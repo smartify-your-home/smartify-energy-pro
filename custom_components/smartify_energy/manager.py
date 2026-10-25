@@ -10,7 +10,7 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_send
-from homeassistant.helpers.event import async_call_later, async_track_time_interval
+from homeassistant.helpers.event import async_call_later, async_track_time_interval, async_track_state_change_event
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
@@ -190,9 +190,40 @@ class EnergyManager:
         for sub_id, dev in self.devices.items():
             if sub_id in (data.get("devices") or {}):
                 dev.load(data["devices"][sub_id])
+        entities = set()
+        for cfg in [self.cfg, *(d.cfg for d in self.devices.values())]:
+            for value in cfg.values():
+                for item in value if isinstance(value, list) else [value]:
+                    if isinstance(item, str) and item.split(".")[0] in {
+                        "sensor", "binary_sensor", "switch", "input_boolean", "number",
+                        "input_number", "select", "input_select", "input_text", "light", "fan",
+                    } and "." in item:
+                        entities.add(item)
+        if entities:
+            self._unsubs.append(async_track_state_change_event(self.hass, entities, self._input_changed))
+        for dev in self.devices.values():
+            if dev.TYPE == "heatpump":
+                dev.observe_power(dt_util.now())
         interval = timedelta(seconds=int(self.cfg.get(CONF_INTERVAL, 30)))
         self._unsubs.append(async_track_time_interval(self.hass, self._async_tick, interval))
         self._unsubs.append(async_call_later(self.hass, 10, self._async_first_run))
+
+    @callback
+    def _input_changed(self, event) -> None:
+        for dev in self.devices.values():
+            if dev.TYPE == "heatpump" and event.data.get("entity_id") == dev.cfg.get("power_sensor"):
+                dev.observe_power(dt_util.now())
+        self._schedule_run()
+
+    def _weighted_average(self, now: datetime, window: timedelta, fallback: float) -> float:
+        points = list(self._history)
+        start = now - window
+        total = duration = 0.0
+        for (t, value), (end, _) in zip(points, points[1:]):
+            seconds = max(0.0, (end - max(t, start)).total_seconds())
+            total += value * seconds
+            duration += seconds
+        return total / duration if duration else fallback
 
     async def _async_first_run(self, _now=None) -> None:
         await self.forecast.async_refresh()
@@ -332,16 +363,17 @@ class EnergyManager:
 
         window = timedelta(minutes=float(self.p("avg_window")))
         self._history.append((now, budget))
-        while self._history and now - self._history[0][0] > window:
+        retention = max(window, SHORT_WINDOW)
+        while len(self._history) > 1 and now - self._history[1][0] >= retention:
             self._history.popleft()
-        self.budget_avg = sum(v for _, v in self._history) / len(self._history)
-        short = [v for t, v in self._history if now - t <= SHORT_WINDOW] or [budget]
+        self.budget_avg = self._weighted_average(now, window, budget)
+        short_avg = self._weighted_average(now, SHORT_WINDOW, budget)
         ready = now - self._history[0][0] >= window * 0.9
 
         night = in_window(now, time_from_str(self.p("night_start"), time(0)),
                           time_from_str(self.p("night_end"), time(0)))
         ctx = Context(now=now, dt=dt, budget_now=budget, budget_avg=self.budget_avg,
-                      budget_short=sum(short) / len(short), history_ready=ready, night_window=night)
+                      budget_short=short_avg, history_ready=ready, night_window=night)
         ctx.alloc_base = self.budget_avg if ready else budget
 
         for dev in self.devices.values():

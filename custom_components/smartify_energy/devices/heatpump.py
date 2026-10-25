@@ -10,9 +10,10 @@ die Zieltemperatur erreicht ist oder das Tageslimit verbraucht ist.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+import math
 
 from ..const import BOOST_BUTTON, BOOST_NUMBER, CONF_BOOST_ENTITY, CONF_BOOST_TYPE, CONF_TEMP_SENSOR
-from ..helpers import ParamSpec, SensorSpec, is_on, state_float
+from ..helpers import ParamSpec, SensorSpec, is_on, state_float, power_w
 from .base import BaseDevice, Context, Decision, PlanDemand
 
 
@@ -28,12 +29,15 @@ class HeatPumpDevice(BaseDevice):
         self.state.setdefault("started", None)
         self.state.setdefault("stopped", None)
         self._deficit_since: datetime | None = None
+        self._idle_since: datetime | None = None
 
     def param_specs(self) -> list[ParamSpec]:
         specs = [
             ParamSpec("nominal_power", "number", float(self.cfg.get("nominal_power", 2000)),
                       "mdi:flash", 200, 10000, 50, "W"),
             ParamSpec("target_temp", "number", 55, "mdi:thermometer-high", 30, 75, 0.5, "°C"),
+            ParamSpec("boost_hysteresis", "number", 4, "mdi:thermometer", 0, 30, 0.5, "K"),
+            ParamSpec("idle_power_threshold", "number", 5, "mdi:flash", 0, 1000, 1, "W"),
             ParamSpec("min_on", "number", 30, "mdi:timer-lock-outline", 5, 180, 5, "min"),
             ParamSpec("min_off", "number", 60, "mdi:timer-lock-open-outline", 5, 360, 5, "min"),
             ParamSpec("max_per_day", "number", 120, "mdi:timer-alert-outline", 0, 720, 10, "min"),
@@ -65,7 +69,20 @@ class HeatPumpDevice(BaseDevice):
     def temp(self) -> float | None:
         return state_float(self.hass, self.cfg.get(CONF_TEMP_SENSOR))
 
+    def on_param_changed(self, key: str) -> None:
+        if key == "idle_power_threshold":
+            self._idle_since = None
+
+    def observe_power(self, now: datetime) -> None:
+        """Track every power event, including brief activity before a debounced run."""
+        value = power_w(self.hass, self.cfg.get("power_sensor"))
+        if value is None or not math.isfinite(value) or value >= float(self.p("idle_power_threshold")):
+            self._idle_since = None
+        elif self._idle_since is None:
+            self._idle_since = now
+
     def pre_update(self, ctx: Context) -> None:
+        self.observe_power(ctx.now)
         today = ctx.now.date().isoformat()
         if self.state.get("day") != today:
             self.state.update(day=today, boost_min=0.0)
@@ -104,8 +121,12 @@ class HeatPumpDevice(BaseDevice):
         self.status = "bereit"
         if self.state["boost_min"] >= float(self.p("max_per_day")):
             return Decision(False, 0, "Tageslimit erreicht")
-        if temp is not None and temp >= target - 3:
+        if temp is None or not math.isfinite(temp):
+            return Decision(False, 0, "Temperatursensor fehlt oder ungültig")
+        if temp >= target - float(self.p("boost_hysteresis")):
             return Decision(False, 0, f"Speicher warm ({temp:.1f} °C)")
+        if self._idle_since is None or ctx.now - self._idle_since < timedelta(minutes=15):
+            return Decision(False, 0, "Warte auf 15 Minuten WP-Leistung unter Ruheschwelle")
         if self._elapsed("stopped", ctx.now) < float(self.p("min_off")):
             return Decision(False, 0, "Mindestpause läuft")
         if left_now >= need and left_avg >= need:
@@ -117,6 +138,8 @@ class HeatPumpDevice(BaseDevice):
             return
         await self._set(decision.on)
         self.state["active"] = decision.on
+        if decision.on:
+            self._idle_since = None
         self.state["started" if decision.on else "stopped"] = ctx.now.timestamp()
         self._deficit_since = None
 

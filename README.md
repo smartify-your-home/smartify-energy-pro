@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.2** · Integrationsdomain: `smartify_energy`
+Version: **0.2.3** · Integrationsdomain: `smartify_energy`
 
 ## Funktionen
 
@@ -38,3 +38,9 @@ Fehler und Verbesserungsvorschläge: [Issues](https://github.com/smartify-your-h
 ## Warmwasser-Boost per Button
 
 Als Boost-Art kann Schalter, Button oder Sollwert gewählt werden. Button unterstützt `button` und `input_button` und löst beim Start einmal `press` aus. Während der intern verwalteten Boost-Phase wird nicht erneut gedrückt. Ein Button liefert keinen Laufstatus und kann die Einmalladung nicht abbrechen: Zieltemperatur, Zeitlimit und Aus beenden nur die interne Freigabe; den tatsächlichen Ladezyklus beendet die Wärmepumpe. Nach Ende der internen Phase gilt die Mindestpause vor einer erneuten Auslösung.
+
+## Boost-Startschutz (0.2.3)
+
+Für jeden automatischen Warmwasser-Boost sind Leistungs- und Temperatursensor nötig. Die WP-Leistung muss durchgehend 15 Minuten unter der einstellbaren WP-Ruheschwelle (Standard 5 W) liegen. Aktivität oder ungültige Leistungswerte setzen die Wartezeit zurück; nach Neustart/Reload beginnt sie neu. Start nur unter Zieltemperatur minus Boost-Hysterese (Standard 4 K): bei 50 °C Ziel also unter 46 °C. Die bestehende Mindestpause und PV-Bedingungen gelten zusätzlich. Ein gestarteter Boost verbraucht die Ruhefreigabe.
+
+Änderungen relevanter Eingänge lösen eine innerhalb von 2 Sekunden gebündelte Neubewertung aus. Der periodische Zyklus bleibt erhalten; Mittelwerte sind zeitgewichtet.

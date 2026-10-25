@@ -405,6 +405,12 @@
       },
       "normal_value": {
         "name": "Normal setpoint"
+      },
+      "boost_hysteresis": {
+        "name": "Boost hysteresis"
+      },
+      "idle_power_threshold": {
+        "name": "Heat pump idle power threshold"
       }
     },
     "time": {

@@ -405,6 +405,12 @@
       },
       "normal_value": {
         "name": "Normal-Sollwert"
+      },
+      "boost_hysteresis": {
+        "name": "Boost-Hysterese"
+      },
+      "idle_power_threshold": {
+        "name": "WP-Ruheschwelle"
       }
     },
     "time": {
