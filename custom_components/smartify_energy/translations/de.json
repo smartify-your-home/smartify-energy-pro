@@ -1,0 +1,554 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "smartify Energiemanager – Netz",
+        "description": "Grundlage: Was am Netzanschluss eingespeist wird.",
+        "data": {
+          "name": "Name",
+          "grid_sensor": "Netzleistung (Saldo) bzw. Netzbezug",
+          "grid_sign": "Vorzeichen Netzleistung",
+          "sink_sensors": "Überschuss-Senken (z. B. Ohmpilot, Heizstab)",
+          "interval": "Regelintervall",
+          "grid_export_sensor": "Einspeisung (nur bei getrennten Sensoren)"
+        },
+        "data_description": {
+          "grid_sensor": "Leistung am Netzanschlusspunkt. Einspeisung und Bezug im selben Sensor (oder nur Einspeisung).",
+          "sink_sensors": "Leistung dieser Verbraucher wird zum Überschuss addiert – sie nehmen nur den Rest.",
+          "grid_export_sensor": "Optional. Wenn gesetzt: Netzsensor = Bezug, dieser Sensor = Einspeisung (beide positiv). Das Vorzeichen-Feld wird dann ignoriert."
+        }
+      },
+      "forecast": {
+        "title": "PV-Prognose",
+        "data": {
+          "forecast_entries": "Prognose-Integrationen (werden summiert)",
+          "forecast_sensors": "Prognose-Sensoren (Fallback)"
+        },
+        "data_description": {
+          "forecast_entries": "Vorauswahl aus dem Energie-Dashboard. Ausgewählte Einträge werden summiert – pro Dachfläche nur eine Quelle wählen (z. B. nicht Forecast.Solar UND Open-Meteo für dieselbe Anlage).",
+          "forecast_sensors": "Nur nötig, wenn die Prognose-Integration keine Energie-Plattform hat (Attribute wh_period, watts oder detailedForecast)."
+        }
+      },
+      "battery": {
+        "title": "Speicher (optional)",
+        "description": "Leer lassen, wenn kein Speicher vorhanden ist. Kann später ergänzt werden.",
+        "data": {
+          "battery_soc": "Speicher Ladestand",
+          "battery_power": "Speicher Leistung",
+          "battery_sign": "Vorzeichen Speicherleistung",
+          "battery_capacity": "Nutzbare Kapazität"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Netz",
+        "data": {
+          "name": "Name",
+          "grid_sensor": "Netzleistung (Saldo) bzw. Netzbezug",
+          "grid_sign": "Vorzeichen Netzleistung",
+          "sink_sensors": "Überschuss-Senken (z. B. Ohmpilot, Heizstab)",
+          "interval": "Regelintervall",
+          "grid_export_sensor": "Einspeisung (nur bei getrennten Sensoren)"
+        },
+        "data_description": {
+          "grid_sensor": "Leistung am Netzanschlusspunkt. Einspeisung und Bezug im selben Sensor (oder nur Einspeisung).",
+          "sink_sensors": "Leistung dieser Verbraucher wird zum Überschuss addiert – sie nehmen nur den Rest.",
+          "grid_export_sensor": "Optional. Wenn gesetzt: Netzsensor = Bezug, dieser Sensor = Einspeisung (beide positiv). Das Vorzeichen-Feld wird dann ignoriert."
+        }
+      },
+      "forecast": {
+        "title": "PV-Prognose",
+        "data": {
+          "forecast_entries": "Prognose-Integrationen (werden summiert)",
+          "forecast_sensors": "Prognose-Sensoren (Fallback)"
+        },
+        "data_description": {
+          "forecast_entries": "Vorauswahl aus dem Energie-Dashboard. Ausgewählte Einträge werden summiert – pro Dachfläche nur eine Quelle wählen (z. B. nicht Forecast.Solar UND Open-Meteo für dieselbe Anlage).",
+          "forecast_sensors": "Nur nötig, wenn die Prognose-Integration keine Energie-Plattform hat (Attribute wh_period, watts oder detailedForecast)."
+        }
+      },
+      "battery": {
+        "title": "Speicher (optional)",
+        "description": "Leer lassen, wenn kein Speicher vorhanden ist. Kann später ergänzt werden.",
+        "data": {
+          "battery_soc": "Speicher Ladestand",
+          "battery_power": "Speicher Leistung",
+          "battery_sign": "Vorzeichen Speicherleistung",
+          "battery_capacity": "Nutzbare Kapazität"
+        }
+      }
+    }
+  },
+  "config_subentries": {
+    "load": {
+      "entry_type": "Haushaltsgerät",
+      "initiate_flow": {
+        "user": "Haushaltsgerät hinzufügen"
+      },
+      "step": {
+        "user": {
+          "title": "Haushaltsgerät (Steckdose)",
+          "data": {
+            "name": "Name",
+            "switch": "Schaltbare Steckdose / Schalter",
+            "power_sensor": "Leistungssensor",
+            "nominal_power": "Nennleistung",
+            "duration": "Typische Programmdauer"
+          },
+          "data_description": {
+            "switch": "Steckdose bleibt an; das Gerät wird am Gerät gestartet und bei zu wenig Überschuss pausiert."
+          }
+        },
+        "reconfigure": {
+          "title": "Haushaltsgerät (Steckdose)",
+          "data": {
+            "name": "Name",
+            "switch": "Schaltbare Steckdose / Schalter",
+            "power_sensor": "Leistungssensor",
+            "nominal_power": "Nennleistung",
+            "duration": "Typische Programmdauer"
+          },
+          "data_description": {
+            "switch": "Steckdose bleibt an; das Gerät wird am Gerät gestartet und bei zu wenig Überschuss pausiert."
+          }
+        }
+      },
+      "error": {
+        "options_required": "Bitte beide Optionswerte angeben.",
+        "min_gt_max": "Minimalstrom ist größer als Maximalstrom.",
+        "boost_mismatch": "Boost-Art passt nicht zur gewählten Entity (Schalter ↔ Zahl)."
+      },
+      "abort": {
+        "reconfigure_successful": "Gespeichert."
+      }
+    },
+    "pool": {
+      "entry_type": "Poolpumpe",
+      "initiate_flow": {
+        "user": "Poolpumpe hinzufügen"
+      },
+      "step": {
+        "user": {
+          "title": "Poolpumpe",
+          "data": {
+            "name": "Name",
+            "switch": "Schaltbare Steckdose / Schalter",
+            "power_sensor": "Leistungssensor",
+            "nominal_power": "Nennleistung",
+            "temperature_sensor": "Wassertemperatur"
+          },
+          "data_description": {
+            "temperature_sensor": "Optional. Soll-Laufzeit = Temperatur × Faktor (Faustregel T/2)."
+          }
+        },
+        "reconfigure": {
+          "title": "Poolpumpe",
+          "data": {
+            "name": "Name",
+            "switch": "Schaltbare Steckdose / Schalter",
+            "power_sensor": "Leistungssensor",
+            "nominal_power": "Nennleistung",
+            "temperature_sensor": "Wassertemperatur"
+          },
+          "data_description": {
+            "temperature_sensor": "Optional. Soll-Laufzeit = Temperatur × Faktor (Faustregel T/2)."
+          }
+        }
+      },
+      "error": {
+        "options_required": "Bitte beide Optionswerte angeben.",
+        "min_gt_max": "Minimalstrom ist größer als Maximalstrom.",
+        "boost_mismatch": "Boost-Art passt nicht zur gewählten Entity (Schalter ↔ Zahl)."
+      },
+      "abort": {
+        "reconfigure_successful": "Gespeichert."
+      }
+    },
+    "ev": {
+      "entry_type": "Wallbox",
+      "initiate_flow": {
+        "user": "Wallbox hinzufügen"
+      },
+      "step": {
+        "user": {
+          "title": "Wallbox / E-Auto",
+          "data": {
+            "name": "Name",
+            "current_entity": "Ladestrom (Number)",
+            "control_entity": "Laden ein/aus (Schalter oder Auswahl)",
+            "control_on": "Option für EIN (bei Auswahl)",
+            "control_off": "Option für AUS (bei Auswahl)",
+            "phase_entity": "Phasenumschaltung (Auswahl, optional)",
+            "phase_1": "Option 1-phasig",
+            "phase_3": "Option 3-phasig",
+            "power_sensor": "Ladeleistung",
+            "connected_entity": "Auto angesteckt (Sensor)",
+            "connected_states": "Zustände für „angesteckt“ (kommagetrennt)",
+            "soc_sensor": "Auto-Ladestand (SoC)",
+            "capacity": "Akkukapazität",
+            "consumption": "Verbrauch",
+            "days_entity": "Tage-Konfigurator (input_text)",
+            "min_current": "Minimalstrom",
+            "max_current": "Maximalstrom",
+            "phases": "Phasen",
+            "voltage": "Spannung",
+            "efficiency": "Ladewirkungsgrad"
+          },
+          "data_description": {
+            "control_entity": "go-eCharger: select …_frc mit „charge“ / „dont_charge“.",
+            "phase_entity": "go-eCharger: select …_psm mit „one_phase“ / „three_phases“.",
+            "connected_states": "Leer = alles außer idle/off/disconnected gilt als angesteckt.",
+            "days_entity": "JSON wie [[\"MO\",km,büro], …]. Für die Abfahrt zählt der nächste Wochentag."
+          }
+        },
+        "reconfigure": {
+          "title": "Wallbox / E-Auto",
+          "data": {
+            "name": "Name",
+            "current_entity": "Ladestrom (Number)",
+            "control_entity": "Laden ein/aus (Schalter oder Auswahl)",
+            "control_on": "Option für EIN (bei Auswahl)",
+            "control_off": "Option für AUS (bei Auswahl)",
+            "phase_entity": "Phasenumschaltung (Auswahl, optional)",
+            "phase_1": "Option 1-phasig",
+            "phase_3": "Option 3-phasig",
+            "power_sensor": "Ladeleistung",
+            "connected_entity": "Auto angesteckt (Sensor)",
+            "connected_states": "Zustände für „angesteckt“ (kommagetrennt)",
+            "soc_sensor": "Auto-Ladestand (SoC)",
+            "capacity": "Akkukapazität",
+            "consumption": "Verbrauch",
+            "days_entity": "Tage-Konfigurator (input_text)",
+            "min_current": "Minimalstrom",
+            "max_current": "Maximalstrom",
+            "phases": "Phasen",
+            "voltage": "Spannung",
+            "efficiency": "Ladewirkungsgrad"
+          },
+          "data_description": {
+            "control_entity": "go-eCharger: select …_frc mit „charge“ / „dont_charge“.",
+            "phase_entity": "go-eCharger: select …_psm mit „one_phase“ / „three_phases“.",
+            "connected_states": "Leer = alles außer idle/off/disconnected gilt als angesteckt.",
+            "days_entity": "JSON wie [[\"MO\",km,büro], …]. Für die Abfahrt zählt der nächste Wochentag."
+          }
+        }
+      },
+      "error": {
+        "options_required": "Bitte beide Optionswerte angeben.",
+        "min_gt_max": "Minimalstrom ist größer als Maximalstrom.",
+        "boost_mismatch": "Boost-Art passt nicht zur gewählten Entity (Schalter ↔ Zahl)."
+      },
+      "abort": {
+        "reconfigure_successful": "Gespeichert."
+      }
+    },
+    "heatpump": {
+      "entry_type": "Wärmepumpe",
+      "initiate_flow": {
+        "user": "Wärmepumpen-Boost hinzufügen"
+      },
+      "step": {
+        "user": {
+          "title": "Wärmepumpe – PV-Boost",
+          "data": {
+            "name": "Name",
+            "boost_type": "Boost-Art",
+            "boost_entity": "Boost-Entity",
+            "power_sensor": "Leistungssensor",
+            "nominal_power": "Leistung im Boost",
+            "temperature_sensor": "Speichertemperatur"
+          },
+          "data_description": {
+            "boost_entity": "EMS-ESP: switch.boiler_dhw_one_time_charging (Einmalladung) oder number.boiler_dhw_selected_temperature (Sollwert)."
+          }
+        },
+        "reconfigure": {
+          "title": "Wärmepumpe – PV-Boost",
+          "data": {
+            "name": "Name",
+            "boost_type": "Boost-Art",
+            "boost_entity": "Boost-Entity",
+            "power_sensor": "Leistungssensor",
+            "nominal_power": "Leistung im Boost",
+            "temperature_sensor": "Speichertemperatur"
+          },
+          "data_description": {
+            "boost_entity": "EMS-ESP: switch.boiler_dhw_one_time_charging (Einmalladung) oder number.boiler_dhw_selected_temperature (Sollwert)."
+          }
+        }
+      },
+      "error": {
+        "options_required": "Bitte beide Optionswerte angeben.",
+        "min_gt_max": "Minimalstrom ist größer als Maximalstrom.",
+        "boost_mismatch": "Boost-Art passt nicht zur gewählten Entity (Schalter ↔ Zahl)."
+      },
+      "abort": {
+        "reconfigure_successful": "Gespeichert."
+      }
+    }
+  },
+  "selector": {
+    "grid_sign": {
+      "options": {
+        "export_positive": "Einspeisung positiv",
+        "import_positive": "Bezug positiv"
+      }
+    },
+    "battery_sign": {
+      "options": {
+        "charge_positive": "Laden positiv",
+        "discharge_positive": "Entladen positiv"
+      }
+    },
+    "boost_type": {
+      "options": {
+        "switch": "Schalter (Einmalladung)",
+        "number": "Sollwert anheben"
+      }
+    }
+  },
+  "entity": {
+    "number": {
+      "priority": {
+        "name": "Priorität"
+      },
+      "avg_window": {
+        "name": "Mittelungsfenster"
+      },
+      "grid_reserve": {
+        "name": "Netz-Reserve"
+      },
+      "base_load": {
+        "name": "Grundlast (Prognose)"
+      },
+      "battery_min_soc": {
+        "name": "Speicher Mindest-SoC"
+      },
+      "battery_target_soc": {
+        "name": "Speicher Ziel-SoC"
+      },
+      "battery_safety": {
+        "name": "Speicher Sicherheitsfaktor"
+      },
+      "nominal_power": {
+        "name": "Nennleistung"
+      },
+      "min_surplus": {
+        "name": "Mindest-Überschuss"
+      },
+      "finish_threshold": {
+        "name": "Fertig-Schwelle"
+      },
+      "finish_minutes": {
+        "name": "Fertig-Dauer"
+      },
+      "duration": {
+        "name": "Typische Laufzeit"
+      },
+      "fixed_runtime": {
+        "name": "Feste Soll-Laufzeit"
+      },
+      "temp_factor": {
+        "name": "Faktor Laufzeit je °C"
+      },
+      "runtime_min": {
+        "name": "Soll-Laufzeit Minimum"
+      },
+      "runtime_max": {
+        "name": "Soll-Laufzeit Maximum"
+      },
+      "max_runtime": {
+        "name": "Max-Laufzeit (inkl. PV-Bonus)"
+      },
+      "winter_temp": {
+        "name": "Winterbetrieb unter"
+      },
+      "vm_share": {
+        "name": "Vormittags-Anteil"
+      },
+      "min_on": {
+        "name": "Mindestlaufzeit"
+      },
+      "min_off": {
+        "name": "Mindestpause"
+      },
+      "target_km": {
+        "name": "Ziel-Kilometer"
+      },
+      "reserve_soc": {
+        "name": "Reserve-SoC"
+      },
+      "max_soc": {
+        "name": "Max-SoC"
+      },
+      "consumption": {
+        "name": "Verbrauch"
+      },
+      "pv_share": {
+        "name": "Mindest-PV-Anteil zum Start"
+      },
+      "stop_delay": {
+        "name": "Stopp-Verzögerung"
+      },
+      "target_temp": {
+        "name": "Zieltemperatur"
+      },
+      "max_per_day": {
+        "name": "Max. Boost pro Tag"
+      },
+      "boost_value": {
+        "name": "Boost-Sollwert"
+      },
+      "normal_value": {
+        "name": "Normal-Sollwert"
+      }
+    },
+    "time": {
+      "night_start": {
+        "name": "Sofortfenster Beginn"
+      },
+      "night_end": {
+        "name": "Sofortfenster Ende"
+      },
+      "latest_start": {
+        "name": "Spätester Start"
+      },
+      "vm_deadline": {
+        "name": "Vormittagsziel bis"
+      },
+      "lock_start": {
+        "name": "Sperrzeit Beginn"
+      },
+      "lock_end": {
+        "name": "Sperrzeit Ende"
+      },
+      "deadline": {
+        "name": "Fertig bis / Abfahrt"
+      }
+    },
+    "switch": {
+      "nachladen": {
+        "name": "Nachladen"
+      },
+      "lock_enabled": {
+        "name": "Sperrzeit aktiv"
+      }
+    },
+    "sensor": {
+      "surplus": {
+        "name": "Überschuss"
+      },
+      "surplus_avg": {
+        "name": "Überschuss Mittelwert"
+      },
+      "allocated": {
+        "name": "Verteilt"
+      },
+      "forecast_today": {
+        "name": "PV-Prognose heute"
+      },
+      "plan": {
+        "name": "Plan"
+      },
+      "battery_priority": {
+        "name": "Speicher-Vorrang"
+      },
+      "status": {
+        "name": "Status"
+      },
+      "planned_start": {
+        "name": "Empfohlener Start"
+      },
+      "power": {
+        "name": "Leistung"
+      },
+      "phase": {
+        "name": "Zustand"
+      },
+      "runtime_today": {
+        "name": "Laufzeit heute"
+      },
+      "runtime_target": {
+        "name": "Soll-Laufzeit"
+      },
+      "energy_needed": {
+        "name": "Energiebedarf"
+      },
+      "charge_current": {
+        "name": "Ladestrom"
+      },
+      "boost_today": {
+        "name": "Boost heute"
+      }
+    },
+    "binary_sensor": {
+      "active": {
+        "name": "Aktiv"
+      },
+      "waiting": {
+        "name": "Wartet"
+      },
+      "heating": {
+        "name": "Heizphase"
+      },
+      "finished": {
+        "name": "Fertig"
+      }
+    },
+    "button": {
+      "start_now": {
+        "name": "Sofort starten"
+      },
+      "reset": {
+        "name": "Reset"
+      }
+    },
+    "select": {
+      "mode": {
+        "name": "Modus",
+        "state": {
+          "auto": "Automatik",
+          "observe": "Beobachten",
+          "manual": "Manuell",
+          "off": "Aus"
+        }
+      },
+      "battery_strategy": {
+        "name": "Speicher-Strategie",
+        "state": {
+          "forecast": "Prognose",
+          "battery_first": "Speicher zuerst",
+          "devices_first": "Geräte zuerst"
+        }
+      },
+      "season": {
+        "name": "Saison",
+        "state": {
+          "auto": "Automatisch (Wassertemperatur)",
+          "summer": "Sommer",
+          "winter": "Winter"
+        }
+      },
+      "goal": {
+        "name": "Ladeziel",
+        "state": {
+          "pv_only": "Nur PV",
+          "km_until": "km bis Uhrzeit",
+          "days": "Tage-Konfigurator",
+          "now": "Sofort laden"
+        }
+      },
+      "phase_mode": {
+        "name": "Phasen",
+        "state": {
+          "auto": "Automatisch",
+          "one": "1-phasig",
+          "three": "3-phasig"
+        }
+      }
+    }
+  }
+}

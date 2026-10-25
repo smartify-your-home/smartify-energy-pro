@@ -1,0 +1,554 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "smartify energy manager – grid",
+        "description": "Basis: export at the grid connection.",
+        "data": {
+          "name": "Name",
+          "grid_sensor": "Grid power (net) or grid import",
+          "grid_sign": "Grid power sign",
+          "sink_sensors": "Surplus sinks (e.g. Ohmpilot, heating rod)",
+          "interval": "Control interval",
+          "grid_export_sensor": "Export power (separate sensors only)"
+        },
+        "data_description": {
+          "grid_sensor": "Power at the grid connection point.",
+          "sink_sensors": "Power of these loads is added back – they only take what is left.",
+          "grid_export_sensor": "Optional. If set: grid sensor = import, this sensor = export (both positive); sign is ignored."
+        }
+      },
+      "forecast": {
+        "title": "PV forecast",
+        "data": {
+          "forecast_entries": "Forecast integrations (summed)",
+          "forecast_sensors": "Forecast sensors (fallback)"
+        },
+        "data_description": {
+          "forecast_entries": "Preselected from the energy dashboard. Selected entries are summed – choose one source per array.",
+          "forecast_sensors": "Only if the forecast integration has no energy platform."
+        }
+      },
+      "battery": {
+        "title": "Battery (optional)",
+        "description": "Leave empty without a battery.",
+        "data": {
+          "battery_soc": "Battery state of charge",
+          "battery_power": "Battery power",
+          "battery_sign": "Battery power sign",
+          "battery_capacity": "Usable capacity"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Grid",
+        "data": {
+          "name": "Name",
+          "grid_sensor": "Grid power (net) or grid import",
+          "grid_sign": "Grid power sign",
+          "sink_sensors": "Surplus sinks (e.g. Ohmpilot, heating rod)",
+          "interval": "Control interval",
+          "grid_export_sensor": "Export power (separate sensors only)"
+        },
+        "data_description": {
+          "grid_sensor": "Power at the grid connection point.",
+          "sink_sensors": "Power of these loads is added back – they only take what is left.",
+          "grid_export_sensor": "Optional. If set: grid sensor = import, this sensor = export (both positive); sign is ignored."
+        }
+      },
+      "forecast": {
+        "title": "PV forecast",
+        "data": {
+          "forecast_entries": "Forecast integrations (summed)",
+          "forecast_sensors": "Forecast sensors (fallback)"
+        },
+        "data_description": {
+          "forecast_entries": "Preselected from the energy dashboard. Selected entries are summed – choose one source per array.",
+          "forecast_sensors": "Only if the forecast integration has no energy platform."
+        }
+      },
+      "battery": {
+        "title": "Battery (optional)",
+        "description": "Leave empty without a battery.",
+        "data": {
+          "battery_soc": "Battery state of charge",
+          "battery_power": "Battery power",
+          "battery_sign": "Battery power sign",
+          "battery_capacity": "Usable capacity"
+        }
+      }
+    }
+  },
+  "config_subentries": {
+    "load": {
+      "entry_type": "Appliance",
+      "initiate_flow": {
+        "user": "Add appliance"
+      },
+      "step": {
+        "user": {
+          "title": "Appliance (smart plug)",
+          "data": {
+            "name": "Name",
+            "switch": "Switch",
+            "power_sensor": "Power sensor",
+            "nominal_power": "Rated power",
+            "duration": "Typical program duration"
+          },
+          "data_description": {
+            "switch": "Plug stays on; start the program at the appliance."
+          }
+        },
+        "reconfigure": {
+          "title": "Appliance (smart plug)",
+          "data": {
+            "name": "Name",
+            "switch": "Switch",
+            "power_sensor": "Power sensor",
+            "nominal_power": "Rated power",
+            "duration": "Typical program duration"
+          },
+          "data_description": {
+            "switch": "Plug stays on; start the program at the appliance."
+          }
+        }
+      },
+      "error": {
+        "options_required": "Please enter both option values.",
+        "min_gt_max": "Minimum current exceeds maximum.",
+        "boost_mismatch": "Boost type does not match the entity."
+      },
+      "abort": {
+        "reconfigure_successful": "Saved."
+      }
+    },
+    "pool": {
+      "entry_type": "Pool pump",
+      "initiate_flow": {
+        "user": "Add pool pump"
+      },
+      "step": {
+        "user": {
+          "title": "Pool pump",
+          "data": {
+            "name": "Name",
+            "switch": "Switch",
+            "power_sensor": "Power sensor",
+            "nominal_power": "Rated power",
+            "temperature_sensor": "Water temperature"
+          },
+          "data_description": {
+            "temperature_sensor": "Optional."
+          }
+        },
+        "reconfigure": {
+          "title": "Pool pump",
+          "data": {
+            "name": "Name",
+            "switch": "Switch",
+            "power_sensor": "Power sensor",
+            "nominal_power": "Rated power",
+            "temperature_sensor": "Water temperature"
+          },
+          "data_description": {
+            "temperature_sensor": "Optional."
+          }
+        }
+      },
+      "error": {
+        "options_required": "Please enter both option values.",
+        "min_gt_max": "Minimum current exceeds maximum.",
+        "boost_mismatch": "Boost type does not match the entity."
+      },
+      "abort": {
+        "reconfigure_successful": "Saved."
+      }
+    },
+    "ev": {
+      "entry_type": "Wallbox",
+      "initiate_flow": {
+        "user": "Add wallbox"
+      },
+      "step": {
+        "user": {
+          "title": "Wallbox / EV",
+          "data": {
+            "name": "Name",
+            "current_entity": "Charge current (number)",
+            "control_entity": "Charging on/off (switch or select)",
+            "control_on": "Option for ON (select)",
+            "control_off": "Option for OFF (select)",
+            "phase_entity": "Phase switching (select, optional)",
+            "phase_1": "Option 1-phase",
+            "phase_3": "Option 3-phase",
+            "power_sensor": "Charging power",
+            "connected_entity": "Car connected (sensor)",
+            "connected_states": "States meaning connected (comma separated)",
+            "soc_sensor": "Car state of charge",
+            "capacity": "Battery capacity",
+            "consumption": "Consumption",
+            "days_entity": "Day planner (input_text)",
+            "min_current": "Minimum current",
+            "max_current": "Maximum current",
+            "phases": "Phases",
+            "voltage": "Voltage",
+            "efficiency": "Charging efficiency"
+          },
+          "data_description": {
+            "control_entity": "go-eCharger: select …_frc.",
+            "phase_entity": "go-eCharger: select …_psm.",
+            "connected_states": "Empty = anything but idle/off.",
+            "days_entity": "JSON like [[\"MO\",km,office], …]."
+          }
+        },
+        "reconfigure": {
+          "title": "Wallbox / EV",
+          "data": {
+            "name": "Name",
+            "current_entity": "Charge current (number)",
+            "control_entity": "Charging on/off (switch or select)",
+            "control_on": "Option for ON (select)",
+            "control_off": "Option for OFF (select)",
+            "phase_entity": "Phase switching (select, optional)",
+            "phase_1": "Option 1-phase",
+            "phase_3": "Option 3-phase",
+            "power_sensor": "Charging power",
+            "connected_entity": "Car connected (sensor)",
+            "connected_states": "States meaning connected (comma separated)",
+            "soc_sensor": "Car state of charge",
+            "capacity": "Battery capacity",
+            "consumption": "Consumption",
+            "days_entity": "Day planner (input_text)",
+            "min_current": "Minimum current",
+            "max_current": "Maximum current",
+            "phases": "Phases",
+            "voltage": "Voltage",
+            "efficiency": "Charging efficiency"
+          },
+          "data_description": {
+            "control_entity": "go-eCharger: select …_frc.",
+            "phase_entity": "go-eCharger: select …_psm.",
+            "connected_states": "Empty = anything but idle/off.",
+            "days_entity": "JSON like [[\"MO\",km,office], …]."
+          }
+        }
+      },
+      "error": {
+        "options_required": "Please enter both option values.",
+        "min_gt_max": "Minimum current exceeds maximum.",
+        "boost_mismatch": "Boost type does not match the entity."
+      },
+      "abort": {
+        "reconfigure_successful": "Saved."
+      }
+    },
+    "heatpump": {
+      "entry_type": "Heat pump",
+      "initiate_flow": {
+        "user": "Add heat pump boost"
+      },
+      "step": {
+        "user": {
+          "title": "Heat pump – PV boost",
+          "data": {
+            "name": "Name",
+            "boost_type": "Boost type",
+            "boost_entity": "Boost entity",
+            "power_sensor": "Power sensor",
+            "nominal_power": "Power while boosting",
+            "temperature_sensor": "Tank temperature"
+          },
+          "data_description": {
+            "boost_entity": "EMS-ESP: one-time charging switch or setpoint number."
+          }
+        },
+        "reconfigure": {
+          "title": "Heat pump – PV boost",
+          "data": {
+            "name": "Name",
+            "boost_type": "Boost type",
+            "boost_entity": "Boost entity",
+            "power_sensor": "Power sensor",
+            "nominal_power": "Power while boosting",
+            "temperature_sensor": "Tank temperature"
+          },
+          "data_description": {
+            "boost_entity": "EMS-ESP: one-time charging switch or setpoint number."
+          }
+        }
+      },
+      "error": {
+        "options_required": "Please enter both option values.",
+        "min_gt_max": "Minimum current exceeds maximum.",
+        "boost_mismatch": "Boost type does not match the entity."
+      },
+      "abort": {
+        "reconfigure_successful": "Saved."
+      }
+    }
+  },
+  "selector": {
+    "grid_sign": {
+      "options": {
+        "export_positive": "Export positive",
+        "import_positive": "Import positive"
+      }
+    },
+    "battery_sign": {
+      "options": {
+        "charge_positive": "Charging positive",
+        "discharge_positive": "Discharging positive"
+      }
+    },
+    "boost_type": {
+      "options": {
+        "switch": "Switch",
+        "number": "Raise setpoint"
+      }
+    }
+  },
+  "entity": {
+    "number": {
+      "priority": {
+        "name": "Priority"
+      },
+      "avg_window": {
+        "name": "Averaging window"
+      },
+      "grid_reserve": {
+        "name": "Grid reserve"
+      },
+      "base_load": {
+        "name": "Base load (forecast)"
+      },
+      "battery_min_soc": {
+        "name": "Battery minimum SoC"
+      },
+      "battery_target_soc": {
+        "name": "Battery target SoC"
+      },
+      "battery_safety": {
+        "name": "Battery safety factor"
+      },
+      "nominal_power": {
+        "name": "Rated power"
+      },
+      "min_surplus": {
+        "name": "Minimum surplus"
+      },
+      "finish_threshold": {
+        "name": "Finished threshold"
+      },
+      "finish_minutes": {
+        "name": "Finished duration"
+      },
+      "duration": {
+        "name": "Typical runtime"
+      },
+      "fixed_runtime": {
+        "name": "Fixed target runtime"
+      },
+      "temp_factor": {
+        "name": "Runtime factor per °C"
+      },
+      "runtime_min": {
+        "name": "Target runtime minimum"
+      },
+      "runtime_max": {
+        "name": "Target runtime maximum"
+      },
+      "max_runtime": {
+        "name": "Max runtime (incl. PV bonus)"
+      },
+      "winter_temp": {
+        "name": "Winter mode below"
+      },
+      "vm_share": {
+        "name": "Morning share"
+      },
+      "min_on": {
+        "name": "Minimum on time"
+      },
+      "min_off": {
+        "name": "Minimum off time"
+      },
+      "target_km": {
+        "name": "Target distance"
+      },
+      "reserve_soc": {
+        "name": "Reserve SoC"
+      },
+      "max_soc": {
+        "name": "Max SoC"
+      },
+      "consumption": {
+        "name": "Consumption"
+      },
+      "pv_share": {
+        "name": "Minimum PV share to start"
+      },
+      "stop_delay": {
+        "name": "Stop delay"
+      },
+      "target_temp": {
+        "name": "Target temperature"
+      },
+      "max_per_day": {
+        "name": "Max boost per day"
+      },
+      "boost_value": {
+        "name": "Boost setpoint"
+      },
+      "normal_value": {
+        "name": "Normal setpoint"
+      }
+    },
+    "time": {
+      "night_start": {
+        "name": "Immediate window start"
+      },
+      "night_end": {
+        "name": "Immediate window end"
+      },
+      "latest_start": {
+        "name": "Latest start"
+      },
+      "vm_deadline": {
+        "name": "Morning goal by"
+      },
+      "lock_start": {
+        "name": "Lock start"
+      },
+      "lock_end": {
+        "name": "Lock end"
+      },
+      "deadline": {
+        "name": "Ready by / departure"
+      }
+    },
+    "switch": {
+      "nachladen": {
+        "name": "Reload"
+      },
+      "lock_enabled": {
+        "name": "Lock active"
+      }
+    },
+    "sensor": {
+      "surplus": {
+        "name": "Surplus"
+      },
+      "surplus_avg": {
+        "name": "Surplus average"
+      },
+      "allocated": {
+        "name": "Allocated"
+      },
+      "forecast_today": {
+        "name": "PV forecast today"
+      },
+      "plan": {
+        "name": "Plan"
+      },
+      "battery_priority": {
+        "name": "Battery priority"
+      },
+      "status": {
+        "name": "Status"
+      },
+      "planned_start": {
+        "name": "Recommended start"
+      },
+      "power": {
+        "name": "Power"
+      },
+      "phase": {
+        "name": "State"
+      },
+      "runtime_today": {
+        "name": "Runtime today"
+      },
+      "runtime_target": {
+        "name": "Target runtime"
+      },
+      "energy_needed": {
+        "name": "Energy needed"
+      },
+      "charge_current": {
+        "name": "Charge current"
+      },
+      "boost_today": {
+        "name": "Boost today"
+      }
+    },
+    "binary_sensor": {
+      "active": {
+        "name": "Active"
+      },
+      "waiting": {
+        "name": "Waiting"
+      },
+      "heating": {
+        "name": "Heating phase"
+      },
+      "finished": {
+        "name": "Finished"
+      }
+    },
+    "button": {
+      "start_now": {
+        "name": "Start now"
+      },
+      "reset": {
+        "name": "Reset"
+      }
+    },
+    "select": {
+      "mode": {
+        "name": "Mode",
+        "state": {
+          "auto": "Automatic",
+          "observe": "Observe",
+          "manual": "Manual",
+          "off": "Off"
+        }
+      },
+      "battery_strategy": {
+        "name": "Battery strategy",
+        "state": {
+          "forecast": "Forecast",
+          "battery_first": "Battery first",
+          "devices_first": "Devices first"
+        }
+      },
+      "season": {
+        "name": "Season",
+        "state": {
+          "auto": "Automatic (water temperature)",
+          "summer": "Summer",
+          "winter": "Winter"
+        }
+      },
+      "goal": {
+        "name": "Charging goal",
+        "state": {
+          "pv_only": "PV only",
+          "km_until": "km by time",
+          "days": "Day planner",
+          "now": "Charge now"
+        }
+      },
+      "phase_mode": {
+        "name": "Phases",
+        "state": {
+          "auto": "Automatic",
+          "one": "1-phase",
+          "three": "3-phase"
+        }
+      }
+    }
+  }
+}

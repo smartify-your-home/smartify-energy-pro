@@ -1,0 +1,254 @@
+"""Haushaltsgerät über schaltbare Steckdose (Waschmaschine, Trockner, Geschirrspüler).
+
+Übernommene Logik aus Smart Energy Manager v3:
+  bereit → Gerät wird am Gerät gestartet (Steckdose an, Leistung > 5 W) → erkannt
+  erkannt + Leistung > 100 W → Freigabe prüfen (Sofortfenster, Priorität, Überschuss)
+     ok    → läuft (bis fertig, wird nicht mehr unterbrochen)
+     nein  → Steckdose AUS → wartet
+  wartet → Überschuss im Mittel ausreichend / Spätstart / Sofortfenster → Steckdose EIN → läuft
+  läuft  → Leistung < Fertig-Schwelle für Fertig-Dauer → fertig (Reset per Taste)
+Neu: Reihenfolge über den Prioritätenmanager statt „wer zuerst eingeschaltet wurde“.
+"""
+from __future__ import annotations
+
+import logging
+from datetime import datetime, time, timedelta
+
+from homeassistant.util import dt as dt_util
+
+from ..const import CONF_POWER_SENSOR, CONF_SWITCH
+from ..helpers import BinarySpec, ButtonSpec, ParamSpec, SensorSpec, is_on, time_from_str
+from .base import BaseDevice, Context, Decision, PlanDemand
+
+_LOGGER = logging.getLogger(__name__)
+
+IDLE, DETECTED, WAITING, RUNNING, FINISHED = "bereit", "erkannt", "wartet", "laeuft", "fertig"
+
+
+class LoadDevice(BaseDevice):
+    TYPE = "load"
+    ICON = "mdi:washing-machine"
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.state.setdefault("sm", IDLE)
+        self.state.setdefault("approved", False)
+        self.state.setdefault("hp_active", False)
+        self.state.setdefault("hp_done", False)
+        self._hp_since: datetime | None = None
+        self._low_since: datetime | None = None
+        self._nachladen_prev = False
+
+    def param_specs(self) -> list[ParamSpec]:
+        return [
+            ParamSpec("nominal_power", "number", float(self.cfg.get("nominal_power", 2200)),
+                      "mdi:flash", 100, 4000, 50, "W"),
+            ParamSpec("min_surplus", "number", 1000, "mdi:solar-power", -3000, 4000, 50, "W"),
+            ParamSpec("latest_start", "time", "15:00", "mdi:clock-alert-outline"),
+            ParamSpec("finish_threshold", "number", 5, "mdi:power-plug-off", 0, 50, 0.5, "W"),
+            ParamSpec("finish_minutes", "number", 20, "mdi:timer-sand", 1, 60, 1, "min"),
+            ParamSpec("duration", "number", float(self.cfg.get("duration", 2.0)),
+                      "mdi:timer-outline", 0.5, 6, 0.25, "h"),
+            ParamSpec("nachladen", "switch", False, "mdi:washing-machine-alert", config=False),
+        ]
+
+    def sensor_specs(self) -> list[SensorSpec]:
+        return super().sensor_specs() + [
+            SensorSpec("phase", lambda: self.state.get("sm"), icon="mdi:state-machine", diagnostic=True),
+        ]
+
+    def binary_specs(self) -> list[BinarySpec]:
+        return super().binary_specs() + [
+            BinarySpec("waiting", lambda: self.state.get("sm") == WAITING, "mdi:timer-pause-outline"),
+            BinarySpec("heating", lambda: bool(self.state.get("hp_active")), "mdi:heat-wave"),
+            BinarySpec("finished", lambda: self.state.get("sm") == FINISHED, "mdi:check-circle-outline"),
+        ]
+
+    def button_specs(self) -> list[ButtonSpec]:
+        return [
+            ButtonSpec("start_now", self.async_start_now, "mdi:play-circle"),
+            ButtonSpec("reset", self.async_reset, "mdi:restart"),
+        ]
+
+    # ── Zustand ──────────────────────────────────────────────────────────────
+    @property
+    def switch(self) -> str:
+        return self.cfg[CONF_SWITCH]
+
+    def is_on(self) -> bool:
+        return is_on(self.hass, self.switch)
+
+    def _p(self) -> float:
+        sensor = self.cfg.get(CONF_POWER_SENSOR)
+        if not sensor:
+            return self.nominal if self.is_on() else 0.0
+        return self.power_now()
+
+    def sort_key(self, ctx: Context) -> tuple:
+        return (self.priority, self.state.get("since") or ctx.now.timestamp())
+
+    def _reset(self) -> None:
+        self.state.update(sm=IDLE, approved=False, hp_active=False, hp_done=False, since=None)
+        self._hp_since = None
+        self._low_since = None
+
+    async def async_reset(self) -> None:
+        self._reset()
+        self.reason = "Reset"
+        await self.manager.async_request_run()
+
+    async def async_start_now(self) -> None:
+        self.state.update(sm=RUNNING, approved=True, since=dt_util.now().timestamp())
+        self.reason = "Sofort-Start"
+        if not self.is_on():
+            await self._switch(self.switch, True)
+        await self.manager.async_request_run()
+
+    # ── Laufende Messung ─────────────────────────────────────────────────────
+    def pre_update(self, ctx: Context) -> None:
+        sm = self.state["sm"]
+        p = self._p()
+        if sm in (DETECTED, RUNNING):
+            self._check_heating(p, ctx.now)
+        if sm == RUNNING:
+            done_possible = self.state["hp_done"] or not self.cfg.get(CONF_POWER_SENSOR) or self.state["approved"]
+            if done_possible and p < float(self.p("finish_threshold")):
+                if self._low_since is None:
+                    self._low_since = ctx.now
+                elif ctx.now - self._low_since >= timedelta(minutes=float(self.p("finish_minutes"))):
+                    _LOGGER.info("[%s] fertig", self.name)
+                    self._reset()
+                    self.state["sm"] = FINISHED
+                    self.reason = "Fertig"
+            else:
+                self._low_since = None
+
+    def _check_heating(self, p: float, now: datetime) -> None:
+        threshold = max(200.0, self.nominal * 0.08)
+        if p > threshold:
+            if self._hp_since is None:
+                self._hp_since = now
+            elif now - self._hp_since >= timedelta(seconds=10):
+                self.state["hp_active"] = True
+                self.state["hp_done"] = False
+        else:
+            self._hp_since = None
+            if self.state["hp_active"] and p < 100:
+                self.state["hp_active"] = False
+                self.state["hp_done"] = True
+
+    @property
+    def reserved_power(self) -> float:
+        """Laufendes Gerät: Nennleistung bis zum Ende der Heizphase reservieren."""
+        p = self._p()
+        if self.state["sm"] == RUNNING and not self.state["hp_done"]:
+            return max(p, self.nominal)
+        return p
+
+    # ── Entscheidung ─────────────────────────────────────────────────────────
+    def decide(self, ctx: Context, budget_left: float) -> Decision:
+        sm = self.state["sm"]
+        p = self._p()
+        sw_on = self.is_on()
+        latest = time_from_str(self.p("latest_start"), time(15, 0))
+        late = ctx.now.time() >= latest
+        free = budget_left - p  # Überschuss ohne Eigenverbrauch
+        need = float(self.p("min_surplus"))
+
+        if sm == IDLE:
+            if sw_on and (p > 5 or not self.cfg.get(CONF_POWER_SENSOR)):
+                self.state.update(sm=DETECTED, since=ctx.now.timestamp(), approved=False)
+                if ctx.night_window:
+                    return self._approve("Sofortfenster – sofort freigegeben")
+            else:
+                self.status = "bereit"
+                return Decision(False, 0, "Bereit – Gerät am Gerät starten")
+
+        if sm == FINISHED:
+            self.status = "fertig"
+            if sw_on and p > 5 and self._low_since is None:
+                # wieder gestartet ohne Reset
+                self.state.update(sm=DETECTED, since=ctx.now.timestamp())
+            else:
+                return Decision(sw_on, p, "Fertig – Reset zum Neustart")
+
+        if self.state["sm"] == RUNNING and (self.state["approved"]):
+            self.status = "laeuft"
+            return Decision(True, self.reserved_power, self.reason or "Läuft (freigegeben)", forced=True)
+
+        if self.state["sm"] == DETECTED:
+            self.status = "erkannt"
+            if p <= 100 and self.cfg.get(CONF_POWER_SENSOR):
+                return Decision(True, p, "Programm gewählt – warte auf Start")
+            if ctx.night_window or late:
+                return self._approve("Spätstart/Sofortfenster – freigegeben")
+            if any(n != self.name for n in ctx.loads_heating):
+                return self._wait("Anderes Gerät in Heizphase")
+            free_now = ctx.now_left(budget_left) - p
+            if min(free, free_now) >= need:
+                return self._approve(f"Überschuss ok ({min(free, free_now):.0f} W ≥ {need:.0f} W)")
+            return self._wait(f"Überschuss zu gering ({min(free, free_now):.0f} W < {need:.0f} W)")
+
+        if self.state["sm"] == WAITING:
+            self.status = "wartet"
+            if self.p("nachladen"):
+                return Decision(True, p, "Nachladen – Steckdose kurz an", setpoint={"nachladen": True})
+            if late or ctx.night_window:
+                return self._approve("Spätstart/Sofortfenster erreicht", forced=True)
+            if any(n != self.name for n in ctx.loads_heating):
+                return Decision(False, 0, "Anderes Gerät in Heizphase")
+            if not ctx.history_ready:
+                return Decision(False, 0, "Mittelwert noch nicht verfügbar")
+            free_now = ctx.now_left(budget_left) - p
+            if free >= need and free_now >= need:
+                return self._approve(f"Überschuss im Mittel ok ({free:.0f} W)")
+            return Decision(False, 0, f"Warte auf Überschuss ({min(free, free_now):.0f} W < {need:.0f} W)")
+
+        return Decision(sw_on, p, "Unbekannter Zustand")
+
+    def _approve(self, reason: str, forced: bool = False) -> Decision:
+        self.state.update(sm=RUNNING, approved=True)
+        self.status = "laeuft"
+        return Decision(True, max(self._p(), self.nominal), reason, forced=True)
+
+    def _wait(self, reason: str) -> Decision:
+        self.state.update(sm=WAITING, approved=False, hp_active=False, hp_done=False)
+        self._hp_since = None
+        self._low_since = None
+        self.status = "wartet"
+        return Decision(False, 0, reason)
+
+    async def async_apply(self, decision: Decision, ctx: Context) -> None:
+        sw_on = self.is_on()
+        if decision.setpoint.get("nachladen"):
+            self._nachladen_prev = True
+            if not sw_on:
+                await self._switch(self.switch, True)
+            return
+        if self._nachladen_prev and not self.p("nachladen"):
+            self._nachladen_prev = False
+        if self.state["sm"] in (IDLE, FINISHED, DETECTED):
+            return  # Steckdose bleibt wie vom Benutzer gesetzt
+        if decision.on != sw_on:
+            await self._switch(self.switch, decision.on)
+
+    async def async_run(self, ctx: Context, budget_left: float) -> Decision:
+        if self.mode == "observe":
+            # Beobachten: nur Empfehlung, Zustandsmaschine nicht verändern
+            saved = dict(self.state)
+            decision = await super().async_run(ctx, budget_left)
+            self.state = saved
+            return decision
+        return await super().async_run(ctx, budget_left)
+
+    # ── Prognose ─────────────────────────────────────────────────────────────
+    def plan_demand(self, now: datetime) -> PlanDemand | None:
+        if self.state["sm"] not in (DETECTED, WAITING):
+            return None
+        hours = float(self.p("duration"))
+        latest = time_from_str(self.p("latest_start"), time(15, 0))
+        latest_dt = now.replace(hour=latest.hour, minute=latest.minute, second=0, microsecond=0)
+        if latest_dt < now:
+            latest_dt = now
+        return PlanDemand(self.nominal * 0.6, self.nominal * 0.6 * hours,
+                          latest_dt + timedelta(hours=hours), interruptible=False)
