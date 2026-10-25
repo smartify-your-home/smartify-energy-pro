@@ -411,6 +411,9 @@
       },
       "idle_power_threshold": {
         "name": "Heat pump idle power threshold"
+      },
+      "idle_minutes": {
+        "name": "Heat pump idle time before boost"
       }
     },
     "time": {

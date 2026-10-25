@@ -37,6 +37,7 @@ class HeatPumpDevice(BaseDevice):
                       "mdi:flash", 200, 10000, 50, "W"),
             ParamSpec("target_temp", "number", 55, "mdi:thermometer-high", 30, 75, 0.5, "°C"),
             ParamSpec("boost_hysteresis", "number", 4, "mdi:thermometer", 0, 30, 0.5, "K"),
+            ParamSpec("idle_minutes", "number", 15, "mdi:timer-sand", 1, 180, 1, "min"),
             ParamSpec("idle_power_threshold", "number", 5, "mdi:flash", 0, 1000, 1, "W"),
             ParamSpec("min_on", "number", 30, "mdi:timer-lock-outline", 5, 180, 5, "min"),
             ParamSpec("min_off", "number", 60, "mdi:timer-lock-open-outline", 5, 360, 5, "min"),
@@ -125,8 +126,8 @@ class HeatPumpDevice(BaseDevice):
             return Decision(False, 0, "Temperatursensor fehlt oder ungültig")
         if temp >= target - float(self.p("boost_hysteresis")):
             return Decision(False, 0, f"Speicher warm ({temp:.1f} °C)")
-        if self._idle_since is None or ctx.now - self._idle_since < timedelta(minutes=15):
-            return Decision(False, 0, "Warte auf 15 Minuten WP-Leistung unter Ruheschwelle")
+        if self._idle_since is None or ctx.now - self._idle_since < timedelta(minutes=float(self.p("idle_minutes"))):
+            return Decision(False, 0, f"Warte auf {float(self.p('idle_minutes')):g} Minuten WP-Leistung unter Ruheschwelle")
         if self._elapsed("stopped", ctx.now) < float(self.p("min_off")):
             return Decision(False, 0, "Mindestpause läuft")
         if left_now >= need and left_avg >= need:

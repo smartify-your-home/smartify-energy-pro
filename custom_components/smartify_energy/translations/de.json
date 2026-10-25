@@ -411,6 +411,9 @@
       },
       "idle_power_threshold": {
         "name": "WP-Ruheschwelle"
+      },
+      "idle_minutes": {
+        "name": "WP-Ruhezeit vor Boost"
       }
     },
     "time": {
