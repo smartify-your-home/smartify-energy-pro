@@ -306,7 +306,8 @@
     "boost_type": {
       "options": {
         "switch": "Schalter (Einmalladung)",
-        "number": "Sollwert anheben"
+        "number": "Sollwert anheben",
+        "button": "Button (Einmalladung)"
       }
     }
   },

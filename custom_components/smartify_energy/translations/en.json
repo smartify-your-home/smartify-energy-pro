@@ -306,7 +306,8 @@
     "boost_type": {
       "options": {
         "switch": "Switch",
-        "number": "Raise setpoint"
+        "number": "Raise setpoint",
+        "button": "Button (one-time charge)"
       }
     }
   },

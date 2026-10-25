@@ -19,6 +19,7 @@ from homeassistant.helpers import selector as sel
 from .const import (
     BAT_SIGN_CHARGE_POSITIVE,
     BAT_SIGN_DISCHARGE_POSITIVE,
+    BOOST_BUTTON,
     BOOST_NUMBER,
     BOOST_SWITCH,
     CONF_BAT_CAPACITY,
@@ -320,8 +321,8 @@ class HeatPumpSubentryFlow(_DeviceFlow):
     def schema(self, d: dict) -> vol.Schema:
         return vol.Schema({
             _req(CONF_NAME, d, "Wärmepumpe Boost"): sel.TextSelector(),
-            _req(CONF_BOOST_TYPE, d, BOOST_SWITCH): _choice([BOOST_SWITCH, BOOST_NUMBER], "boost_type"),
-            _req(CONF_BOOST_ENTITY, d): _ent(["switch", "input_boolean", "number", "input_number"]),
+            _req(CONF_BOOST_TYPE, d, BOOST_SWITCH): _choice([BOOST_SWITCH, BOOST_BUTTON, BOOST_NUMBER], "boost_type"),
+            _req(CONF_BOOST_ENTITY, d): _ent(["switch", "input_boolean", "button", "input_button", "number", "input_number"]),
             _opt(CONF_POWER_SENSOR, d): _ent("sensor", "power"),
             _req(CONF_NOMINAL, d, 2000): _num(200, 10000, 50, "W"),
             _opt(CONF_TEMP_SENSOR, d): _ent("sensor", "temperature"),
@@ -330,6 +331,7 @@ class HeatPumpSubentryFlow(_DeviceFlow):
     def validate(self, data: dict) -> dict[str, str]:
         dom = data.get(CONF_BOOST_ENTITY, "").split(".")[0]
         is_num = dom in ("number", "input_number")
-        if is_num != (data.get(CONF_BOOST_TYPE) == BOOST_NUMBER):
+        expected = BOOST_NUMBER if is_num else BOOST_BUTTON if dom in ("button", "input_button") else BOOST_SWITCH
+        if data.get(CONF_BOOST_TYPE) != expected:
             return {CONF_BOOST_ENTITY: "boost_mismatch"}
         return {}

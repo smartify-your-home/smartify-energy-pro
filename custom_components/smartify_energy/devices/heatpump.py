@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from ..const import BOOST_NUMBER, CONF_BOOST_ENTITY, CONF_BOOST_TYPE, CONF_TEMP_SENSOR
+from ..const import BOOST_BUTTON, BOOST_NUMBER, CONF_BOOST_ENTITY, CONF_BOOST_TYPE, CONF_TEMP_SENSOR
 from ..helpers import ParamSpec, SensorSpec, is_on, state_float
 from .base import BaseDevice, Context, Decision, PlanDemand
 
@@ -57,7 +57,7 @@ class HeatPumpDevice(BaseDevice):
         return self.cfg[CONF_BOOST_ENTITY]
 
     def is_on(self) -> bool:
-        if self.cfg.get(CONF_BOOST_TYPE) == BOOST_NUMBER:
+        if self.cfg.get(CONF_BOOST_TYPE) in (BOOST_NUMBER, BOOST_BUTTON):
             return bool(self.state.get("active"))
         return is_on(self.hass, self.entity)
 
@@ -127,6 +127,14 @@ class HeatPumpDevice(BaseDevice):
             self.state["stopped"] = ctx.now.timestamp()
 
     async def _set(self, on: bool) -> None:
+        if self.cfg.get(CONF_BOOST_TYPE) == BOOST_BUTTON:
+            # Trigger once per boost session; buttons cannot stop a physical cycle.
+            if on:
+                await self.hass.services.async_call(
+                    self.entity.split(".")[0], "press",
+                    {"entity_id": self.entity}, blocking=True
+                )
+            return
         if self.cfg.get(CONF_BOOST_TYPE) == BOOST_NUMBER:
             value = float(self.p("boost_value" if on else "normal_value"))
             await self.hass.services.async_call(self.entity.split(".")[0], "set_value",

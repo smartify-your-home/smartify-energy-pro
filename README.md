@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.1** · Integrationsdomain: `smartify_energy`
+Version: **0.2.2** · Integrationsdomain: `smartify_energy`
 
 ## Funktionen
 
@@ -34,3 +34,7 @@ type: custom:smartify-energy-plan-card
 Die Integration nutzt aktuelle Home-Assistant-Schnittstellen, unter anderem Konfigurations-Untereinträge. Eine Laufzeitprüfung in Home Assistant steht noch aus. Änderungen an der Verbrauchersteuerung zunächst mit passenden Testgeräten prüfen.
 
 Fehler und Verbesserungsvorschläge: [Issues](https://github.com/smartify-your-home/smartify-energy-pro/issues).
+
+## Warmwasser-Boost per Button
+
+Als Boost-Art kann Schalter, Button oder Sollwert gewählt werden. Button unterstützt `button` und `input_button` und löst beim Start einmal `press` aus. Während der intern verwalteten Boost-Phase wird nicht erneut gedrückt. Ein Button liefert keinen Laufstatus und kann die Einmalladung nicht abbrechen: Zieltemperatur, Zeitlimit und Aus beenden nur die interne Freigabe; den tatsächlichen Ladezyklus beendet die Wärmepumpe. Nach Ende der internen Phase gilt die Mindestpause vor einer erneuten Auslösung.
