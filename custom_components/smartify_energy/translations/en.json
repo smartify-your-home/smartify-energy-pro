@@ -489,10 +489,16 @@
     },
     "sensor": {
       "surplus": {
-        "name": "Surplus"
+        "name": "Grid surplus (signed)"
       },
       "surplus_avg": {
-        "name": "Surplus average"
+        "name": "Grid surplus average"
+      },
+      "budget": {
+        "name": "Control budget"
+      },
+      "budget_avg": {
+        "name": "Control budget average"
       },
       "allocated": {
         "name": "Allocated"
