@@ -281,8 +281,10 @@ class EvDevice(BaseDevice):
                                 f"Ziel {self._target_km:.0f} km bis {self._deadline:%H:%M} – Netzladung",
                                 forced=True)
 
-        avail = ctx.short_left(budget_left)
-        avail_avg = budget_left if ctx.history_ready else avail
+        # Follow instantaneous grid power for modulation; longer averages are
+        # only start gates, not a throttle on a running charge.
+        avail = ctx.now_left(budget_left)
+        avail_avg = ctx.short_left(budget_left) if ctx.history_ready else avail
         share = float(self.p("pv_share")) / 100
         phases = self._phases_for(avail, ctx)
         p_min = self.min_a * self.voltage * phases
@@ -297,6 +299,8 @@ class EvDevice(BaseDevice):
                     self._deficit_since = None
                     self.status = "wartet"
                     return Decision(False, 0, f"Überschuss fehlt ({avail:.0f} W < {threshold:.0f} W)")
+            # Reduce current immediately, even while stop_delay is counting.
+            # The minimum 6 A remains necessary while charging is enabled.
             amps = clamp(math.floor(max(avail, p_min) / (self.voltage * phases)), self.min_a, self.max_a)
             self.status = "laedt_pv"
             return self._charge(amps, phases, f"PV-Laden {amps:.0f} A × {phases}")
