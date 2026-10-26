@@ -74,6 +74,10 @@ class HeatPumpDevice(BaseDevice):
             if old_cfg.get(key) != self.cfg.get(key):
                 data["params"].pop(key, None)
         super().load(data)
+        # Migration from earlier SEP releases: their 'started' timestamp
+        # is the safest available approximation of the last WW command.
+        if self.state.get("last_trigger") is None and self.state.get("started") is not None:
+            self.state["last_trigger"] = self.state["started"]
 
     def _weather_checks(self) -> dict[str, dict]:
         """Optional start gates. Incomplete/disabled gates do not read inputs."""
