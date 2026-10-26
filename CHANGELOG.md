@@ -1,3 +1,11 @@
+## 0.2.22 – PV-Akku in der Prioritätenliste
+
+- **PV-Akku als verschiebbare Zeile** im SEP-Prioritätenmanager (bei konfiguriertem Akku-Leistungs-/SoC-Sensor); zeigt Ladeleistung und SoC. Position wird als `number.*battery_rank` im Hub gespeichert.
+- **Priorisierte Saldo-Logik:** Nur Verbraucher **oberhalb** des PV-Akkus dürfen dessen gemessene Ladung zum aktuellen Gerätesaldo hinzurechnen. Geräte **unterhalb** des Akkus erhalten diese Leistung nicht erneut.
+- Der Speicher bleibt **passiv selbstregelnd**: SEP gibt keine Batteriebefehle aus. Damit eine höhere Verbraucherpriorität physisch durchgesetzt werden kann, muss der Speicher seine Ladung automatisch reduzieren, sobald Netzexport sinkt beziehungsweise Hausverbrauch steigt.
+- Laufende Akkuladung wird nicht doppelt vom Netzsaldo abgezogen. Akku-Entladung wird wie zuvor beim Budget abgezogen; sie ist keine frei verfügbare PV.
+- **Einschränkung:** Akkuladung erhöht nur das **momentane** verfügbare Budget vor seiner Position; ein 10-Minuten-Mittelwert der tatsächlichen Akku-Freigabe wird nicht simuliert. Haushaltsgeräte mit Mittelwert-Startprüfung bleiben deshalb konservativ. PV-Akku ist ein virtuelles Gerät ohne HA-Aktor oder Ladeleistungsbegrenzung.
+
 ## 0.2.21 – Heizstab als sofort reagierende PV-Restverbrauchssenke
 - **Neuer Gerätetyp „Heizstab / PV-Überschusssenke“**, unabhängig von Haushaltsgeräten, Pool und WP-Boost. Ansteuerung über `switch` oder `input_boolean`, obligatorischer Warmwasser-Temperatursensor, optionale echte Heizstab-Leistungsmessung.
 - Nur **aktuelles Steuerbudget**, ausdrücklich **kein 10-Minuten-Mittelwert**: Bei ausreichend unmittelbar verfügbarem Restbudget EIN, bei Netzbezug bzw. Unterschreitung der konfigurierten Stoppschwelle AUS. Die Reservierungen höher priorisierter Geräte werden berücksichtigt. Der eigene laufende Verbrauch ist bereits im physikalischen Netzsaldo enthalten und wird nicht nochmals abgezogen.
