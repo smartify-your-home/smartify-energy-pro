@@ -337,7 +337,8 @@ class EnergyManager:
         # minimum-runtime pool is already part of the measured grid balance.
         # Never add it back as if SEP could stop it to serve another load.
         self._measured_power = {
-            key: max(0.0, dev.power_now()) for key, dev in self.devices.items()
+            key: max(0.0, dev.power_accounted_in_grid())
+            for key, dev in self.devices.items()
         }
         self._reclaimable_power = {
             key: min(self._measured_power[key], max(0.0, dev.reclaimable_power()))
