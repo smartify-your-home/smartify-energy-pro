@@ -1,9 +1,12 @@
 # Funktionsstand und Grenzen
 
-Stand: **0.2.9**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
+Stand: **0.2.16**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
 
 ## Regelung
-- PV-Überschuss, Prioritäten, laufende Verbraucher und Batterie-Strategie fließen in das aktuelle Leistungsverteilungsbudget ein.
+- Der Sensor `surplus` ist der **reale Netzsaldo** (+ Einspeisung, − Netzbezug), `surplus_avg` dessen zeitlicher Mittelwert. `budget` und `budget_avg` zeigen dagegen das intern verwendete Steuerbudget.
+- SEP rechnet nur tatsächlich steuerbare, unmittelbar absenkbare Leistung wieder zum Budget hinzu. Laufender WW-Boost und freigegebene Haushaltsprogramme sind bereits im Netzsaldo enthalten und werden nicht zurückgerechnet.
+- Bei laufender PV-Wallbox-Ladung gilt nur der Teil oberhalb des aktuellen Mindeststroms als frei umverteilbar. Die Wallbox selbst darf ihre bereits belegte Mindestleistung für die eigene Modulation berücksichtigen.
+- Leistung von externen Überschuss-Senken und das Laden eines Akkus bleiben für die Budgetfreigabe ohne SEP-Stelleingriff unberücksichtigt. Batterie-Entladung wird sicherheitshalber vom verfügbaren PV-Budget abgezogen. Der angezeigte Batterie-Vorrang bleibt eine Planungshilfe, keine Steuerung des Batterie-Wechselrichters.
 - Lasten mit höherer Priorität werden vor nachgeordneten Geräten berücksichtigt; Pflicht- und Sofortladungen können Netzstrom beanspruchen.
 - Der reguläre Regelzyklus bleibt konfigurierbar. Änderungen ausgewählter Messwerte lösen schneller eine gebündelte Auswertung aus.
 
