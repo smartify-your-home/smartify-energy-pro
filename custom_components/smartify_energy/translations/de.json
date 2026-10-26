@@ -111,6 +111,7 @@
           "title": "Haushaltsgerät (Steckdose)",
           "data": {
             "name": "[Pflicht] Name",
+            "appliance_type": "[Pflicht] Gerätetyp",
             "switch": "[Pflicht] Schaltbare Steckdose / Schalter",
             "power_sensor": "[Optional] Leistungssensor",
             "nominal_power": "[Pflicht] Nennleistung",
@@ -121,13 +122,15 @@
             "switch": "**Pflicht:** Wählen Sie den Schalter, der dieses Gerät tatsächlich mit Strom versorgt oder freigibt. Die automatische Regelung darf diesen Schalter bedienen. Starten Sie das Programm am Gerät. Es muss nach einer Stromunterbrechung selbstständig weiterlaufen können.",
             "power_sensor": "**Optional:** Aktuell gemessener Strombedarf dieses Geräts in W oder kW. Nicht den aufsummierten Verbrauch in kWh auswählen. Ein echter Messwert verbessert Erkennung und Leistungsverteilung.",
             "nominal_power": "**Pflicht:** Typischer Strombedarf während des Betriebs in Watt (W). Bei Waschmaschinen ist meist die Heizphase entscheidend. SEP nutzt diesen Wert zur Reservierung und als Ersatz, wenn keine Leistung messbar ist.",
-            "duration": "**Pflicht:** Geschätzte Programmdauer in Stunden für die Startempfehlung. Beispiel: 2,5 für zweieinhalb Stunden. Das Gerät wird nach dieser Zeit nicht automatisch abgeschaltet."
+            "duration": "**Pflicht:** Geschätzte Programmdauer in Stunden für die Startempfehlung. Beispiel: 2,5 für zweieinhalb Stunden. Das Gerät wird nach dieser Zeit nicht automatisch abgeschaltet.",
+            "appliance_type": "**Pflicht:** Waschmaschine, Geschirrspüler oder Sonstiges auswählen. Bestimmt das MDI-Symbol in der Prioritätenkarte und am Statussensor; die bisherige Haushaltsgeräte-Steuerung bleibt unverändert."
           }
         },
         "reconfigure": {
           "title": "Haushaltsgerät (Steckdose)",
           "data": {
             "name": "[Pflicht] Name",
+            "appliance_type": "[Pflicht] Gerätetyp",
             "switch": "[Pflicht] Schaltbare Steckdose / Schalter",
             "power_sensor": "[Optional] Leistungssensor",
             "nominal_power": "[Pflicht] Nennleistung",
@@ -138,7 +141,8 @@
             "switch": "**Pflicht:** Wählen Sie den Schalter, der dieses Gerät tatsächlich mit Strom versorgt oder freigibt. Die automatische Regelung darf diesen Schalter bedienen. Starten Sie das Programm am Gerät. Es muss nach einer Stromunterbrechung selbstständig weiterlaufen können.",
             "power_sensor": "**Optional:** Aktuell gemessener Strombedarf dieses Geräts in W oder kW. Nicht den aufsummierten Verbrauch in kWh auswählen. Ein echter Messwert verbessert Erkennung und Leistungsverteilung.",
             "nominal_power": "**Pflicht:** Typischer Strombedarf während des Betriebs in Watt (W). Bei Waschmaschinen ist meist die Heizphase entscheidend. SEP nutzt diesen Wert zur Reservierung und als Ersatz, wenn keine Leistung messbar ist.",
-            "duration": "**Pflicht:** Geschätzte Programmdauer in Stunden für die Startempfehlung. Beispiel: 2,5 für zweieinhalb Stunden. Das Gerät wird nach dieser Zeit nicht automatisch abgeschaltet."
+            "duration": "**Pflicht:** Geschätzte Programmdauer in Stunden für die Startempfehlung. Beispiel: 2,5 für zweieinhalb Stunden. Das Gerät wird nach dieser Zeit nicht automatisch abgeschaltet.",
+            "appliance_type": "**Pflicht:** Waschmaschine, Geschirrspüler oder Sonstiges auswählen. Bestimmt das MDI-Symbol in der Prioritätenkarte und am Statussensor; die bisherige Haushaltsgeräte-Steuerung bleibt unverändert."
           }
         }
       },
@@ -527,6 +531,13 @@
           "label": "Ja – Programm läuft nach Stromwiederkehr weiter"
         }
       ]
+    },
+    "appliance_type": {
+      "options": {
+        "washing_machine": "Waschmaschine",
+        "dishwasher": "Geschirrspüler",
+        "other": "Sonstiges Haushaltsgerät"
+      }
     }
   },
   "entity": {
