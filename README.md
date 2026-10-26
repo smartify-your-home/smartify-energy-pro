@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.8** · Integrationsdomain: `smartify_energy`
+Version: **0.2.9** · Integrationsdomain: `smartify_energy`
 
 ## Dokumentation und Updates
 
@@ -73,3 +73,7 @@ Die Entitäten müssen Zahlenzustände liefern; die Bewölkungssensoren müssen 
 Bei Änderungen am Netzleistungs-, Batterie-Leistungs- oder Wallbox-Leistungssensor wird die Neubewertung nach etwa 0,5 Sekunden gebündelt angestoßen (andere Ereignisse bleiben bei etwa 2 Sekunden). Die laufende Wallbox passt ihren Ladestrom anhand des **aktuellen** verfügbaren Überschusses statt des 2-Minuten-Mittelwerts an; höhere priorisierte Reservierungen werden weiterhin berücksichtigt. Der Kurzzeitmittelwert dient nur noch als zusätzliche Startbedingung. Stromschritte bleiben durch die Auflösung der Wallbox auf ganze Ampere begrenzt. Bei zu wenig Überschuss reduziert SEP unmittelbar auf den Mindeststrom; die konfigurierbare Abschaltverzögerung gilt weiterhin. Die tatsächliche Reaktion hängt von der Aktualisierung der Sensoren, Service-Laufzeit und Wallbox ab.
 
 **Batterie:** SEP berücksichtigt Speicherleistung, SoC, Prognose und Strategie bei der Überschussverteilung, steuert jedoch aktuell **keinen Akku-Ladesollwert**. Die schnellere Messwertauswertung bedeutet daher noch keine direkte Akku-Laderegelung. Vor einer solchen Erweiterung müssen geeignete schreibbare Akku-Entitäten bekannt sein.
+
+## Haushaltsgeräte: SEM-v3-Abgleich (0.2.9)
+
+Die Zustandsmaschine wurde anhand der bereitgestellten SEM-v3-Integration abgeglichen: 5 Sekunden stabile Leistung über 9 W zur Programmerkennung (ohne Leistungssensor bei eingeschalteter Steckdose), 10 Sekunden über max(200 W, 8 % Nennleistung) zur Heizphasenerkennung, 2 Minuten unter der einstellbaren Fertigschwelle als Standard, standardmäßige Spätstartzeit 16:00 und Zustand „Fertig“ bis zum manuellen Reset. Bereits ausdrücklich freigegebene Programme werden nicht wegen später sinkenden Überschusses gestoppt. SEP behält jedoch die zentral einstellbaren Prioritätszahlen anstelle der ausschließlich zeitlichen Reihenfolge von SEM. Neue Standardwerte betreffen neue Einträge; bereits gespeicherte Parameter bleiben bestehen. Eine Prüfung mit echten Geräten steht aus.
