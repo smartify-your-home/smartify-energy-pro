@@ -416,9 +416,9 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const sig = ids.map(id => { const s = hass.states[id]; return s ? `${id}:${s.last_updated}` : id; }).join("|");
     if (sig === this._sig) return;
     this._data = data;
-    // Nicht neu zeichnen, während ein Eingabefeld bearbeitet wird
+    // Do not replace an actively edited input OR native select dropdown.
     const active = this.shadowRoot.activeElement;
-    if (active && active.matches?.("input[type=number], input[type=time]")) {
+    if (active && active.matches?.("input[type=number], input[type=time], select")) {
       if (!this._pendingBlur) {
         this._pendingBlur = true;
         active.addEventListener("blur", () => { this._pendingBlur = false; this._sig = ""; this.hass = this._hass; }, { once: true });
