@@ -4,7 +4,7 @@ from __future__ import annotations
 DOMAIN = "smartify_energy"
 NAME = "Smartify Energy Pro"
 MANUFACTURER = "smartify"
-VERSION = "0.2.22"
+VERSION = "0.2.23"
 
 PLATFORMS = ["sensor", "binary_sensor", "select", "number", "switch", "time", "button"]
 
@@ -60,6 +60,7 @@ CONF_DAYS_ENTITY = "days_entity"
 CONF_BOOST_ENTITY = "boost_entity"
 CONF_BOOST_TYPE = "boost_type"
 CONF_WW_ACTIVE_ENTITY = "ww_active_entity"
+CONF_WW_BOOST_TEMP_ENTITY = "ww_boost_temp_entity"
 BOOST_SWITCH = "switch"
 BOOST_BUTTON = "button"
 BOOST_NUMBER = "number"
