@@ -1,3 +1,7 @@
+## 0.2.11 – Planungsanzeige bei Moduswechsel
+- Fehler behoben: Nach dem Schalten eines Geräts (z. B. WP-Boost) auf „Aus“ wird die grafische Prognoseplanung unmittelbar neu berechnet; veraltete Boost-Balken bleiben nicht bis zum nächsten 15-Minuten-Planungsintervall stehen.
+- Regelmäßiger Prognose-Abruf bleibt im bisherigen Intervall; eine Einstellungsänderung erzwingt nur die Neuplanung.
+
 ## 0.2.10 – Startzeit und grafische Priorisierung vorbereiten
 - Haushaltsgeräte: neue einstellbare Uhrzeit **Frühester automatischer Start** (Standard 00:00). Sperrt automatische PV-, Spätstart- und Sofortfensterfreigabe bis zur Uhrzeit. Manueller Sofort-Start bleibt möglich.
 - Prioritätseingaben (number-Entities) aller Gerätetypen aus der angezeigten Parameterauswahl entfernt. Gespeicherte Prioritäten bleiben erhalten und werden intern berücksichtigt; grafische Bedienung folgt separat.
