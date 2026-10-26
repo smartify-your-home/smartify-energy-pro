@@ -1,6 +1,6 @@
 # Installation und Updates
 
-Aktuelle Version: **0.2.9**. Integrationsdomain: `smartify_energy`.
+Aktuelle Version: **0.2.10**. Integrationsdomain: `smartify_energy`.
 
 ## Update über HACS
 1. Vor dem Update Home-Assistant-Backup erstellen und die bestehenden SEP-Geräteeinstellungen dokumentieren.
@@ -43,3 +43,7 @@ Bei neuen Haushaltsgeräten gelten SEM-v3-nahe Standardwerte: Mindestüberschuss
 ## Name in Home Assistant
 
 Ab der aktuellen Repository-Fassung lautet der Integrationsname **Smartify Energy Pro**. Die technische Domain `smartify_energy` bleibt unverändert. Nach dem Update Home Assistant neu starten. Ein bereits angelegter Eintrag kann seinen alten individuell gespeicherten Namen behalten; diesen bei Bedarf in Geräte & Dienste umbenennen. Es ist keine Neuinstallation notwendig.
+
+## Neu in 0.2.10
+
+Haushaltsgeräte: `Frühester automatischer Start` (Standard `00:00`) vor automatischen Freigaben, einschließlich Spätstart und Sofortfenster. `Sofort-Start` per Taste bleibt manuell möglich. Prioritäts-Number-Entities aller Geräte werden nicht mehr bereitgestellt; bisher gespeicherte Prioritäten bleiben intern unverändert. Bereits bestehende Prioritäts-Entities können nach dem Update als nicht mehr bereitgestellt markiert werden und bei Bedarf aus der Entitätsregistrierung entfernt werden. Die grafische Prioritätensteuerung ist noch nicht implementiert.
