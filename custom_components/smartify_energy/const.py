@@ -1,8 +1,8 @@
-"""Konstanten für den smartify Energiemanager."""
+"""Konstanten für den Smart Energy Pro."""
 from __future__ import annotations
 
 DOMAIN = "smartify_energy"
-NAME = "smartify Energiemanager"
+NAME = "Smart Energy Pro"
 MANUFACTURER = "smartify"
 VERSION = "0.2.9"
 
