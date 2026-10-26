@@ -24,7 +24,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.2.8";
+const CARD_VERSION = "1.2.9";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -275,7 +275,7 @@ const CARD_CSS = `
   select.mode.off { border-color:#E65100; }
 
   .list { display:flex; flex-direction:column; gap:4px; position:relative; }
-  .dev { display:grid; grid-template-columns:22px 26px 28px 1fr auto; align-items:center; gap:8px;
+  .dev { display:grid; grid-template-columns:22px 26px 28px minmax(0,1fr) auto; align-items:center; gap:8px;
          background:var(--row-bg); border-radius:var(--radius); padding:8px 8px 8px 4px; box-sizing:border-box;
          border-style:solid; border-width:0 0 4px 0; border-image-slice:1; position:relative;
          transition:transform .18s ease; user-select:none; }
@@ -295,8 +295,23 @@ const CARD_CSS = `
   .main .plan { font-size:11px; color:var(--secondary-text-color); }
   .mode-help { font-size:11px; color:var(--secondary-text-color); }
   .title { flex-wrap:wrap; }
-  .right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+  .right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; min-width:0; }
+  .power-budget { display:flex; gap:10px; justify-content:flex-end; align-items:center; flex-wrap:wrap; }
+  .pb-item { display:flex; flex-direction:column; align-items:flex-end; gap:1px; white-space:nowrap; }
+  .pb-label { font-size:10px; opacity:.72; }
   .pw { font-size:13px; font-weight:bold; white-space:nowrap; }
+  .pb-budget { font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .pb-budget.negative { color:var(--error-color, #d45b48); }
+  .pb-budget.positive { color:var(--success-color, #2e7d32); }
+  .pb-extra { font-size:10px; color:var(--secondary-text-color); white-space:nowrap; }
+  .pb-extra span { display:inline-block; padding-left:7px; }
+  @media (max-width:560px) {
+    .dev { grid-template-columns:18px 24px 24px minmax(0,1fr); gap:5px; }
+    .right { grid-column:4; grid-row:2; align-items:flex-start; width:100%; }
+    .power-budget { justify-content:flex-start; gap:12px; }
+    .pb-item { align-items:flex-start; }
+    .pb-extra span:first-child { padding-left:0; }
+  }
   .chip { font-size:10px; padding:1px 6px; border-radius:8px; color:#000; font-weight:600; }
 
   .timeline { background:var(--row-bg); border-radius:var(--radius); padding:8px 6px 4px; box-sizing:border-box; }
@@ -500,6 +515,14 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const on = reserved > 0;
       const forced = on && a.pflicht;
       const power = num(this._st(dev.power)?.state);
+      const budgetNow = num(a.aktuell_w);
+      const budgetAverage = num(a.mittel_w);
+      const upstream = num(a.vorreservierung_w);
+      const needed = num(a.benoetigt_w);
+      const budgetOk = needed != null && budgetNow != null && budgetAverage != null
+        && budgetNow >= needed && budgetAverage >= needed;
+      const budgetTitle = budgetNow == null ? "Kein gerätespezifisches Budget verfügbar" :
+        `Budget für ${dev.name}: aktuell ${fmtW(budgetNow)}, Mittelwert ${fmtW(budgetAverage)}, vorher reserviert ${fmtW(upstream)}, benötigt ${fmtW(needed)}`;
       const icon = a.icon || TYPE_ICONS[a.geraetetyp] || "mdi:flash";
       const border = forced ? FORCED_GRADIENT : on ? dev.color : null;
       const statusTxt = STATUS_LABELS[st?.state] || st?.state || "";
@@ -522,10 +545,21 @@ class SmartifyEnergyPlanCard extends HTMLElement {
             <div class="sub" title="${esc(sub)}">${esc(sub)}</div>
             ${planTxt ? `<div class="plan">${esc(planTxt)}</div>` : ""}
           </div>
-          <div class="right">
-            <div style="display:flex;align-items:center;gap:4px">
-              <div class="pw">${power != null && power > 0 ? fmtW(power) : ""}</div>
+          <div class="right" title="${esc(budgetTitle)}">
+            <div class="power-budget">
+              <div class="pb-item">
+                <span class="pb-label">Leistung</span>
+                <span class="pw">${power != null ? fmtW(power) : "–"}</span>
+              </div>
+              <div class="pb-item">
+                <span class="pb-label">Budget aktuell</span>
+                <span class="pb-budget ${budgetNow == null ? "" : budgetNow < 0 ? "negative" : budgetOk ? "positive" : ""}">${fmtW(budgetNow)}</span>
+              </div>
               ${this._config.show_settings !== false && dev.settings.length ? `<button class="gear ${open ? "open" : ""}" data-gear="${dev.id}" title="Einstellungen"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}
+            </div>
+            <div class="pb-extra">
+              <span>Ø ${fmtW(budgetAverage)}</span>
+              <span>Vorreserviert ${fmtW(upstream)}</span>
             </div>
             ${this._config.show_mode ? this._modeSelect(dev.mode) : ""}
           </div>
