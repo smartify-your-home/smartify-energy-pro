@@ -287,6 +287,13 @@ const CARD_CSS = `
   .tile ha-icon { --mdc-icon-size:22px; }
   .tile .v { font-weight:bold; font-size:min(17px, 21cqw); margin-top:2px; white-space:nowrap; }
   .tile .n { font-size:min(11px, 16cqw); opacity:.75; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .tile.paired { gap:1px; padding:7px 7px 6px; }
+  .tile.paired .n { font-size:11px; opacity:.85; }
+  .tile.paired .v { font-size:18px; margin-top:0; }
+  .tile.paired .instant { display:flex; align-items:baseline; justify-content:center; gap:5px;
+                          font-size:11px; color:var(--secondary-text-color); white-space:nowrap; }
+  .tile.paired .instant strong { font-size:13px; color:var(--txt); font-weight:600; }
+
 
   select.mode { appearance:none; -webkit-appearance:none; border:1px solid var(--divider-color); border-radius:12px;
                 background:var(--secondary-background-color); color:var(--txt); font-size:11px;
@@ -445,11 +452,16 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const bat = this._st(e["sensor:battery_priority"]);
     const s = num(surplus?.state);
     const b = num(budget?.state);
+    const paired = [
+      { title: "Netzsaldo", avg: fmtW(num(avg?.state)), now: fmtW(s),
+        ent: e["sensor:surplus_avg"], nowEnt: e["sensor:surplus"],
+        icon: "mdi:transmission-tower", g: s >= 0 ? ["#81C784", "#00ACC1"] : ["#FFB74D", "#E65100"] },
+      { title: "Steuerbudget", avg: budgetAvg ? fmtW(num(budgetAvg.state)) : "–",
+        now: budget ? fmtW(b) : "–",
+        ent: e["sensor:budget_avg"], nowEnt: e["sensor:budget"],
+        icon: "mdi:solar-power-variant", g: b > 0 ? ["#81C784", "#00ACC1"] : ["#FFB74D", "#E65100"] },
+    ];
     const tiles = [
-      { ent: e["sensor:surplus"], icon: "mdi:transmission-tower", v: fmtW(s), n: "Netzsaldo (− Bezug)", g: s >= 0 ? ["#81C784", "#00ACC1"] : ["#FFB74D", "#E65100"] },
-      { ent: e["sensor:budget"], icon: "mdi:solar-power-variant", v: budget ? fmtW(b) : "–", n: "Steuerbudget", g: b > 0 ? ["#81C784", "#00ACC1"] : ["#FFB74D", "#E65100"] },
-      { ent: e["sensor:surplus_avg"], icon: "mdi:chart-bell-curve", v: fmtW(num(avg?.state)), n: "Ø Netzsaldo", g: ["#B0BEC5", "#546E7A"] },
-      { ent: e["sensor:budget_avg"], icon: "mdi:chart-bell-curve", v: budgetAvg ? fmtW(num(budgetAvg.state)) : "–", n: "Ø Steuerbudget", g: ["#B0BEC5", "#546E7A"] },
       { ent: e["sensor:allocated"], icon: "mdi:call-split", v: fmtW(num(alloc?.state)), n: "Verteilt", g: PALETTE[0] },
     ];
     if (fc && fc.state !== "unknown" && fc.state !== "unavailable") {
@@ -461,10 +473,18 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       tiles.push({ ent: e["sensor:battery_priority"], icon: bat.state === "speicher" ? "mdi:home-battery" : "mdi:home-lightning-bolt",
                    v: bat.state === "speicher" ? "Speicher" : "Geräte", n: "Vorrang", g: BATTERY_GRADIENT });
     }
-    return `<div class="tiles">${tiles.map(t => `
-      <div class="tile" data-more="${t.ent || ""}" style="border-image-source:${grad(t.g)}">
-        <ha-icon icon="${t.icon}"></ha-icon><div class="v">${esc(t.v)}</div><div class="n">${esc(t.n)}</div>
-      </div>`).join("")}</div>`;
+    return `<div class="tiles">
+      ${paired.map(t => `
+        <div class="tile paired" data-more="${t.ent || ""}" style="border-image-source:${grad(t.g)}">
+          <ha-icon icon="${t.icon}"></ha-icon>
+          <div class="n">${esc(t.title)} Ø</div>
+          <div class="v">${esc(t.avg)}</div>
+          <div class="instant" data-more="${t.nowEnt || ""}">Ist <strong>${esc(t.now)}</strong></div>
+        </div>`).join("")}
+      ${tiles.map(t => `
+        <div class="tile" data-more="${t.ent || ""}" style="border-image-source:${grad(t.g)}">
+          <ha-icon icon="${t.icon}"></ha-icon><div class="v">${esc(t.v)}</div><div class="n">${esc(t.n)}</div>
+        </div>`).join("")}</div>`;
   }
 
   _modeSelect(entityId, cls = "") {
