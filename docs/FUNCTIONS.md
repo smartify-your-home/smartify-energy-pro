@@ -1,6 +1,6 @@
 # Funktionsstand und Grenzen
 
-Stand: **0.2.16**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
+Stand: **0.2.17**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
 
 ## Regelung
 - Der Sensor `surplus` ist der **reale Netzsaldo** (+ Einspeisung, − Netzbezug), `surplus_avg` dessen zeitlicher Mittelwert. `budget` und `budget_avg` zeigen dagegen das intern verwendete Steuerbudget.
@@ -23,7 +23,10 @@ Stand: **0.2.16**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten 
 - Dafür sind passende schreibbare Home-Assistant-Entitäten und eine getrennt zu entwickelnde sichere Stellwertlogik nötig.
 
 ## Wärmepumpe
-- Boost unter Berücksichtigung von Überschuss, Zieltemperatur, Hysterese, Ruhezeit und Mindestpause.
+- Warmwasser-Boost als einmaliger Start per Button oder Schalter: SEP prüft PV-Budget, Temperatur, Hysterese, Ruhezeit und Wetterbedingungen, stößt die WW-Ladung einmal an und schaltet den Einmal-Auslöser danach nicht wieder aus.
+- Optionales Lesesignal **Warmwasser aktiv** (`binary_sensor`/`input_boolean`): EIN verhindert einen weiteren Start während einer WW-Ladung, ungültig/nicht verfügbar blockiert sicherheitshalber.
+- **WW-Boost Mindestabstand:** 60–720 Minuten (Standard 60 min), dauerhafter letzter Startzeitpunkt wird vor dem Aktor-Befehl gespeichert. Auch ein HA-Neustart setzt die Sperre nicht zurück.
+- Ein Schalter muss wieder AUS sein, bevor er erneut eingeschaltet werden darf; Number-basierte Boosts behalten die aktive Rückstellung und bekommen ebenfalls die dauerhafte Startsperre.
 - Optional Sonnenhöhenwinkel sowie zwei stündliche Bewölkungswerte als Startfilter.
 - Die Wetterfilter betreffen nur neue Boosts; sie ersetzen keine prognosebasierte Suche nach dem besten Boost-Zeitfenster.
 
