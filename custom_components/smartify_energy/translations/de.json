@@ -392,6 +392,52 @@
       "abort": {
         "reconfigure_successful": "Gespeichert."
       }
+    },
+    "heater": {
+      "entry_type": "Heizstab / PV-Überschusssenke",
+      "initiate_flow": {
+        "user": "Heizstab hinzufügen"
+      },
+      "step": {
+        "user": {
+          "title": "Heizstab / PV-Überschusssenke",
+          "data": {
+            "name": "[Pflicht] Name",
+            "switch": "[Pflicht] Schalter oder Eingabe-Boolean",
+            "power_sensor": "[Optional] Leistungssensor (W)",
+            "temperature_sensor": "[Pflicht] Warmwassertemperatur (°C)",
+            "nominal_power": "[Pflicht] Heizleistung (W)"
+          },
+          "data_description": {
+            "name": "Name dieses Heizstabs, z. B. Elektroheizstab Warmwasser.",
+            "switch": "Schaltbarer Aktor (switch.*) oder Helfer (input_boolean.*). Muss den Heizstab wirklich schalten beziehungsweise über eine weitere HA-Automation den Shelly ansteuern.",
+            "power_sensor": "Optional: tatsächliche Heizstableistung in W oder kW, z. B. Shelly-Leistungssensor. Ohne Leistungssensor werden andere Geräte vorsichtshalber stärker reserviert.",
+            "temperature_sensor": "Pflicht: tatsächliche Temperatur des Warmwasserspeichers. Bei ungültigem/fehlendem Sensor schaltet SEP den Heizstab sofort AUS.",
+            "nominal_power": "Nennleistung des Heizstabs in W, z. B. 2000 W. Heizleistung und PV-Startreserve dürfen nicht unterschritten werden."
+          }
+        },
+        "reconfigure": {
+          "title": "Heizstab / PV-Überschusssenke",
+          "data": {
+            "name": "[Pflicht] Name",
+            "switch": "[Pflicht] Schalter oder Eingabe-Boolean",
+            "power_sensor": "[Optional] Leistungssensor (W)",
+            "temperature_sensor": "[Pflicht] Warmwassertemperatur (°C)",
+            "nominal_power": "[Pflicht] Heizleistung (W)"
+          },
+          "data_description": {
+            "name": "Name dieses Heizstabs, z. B. Elektroheizstab Warmwasser.",
+            "switch": "Schaltbarer Aktor (switch.*) oder Helfer (input_boolean.*). Muss den Heizstab wirklich schalten beziehungsweise über eine weitere HA-Automation den Shelly ansteuern.",
+            "power_sensor": "Optional: tatsächliche Heizstableistung in W oder kW, z. B. Shelly-Leistungssensor. Ohne Leistungssensor werden andere Geräte vorsichtshalber stärker reserviert.",
+            "temperature_sensor": "Pflicht: tatsächliche Temperatur des Warmwasserspeichers. Bei ungültigem/fehlendem Sensor schaltet SEP den Heizstab sofort AUS.",
+            "nominal_power": "Nennleistung des Heizstabs in W, z. B. 2000 W. Heizleistung und PV-Startreserve dürfen nicht unterschritten werden."
+          }
+        }
+      },
+      "error": {},
+      "abort": {
+        "reconfigure_successful": "Gespeichert."
+      }
     }
   },
   "selector": {
@@ -530,6 +576,24 @@
       },
       "trigger_cooldown": {
         "name": "WW-Boost Mindestabstand"
+      },
+      "heater_max_temp": {
+        "name": "Maximale Temperatur"
+      },
+      "heater_hysteresis": {
+        "name": "Temperatur-Hysterese"
+      },
+      "heater_start_surplus": {
+        "name": "PV-Überschuss EIN"
+      },
+      "heater_stop_surplus": {
+        "name": "Budgetgrenze AUS"
+      },
+      "heater_min_on": {
+        "name": "Mindestlaufzeit (optional)"
+      },
+      "heater_min_off": {
+        "name": "Mindestpause (optional)"
       }
     },
     "time": {
@@ -556,6 +620,9 @@
       },
       "deadline": {
         "name": "Fertig bis / Abfahrt"
+      },
+      "heater_earliest_start": {
+        "name": "Heizstab frühester Start"
       }
     },
     "switch": {
