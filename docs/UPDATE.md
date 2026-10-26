@@ -1,6 +1,6 @@
 # Installation und Updates
 
-Aktuelle Version: **0.2.26**. Integrationsdomain: `smartify_energy`.
+Aktuelle Version: **0.2.27**. Integrationsdomain: `smartify_energy`.
 
 ## Update über HACS
 1. Vor dem Update Home-Assistant-Backup erstellen und die bestehenden SEP-Geräteeinstellungen dokumentieren.
@@ -60,3 +60,7 @@ Haushaltsgeräte: `Frühester automatischer Start` (Standard `00:00`) vor automa
 ## 0.2.13 – Grafische Prioritäten
 
 Nach dieser Aktualisierung zeigen die Gerätekacheln die Priorität wieder als Zahl statt `?`. Die manuelle Prioritäten-Number-Entität bleibt entfernt. Zum Sortieren einen Geräte-Handle halten und an die gewünschte Position ziehen. Die Karte schreibt die neue Reihenfolge über den Dienst `smartify_energy.set_priority_order`; damit werden die Prioritäten im SEP-Gerätespeicher persistiert. Home Assistant nach dem Update neu starten und die Dashboard-Seite komplett neu laden, damit die neue JS-Karte aktiv wird.
+
+## Wäschetrockner (0.2.27)
+
+Für den neuen Gerätetyp **Wäschetrockner** die Nennleistung und Programmdauer passend zum eigenen Modell eintragen. Vor der Einstellung „Programm läuft nach Stromwiederkehr weiter“ den tatsächlichen Wiederanlauf nach Spannungsunterbrechung am Gerät sicher testen. Bei „Nein“ ist die SEP-Steckdosensteuerung gesperrt und es erfolgt ausschließlich eine Beobachtung nach manuellem Start. Bei „Ja“ darf SEP einmalig für eine spätere PV-Startfreigabe unterbrechen; ein freigegebenes Programm läuft unabhängig vom weiteren Überschuss durch. Test zunächst im Modus Beobachten und unter Aufsicht durchführen.
