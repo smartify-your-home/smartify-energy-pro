@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.7** · Integrationsdomain: `smartify_energy`
+Version: **0.2.8** · Integrationsdomain: `smartify_energy`
 
 ## Funktionen
 
