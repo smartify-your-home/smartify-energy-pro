@@ -1,6 +1,6 @@
 {
   "domain": "smartify_energy",
-  "name": "smartify Energiemanager",
+  "name": "Smart Energy Pro",
   "after_dependencies": [
     "energy",
     "frontend",
