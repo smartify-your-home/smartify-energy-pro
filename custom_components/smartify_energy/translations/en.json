@@ -362,6 +362,58 @@
       "abort": {
         "reconfigure_successful": "Saved."
       }
+    },
+    "dryer": {
+      "entry_type": "Tumble dryer",
+      "initiate_flow": {
+        "user": "Add dryer"
+      },
+      "step": {
+        "user": {
+          "title": "Tumble dryer",
+          "data": {
+            "name": "Name",
+            "switch": "Smart plug",
+            "power_sensor": "Power sensor",
+            "nominal_power": "Expected continuous power",
+            "duration": "Typical duration",
+            "dryer_resume": "Resume after power interruption?"
+          },
+          "data_description": {
+            "dryer_resume": "Default No: SEP never toggles the plug and only monitors a manually started dryer. Yes: only if the model resumes its program after power restoration; SEP may then gate startup by PV.",
+            "power_sensor": "Required real-time power measurement.",
+            "nominal_power": "Continuous demand reserved until finished.",
+            "switch": "Never controlled by SEP in non-resume mode.",
+            "duration": "Planning estimate only."
+          }
+        },
+        "reconfigure": {
+          "title": "Tumble dryer",
+          "data": {
+            "name": "Name",
+            "switch": "Smart plug",
+            "power_sensor": "Power sensor",
+            "nominal_power": "Expected continuous power",
+            "duration": "Typical duration",
+            "dryer_resume": "Resume after power interruption?"
+          },
+          "data_description": {
+            "dryer_resume": "Default No: SEP never toggles the plug and only monitors a manually started dryer. Yes: only if the model resumes its program after power restoration; SEP may then gate startup by PV.",
+            "power_sensor": "Required real-time power measurement.",
+            "nominal_power": "Continuous demand reserved until finished.",
+            "switch": "Never controlled by SEP in non-resume mode.",
+            "duration": "Planning estimate only."
+          }
+        }
+      },
+      "error": {
+        "options_required": "Please enter both option values.",
+        "min_gt_max": "Minimum current exceeds maximum.",
+        "boost_mismatch": "Boost type does not match the entity."
+      },
+      "abort": {
+        "reconfigure_successful": "Saved."
+      }
     }
   },
   "selector": {
@@ -383,6 +435,18 @@
         "number": "Raise setpoint",
         "button": "Button (one-time charge)"
       }
+    },
+    "dryer_resume": {
+      "options": [
+        {
+          "value": "never",
+          "label": "No – never switch plug"
+        },
+        {
+          "value": "yes",
+          "label": "Yes – resumes after power restoration"
+        }
+      ]
     }
   },
   "entity": {
