@@ -1,3 +1,8 @@
+## 0.2.31 – Bewölkung bei laufender WW-Bereitung ignorieren
+- Die Sonderfreigabe während laufender WW-Bereitung berücksichtigt keine Bewölkung (aktuelle/kommende Stunde), auch keine fehlenden Bewölkungswerte. Für die Leistungsfreigabe zählt das aktuelle prioritätsbereinigte Steuerbudget ≥ 0 W.
+- Wartezeit (0 deaktiviert), Temperatur strikt unter Zieltemperatur minus Hysterese, optionaler Sonnenwinkelfilter, Startsperre und maximal ein Boost je WW-Zyklus bleiben erhalten. Normale Starts und Number-Boosts behalten ihre Bewölkungsfilter.
+- Hilfetexte, README und Update-Anleitung aktualisiert; Regressionstests für Bewölkung, fehlende Werte, Temperaturgrenze und negatives Budget ergänzt.
+
 ## 0.2.30 – Einstellbare WW-Aktiv-Wartezeit
 - Neue Einstellung **WW aktiv: Wartezeit bis Boost** in Gerätekonfiguration und SEP-Geräteeinstellungen: 0–180 Minuten (0 deaktiviert die Sonderfreigabe), Standard 10 Minuten. Bestehende Geräte behalten das bisherige Verhalten; Änderungen werden gespeichert.
 - Enthält die bisher unveröffentlichte Freigabe aus 0.2.29: einmaliger Boost während laufender WW-Bereitung nach der Wartezeit bei aktuellem prioritätsbereinigtem Steuerbudget ≥ 0 W. Temperatur, Wetterfilter, Startsperre und maximal ein Boost je WW-Zyklus bleiben wirksam; Number-Sollwertsteuerung unverändert.

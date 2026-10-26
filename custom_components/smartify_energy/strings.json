@@ -278,7 +278,7 @@
             "cloud_next_entity": "Optional next-hour cloud forecast from 0 to 100 percent. The source must keep this value relative to the next hour. SEP reads its numeric state, not a forecast attribute list.",
             "cloud_next_max": "Next-hour cloud cover must also be strictly below this limit: exactly 50% blocks a 50% limit. An unset limit ignores this check until both sources and limits are complete.",
             "ww_active_entity": "Optional binary_sensor/input_boolean: on during hot-water preparation, off otherwise. A one-shot boost is allowed after the configured wait with control budget ≥ 0 W. Unknown/unavailable signals inhibit starts. SEP only reads this entity.",
-            "ww_active_minutes": "Hot water must stay continuously on for this duration before a one-shot boost is allowed with current control budget ≥ 0 W. Default 10 minutes, range 0–180 (0 disables this special permission). Temperature, weather filters and cooldown still apply; at most one boost per cycle. Applies to button/switch/input_boolean, not number setpoints."
+            "ww_active_minutes": "Hot water must stay continuously on for this duration before a one-shot boost is allowed with current control budget ≥ 0 W. Default 10 minutes, range 0–180 (0 disables this special permission). Temperature, optional sun-angle filter and cooldown still apply; cloud filters are ignored for this special permission; at most one boost per cycle. Applies to button/switch/input_boolean, not number setpoints."
           }
         },
         "reconfigure": {
@@ -308,7 +308,7 @@
             "cloud_next_entity": "Optional next-hour cloud forecast from 0 to 100 percent. The source must keep this value relative to the next hour. SEP reads its numeric state, not a forecast attribute list.",
             "cloud_next_max": "Next-hour cloud cover must also be strictly below this limit: exactly 50% blocks a 50% limit. An unset limit ignores this check until both sources and limits are complete.",
             "ww_active_entity": "Optional binary_sensor/input_boolean: on during hot-water preparation, off otherwise. A one-shot boost is allowed after the configured wait with control budget ≥ 0 W. Unknown/unavailable signals inhibit starts. SEP only reads this entity.",
-            "ww_active_minutes": "Hot water must stay continuously on for this duration before a one-shot boost is allowed with current control budget ≥ 0 W. Default 10 minutes, range 0–180 (0 disables this special permission). Temperature, weather filters and cooldown still apply; at most one boost per cycle. Applies to button/switch/input_boolean, not number setpoints."
+            "ww_active_minutes": "Hot water must stay continuously on for this duration before a one-shot boost is allowed with current control budget ≥ 0 W. Default 10 minutes, range 0–180 (0 disables this special permission). Temperature, optional sun-angle filter and cooldown still apply; cloud filters are ignored for this special permission; at most one boost per cycle. Applies to button/switch/input_boolean, not number setpoints."
           }
         }
       },

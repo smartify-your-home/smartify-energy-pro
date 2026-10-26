@@ -186,6 +186,28 @@ class WarmWaterOnceTests(unittest.IsolatedAsyncioTestCase):
         self.dev.load(saved)
         self.assertEqual(self.dev.p("ww_active_minutes"), 25)
 
+    def test_running_ww_ignores_clouds_but_keeps_temperature_and_budget(self):
+        self.dev.cfg.update(cloud_now_entity="sensor.cloud_now", cloud_next_entity="sensor.cloud_next")
+        self.dev.params.update(cloud_filter_active=True, cloud_now_max=75, cloud_next_max=50)
+        self.values["binary_sensor.ww"] = "on"
+        at = self.now + timedelta(minutes=10)
+        for cloud in ("100", "unavailable", "unknown"):
+            self.values.update({"sensor.cloud_now": cloud, "sensor.cloud_next": cloud})
+            self.assertTrue(self.dev.decide(self.ctx(at, 0), 0).on)
+            self.assertFalse(self.dev.decide(self.ctx(at, -1), -1).on)
+        self.values["sensor.temp"] = "51"  # 55 target - 4 hysteresis: strict boundary
+        self.assertFalse(self.dev.decide(self.ctx(at, 0), 0).on)
+        self.values["sensor.temp"] = "50.9"
+        self.assertTrue(self.dev.decide(self.ctx(at, 0), 0).on)
+        self.values["binary_sensor.ww"] = "off"
+        self.assertFalse(self.dev.decide(self.ctx(at, 3000), 3000).on)
+
+    def test_running_ww_keeps_optional_sun_filter(self):
+        self.dev.cfg["sun_angle_entity"] = "sensor.sun"
+        self.dev.params.update(sun_filter_active=True, sun_angle_min=12)
+        self.values.update({"binary_sensor.ww": "on", "sensor.sun": "11"})
+        self.assertFalse(self.dev.decide(self.ctx(self.now + timedelta(minutes=10), 0), 0).on)
+
 
 if __name__ == "__main__":
     unittest.main()

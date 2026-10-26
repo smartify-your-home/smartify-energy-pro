@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.30** · Integrationsdomain: `smartify_energy`
+Version: **0.2.31** · Integrationsdomain: `smartify_energy`
 
 ## Dokumentation und Updates
 
@@ -110,8 +110,12 @@ Unter **Gerät hinzufügen → Wäschetrockner** kann ein Trockner separat konfi
 
 ## WW-Boost bei laufender Warmwasserbereitung (0.2.29)
 
-Für einmalige WW-Boost-Auslöser (Button/Schalter/Input-Boolean) darf SEP auch während einer bereits laufenden Warmwasserbereitung einmalig boosten, sobald der konfigurierte WW-Aktiv-Binärsensor **für die eingestellte Wartezeit durchgehend `on`** (Standard 10 Minuten) ist und das **aktuelle prioritätsbereinigte Steuerbudget mindestens 0 W** beträgt. Die normale Mindestleistungsfreigabe und WP-Ruhebedingung werden in diesem speziellen Fall nicht benötigt; Solltemperatur, Temperaturhysterese, optionale Wetterbedingungen und Boost-Startsperre bleiben wirksam. Pro erfasstem WW-Zyklus wird höchstens ein Boost ausgelöst. Ohne gültigen WW-Aktiv-Sensor ist diese Sonderfreigabe nicht möglich. Sollwertgesteuerte Number-Boosts bleiben vorerst unverändert.
+Für einmalige WW-Boost-Auslöser (Button/Schalter/Input-Boolean) darf SEP auch während einer bereits laufenden Warmwasserbereitung einmalig boosten, sobald der konfigurierte WW-Aktiv-Binärsensor **für die eingestellte Wartezeit durchgehend `on`** (Standard 10 Minuten) ist und das **aktuelle prioritätsbereinigte Steuerbudget mindestens 0 W** beträgt. Die normale Mindestleistungsfreigabe und WP-Ruhebedingung werden in diesem speziellen Fall nicht benötigt; Solltemperatur, Temperaturhysterese, optionaler Sonnenwinkelfilter (keine Bewölkungsprüfung) und Boost-Startsperre bleiben wirksam. Pro erfasstem WW-Zyklus wird höchstens ein Boost ausgelöst. Ohne gültigen WW-Aktiv-Sensor ist diese Sonderfreigabe nicht möglich. Sollwertgesteuerte Number-Boosts bleiben vorerst unverändert.
 
 ## 0.2.30 – WW-Aktiv-Wartezeit einstellen
 
-Unter Gerätekonfiguration → Wärmepumpe Boost steht **WW aktiv: Wartezeit bis Boost** zur Verfügung: **0–180 Minuten (0 deaktiviert die Sonderfreigabe)**, Standard **10 Minuten**. Der Wert ist auch als Zahlen-Entität in den SEP-Geräteeinstellungen änderbar und bleibt nach einem Neustart erhalten. Bestehende Geräte verwenden weiterhin 10 Minuten. Die Wartezeit gilt nur für einmalige Button-/Schalter-/Boolean-Boosts bei laufender Warmwasserbereitung. Das aktuelle prioritätsbereinigte Steuerbudget muss ≥ 0 W sein; Temperatur, Wetterfilter, Startsperre und höchstens ein Boost je WW-Zyklus gelten weiterhin. Nach dem HACS-Update Home Assistant neu starten.
+Unter Gerätekonfiguration → Wärmepumpe Boost steht **WW aktiv: Wartezeit bis Boost** zur Verfügung: **0–180 Minuten (0 deaktiviert die Sonderfreigabe)**, Standard **10 Minuten**. Der Wert ist auch als Zahlen-Entität in den SEP-Geräteeinstellungen änderbar und bleibt nach einem Neustart erhalten. Bestehende Geräte verwenden weiterhin 10 Minuten. Die Wartezeit gilt nur für einmalige Button-/Schalter-/Boolean-Boosts bei laufender Warmwasserbereitung. Das aktuelle prioritätsbereinigte Steuerbudget muss ≥ 0 W sein; Temperatur, optionaler Sonnenwinkelfilter, Startsperre und höchstens ein Boost je WW-Zyklus gelten weiterhin. Nach dem HACS-Update Home Assistant neu starten.
+
+## 0.2.31 – Keine Bewölkungsprüfung bei laufendem WW
+
+Die Sonderfreigabe während aktiver WW-Bereitung ignoriert die Bewölkung der aktuellen und kommenden Stunde, auch bei unbekannten/nicht verfügbaren Bewölkungssensoren. Entscheidend für die Leistung ist ausschließlich das aktuelle prioritätsbereinigte Steuerbudget ≥ 0 W. Eingestellte Wartezeit (0 = deaktiviert), Temperatur unter Ziel minus Hysterese, optionaler Sonnenwinkelfilter, Startsperre und maximal eine Auslösung je WW-Zyklus bleiben wirksam. Bei normalen Boost-Starts und Number-Sollwertsteuerung bleiben die Bewölkungsfilter erhalten.

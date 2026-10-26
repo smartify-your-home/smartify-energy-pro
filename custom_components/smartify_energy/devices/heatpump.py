@@ -287,7 +287,10 @@ class HeatPumpDevice(BaseDevice):
                 ctx.now - self._idle_since < timedelta(minutes=float(self.p("idle_minutes"))))):
             self.status = "wartet"
             return Decision(False, 0, "Wärmepumpe noch nicht lange genug in Ruhe")
-        for check in self._weather_checks().values():
+        for name, check in self._weather_checks().items():
+            # Running WW uses the current budget, not cloud forecasts.
+            if running_boost and name == "cloud":
+                continue
             if not check["erlaubt"]:
                 self.status = "wartet"
                 return Decision(False, 0, check["grund"])
