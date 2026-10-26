@@ -331,12 +331,13 @@
             "cloud_now_entity": "[Bedingt] Bewölkung aktuelle Stunde – Entität",
             "cloud_now_max": "[Bedingt] Bewölkung aktuelle Stunde unter",
             "cloud_next_entity": "[Bedingt] Bewölkung kommende Stunde – Entität",
-            "cloud_next_max": "[Bedingt] Bewölkung kommende Stunde unter"
+            "cloud_next_max": "[Bedingt] Bewölkung kommende Stunde unter",
+            "ww_active_entity": "[Optional] Warmwasser aktiv (Binary/Boolean)"
           },
           "data_description": {
             "name": "**Pflicht:** Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
-            "boost_type": "**Pflicht:** Schalter: switch oder input_boolean ein-/ausschalten. Button: button oder input_button einmal drücken. Sollwert: einen Zahlenwert anheben und später zurückstellen. Ein Button kann eine begonnene Warmwasserladung nicht abbrechen.",
-            "boost_entity": "**Pflicht:** Wählen Sie den passenden Warmwasser-Auslöser Ihrer Wärmepumpe. Bei einem Boolean muss eine vorhandene Automation dessen Zustand in einen WP-Befehl umsetzen. Ein beliebiger Helfer allein schaltet die Wärmepumpe nicht.",
+            "boost_type": "**Pflicht:** Schalter/input_boolean oder Button/input_button: startet die Warmwasserladung einmalig. SEP schaltet diesen Auslöser danach nicht wieder aus und bricht die laufende WW-Ladung nicht ab. Sollwert/Number: weiterhin aktive Sollwerterhöhung mit anschließender Rückstellung. Für einen Einmalstart bevorzugt Button.",
+            "boost_entity": "**Pflicht:** Eine vorhandene Entität, die den einmaligen Warmwasser-Ladestart tatsächlich auslöst. Ein Helfer (input_boolean) braucht eine passende HA-Automation. Bei dauerhaft EIN bleibendem Schalter löst SEP nicht erneut aus; dieser muss extern zurück auf AUS gehen, um wieder startbereit zu sein.",
             "power_sensor": "**Bedingt:** Für Boost erforderlich: aktuelle elektrische Leistung der Wärmepumpe in W oder kW. Nur dieser Messwert bestätigt die Ruhezeit; eine eingeschaltete Freigabe allein reicht nicht. Für automatischen Boost zwingend erforderlich, auch wenn das Formular das Feld leer zulässt.",
             "nominal_power": "**Pflicht:** Typischer Strombedarf während des Betriebs in Watt (W). Bei Waschmaschinen ist meist die Heizphase entscheidend. SEP nutzt diesen Wert zur Reservierung und als Ersatz, wenn keine Leistung messbar ist.",
             "temperature_sensor": "**Bedingt:** Für Boost erforderlich: aktuelle Warmwassertemperatur in °C. Start nur unter Zieltemperatur minus Hysterese; ohne gültigen Messwert wird kein neuer Boost ausgelöst. Für automatischen Boost zwingend erforderlich, auch wenn das Formular das Feld leer zulässt.",
@@ -345,7 +346,8 @@
             "cloud_now_entity": "**Bedingt:** Optional: Bewölkungsprognose für die aktuelle Stunde als Zahl von 0 bis 100 %. 0 bedeutet wolkenlos. Nur zusammen mit beiden Grenzwerten, der Entität der kommenden Stunde und aktiver Bewölkungsprüfung wirksam. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten.",
             "cloud_now_max": "**Bedingt:** Boost startet nur bei einem Wert kleiner als diese Grenze. Beispiel: unter 75 %; genau 75 % sperrt den Start. Beide Stunden müssen ihre Grenze einhalten. Bei unvollständigen Angaben wird die gesamte Bewölkungsprüfung ignoriert. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten.",
             "cloud_next_entity": "**Bedingt:** Optional: Bewölkungsprognose für die kommende Stunde als Zahl von 0 bis 100 %. Die Datenquelle muss den Wert laufend auf die nächste Stunde beziehen. SEP liest den Zahlenzustand, keine Wetterliste in Attributen. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten.",
-            "cloud_next_max": "**Bedingt:** Boost startet nur, wenn auch die kommende Stunde unter dieser Grenze liegt. Beispiel: unter 50 %; genau 50 % sperrt. Leer bedeutet bei dieser Prüfung: ignorieren, bis beide Entitäten und Grenzen vollständig sind. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten."
+            "cloud_next_max": "**Bedingt:** Boost startet nur, wenn auch die kommende Stunde unter dieser Grenze liegt. Beispiel: unter 50 %; genau 50 % sperrt. Leer bedeutet bei dieser Prüfung: ignorieren, bis beide Entitäten und Grenzen vollständig sind. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten.",
+            "ww_active_entity": "**Optional:** Einen binary_sensor oder input_boolean auswählen, der bei einer laufenden Warmwasserbereitung EIN ist und sonst AUS. SEP verhindert während EIN einen neuen WW-Boost. Ist die konfigurierte Entität unbekannt/nicht verfügbar, wird aus Sicherheitsgründen kein neuer Boost gestartet. Die Entität dient nur zum Lesen und wird von SEP nicht geschaltet."
           }
         },
         "reconfigure": {
@@ -362,12 +364,13 @@
             "cloud_now_entity": "[Bedingt] Bewölkung aktuelle Stunde – Entität",
             "cloud_now_max": "[Bedingt] Bewölkung aktuelle Stunde unter",
             "cloud_next_entity": "[Bedingt] Bewölkung kommende Stunde – Entität",
-            "cloud_next_max": "[Bedingt] Bewölkung kommende Stunde unter"
+            "cloud_next_max": "[Bedingt] Bewölkung kommende Stunde unter",
+            "ww_active_entity": "[Optional] Warmwasser aktiv (Binary/Boolean)"
           },
           "data_description": {
             "name": "**Pflicht:** Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
-            "boost_type": "**Pflicht:** Schalter: switch oder input_boolean ein-/ausschalten. Button: button oder input_button einmal drücken. Sollwert: einen Zahlenwert anheben und später zurückstellen. Ein Button kann eine begonnene Warmwasserladung nicht abbrechen.",
-            "boost_entity": "**Pflicht:** Wählen Sie den passenden Warmwasser-Auslöser Ihrer Wärmepumpe. Bei einem Boolean muss eine vorhandene Automation dessen Zustand in einen WP-Befehl umsetzen. Ein beliebiger Helfer allein schaltet die Wärmepumpe nicht.",
+            "boost_type": "**Pflicht:** Schalter/input_boolean oder Button/input_button: startet die Warmwasserladung einmalig. SEP schaltet diesen Auslöser danach nicht wieder aus und bricht die laufende WW-Ladung nicht ab. Sollwert/Number: weiterhin aktive Sollwerterhöhung mit anschließender Rückstellung. Für einen Einmalstart bevorzugt Button.",
+            "boost_entity": "**Pflicht:** Eine vorhandene Entität, die den einmaligen Warmwasser-Ladestart tatsächlich auslöst. Ein Helfer (input_boolean) braucht eine passende HA-Automation. Bei dauerhaft EIN bleibendem Schalter löst SEP nicht erneut aus; dieser muss extern zurück auf AUS gehen, um wieder startbereit zu sein.",
             "power_sensor": "**Bedingt:** Für Boost erforderlich: aktuelle elektrische Leistung der Wärmepumpe in W oder kW. Nur dieser Messwert bestätigt die Ruhezeit; eine eingeschaltete Freigabe allein reicht nicht. Für automatischen Boost zwingend erforderlich, auch wenn das Formular das Feld leer zulässt.",
             "nominal_power": "**Pflicht:** Typischer Strombedarf während des Betriebs in Watt (W). Bei Waschmaschinen ist meist die Heizphase entscheidend. SEP nutzt diesen Wert zur Reservierung und als Ersatz, wenn keine Leistung messbar ist.",
             "temperature_sensor": "**Bedingt:** Für Boost erforderlich: aktuelle Warmwassertemperatur in °C. Start nur unter Zieltemperatur minus Hysterese; ohne gültigen Messwert wird kein neuer Boost ausgelöst. Für automatischen Boost zwingend erforderlich, auch wenn das Formular das Feld leer zulässt.",
@@ -376,7 +379,8 @@
             "cloud_now_entity": "**Bedingt:** Optional: Bewölkungsprognose für die aktuelle Stunde als Zahl von 0 bis 100 %. 0 bedeutet wolkenlos. Nur zusammen mit beiden Grenzwerten, der Entität der kommenden Stunde und aktiver Bewölkungsprüfung wirksam. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten.",
             "cloud_now_max": "**Bedingt:** Boost startet nur bei einem Wert kleiner als diese Grenze. Beispiel: unter 75 %; genau 75 % sperrt den Start. Beide Stunden müssen ihre Grenze einhalten. Bei unvollständigen Angaben wird die gesamte Bewölkungsprüfung ignoriert. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten.",
             "cloud_next_entity": "**Bedingt:** Optional: Bewölkungsprognose für die kommende Stunde als Zahl von 0 bis 100 %. Die Datenquelle muss den Wert laufend auf die nächste Stunde beziehen. SEP liest den Zahlenzustand, keine Wetterliste in Attributen. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten.",
-            "cloud_next_max": "**Bedingt:** Boost startet nur, wenn auch die kommende Stunde unter dieser Grenze liegt. Beispiel: unter 50 %; genau 50 % sperrt. Leer bedeutet bei dieser Prüfung: ignorieren, bis beide Entitäten und Grenzen vollständig sind. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten."
+            "cloud_next_max": "**Bedingt:** Boost startet nur, wenn auch die kommende Stunde unter dieser Grenze liegt. Beispiel: unter 50 %; genau 50 % sperrt. Leer bedeutet bei dieser Prüfung: ignorieren, bis beide Entitäten und Grenzen vollständig sind. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten.",
+            "ww_active_entity": "**Optional:** Einen binary_sensor oder input_boolean auswählen, der bei einer laufenden Warmwasserbereitung EIN ist und sonst AUS. SEP verhindert während EIN einen neuen WW-Boost. Ist die konfigurierte Entität unbekannt/nicht verfügbar, wird aus Sicherheitsgründen kein neuer Boost gestartet. Die Entität dient nur zum Lesen und wird von SEP nicht geschaltet."
           }
         }
       },
@@ -523,6 +527,9 @@
       },
       "cloud_next_max": {
         "name": "Bewölkung kommende Stunde unter"
+      },
+      "trigger_cooldown": {
+        "name": "WW-Boost Mindestabstand"
       }
     },
     "time": {
@@ -532,7 +539,9 @@
       "night_end": {
         "name": "Sofortfenster Ende"
       },
-      "earliest_start": {"name": "Frühester Start"},
+      "earliest_start": {
+        "name": "Frühester Start"
+      },
       "latest_start": {
         "name": "Spätester Start"
       },
