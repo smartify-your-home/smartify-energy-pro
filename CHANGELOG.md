@@ -1,3 +1,10 @@
+## 0.2.32 – Optionaler PV-Forecast als alternativer WW-Startfilter
+- Neue Auswahl **Kein Filter / Bewölkung / PV-Forecast** in den SEP-Wärmepumpen-Geräteeinstellungen. Bestehende Bewölkung-Aktivierung und Grenzwerte werden übernommen.
+- Vorhandene SEP-Prognose für die nächsten **1 oder 2 Stunden ab jetzt**, anteilig je Stunde; Mindestenergie **0,1–100 kWh**, Standard **2 kWh in 2 Stunden**. Forecast und Bewölkung werden alternativ geprüft.
+- Fehlende, unvollständige, fehlerhafte oder über 60 Minuten alte Prognose sperrt im Forecast-Modus neue Starts. Diagnoseattribute und verständliche deutsche/englische Bezeichnungen sowie Hilfetexte ergänzt.
+- Die Sonderfreigabe während laufender WW-Bereitung ignoriert weiterhin Bewölkung und Forecast. Temperaturhysterese, Budget, Wartezeit, Startsperre und optionaler Sonnenwinkelfilter bleiben wirksam. Laufende Boosts werden durch den Startfilter nicht abgebrochen.
+- README und Update-Anleitung ergänzt; Regressionstests für Zeitfenster, Grenzwerte, Migration, alternative Filter und laufende WW-Bereitung ergänzt. Kein bestätigter HA-Hardwaretest.
+
 ## 0.2.31 – Bewölkung bei laufender WW-Bereitung ignorieren
 - Die Sonderfreigabe während laufender WW-Bereitung berücksichtigt keine Bewölkung (aktuelle/kommende Stunde), auch keine fehlenden Bewölkungswerte. Für die Leistungsfreigabe zählt das aktuelle prioritätsbereinigte Steuerbudget ≥ 0 W.
 - Wartezeit (0 deaktiviert), Temperatur strikt unter Zieltemperatur minus Hysterese, optionaler Sonnenwinkelfilter, Startsperre und maximal ein Boost je WW-Zyklus bleiben erhalten. Normale Starts und Number-Boosts behalten ihre Bewölkungsfilter.

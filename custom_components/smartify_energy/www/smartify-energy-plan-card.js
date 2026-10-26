@@ -45,6 +45,8 @@ const OPTION_LABELS = {
   auto: "Automatik", observe: "Beobachten", manual: "Manuell", off: "Aus",
   forecast: "Prognose", battery_first: "Speicher zuerst", devices_first: "Geräte zuerst",
   summer: "Sommer", winter: "Winter",
+  none: "Kein Filter", cloud: "Bewölkung", pv_forecast: "PV-Forecast",
+  "1": "Nächste 1 Stunde", "2": "Nächste 2 Stunden",
   pv_only: "Nur PV", km_until: "km bis Uhrzeit", days: "Tage-Konfigurator", now: "Sofort laden",
   one: "1-phasig", three: "3-phasig",
 };
@@ -120,7 +122,9 @@ const SETTING_HELP = {
   "cloud_now_max": "Boost startet nur bei einem Wert kleiner als diese Grenze. Beispiel: unter 75 %; genau 75 % sperrt den Start. Beide Stunden müssen ihre Grenze einhalten. Bei unvollständigen Angaben wird die gesamte Bewölkungsprüfung ignoriert.",
   "cloud_next_max": "Boost startet nur, wenn auch die kommende Stunde unter dieser Grenze liegt. Beispiel: unter 50 %; genau 50 % sperrt. Leer bedeutet bei dieser Prüfung: ignorieren, bis beide Entitäten und Grenzen vollständig sind.",
   "sun_filter_active": "Ein: Vor einem neuen Boost wird der Sonnenwinkel geprüft, wenn Entität und Mindestwinkel eingetragen sind. Aus oder unvollständige Angaben: ignorieren. Ein ungültiger Messwert bei vollständig aktiver Prüfung verhindert den Start. Laufende Boosts werden dadurch nicht beendet.",
-  "cloud_filter_active": "Ein: Vor einem neuen Boost müssen aktuelle UND kommende Stunde unter ihrer jeweiligen Bewölkungsgrenze liegen. Beide Entitäten und Grenzen müssen eingetragen sein, sonst wird die Prüfung ignoriert. Bei vollständiger aktiver Prüfung sperrt ein ungültiger Messwert. Laufende WW-Ladungen werden dadurch nicht beendet.",
+  "boost_start_filter": "Für normale WW-Boost-Starts: Kein Filter, Bewölkung ODER PV-Forecast. Bewölkung nutzt die beiden konfigurierten Prozentgrenzen; PV-Forecast nutzt ausschließlich die vorhandene SEP-Prognose im gewählten Zeitfenster. Bei laufender WW-Bereitung gelten weder Bewölkung noch Forecast. Temperatur, Budget, Startsperre und optionaler Sonnenwinkelfilter bleiben wirksam.",
+  "boost_forecast_hours": "Zeitraum ab jetzt: 1 oder 2 Stunden, Standard 2. Angebrochene Stunden werden anteilig berechnet. Nur wirksam bei Startfilter PV-Forecast. Beispiel: um 12:30 mit 2 Stunden bis 14:30.",
+  "boost_forecast_min_kwh": "Mindestens erwarteter PV-Ertrag im gewählten Zeitraum, Standard 2 kWh; einstellbar 0,1–100 kWh. Das ist Erzeugung, kein freier Überschuss: Die Budgetprüfung bleibt erhalten. Fehlende, fehlerhafte, unvollständige oder über 60 Minuten alte Prognosen sperren im Forecast-Modus neue Starts. Quelle in den zentralen SEP-Prognoseeinstellungen wählen.",
   "ww_active_minutes": "So lange muss Warmwasser aktiv ununterbrochen EIN sein. Danach darf SEP bei aktuellem Steuerbudget ≥ 0 W einmalig boosten. Standard 10 Minuten, einstellbar 0–180 Minuten (0 deaktiviert die Sonderfreigabe). Temperatur, optionaler Sonnenwinkelfilter und Startsperre gelten weiter; Bewölkung wird hier ignoriert. Nur für Button/Schalter/Boolean; maximal ein Boost je WW-Zyklus.",
   "trigger_cooldown": "Mindestzeit zwischen zwei WW-Boost-Auslösungen in Minuten. Standard 60 min, einstellbar 60–720 min. Nach erfolgreicher Startfreigabe wird der Zeitstempel VOR dem WP-Befehl gespeichert und übersteht auch Home-Assistant-Neustarts. Während laufender WW-Ladung ist nach der konfigurierten WW-Aktiv-Wartezeit höchstens ein Boost je Zyklus möglich."
 };

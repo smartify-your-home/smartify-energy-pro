@@ -17,6 +17,7 @@ from ..const import (
     BOOST_BUTTON, BOOST_NUMBER, CONF_BOOST_ENTITY, CONF_BOOST_TYPE,
     CONF_TEMP_SENSOR, CONF_WW_ACTIVE_ENTITY, CONF_WW_BOOST_TEMP_ENTITY,
 )
+from ..forecast_window import rolling_energy
 from ..helpers import ParamSpec, SensorSpec, is_on, state_float, state_str, power_w
 from .base import BaseDevice, Context, Decision, PlanDemand
 
@@ -48,7 +49,10 @@ class HeatPumpDevice(BaseDevice):
             ParamSpec("sun_filter_active", "switch", False, "mdi:weather-sunny"),
             ParamSpec("sun_angle_min", "number", self.cfg.get("sun_angle_min"),
                       "mdi:sun-angle", -90, 90, 0.5, "°"),
-            ParamSpec("cloud_filter_active", "switch", False, "mdi:weather-cloudy"),
+            ParamSpec("boost_start_filter", "select", "none", "mdi:weather-partly-cloudy",
+                      options=["none", "cloud", "pv_forecast"]),
+            ParamSpec("boost_forecast_hours", "select", "2", "mdi:timeline-clock", options=["1", "2"]),
+            ParamSpec("boost_forecast_min_kwh", "number", 2.0, "mdi:solar-power", 0.1, 100, 0.1, "kWh"),
             ParamSpec("cloud_now_max", "number", self.cfg.get("cloud_now_max"),
                       "mdi:weather-cloudy", 0, 100, 1, "%"),
             ParamSpec("cloud_next_max", "number", self.cfg.get("cloud_next_max"),
@@ -76,6 +80,9 @@ class HeatPumpDevice(BaseDevice):
         for key in ("sun_angle_min", "cloud_now_max", "cloud_next_max"):
             if old_cfg.get(key) != self.cfg.get(key):
                 data["params"].pop(key, None)
+        # Preserve the previously enabled cloud filter on upgrade.
+        if "boost_start_filter" not in data["params"]:
+            data["params"]["boost_start_filter"] = "cloud" if data["params"].get("cloud_filter_active") else "none"
         super().load(data)
         # Migration from earlier SEP releases: their 'started' timestamp
         # is the safest available approximation of the last WW command.
@@ -93,7 +100,7 @@ class HeatPumpDevice(BaseDevice):
             )),
         )
         for name, active, fields in groups:
-            enabled = bool(self.p(active))
+            enabled = self.p("boost_start_filter") == "cloud" if name == "cloud" else bool(self.p(active))
             configured = all(self.cfg.get(entity) and self.p(limit) is not None
                              for entity, limit, _, _ in fields)
             check = {"aktiv": enabled, "vollstaendig": bool(configured), "wirksam": False,
@@ -123,10 +130,42 @@ class HeatPumpDevice(BaseDevice):
                     break
         return result
 
+    def _forecast_check(self, now: datetime) -> dict:
+        check = {"aktiv": self.p("boost_start_filter") == "pv_forecast", "erlaubt": True,
+                 "zeitraum_h": self.p("boost_forecast_hours"),
+                 "minimum_kwh": self.p("boost_forecast_min_kwh"), "prognose_kwh": None,
+                 "grund": "Ignoriert: PV-Forecast nicht ausgewählt"}
+        if not check["aktiv"]:
+            return check
+        try:
+            hours = int(self.p("boost_forecast_hours"))
+            minimum = float(self.p("boost_forecast_min_kwh"))
+            if hours not in (1, 2) or not math.isfinite(minimum) or not 0.1 <= minimum <= 100:
+                raise ValueError
+        except (TypeError, ValueError):
+            check.update(erlaubt=False, grund="PV-Forecast-Einstellung ungültig")
+            return check
+        energy, error = rolling_energy(getattr(self.manager, "forecast", None), now, hours)
+        if error:
+            check.update(erlaubt=False, grund=error)
+            return check
+        kwh = energy / 1000
+        check.update(prognose_kwh=round(kwh, 3), erlaubt=kwh >= minimum,
+                     grund=f"PV-Forecast nächste {hours} h: {kwh:.2f} kWh; benötigt {minimum:g} kWh")
+        return check
+
+    def _start_filter_error(self, now: datetime) -> str | None:
+        if self.p("boost_start_filter") not in ("none", "cloud", "pv_forecast"):
+            return "WW-Boost-Startfilter ungültig"
+        check = self._forecast_check(now)
+        return None if check["erlaubt"] else check["grund"]
+
     def status_attrs(self) -> dict:
         return {
             **super().status_attrs(),
             "boost_startbedingungen": self._weather_checks(),
+            "boost_startfilter": self.p("boost_start_filter"),
+            "pv_forecast_startbedingung": self._forecast_check(datetime.now().astimezone()),
             "warmwasser_aktiv": self.ww_active,
             "ww_aktiv_mindestdauer_min": self.p("ww_active_minutes"),
             "ww_aktiv_seit_min": self._ww_active_minutes(datetime.now().astimezone()),
@@ -294,6 +333,9 @@ class HeatPumpDevice(BaseDevice):
             if not check["erlaubt"]:
                 self.status = "wartet"
                 return Decision(False, 0, check["grund"])
+        if not running_boost and (error := self._start_filter_error(ctx.now)):
+            self.status = "wartet"
+            return Decision(False, 0, error)
         left_now = ctx.now_left(budget_left)
         left_avg = budget_left if ctx.history_ready else left_now
         need = self.nominal
@@ -358,6 +400,8 @@ class HeatPumpDevice(BaseDevice):
         for check in self._weather_checks().values():
             if not check["erlaubt"]:
                 return Decision(False, 0, check["grund"])
+        if error := self._start_filter_error(ctx.now):
+            return Decision(False, 0, error)
         if left_now >= need and left_avg >= need:
             return Decision(True, need, "PV-Überschuss – Boost")
         return Decision(False, 0, f"Überschuss zu niedrig ({min(left_now, left_avg):.0f} W < {need:.0f} W)")

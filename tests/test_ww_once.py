@@ -188,7 +188,7 @@ class WarmWaterOnceTests(unittest.IsolatedAsyncioTestCase):
 
     def test_running_ww_ignores_clouds_but_keeps_temperature_and_budget(self):
         self.dev.cfg.update(cloud_now_entity="sensor.cloud_now", cloud_next_entity="sensor.cloud_next")
-        self.dev.params.update(cloud_filter_active=True, cloud_now_max=75, cloud_next_max=50)
+        self.dev.params.update(boost_start_filter="cloud", cloud_now_max=75, cloud_next_max=50)
         self.values["binary_sensor.ww"] = "on"
         at = self.now + timedelta(minutes=10)
         for cloud in ("100", "unavailable", "unknown"):

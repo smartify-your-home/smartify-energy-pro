@@ -525,6 +525,9 @@
       },
       "ww_active_minutes": {
         "name": "Hot water active: wait before boost"
+      },
+      "boost_forecast_min_kwh": {
+        "name": "PV forecast minimum energy"
       }
     },
     "time": {
@@ -683,6 +686,21 @@
           "auto": "Automatic",
           "one": "1-phase",
           "three": "3-phase"
+        }
+      },
+      "boost_start_filter": {
+        "name": "Hot-water boost start filter",
+        "state": {
+          "none": "No filter",
+          "cloud": "Cloud cover",
+          "pv_forecast": "PV-Forecast"
+        }
+      },
+      "boost_forecast_hours": {
+        "name": "PV forecast window from now",
+        "state": {
+          "1": "Next 1 hour",
+          "2": "Next 2 hours"
         }
       }
     }

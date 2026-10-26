@@ -674,6 +674,9 @@
       },
       "ww_active_minutes": {
         "name": "WW aktiv: Wartezeit bis Boost"
+      },
+      "boost_forecast_min_kwh": {
+        "name": "PV-Forecast Mindestenergie"
       }
     },
     "time": {
@@ -835,6 +838,21 @@
           "auto": "Automatisch",
           "one": "1-phasig",
           "three": "3-phasig"
+        }
+      },
+      "boost_start_filter": {
+        "name": "WW-Boost Startfilter",
+        "state": {
+          "none": "Kein Filter",
+          "cloud": "Bewölkung",
+          "pv_forecast": "PV-Forecast"
+        }
+      },
+      "boost_forecast_hours": {
+        "name": "PV-Forecast Zeitraum ab jetzt",
+        "state": {
+          "1": "Nächste 1 Stunde",
+          "2": "Nächste 2 Stunden"
         }
       }
     }

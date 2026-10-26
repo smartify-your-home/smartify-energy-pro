@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.31** · Integrationsdomain: `smartify_energy`
+Version: **0.2.32** · Integrationsdomain: `smartify_energy`
 
 ## Dokumentation und Updates
 
@@ -119,3 +119,21 @@ Unter Gerätekonfiguration → Wärmepumpe Boost steht **WW aktiv: Wartezeit bis
 ## 0.2.31 – Keine Bewölkungsprüfung bei laufendem WW
 
 Die Sonderfreigabe während aktiver WW-Bereitung ignoriert die Bewölkung der aktuellen und kommenden Stunde, auch bei unbekannten/nicht verfügbaren Bewölkungssensoren. Entscheidend für die Leistung ist ausschließlich das aktuelle prioritätsbereinigte Steuerbudget ≥ 0 W. Eingestellte Wartezeit (0 = deaktiviert), Temperatur unter Ziel minus Hysterese, optionaler Sonnenwinkelfilter, Startsperre und maximal eine Auslösung je WW-Zyklus bleiben wirksam. Bei normalen Boost-Starts und Number-Sollwertsteuerung bleiben die Bewölkungsfilter erhalten.
+
+## 0.2.32 – Wahlweise Bewölkung oder PV-Forecast vor WW-Boost
+
+In den **SEP-Geräteeinstellungen der Wärmepumpe** (auch als Konfigurationsentitäten auf der HA-Geräteseite) ersetzt **WW-Boost Startfilter** den bisherigen Bewölkung-Aktiv-Schalter:
+
+| Auswahl | Wirkung bei normalem Boost-Start |
+| --- | --- |
+| Kein Filter | Keine Bewölkungs- oder Forecastprüfung |
+| Bewölkung | Vorhandene Grenzen für aktuelle und kommende Stunde; wie bisher nur bei vollständig konfigurierten Entitäten/Grenzen |
+| PV-Forecast | Erwartete PV-Energie muss die eingestellte Mindestenergie erreichen; Bewölkung wird ignoriert |
+
+**PV-Forecast Zeitraum ab jetzt:** nächste 1 oder 2 Stunden (Standard 2). **PV-Forecast Mindestenergie:** 0,1–100 kWh (Standard 2 kWh). Quelle ist die bereits zentral in SEP konfigurierte PV-Prognose. Angebrochene Stunden werden entsprechend ihrem Anteil berücksichtigt: um 12:30 bedeutet „2 Stunden“ den Zeitraum bis 14:30. Gleichheit mit der Mindestenergie reicht aus.
+
+Im Forecast-Modus verhindern fehlende Quellen, Fehler, ungültige/fehlende Stundenwerte oder über 60 Minuten alte Prognosedaten einen neuen Start; der Grund steht im Gerätestatus. Explizite 0-Wh-Stunden sind gültig, fehlende Stunden gelten nicht als Null. Prognoseenergie beschreibt Erzeugung, nicht verfügbaren Überschuss; die normale aktuelle/gemittelte Budgetprüfung bleibt bestehen. Bereits laufende Boosts werden durch den Filter nicht beendet.
+
+**Sonderfreigabe während laufender WW-Bereitung:** weder Bewölkung noch PV-Forecast. Wartezeit (0 deaktiviert), Temperatur unter Ziel minus Hysterese, aktuelles prioritätsbereinigtes Budget ≥ 0 W, Startsperre, optionaler Sonnenwinkelfilter und höchstens ein Boost je WW-Zyklus bleiben wirksam. Normale Number-Boost-Starts verwenden ebenfalls den ausgewählten Startfilter.
+
+**Update:** Ein bisher aktivierter Bewölkungsschalter wird automatisch zu „Bewölkung“, sonst zu „Kein Filter“. Die bisherigen Bewölkungsgrenzen bleiben gespeichert. Die zwei Forecast-Parameter wirken ausschließlich bei Auswahl „PV-Forecast“. Nach dem HACS-Update Home Assistant neu starten. Kein bestätigter Test an realer HA-Hardware.

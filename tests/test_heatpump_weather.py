@@ -55,7 +55,7 @@ class WeatherStartTests(unittest.TestCase):
                     'cloud_now_entity': 'sensor.now', 'cloud_now_max': 75,
                     'cloud_next_entity': 'sensor.next', 'cloud_next_max': 50}
         self.dev = HeatPumpDevice(self.manager, 'hp', 'Warmwasser', dict(self.cfg))
-        self.dev.params.update(sun_filter_active=True, cloud_filter_active=True)
+        self.dev.params.update(sun_filter_active=True, boost_start_filter="cloud")
         self.now = datetime(2026, 10, 26, 12, tzinfo=timezone.utc)
         self.dev._idle_since = self.now - timedelta(minutes=20)
         self.ctx = Context(self.now, 30, 3000, 3000, 3000, True, False, 3000)
@@ -66,7 +66,7 @@ class WeatherStartTests(unittest.TestCase):
     def test_defaults_disabled_and_limits_unset(self):
         dev = HeatPumpDevice(self.manager, 'new', 'New', {})
         self.assertFalse(dev.p('sun_filter_active'))
-        self.assertFalse(dev.p('cloud_filter_active'))
+        self.assertEqual(dev.p('boost_start_filter'), 'none')
         self.assertIsNone(dev.p('sun_angle_min'))
         self.assertIsNone(dev.p('cloud_now_max'))
         self.assertIsNone(dev.p('cloud_next_max'))
@@ -81,7 +81,7 @@ class WeatherStartTests(unittest.TestCase):
                 self.values[entity] = saved
 
     def test_disabled_checks_ignore_bad_values(self):
-        self.dev.params.update(sun_filter_active=False, cloud_filter_active=False)
+        self.dev.params.update(sun_filter_active=False, boost_start_filter="none")
         self.values.update({'sensor.sun': 'unavailable', 'sensor.now': '100', 'sensor.next': '100'})
         self.assertTrue(self.allowed())
 
@@ -121,10 +121,10 @@ class WeatherStartTests(unittest.TestCase):
             self.assertFalse(self.allowed())
 
     def test_checks_are_independent(self):
-        self.dev.params['cloud_filter_active'] = False
+        self.dev.params['boost_start_filter'] = 'none'
         self.values['sensor.sun'] = '5'
         self.assertFalse(self.allowed())
-        self.dev.params.update(cloud_filter_active=True, sun_filter_active=False)
+        self.dev.params.update(boost_start_filter="cloud", sun_filter_active=False)
         self.values['sensor.next'] = '100'
         self.assertFalse(self.allowed())
 
