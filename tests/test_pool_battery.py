@@ -87,9 +87,9 @@ class PoolBatteryTests(unittest.TestCase):
     def test_no_double_count_own_running_pool(self):
         self.values["switch.pool"] = "on"
         self.values["sensor.pool"] = "700"
-        # Grid break-even while pool already runs. Own 700W draw is
-        # embedded in grid, so maintaining operation must be allowed.
-        self.assertTrue(self.check(0).on)
+        # Grid export 100W while pool already runs; own 700W draw is
+        # embedded in grid. This also meets the 50W safety margin.
+        self.assertTrue(self.check(100).on)
         self.assertIsNone(self.pump._low_since)
 
     def test_running_pool_cannot_hog_other_priority_reservations(self):
@@ -103,8 +103,7 @@ class PoolBatteryTests(unittest.TestCase):
         self.values["switch.pool"] = "on"
         self.values["sensor.pool"] = "700"
         self.pump.state["runtime"] = self.pump.target_min
-        self.assertTrue(self.check(-100).on) if False else None
-        # Once target is met, the currently coded pool policy stops
+         # Once target is met, the currently coded pool policy stops
         # immediately when its averaged headroom is insufficient.
         self.assertFalse(self.check(-100).on)
 
