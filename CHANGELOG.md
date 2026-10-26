@@ -1,3 +1,12 @@
+## 0.2.21 – Heizstab als sofort reagierende PV-Restverbrauchssenke
+- **Neuer Gerätetyp „Heizstab / PV-Überschusssenke“**, unabhängig von Haushaltsgeräten, Pool und WP-Boost. Ansteuerung über `switch` oder `input_boolean`, obligatorischer Warmwasser-Temperatursensor, optionale echte Heizstab-Leistungsmessung.
+- Nur **aktuelles Steuerbudget**, ausdrücklich **kein 10-Minuten-Mittelwert**: Bei ausreichend unmittelbar verfügbarem Restbudget EIN, bei Netzbezug bzw. Unterschreitung der konfigurierten Stoppschwelle AUS. Die Reservierungen höher priorisierter Geräte werden berücksichtigt. Der eigene laufende Verbrauch ist bereits im physikalischen Netzsaldo enthalten und wird nicht nochmals abgezogen.
+- Parameter: Heizleistung (2000 W), PV-Startschwelle (2200 W), PV-Stoppschwelle (0 W), Maximaltemperatur (55 °C), Hysterese (3 K), frühester Start (10:00), optionale Mindestlaufzeit (0 min) und Mindestpause (0 min); sämtliche Zahlen und Uhrzeit über SEP-Entities konfigurierbar.
+- Fehlt ein gültiger Temperaturwert oder ist die maximale Temperatur erreicht, schaltet SEP den Heizstab auch während der Mindestlaufzeit **sofort AUS**. Modus Aus schaltet ebenfalls AUS. Eine unabhängige thermische Sicherheitseinrichtung ist weiterhin erforderlich.
+- Die Schaltzeitpunkte werden nach tatsächlichem Serviceaufruf dauerhaft gespeichert und über HA-Neustarts fortgeführt. Bei manuellen Änderungen wird ein Zustandswechsel erkannt, soweit der Schaltzustand lesbar ist.
+- Neue Tests für fehlenden Mittelwert, aktuellen Überschuss, aufeinanderfolgende Geräteleistungen, Temperatur-Hysterese, Sicherheitsabschaltung, früheste Uhrzeit, Neustart und die Schaltentitäten `switch` / `input_boolean`.
+- **Achtung:** Bisherige Automationen für denselben Relaisausgang deaktivieren, damit SEP und sie nicht gegeneinander schalten.
+
 ## 0.2.20 – Aktuelles Einzelbudget pro Gerät und kombinierte Heizreservierung
 - Die Freigabe des nächsten PV-Haushaltsgeräts bewertet **aktuelles** und **gemitteltes** Steuerbudget getrennt und berücksichtigt in beiden Budgets alle noch offenen Heizleistungs-Reservierungen vorheriger Geräte. Ein hoher alter Mittelwert ersetzt niemals eine zu geringe momentane Leistung.
 - Im Grundsatz: PV-Budget jetzt − Vorreservierungen ≥ erwartete Heizlast des nächsten Geräts **und** PV-Budget Mittelwert − Vorreservierungen ≥ erwartete Heizlast. Bereits tatsächlich gemessener Verbrauch wird nicht doppelt abgezogen; die noch nicht eingetretene Heizlast bleibt vollständig reserviert.
