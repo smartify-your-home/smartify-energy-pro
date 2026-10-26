@@ -38,6 +38,7 @@ from .const import (
     SIGNAL_UPDATE,
     STORAGE_VERSION,
 )
+from .budget import additional_reservation, control_budget
 from .devices import DEVICE_CLASSES, BaseDevice, Context
 from .forecast import ForecastProvider
 from .helpers import ParamSpec, SensorSpec, in_window, power_w, state_float, time_from_str
@@ -66,6 +67,7 @@ class EnergyManager:
         )
         self._store = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}")
         self._history: deque[tuple[datetime, float]] = deque()
+        self._grid_history: deque[tuple[datetime, float]] = deque()
         self._lock = asyncio.Lock()
         self._unsubs: list = []
         self._pending_run = None
@@ -74,8 +76,11 @@ class EnergyManager:
         self._plan_dirty = False
         # Messwerte für Sensoren
         self.grid_export = 0.0
+        self.grid_avg = 0.0
         self.sinks = 0.0
-        self.managed = 0.0
+        self.managed = 0.0  # Only power SEP can actually curtail.
+        self._measured_power: dict[str, float] = {}
+        self._reclaimable_power: dict[str, float] = {}
         self.battery_power = 0.0
         self.battery_soc: float | None = None
         self.battery_devices_first = True
@@ -117,6 +122,7 @@ class EnergyManager:
         self.params[key] = value
         if key == "avg_window":
             self._history.clear()
+            self._grid_history.clear()
         self.async_param_changed()
 
     @property
@@ -125,15 +131,25 @@ class EnergyManager:
 
     def sensor_specs(self) -> list[SensorSpec]:
         specs = [
-            SensorSpec("surplus", lambda: round(self.budget_now), unit="W", device_class="power",
+            SensorSpec("surplus", lambda: round(self.grid_export), unit="W", device_class="power",
+                       state_class="measurement", icon="mdi:transmission-tower",
+                       attrs=lambda: {
+                           "einspeisung_w": round(max(self.grid_export, 0.0)),
+                           "netzbezug_w": round(max(-self.grid_export, 0.0)),
+                           "vorzeichen": "Einspeisung positiv, Bezug negativ",
+                       }),
+            SensorSpec("surplus_avg", lambda: round(self.grid_avg), unit="W", device_class="power",
+                       state_class="measurement", icon="mdi:chart-bell-curve"),
+            SensorSpec("budget", lambda: round(self.budget_now), unit="W", device_class="power",
                        state_class="measurement", icon="mdi:solar-power-variant",
                        attrs=lambda: {
-                           "einspeisung_w": round(self.grid_export),
-                           "senken_w": round(self.sinks),
-                           "gesteuert_w": round(self.managed),
+                           "netzsaldo_w": round(self.grid_export),
+                           "ruecknehmbar_w": round(self.managed),
+                           "senken_nur_information_w": round(self.sinks),
                            "speicher_w": round(self.battery_power),
+                           "hinweis": "Nur durch SEP wirklich reduzierbare Lasten werden gutgeschrieben.",
                        }),
-            SensorSpec("surplus_avg", lambda: round(self.budget_avg), unit="W", device_class="power",
+            SensorSpec("budget_avg", lambda: round(self.budget_avg), unit="W", device_class="power",
                        state_class="measurement", icon="mdi:chart-bell-curve"),
             SensorSpec("allocated", lambda: round(self.allocated), unit="W", device_class="power",
                        state_class="measurement", icon="mdi:call-split",
@@ -229,8 +245,9 @@ class EnergyManager:
                 fast_inputs.add(dev.cfg.get("current_entity"))
         self._schedule_run(0.5 if entity_id in fast_inputs else 2.0)
 
-    def _weighted_average(self, now: datetime, window: timedelta, fallback: float) -> float:
-        points = list(self._history)
+    def _weighted_average(self, now: datetime, window: timedelta, fallback: float,
+                          history: deque[tuple[datetime, float]] | None = None) -> float:
+        points = list(self._history if history is None else history)
         start = now - window
         total = duration = 0.0
         for (t, value), (end, _) in zip(points, points[1:]):
@@ -308,7 +325,18 @@ class EnergyManager:
             bat = -bat
         self.battery_power = bat
         self.battery_soc = state_float(self.hass, self.cfg.get(CONF_BAT_SOC))
-        self.managed = sum(d.power_now() for d in self.devices.values() if d.participates)
+        # A normal WW cycle, released household program, forced EV charge or
+        # minimum-runtime pool is already part of the measured grid balance.
+        # Never add it back as if SEP could stop it to serve another load.
+        self._measured_power = {
+            key: max(0.0, dev.power_now()) for key, dev in self.devices.items()
+        }
+        self._reclaimable_power = {
+            key: min(self._measured_power[key], max(0.0, dev.reclaimable_power()))
+            if dev.mode == MODE_AUTO else 0.0
+            for key, dev in self.devices.items()
+        }
+        self.managed = sum(self._reclaimable_power.values())
 
     def _battery_strategy(self, now: datetime) -> None:
         if not self.has_battery:
@@ -370,19 +398,26 @@ class EnergyManager:
 
         self._read_inputs()
         self._battery_strategy(now)
-        bat_charge = max(self.battery_power, 0.0)
         bat_discharge = max(-self.battery_power, 0.0)
-        budget = (self.grid_export + self.sinks + self.managed - bat_discharge
-                  + (bat_charge if self.battery_devices_first else 0.0)
-                  - float(self.p("grid_reserve")))
+        # Neither an external surplus diverter nor a battery that SEP cannot
+        # command is reliably reclaimable. Keep their measurements for status,
+        # but do not offer their power to other devices as fictional PV.
+        budget = control_budget(
+            self.grid_export, self.managed, bat_discharge,
+            float(self.p("grid_reserve"))
+        )
         self.budget_now = budget
 
         window = timedelta(minutes=float(self.p("avg_window")))
         self._history.append((now, budget))
+        self._grid_history.append((now, self.grid_export))
         retention = max(window, SHORT_WINDOW)
-        while len(self._history) > 1 and now - self._history[1][0] >= retention:
-            self._history.popleft()
+        for history in (self._history, self._grid_history):
+            while len(history) > 1 and now - history[1][0] >= retention:
+                history.popleft()
         self.budget_avg = self._weighted_average(now, window, budget)
+        self.grid_avg = self._weighted_average(now, window, self.grid_export,
+                                               self._grid_history)
         short_avg = self._weighted_average(now, SHORT_WINDOW, budget)
         ready = now - self._history[0][0] >= window * 0.9
 
@@ -399,13 +434,19 @@ class EnergyManager:
 
         left = ctx.alloc_base
         for dev in self._sorted_devices(ctx):
+            current = self._measured_power.get(dev.id, 0.0)
+            reclaimed = self._reclaimable_power.get(dev.id, 0.0)
+            # A modulating load may use its own already-paid-for minimum
+            # power, but must never offer that power to another device.
+            own_budget = dev.own_budget_power(current, reclaimed) if dev.mode == MODE_AUTO else 0.0
             try:
-                decision = await dev.async_run(ctx, left)
+                decision = await dev.async_run(ctx, left + own_budget)
             except Exception:  # noqa: BLE001
                 _LOGGER.exception("[%s] Fehler", dev.name)
                 continue
-            if decision.on and dev.participates:
-                left -= decision.power
+            # Observe/manual modes do not actually actuate the load.
+            if decision.on and dev.mode == MODE_AUTO:
+                left -= additional_reservation(decision.power, current, reclaimed)
         self.allocated = ctx.alloc_base - left
 
         if plan_due:
