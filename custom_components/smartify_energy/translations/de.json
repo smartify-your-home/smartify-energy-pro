@@ -442,6 +442,58 @@
       "abort": {
         "reconfigure_successful": "Gespeichert."
       }
+    },
+    "dryer": {
+      "entry_type": "Wäschetrockner",
+      "initiate_flow": {
+        "user": "Wäschetrockner hinzufügen"
+      },
+      "step": {
+        "user": {
+          "title": "Wäschetrockner",
+          "data": {
+            "name": "[Pflicht] Name",
+            "switch": "[Pflicht] Steckdose (bleibt bei nicht wiederanlauffähigen Geräten eingeschaltet)",
+            "power_sensor": "[Pflicht] Leistungssensor",
+            "nominal_power": "[Pflicht] Erwartete Dauerlast",
+            "duration": "[Pflicht] Typische Laufzeit",
+            "dryer_resume": "[Pflicht] Programm nach Stromunterbrechung fortsetzen?"
+          },
+          "data_description": {
+            "dryer_resume": "**Wichtig:** „Nein“ ist die sichere Voreinstellung. SEP lässt die Steckdose dann immer unangetastet und beobachtet ausschließlich einen manuell am Gerät gestarteten Trockner. Ein automatischer PV-Start ist damit nicht möglich. „Ja“ nur wählen, wenn das Modell ein begonnenes Programm nach dem Aus- und Wiedereinschalten der Steckdose automatisch fortsetzt. Dann darf SEP vor der PV-Freigabe die Steckdose abschalten; nach Freigabe bleibt sie durchgehend EIN.",
+            "power_sensor": "**Pflicht:** Tatsächlicher Strombedarf in Watt. Für die sichere Lauf-/Fertigerkennung wird eine zuverlässige Leistungsmessung benötigt.",
+            "nominal_power": "**Pflicht:** Zu reservierender längerfristiger Bedarf, z. B. 800 W. SEP hält die Reservierung bis zum Programmende, auch bei kurzen Leistungspausen.",
+            "switch": "**Pflicht:** Steckdose des Trockners. Bei „Nein“ (kein Wiederanlauf) wird sie von SEP niemals geschaltet; für die automatische PV-Steuerung ist ein tatsächlich wiederanlauffähiges Gerät erforderlich.",
+            "duration": "**Pflicht:** Typische Programmlaufzeit zur PV-Prognose. Sie löst keine automatische Abschaltung aus."
+          }
+        },
+        "reconfigure": {
+          "title": "Wäschetrockner",
+          "data": {
+            "name": "[Pflicht] Name",
+            "switch": "[Pflicht] Steckdose (bleibt bei nicht wiederanlauffähigen Geräten eingeschaltet)",
+            "power_sensor": "[Pflicht] Leistungssensor",
+            "nominal_power": "[Pflicht] Erwartete Dauerlast",
+            "duration": "[Pflicht] Typische Laufzeit",
+            "dryer_resume": "[Pflicht] Programm nach Stromunterbrechung fortsetzen?"
+          },
+          "data_description": {
+            "dryer_resume": "**Wichtig:** „Nein“ ist die sichere Voreinstellung. SEP lässt die Steckdose dann immer unangetastet und beobachtet ausschließlich einen manuell am Gerät gestarteten Trockner. Ein automatischer PV-Start ist damit nicht möglich. „Ja“ nur wählen, wenn das Modell ein begonnenes Programm nach dem Aus- und Wiedereinschalten der Steckdose automatisch fortsetzt. Dann darf SEP vor der PV-Freigabe die Steckdose abschalten; nach Freigabe bleibt sie durchgehend EIN.",
+            "power_sensor": "**Pflicht:** Tatsächlicher Strombedarf in Watt. Für die sichere Lauf-/Fertigerkennung wird eine zuverlässige Leistungsmessung benötigt.",
+            "nominal_power": "**Pflicht:** Zu reservierender längerfristiger Bedarf, z. B. 800 W. SEP hält die Reservierung bis zum Programmende, auch bei kurzen Leistungspausen.",
+            "switch": "**Pflicht:** Steckdose des Trockners. Bei „Nein“ (kein Wiederanlauf) wird sie von SEP niemals geschaltet; für die automatische PV-Steuerung ist ein tatsächlich wiederanlauffähiges Gerät erforderlich.",
+            "duration": "**Pflicht:** Typische Programmlaufzeit zur PV-Prognose. Sie löst keine automatische Abschaltung aus."
+          }
+        }
+      },
+      "error": {
+        "options_required": "Bitte beide Optionswerte angeben.",
+        "min_gt_max": "Minimalstrom ist größer als Maximalstrom.",
+        "boost_mismatch": "Boost-Art passt nicht zur gewählten Entity (Schalter ↔ Zahl)."
+      },
+      "abort": {
+        "reconfigure_successful": "Gespeichert."
+      }
     }
   },
   "selector": {
@@ -463,6 +515,18 @@
         "number": "Sollwert anheben",
         "button": "Button (Einmalladung)"
       }
+    },
+    "dryer_resume": {
+      "options": [
+        {
+          "value": "never",
+          "label": "Nein – kein Wiederanlauf, Steckdose nie schalten"
+        },
+        {
+          "value": "yes",
+          "label": "Ja – Programm läuft nach Stromwiederkehr weiter"
+        }
+      ]
     }
   },
   "entity": {
