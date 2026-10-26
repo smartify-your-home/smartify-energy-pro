@@ -1,6 +1,6 @@
 # Installation und Updates
 
-Aktuelle Version: **0.2.12**. Integrationsdomain: `smartify_energy`.
+Aktuelle Version: **0.2.13**. Integrationsdomain: `smartify_energy`.
 
 ## Update über HACS
 1. Vor dem Update Home-Assistant-Backup erstellen und die bestehenden SEP-Geräteeinstellungen dokumentieren.
@@ -47,3 +47,7 @@ Ab der aktuellen Repository-Fassung lautet der Integrationsname **Smartify Energ
 ## Neu in 0.2.10
 
 Haushaltsgeräte: `Frühester automatischer Start` (Standard `00:00`) vor automatischen Freigaben, einschließlich Spätstart und Sofortfenster. `Sofort-Start` per Taste bleibt manuell möglich. Prioritäts-Number-Entities aller Geräte werden nicht mehr bereitgestellt; bisher gespeicherte Prioritäten bleiben intern unverändert. Bereits bestehende Prioritäts-Entities können nach dem Update als nicht mehr bereitgestellt markiert werden und bei Bedarf aus der Entitätsregistrierung entfernt werden. Die grafische Prioritätensteuerung ist noch nicht implementiert.
+
+## 0.2.13 – Grafische Prioritäten
+
+Nach dieser Aktualisierung zeigen die Gerätekacheln die Priorität wieder als Zahl statt `?`. Die manuelle Prioritäten-Number-Entität bleibt entfernt. Zum Sortieren einen Geräte-Handle halten und an die gewünschte Position ziehen. Die Karte schreibt die neue Reihenfolge über den Dienst `smartify_energy.set_priority_order`; damit werden die Prioritäten im SEP-Gerätespeicher persistiert. Home Assistant nach dem Update neu starten und die Dashboard-Seite komplett neu laden, damit die neue JS-Karte aktiv wird.
