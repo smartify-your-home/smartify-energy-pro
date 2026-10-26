@@ -24,7 +24,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.2.7";
+const CARD_VERSION = "1.2.8";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -67,8 +67,8 @@ const SETTING_HELP = {
   "battery_target_soc": "Gewünschter Akkustand für die Speicherplanung. Beispiel: 90 %. Bei „Speicher zuerst“ erhalten Verbraucher erst ab diesem Stand Zugriff auf die Ladeleistung des Speichers.",
   "battery_safety": "Zusätzlicher Puffer bei der Prognose: 1,5 verlangt das 1,5-Fache der noch benötigten Speicherenergie. Höhere Werte bevorzugen den Speicher vorsichtiger.",
   "battery_strategy": "SEP berechnet weiter eine Prognose-Priorität für den Hausspeicher. Ohne direkte Stellmöglichkeit am Speicher wird dessen Ladeleistung jedoch aus Sicherheitsgründen nicht als sofort verfügbares Steuerbudget freigegeben. Die Auswahl steuert den Wechselrichter nicht.",
-  "nominal_power": "Typischer Strombedarf während des Betriebs in Watt (W). Bei Waschmaschinen ist meist die Heizphase entscheidend. SEP nutzt diesen Wert zur Reservierung und als Ersatz, wenn keine Leistung messbar ist.",
-  "min_surplus": "Benötigter freier Überschuss für die Freigabe eines Haushaltsgeräts. 1000 W verlangt mindestens 1000 W. Negative Werte erlauben zusätzlich Netzbezug. Das ist keine Garantie, dass das ganze Programm nur mit Sonne läuft.",
+  "nominal_power": "Erwartete Heizleistung dieses Haushaltsgeräts in Watt (W), z. B. 2000 W. Vor Ende der Heizphase reserviert SEP diese Leistung; bereits tatsächlich gemessene Watt werden dabei nicht doppelt belastet. Nach Ende der Heizphase entfällt die zusätzliche Heizreservierung.",
+  "min_surplus": "Zusätzliche einstellbare PV-Startschwelle in Watt (W). Für einen automatischen PV-Start zählt der höhere Wert aus Nennleistung und Mindest-Überschuss: z. B. bei 2000 W Heizleistung und 1500 W Schwelle müssen mindestens 2000 W frei sein. Auch der Mittelwert muss reichen. Negative Werte senken diese Heizlast-Absicherung nicht ab; Netzbezug kann aber durch Spätstart, Sofortfenster oder Sofort starten ausdrücklich erlaubt werden.",
   "finish_threshold": "Unter dieser Leistung kann das Programm als fertig gelten, sobald die Fertigerkennung freigegeben ist. Beispiel: 5 W. Eine zu hohe Schwelle kann längere Programmpausen mit dem Programmende verwechseln.",
   "finish_minutes": "So lange muss die Leistung unter der Fertig-Schwelle bleiben. Erst dann erscheint „Fertig“. Ein längerer Wert vermeidet Fehlmeldungen bei Pausen, meldet das Ende aber später.",
   "duration": "Geschätzte Programmdauer in Stunden für die Startempfehlung. Beispiel: 2,5 für zweieinhalb Stunden. Das Gerät wird nach dieser Zeit nicht automatisch abgeschaltet.",
