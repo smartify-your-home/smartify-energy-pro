@@ -24,7 +24,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.2.9";
+const CARD_VERSION = "1.3.0";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -49,7 +49,7 @@ const OPTION_LABELS = {
   one: "1-phasig", three: "3-phasig",
 };
 const MODE_LABELS = { auto: "Automatik", observe: "Beobachten", manual: "Manuell", off: "Aus" };
-const TYPE_ICONS = { load: "mdi:washing-machine", pool: "mdi:pool", ev: "mdi:ev-station", heatpump: "mdi:heat-pump" };
+const TYPE_ICONS = { load: "mdi:washing-machine", pool: "mdi:pool", ev: "mdi:ev-station", heatpump: "mdi:heat-pump", heater: "mdi:water-boiler" };
 const STATUS_LABELS = {
   laeuft: "läuft", wartet: "wartet", bereit: "bereit", erkannt: "erkannt", fertig: "fertig",
   aus: "aus", manuell: "manuell", beobachten: "beobachten", inaktiv: "inaktiv", sperrzeit: "Sperrzeit",
@@ -58,6 +58,14 @@ const STATUS_LABELS = {
 };
 
 const SETTING_HELP = {
+  "heater_max_temp": "Maximale Wassertemperatur. Ab dieser Temperatur schaltet SEP den Heizstab sofort AUS – unabhängig von Mindestlaufzeiten. Ein eigenständiger physischer Temperaturbegrenzer bleibt erforderlich.",
+  "heater_hysteresis": "Nach Erreichen der Maximaltemperatur darf der Heizstab erst unter Maximaltemperatur minus Hysterese erneut einschalten. Beispiel: 55 °C minus 3 K = unter 52 °C.",
+  "heater_start_surplus": "Minimaler sofort verfügbarer PV-Überschuss für EIN. Für den Start wird mindestens die Nennleistung benötigt. Standard 2200 W bei 2000 W Heizleistung. Der 10-Minuten-Mittelwert wird NICHT verwendet.",
+  "heater_stop_surplus": "Ab diesem verbleibenden Momentanbudget wird bei Unterschreitung ausgeschaltet. 0 W bedeutet bei Netzbezug AUS. Der Heizstab ist bereits im gemessenen Netzsaldo enthalten und wird nicht doppelt abgezogen.",
+  "heater_earliest_start": "Vor dieser Uhrzeit startet der Heizstab nicht neu. Standard 10:00. Ein bereits laufender Heizstab wird dadurch nicht allein ausgeschaltet.",
+  "heater_min_on": "Optionale Mindestlaufzeit gegen Flattern (0 = sofortige Abschaltung bei PV-Mangel). Temperaturfehler oder maximale Temperatur schalten dennoch sofort AUS.",
+  "heater_min_off": "Optionale Mindestpause zwischen AUS und erneutem EIN (0 = keine Pause). Schaltzeitpunkt bleibt auch nach einem Home-Assistant-Neustart gespeichert.",
+
   "mode": "Automatik: SEP steuert dieses Gerät. Beobachten: SEP zeigt Empfehlungen, schaltet aber nicht. Manuell: Sie übernehmen die Bedienung. Aus: Die automatische Regelung ist ausgesetzt. Das Verhalten beim Ausschalten hängt vom Gerätetyp ab. Zentral gilt die Auswahl für den Manager. Aus ist kein Not-Aus: Beim zentralen Ausschalten werden Haushaltsgeräte-Steckdosen einmal eingeschaltet und die Programmerkennung zurückgesetzt. Anschließend können Sie die Steckdosen manuell bedienen; Pool und Wallbox stoppen derzeit nur bei ihrem eigenen Modus Aus. Der WP-Boost wird beendet, eine Button-Ladung kann aber weiterlaufen.",
   "priority": "Kleinere Zahl bedeutet früher an der Reihe: 1 hat Vorrang vor 5. Bereits freigegebene Programme und Pflichtläufe können Vorrang behalten. Ziehen ändert diese Werte; ab dem zehnten Platz teilen Geräte Priorität 10.",
   "avg_window": "Über wie viele Minuten Netzsaldo und Steuerbudget separat gemittelt werden. Ein größerer Wert reagiert ruhiger auf Wolken, aber langsamer auf dauerhaft mehr Sonne. Standard: 10 Minuten.",
