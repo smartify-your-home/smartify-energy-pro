@@ -456,6 +456,7 @@
       "night_end": {
         "name": "Immediate window end"
       },
+      "earliest_start": {"name": "Earliest automatic start"},
       "latest_start": {
         "name": "Latest start"
       },
