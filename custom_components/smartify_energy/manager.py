@@ -272,6 +272,14 @@ class EnergyManager:
     def _dump(self) -> dict:
         return {"hub": self.params, "devices": {sid: d.dump() for sid, d in self.devices.items()}}
 
+    async def async_save_now(self) -> None:
+        """Persist a pending one-shot WW trigger before the external command.
+
+        An immediate durable write is necessary: the normal 60 s delayed
+        state save could lose the cooldown if Home Assistant restarts.
+        """
+        await self._store.async_save(self._dump())
+
     @callback
     def async_param_changed(self) -> None:
         # Changing a device mode/parameter must immediately invalidate the
