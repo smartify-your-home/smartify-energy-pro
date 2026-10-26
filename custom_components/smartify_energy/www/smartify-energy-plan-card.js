@@ -24,7 +24,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.2.2";
+const CARD_VERSION = "1.2.3";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -149,7 +149,7 @@ function collect(hass, hubId) {
     (byDevice[e.device_id] ||= {})[`${e.entity_id.split(".")[0]}:${e.translation_key}`] = e.entity_id;
     const dom = e.entity_id.split(".")[0];
     if (SETTING_DOMAINS.includes(dom)) {
-      (settings[e.device_id] ||= []).push({ id: e.entity_id, dom, key: e.translation_key, config: e.entity_category === "config" });
+      if (e.translation_key !== "priority") (settings[e.device_id] ||= []).push({ id: e.entity_id, dom, key: e.translation_key, config: e.entity_category === "config" });
     }
   }
   for (const list of Object.values(settings)) {
@@ -174,7 +174,7 @@ function collect(hass, hubId) {
         settings: settings[id] || [],
       };
     })
-    .filter(d => d.status && d.priority);
+    .filter(d => d.status);
   devices.sort((a, b) => a.id.localeCompare(b.id));
   devices.forEach((d, i) => { d.color = PALETTE[i % PALETTE.length]; });
   return { hub, name: hubs.get(hub), ents: byDevice[hub] || {}, devices, hubSettings: settings[hub] || [] };
@@ -371,7 +371,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     if (this._drag) return;
     const data = collect(hass, this._config.hub);
     const ids = data ? [...Object.values(data.ents), ...data.hubSettings.map(x => x.id),
-      ...data.devices.flatMap(d => [d.status, d.power, d.planned, d.priority, d.mode, d.active, ...d.settings.map(x => x.id)])] : [];
+      ...data.devices.flatMap(d => [d.status, d.power, d.planned, d.mode, d.active, ...d.settings.map(x => x.id)])] : [];
     const sig = ids.map(id => { const s = hass.states[id]; return s ? `${id}:${s.last_updated}` : id; }).join("|");
     if (sig === this._sig) return;
     this._data = data;
@@ -485,7 +485,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
 
   _devices(d) {
     const rows = d.devices
-      .map(dev => ({ dev, prio: num(this._st(dev.priority)?.state) ?? 99 }))
+      .map(dev => ({ dev, prio: num(this._st(dev.status)?.attributes?.prioritaet) ?? 5 }))
       .sort((a, b) => a.prio - b.prio || a.dev.name.localeCompare(b.dev.name));
     if (!rows.length) return `<div class="empty">Noch keine Geräte – in der Integration „+ Gerät hinzufügen“.</div>`;
     return `<div class="list">${rows.map(({ dev, prio }) => {
@@ -511,7 +511,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         <div class="dev-wrap" data-wrap="${dev.id}">
         <div class="dev" data-dev="${dev.id}" style="${border ? `border-image-source:${grad(border)}` : "border-image-source:linear-gradient(var(--divider-color),var(--divider-color))"}">
           <div class="handle" title="Halten und ziehen, um die Priorität zu ändern">⠿</div>
-          <div class="badge" style="background:${grad(dev.color)}">${prio === 99 ? "?" : Math.round(prio)}</div>
+          <div class="badge" style="background:${grad(dev.color)}">${Math.round(prio)}</div>
           <ha-icon icon="${esc(icon)}" data-more="${dev.status}" style="color:${on ? dev.color[1] : "var(--secondary-text-color)"}"></ha-icon>
           <div class="main" data-more="${dev.status}">
             <div class="name"><span class="t">${esc(dev.name)}</span>${chip}</div>
@@ -670,15 +670,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     g.rows.forEach(r => { r.style.transform = ""; r.classList.remove("dragging"); });
     this._drag = null;
     if (g.to !== g.from) {
-      const calls = order.map((id, idx) => {
-        const dev = g.d.devices.find(x => x.id === id);
-        const prio = Math.min(idx + 1, 10);
-        const cur = num(this._st(dev?.priority)?.state);
-        return dev && cur !== prio
-          ? this._hass.callService("number", "set_value", { entity_id: dev.priority, value: prio })
-          : null;
-      }).filter(Boolean);
-      await Promise.all(calls);
+      await this._hass.callService(DOMAIN, "set_priority_order", { device_ids: order });
     }
     this._sig = "";
     this.hass = this._hass;
