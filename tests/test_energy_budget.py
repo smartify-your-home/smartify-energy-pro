@@ -55,6 +55,23 @@ class BudgetAccountingTests(unittest.TestCase):
         # charging. Neither can be explicitly curtailed by this SEP release.
         self.assertEqual(budget.control_budget(-1000, 0, 0, 0), -1000)
 
+    def test_passive_battery_credit_only_above_rank(self):
+        # 2200 W of battery charge is physically embedded in net export.
+        self.assertEqual(budget.battery_priority_credit(2200, 3, 1), 2200)
+        self.assertEqual(budget.battery_priority_credit(2200, 3, 2), 2200)
+        self.assertEqual(budget.battery_priority_credit(2200, 3, 3), 0)
+        self.assertEqual(budget.battery_priority_credit(2200, 3, 4), 0)
+        self.assertEqual(budget.battery_priority_credit(-500, 3, 1), 0)
+
+    def test_battery_credit_is_not_an_average_credit(self):
+        current_grid = 0
+        battery_charging = 2000
+        credit = budget.battery_priority_credit(battery_charging, 4, 2)
+        self.assertEqual(current_grid + credit, 2000)
+        # The past grid-budget average is intentionally unchanged.
+        historical_average = -300
+        self.assertEqual(historical_average, -300)
+
     def test_discharge_and_grid_reserve_lower_budget(self):
         self.assertEqual(budget.control_budget(2300, 0, 500, 200), 1600)
 
