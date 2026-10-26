@@ -4,7 +4,7 @@
 - **Priorisierte Saldo-Logik:** Nur Verbraucher **oberhalb** des PV-Akkus dürfen dessen gemessene Ladung zum aktuellen Gerätesaldo hinzurechnen. Geräte **unterhalb** des Akkus erhalten diese Leistung nicht erneut.
 - Der Speicher bleibt **passiv selbstregelnd**: SEP gibt keine Batteriebefehle aus. Damit eine höhere Verbraucherpriorität physisch durchgesetzt werden kann, muss der Speicher seine Ladung automatisch reduzieren, sobald Netzexport sinkt beziehungsweise Hausverbrauch steigt.
 - Laufende Akkuladung wird nicht doppelt vom Netzsaldo abgezogen. Akku-Entladung wird wie zuvor beim Budget abgezogen; sie ist keine frei verfügbare PV.
-- **Einschränkung:** Akkuladung erhöht nur das **momentane** verfügbare Budget vor seiner Position; ein 10-Minuten-Mittelwert der tatsächlichen Akku-Freigabe wird nicht simuliert. Haushaltsgeräte mit Mittelwert-Startprüfung bleiben deshalb konservativ. PV-Akku ist ein virtuelles Gerät ohne HA-Aktor oder Ladeleistungsbegrenzung.
+- Akkuladung wird aus echten Messwerten separat als **Momentanwert, 2-Minuten-Mittelwert und konfigurierter Langzeitmittelwert** geführt. Nur Geräte vor dem Akku dürfen diese Leistung in ihrem jeweiligen Prüffenster anrechnen. Damit erhalten auch Haushaltsgeräte und das E-Auto eine korrekte Startprüfung, wenn der Akku vorher alles geschluckt hat. Der PV-Akku bleibt ein virtuelles Gerät ohne HA-Aktor oder Ladeleistungsbegrenzung.
 
 ## 0.2.21 – Heizstab als sofort reagierende PV-Restverbrauchssenke
 - **Neuer Gerätetyp „Heizstab / PV-Überschusssenke“**, unabhängig von Haushaltsgeräten, Pool und WP-Boost. Ansteuerung über `switch` oder `input_boolean`, obligatorischer Warmwasser-Temperatursensor, optionale echte Heizstab-Leistungsmessung.
