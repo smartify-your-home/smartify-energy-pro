@@ -1,6 +1,6 @@
-# Smart Energy Pro
+# Smartify Energy Pro
 
-Home-Assistant-Integration **Smart Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
+Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
 Version: **0.2.9** · Integrationsdomain: `smartify_energy`
 
@@ -21,8 +21,8 @@ Version: **0.2.9** · Integrationsdomain: `smartify_energy`
 ## Installation mit HACS
 
 1. In HACS unter **Benutzerdefinierte Repositories** die URL `https://github.com/smartify-your-home/smartify-energy-pro` mit Kategorie **Integration** hinzufügen.
-2. **Smart Energy Pro** herunterladen und Home Assistant neu starten.
-3. Unter **Einstellungen → Geräte & Dienste → Integration hinzufügen** nach **Smart Energy Pro** suchen und die Einrichtung durchführen.
+2. **Smartify Energy Pro** herunterladen und Home Assistant neu starten.
+3. Unter **Einstellungen → Geräte & Dienste → Integration hinzufügen** nach **Smartify Energy Pro** suchen und die Einrichtung durchführen.
 
 ## Manuelle Installation
 
