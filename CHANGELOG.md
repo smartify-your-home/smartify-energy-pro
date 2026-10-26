@@ -1,3 +1,8 @@
+## 0.2.28 – Kritischer Startfehler behoben
+- Die Optionsübersetzungen für den Trockner-Wiederanlauf waren irrtümlich als JSON-Liste statt als Schlüssel-Text-Objekt hinterlegt. Home Assistant 2026.10 brach deshalb beim Laden der Übersetzungen mit `TypeError: expected str, got list` ab und markierte sämtliche SEP-Entitäten als `unavailable`.
+- Deutsche und englische Übersetzungen auf das korrekte Format umgestellt; bestehende Einstellungen und gespeicherte Werte bleiben unverändert.
+- Die neue Typauswahl für Haushaltsgeräte (Waschmaschine, Geschirrspüler, Sonstiges) bleibt erhalten.
+
 ## 0.2.27 – Eigenes Wäschetrockner-Modell
 
 - Neuer Untereintrag **Wäschetrockner** mit standardmäßig 800 W Leistungsbedarf und 2,5 h Programmdauer.
