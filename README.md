@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.20** · Integrationsdomain: `smartify_energy`
+Version: **0.2.21** · Integrationsdomain: `smartify_energy`
 
 ## Dokumentation und Updates
 
@@ -82,6 +82,14 @@ Bei Änderungen am Netzleistungs-, Batterie-Leistungs- oder Wallbox-Leistungssen
 ## Haushaltsgeräte: SEM-v3-Abgleich und parallele Heizphasen (0.2.18)
 
 Die Zustandsmaschine wurde anhand der bereitgestellten SEM-v3-Integration abgeglichen: 5 Sekunden stabile Leistung über 9 W zur Programmerkennung (ohne Leistungssensor bei eingeschalteter Steckdose), 10 Sekunden über max(200 W, 8 % Nennleistung) zur Heizphasenerkennung, 2 Minuten unter der einstellbaren Fertigschwelle als Standard, standardmäßige Spätstartzeit 16:00 und Zustand „Fertig“ bis zum manuellen Reset. Bereits ausdrücklich freigegebene Programme werden nicht wegen später sinkenden Überschusses gestoppt. SEP behält die grafisch angeordneten Prioritäten anstelle der ausschließlich zeitlichen Reihenfolge von SEM. **Ab 0.2.18 gibt es keine pauschale Sperre mehr bei anderer Heizphase:** Je freigegebenem Gerät wird die noch offene Nennheizleistung unter Abzug tatsächlich gemessener Watt reserviert. Das nächste Gerät darf bei ausreichend aktuellem und gemitteltem Budget auch parallel starten. Nach Heizphasenende entfällt die Reservierung und nur der reale PV-Mittelwert kann den nächsten Start weiterhin verzögern. Neue Standardwerte betreffen neue Einträge; bereits gespeicherte Parameter bleiben bestehen. Eine Prüfung mit echten Geräten steht aus.
+
+## Heizstab / PV-Restverbrauch (0.2.21)
+
+Der neue Subentry-Gerätetyp **Heizstab / PV-Überschusssenke** kann direkt einen Home-Assistant-`switch` oder `input_boolean` steuern. Er benötigt einen *gültigen* Temperaturmesswert (`sensor`) und optional einen echten Leistungssensor. Die Start- und Stop-Entscheidungen verwenden **ausschließlich das aktuelle Restbudget**, nicht den 10-Minuten-Mittelwert. Vorrangige, noch ausstehende Geräte-Reservierungen bleiben berücksichtigt. Der gemessene, bereits laufende Verbrauch wird nicht erneut abgezogen.
+
+Nach Einrichtung im SEP-Gerät die Automatik aktivieren. Die Standardwerte entsprechen der bisherigen Elektroheizstab-Automation: **2000 W** Nennleistung, **2200 W** PV-Startschwelle, **0 W** Stoppschwelle (Netzbezug → AUS), **55 °C** Maximaltemperatur, **3 K** Hysterese (Neustart unter 52 °C), **10:00** frühester Start. `heater_min_on` und `heater_min_off` sind optional (je 0 min = deaktiviert) und können bis 120 min eingestellt werden. Die Temperaturabschaltung sowie Modus AUS übersteuern jede Mindestlaufzeit.
+
+Für einen echten Shelly-Ausgang einen `switch.*` wählen. Bei `input_boolean.*` muss eine separate HA-Automation den logischen Zustand in den echten Schaltausgang umsetzen. Bevor SEP die Steuerung übernimmt, die bisherigen **EStab_Automatik_on/off**-Automationen deaktivieren. Der Regler ersetzt weder einen unabhängigen Temperaturbegrenzer noch die elektrische Schutzabschaltung.
 
 ## Mindestüberschuss für Haushaltsgeräte
 
