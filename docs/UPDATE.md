@@ -4,7 +4,7 @@ Aktuelle Version: **0.2.9**. Integrationsdomain: `smartify_energy`.
 
 ## Update über HACS
 1. Vor dem Update Home-Assistant-Backup erstellen und die bestehenden SEP-Geräteeinstellungen dokumentieren.
-2. In HACS **Smart Energy Pro** öffnen und die neue Version herunterladen. Falls sie nicht angeboten wird, Repository in HACS neu laden.
+2. In HACS **Smartify Energy Pro** öffnen und die neue Version herunterladen. Falls sie nicht angeboten wird, Repository in HACS neu laden.
 3. **Home Assistant neu starten**, damit Python-Code und Integrationsversion geladen werden.
 4. Browser-/App-Ansicht des Dashboards neu laden. Wenn die Karte noch veraltet aussieht, den Frontend-Cache aktualisieren.
 5. In **Einstellungen → Geräte & Dienste** die Integration und den Status aller Untereinträge prüfen; erst dann Automatik aktivieren.
@@ -42,4 +42,4 @@ Bei neuen Haushaltsgeräten gelten SEM-v3-nahe Standardwerte: Mindestüberschuss
 
 ## Name in Home Assistant
 
-Ab der aktuellen Repository-Fassung lautet der Integrationsname **Smart Energy Pro**. Die technische Domain `smartify_energy` bleibt unverändert. Nach dem Update Home Assistant neu starten. Ein bereits angelegter Eintrag kann seinen alten individuell gespeicherten Namen behalten; diesen bei Bedarf in Geräte & Dienste umbenennen. Es ist keine Neuinstallation notwendig.
+Ab der aktuellen Repository-Fassung lautet der Integrationsname **Smartify Energy Pro**. Die technische Domain `smartify_energy` bleibt unverändert. Nach dem Update Home Assistant neu starten. Ein bereits angelegter Eintrag kann seinen alten individuell gespeicherten Namen behalten; diesen bei Bedarf in Geräte & Dienste umbenennen. Es ist keine Neuinstallation notwendig.
