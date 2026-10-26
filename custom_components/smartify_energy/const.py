@@ -4,7 +4,7 @@ from __future__ import annotations
 DOMAIN = "smartify_energy"
 NAME = "Smartify Energy Pro"
 MANUFACTURER = "smartify"
-VERSION = "0.2.26"
+VERSION = "0.2.27"
 
 PLATFORMS = ["sensor", "binary_sensor", "select", "number", "switch", "time", "button"]
 
@@ -27,6 +27,7 @@ CONF_INTERVAL = "interval"
 
 # ── Gerätetypen (Subentries) ─────────────────────────────────────────────────
 TYPE_LOAD = "load"
+TYPE_DRYER = "dryer"
 TYPE_POOL = "pool"
 TYPE_EV = "ev"
 TYPE_HEATPUMP = "heatpump"
