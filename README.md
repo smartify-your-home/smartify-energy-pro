@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.26** · Integrationsdomain: `smartify_energy`
+Version: **0.2.27** · Integrationsdomain: `smartify_energy`
 
 ## Dokumentation und Updates
 
@@ -101,3 +101,9 @@ Der Standardwert für **neu angelegte** Haushaltsgeräte lautet **+1.500 W**. F�
 Haushaltsgeräte haben eine **früheste automatische Startzeit** (Standard 00:00). Vor dieser Uhrzeit erfolgt keine automatische Freigabe – auch nicht durch Spätstart oder Sofortfenster. Ein ausdrücklich gedrückter **Sofort-Start** bleibt möglich. Die bisherigen Prioritäts-Nummern werden nicht mehr als Einstellungs-Entitäten angezeigt; die Prioritätslogik bleibt intern für die spätere grafische Anordnung erhalten.
 
 **Prioritäten:** Die Prioritäts-Zahlen-Entitäten sind bewusst nicht mehr sichtbar. Die grafische Übersicht zeigt die intern gespeicherte Priorität aus dem Gerätestatus; per Drag & Drop wird die Reihenfolge über `smartify_energy.set_priority_order` dauerhaft gespeichert.
+
+## Wäschetrockner – eigenes Leistungsprofil (0.2.27)
+
+Unter **Gerät hinzufügen → Wäschetrockner** kann ein Trockner separat konfiguriert werden (Standard 800 W, 2,5 Stunden). SEP reserviert während des freigegebenen Programms die eingestellte Dauerlast als erwartete Leistung, berücksichtigt die bereits am Netzanschluss gemessene Leistung und darf sie nicht doppelt als zusätzlichen Verbrauch ansetzen.
+
+**Wiederanlauf nach Stromunterbrechung vorher am eigenen Gerät prüfen:** Bei **„Nein – kein Wiederanlauf“ (sichere Voreinstellung)** lässt SEP die Steckdose vollständig unangetastet. Der Trockner wird manuell am Gerät gestartet und von SEP nur überwacht; ein verzögerter automatischer PV-Start ist dann nicht möglich. **„Ja“** ausschließlich auswählen, wenn das Gerät nach Wegfall und Rückkehr der Netzspannung ein zuvor laufendes Programm zuverlässig fortsetzt. Dann ist vor der einmaligen PV-Freigabe ein Abschalten der Steckdose möglich; nach Freigabe wird das Programm nicht wegen sinkender PV-Leistung unterbrochen. Den Wiederanlauf nur unter sicheren Bedingungen nach Herstellerangaben testen.
