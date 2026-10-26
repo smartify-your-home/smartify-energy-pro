@@ -15,7 +15,7 @@ import math
 
 from ..const import (
     BOOST_BUTTON, BOOST_NUMBER, CONF_BOOST_ENTITY, CONF_BOOST_TYPE,
-    CONF_TEMP_SENSOR, CONF_WW_ACTIVE_ENTITY,
+    CONF_TEMP_SENSOR, CONF_WW_ACTIVE_ENTITY, CONF_WW_BOOST_TEMP_ENTITY,
 )
 from ..helpers import ParamSpec, SensorSpec, is_on, state_float, state_str, power_w
 from .base import BaseDevice, Context, Decision, PlanDemand
@@ -129,6 +129,8 @@ class HeatPumpDevice(BaseDevice):
             "letzte_ausloesung": self.state.get("last_trigger"),
             "startsperre_rest_min": self._cooldown_remaining(datetime.now().astimezone()),
             "einmaliger_ww_start": self.one_shot,
+            "ww_boost_sollwert_entitaet": self.cfg.get(CONF_WW_BOOST_TEMP_ENTITY),
+            "ww_boost_sollwert_aktiv": self.target_temperature,
         }
 
     def sensor_specs(self) -> list[SensorSpec]:
@@ -156,6 +158,19 @@ class HeatPumpDevice(BaseDevice):
         if value not in ("on", "off"):
             return None
         return value == "on"
+
+    @property
+    def target_temperature(self) -> float | None:
+        """Use an optional HA temperature entity in place of fixed target."""
+        source = self.cfg.get(CONF_WW_BOOST_TEMP_ENTITY)
+        raw = state_float(self.hass, source) if source else self.p("target_temp")
+        try:
+            value = float(raw)
+        except (ValueError, TypeError):
+            return None
+        if not math.isfinite(value) or not 30 <= value <= 75:
+            return None
+        return value
 
     def _cooldown_remaining(self, now: datetime) -> int:
         """Minutes until the next permitted *start*, including after restart."""
@@ -223,7 +238,10 @@ class HeatPumpDevice(BaseDevice):
             self.status = "wartet"
             return Decision(False, 0, f"WW-Boost-Startsperre: noch {rest} min")
         temp = self.temp
-        target = float(self.p("target_temp"))
+        target = self.target_temperature
+        if target is None:
+            self.status = "wartet"
+            return Decision(False, 0, "WW-Boost-Solltemperatur fehlt oder ist ungültig")
         if temp is None or not math.isfinite(temp):
             self.status = "wartet"
             return Decision(False, 0, "Warmwassertemperatur fehlt oder ist ungültig")
@@ -253,9 +271,11 @@ class HeatPumpDevice(BaseDevice):
         on = self.is_on()
         need = self.nominal
         temp = self.temp
-        target = float(self.p("target_temp"))
+        target = self.target_temperature
         left_now = ctx.now_left(budget_left)
         left_avg = budget_left if ctx.history_ready else left_now
+        if target is None:
+            return Decision(False, 0, "WW-Boost-Solltemperatur fehlt oder ist ungültig")
         own = self.power_now() if on else 0.0
 
         if on:
@@ -341,7 +361,10 @@ class HeatPumpDevice(BaseDevice):
                 )
             return
         if self.cfg.get(CONF_BOOST_TYPE) == BOOST_NUMBER:
-            value = float(self.p("boost_value" if on else "normal_value"))
+            value = (self.target_temperature if on and self.cfg.get(CONF_WW_BOOST_TEMP_ENTITY)
+                     else float(self.p("boost_value" if on else "normal_value")))
+            if value is None:
+                raise ValueError("WW-Boost-Solltemperatur nicht verfügbar")
             await self.hass.services.async_call(self.entity.split(".")[0], "set_value",
                                                 {"entity_id": self.entity, "value": value}, blocking=True)
         else:
