@@ -9,24 +9,40 @@ from unittest.mock import patch
 
 from test_load_budget import Context, ROOT, load_device
 
-# The lightweight fake HA loader clears its temporary package roots after
-# import. Reinstall the roots around heater module import, keeping its already
-# loaded pure helpers / base class in sys.modules.
-load_device()
-package = types.ModuleType("sep_load_test")
+# Isolated modules, with no real Home Assistant installation required.
+fake_ha = types.ModuleType("homeassistant")
+fake_core = types.ModuleType("homeassistant.core")
+fake_core.HomeAssistant = object
+fake_ha_util = types.ModuleType("homeassistant.util")
+fake_dt = types.ModuleType("homeassistant.util.dt")
+fake_dt.now = lambda: datetime(2026, 10, 26, 12, tzinfo=timezone.utc)
+fake_ha_util.dt = fake_dt
+package = types.ModuleType("sep_heater_test")
 package.__path__ = [str(ROOT)]
-devices_package = types.ModuleType("sep_load_test.devices")
+devices_package = types.ModuleType("sep_heater_test.devices")
 devices_package.__path__ = [str(ROOT / "devices")]
 with patch.dict(sys.modules, {
-    "sep_load_test": package,
-    "sep_load_test.devices": devices_package,
+    "homeassistant": fake_ha,
+    "homeassistant.core": fake_core,
+    "homeassistant.util": fake_ha_util,
+    "homeassistant.util.dt": fake_dt,
+    "sep_heater_test": package,
+    "sep_heater_test.devices": devices_package,
 }):
-    spec = importlib.util.spec_from_file_location(
-        "sep_load_test.devices.heater", ROOT / "devices" / "heater.py"
-    )
-    heater_module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(heater_module)
-HeaterDevice = heater_module.HeaterDevice
+    modules = {}
+    for name, filename in [
+        ("const", "const.py"),
+        ("helpers", "helpers.py"),
+        ("devices.base", "devices/base.py"),
+        ("devices.heater", "devices/heater.py"),
+    ]:
+        fullname = "sep_heater_test." + name
+        spec = importlib.util.spec_from_file_location(fullname, ROOT / filename)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[fullname] = module
+        spec.loader.exec_module(module)
+        modules[name] = module
+HeaterDevice = modules["devices.heater"].HeaterDevice
 
 
 class HeaterTests(unittest.IsolatedAsyncioTestCase):
