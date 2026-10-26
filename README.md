@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.22** · Integrationsdomain: `smartify_energy`
+Version: **0.2.26** · Integrationsdomain: `smartify_energy`
 
 ## Dokumentation und Updates
 
@@ -11,6 +11,7 @@ Version: **0.2.22** · Integrationsdomain: `smartify_energy`
 - [Update-Anleitung und Funktionstest](docs/UPDATE.md)
 - [Funktionsstand und bekannte Grenzen](docs/FUNCTIONS.md)
 - [Pflichtfelder, optionale und bedingte Entitäten je Funktion](docs/REQUIRED_FIELDS.md)
+- [SEP 0.2.22–0.2.26: Prioritäten, Akku, WW-Boost und Dashboard](docs/SEP_CURRENT.md)
 
 ## Funktionen
 
