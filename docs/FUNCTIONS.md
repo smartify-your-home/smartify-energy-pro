@@ -1,6 +1,6 @@
 # Funktionsstand und Grenzen
 
-Stand: **0.2.8**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
+Stand: **0.2.9**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
 
 ## Regelung
 - PV-Überschuss, Prioritäten, laufende Verbraucher und Batterie-Strategie fließen in das aktuelle Leistungsverteilungsbudget ein.
@@ -29,3 +29,12 @@ Stand: **0.2.8**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten i
 - Momentane Überschüsse können stark schwanken; die Mindeststrom-/Stop-Regeln verhindern keine kurzfristigen Netzbezüge.
 - Prüfen vor produktivem Betrieb: Sensor-Vorzeichen, Phasen, Leistungsgrenzen, Steuer-Entitäten, Fehlerfall bei fehlenden Messwerten und Zusammenspiel mit anderen Automationen.
 - Automatisierte und reale Integrationstests sind nicht als vollständig nachgewiesen dokumentiert.
+
+## Haushaltsgeräte – SEM v3
+
+- Einschalten/Programmstart wird erst nach fünf Sekunden stabiler Erkennung (>9 W oder eingeschaltete Steckdose ohne Sensor) übernommen.
+- Bei >100 W wird die erstmalige Überschuss-Freigabe geprüft. Bei Ablehnung wird abgeschaltet und auf Überschuss, Spätstart oder Sofortfenster gewartet.
+- Heizphasen: > max(200 W, 8 % Nennleistung) während zehn Sekunden; Ende bei <100 W. Wartende Geräte werden während der Heizphase anderer Geräte nicht neu freigegeben.
+- Nach Freigabe läuft das Programm durch. Sinkender Überschuss allein unterbricht es nicht mehr.
+- Fertigerkennung gemäß Schwelle und Dauer, standardmäßig 5 W und zwei Minuten; Abschlussstatus bis Reset.
+- **Bewusster SEP-Unterschied:** Konfigurierbare Prioritätszahl statt SEMs ältestem Programmstart.
