@@ -19,6 +19,7 @@ from datetime import datetime, time, timedelta
 
 from homeassistant.util import dt as dt_util
 
+from ..budget import pv_start_remaining
 from ..const import CONF_POWER_SENSOR, CONF_SWITCH
 from ..helpers import BinarySpec, ButtonSpec, ParamSpec, SensorSpec, is_on, power_w, time_from_str
 from .base import BaseDevice, Context, Decision, PlanDemand
@@ -107,6 +108,20 @@ class LoadDevice(BaseDevice):
     def pv_start_need(self) -> float:
         """Safe PV start must cover heating draw and configured threshold."""
         return max(self.nominal, float(self.p("min_surplus")))
+
+    def _pv_start_headroom(self, ctx: Context, budget_left: float,
+                           sw_on: bool) -> tuple[float, float, float]:
+        """Explicitly check NOW and the ten-minute average independently.
+
+        Earlier devices may reserve unmet heater power. Their reservations
+        are deducted from BOTH budgets before this device can receive a PV
+        approval. Metered power is already accounted for at the grid meter.
+        """
+        own_measured = self.power_accounted_in_grid() if sw_on else 0.0
+        return pv_start_remaining(
+            ctx.budget_now, ctx.budget_avg, ctx.alloc_base,
+            budget_left, own_metered_w=own_measured,
+        )
 
     def _reset(self) -> None:
         self.state.update(sm=IDLE, approved=False, forced_start=False, hp_active=False, hp_done=False, since=None)
@@ -225,17 +240,21 @@ class LoadDevice(BaseDevice):
             # Add it back only for its own start check, not as credit to
             # any other appliance. Its future reservation remains in the
             # manager (nominal - actually metered draw).
-            own_measured = self.power_accounted_in_grid() if sw_on else 0.0
-            surplus_now = ctx.now_left(budget_left) + own_measured
-            surplus_avg = budget_left
+            free_now, free_avg, reserved = self._pv_start_headroom(
+                ctx, budget_left, sw_on,
+            )
             if not ctx.history_ready:
                 return self._wait("Mittelwert noch nicht verfügbar")
-            if surplus_now >= need and surplus_avg >= need:
+            if free_now >= need and free_avg >= need:
                 return self._approve(
-                    f"PV-Budget aktuell und im Mittel ok ({min(surplus_now, surplus_avg):.0f} W ≥ {need:.0f} W)"
+                    f"PV-Freigabe: aktuell {free_now:.0f} W, "
+                    f"Ø {free_avg:.0f} W ≥ {need:.0f} W "
+                    f"(andere Vorreservierungen {reserved:.0f} W)"
                 )
             return self._wait(
-                f"PV-Budget zu gering ({min(surplus_now, surplus_avg):.0f} W < {need:.0f} W)"
+                f"PV-Budget zu gering: aktuell {free_now:.0f} W, "
+                f"Ø {free_avg:.0f} W, benötigt {need:.0f} W "
+                f"(andere Vorreservierungen {reserved:.0f} W)"
             )
 
         if self.state["sm"] == WAITING:
@@ -252,15 +271,20 @@ class LoadDevice(BaseDevice):
             # parallel if *both* free budgets cover its full heater load.
             if not ctx.history_ready:
                 return Decision(False, 0, "Mittelwert noch nicht verfügbar")
-            own_measured = self.power_accounted_in_grid() if sw_on else 0.0
-            free_now = ctx.now_left(budget_left) + own_measured
-            free_avg = budget_left
-            if free_avg >= need and free_now >= need:
+            free_now, free_avg, reserved = self._pv_start_headroom(
+                ctx, budget_left, sw_on,
+            )
+            if free_now >= need and free_avg >= need:
                 return self._approve(
-                    f"PV-Budget aktuell und im Mittel ok ({min(free_avg, free_now):.0f} W ≥ {need:.0f} W)"
+                    f"PV-Freigabe: aktuell {free_now:.0f} W, "
+                    f"Ø {free_avg:.0f} W ≥ {need:.0f} W "
+                    f"(andere Vorreservierungen {reserved:.0f} W)"
                 )
             return Decision(
-                False, 0, f"Warte auf PV-Budget ({min(free_avg, free_now):.0f} W < {need:.0f} W)"
+                False, 0,
+                f"Warte auf PV-Budget: aktuell {free_now:.0f} W, "
+                f"Ø {free_avg:.0f} W, benötigt {need:.0f} W "
+                f"(andere Vorreservierungen {reserved:.0f} W)",
             )
 
         return Decision(sw_on, p, "Unbekannter Zustand")
