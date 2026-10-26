@@ -1,3 +1,8 @@
+## 0.2.13 – Prioritätsanzeige und Drag & Drop repariert
+- Fehler korrigiert: Nach Entfernung der Prioritäts-Zahlen-Entitäten zeigte die grafische Übersicht für jedes Gerät `?` und erwartete nicht mehr vorhandene Entitäten.
+- Geräte werden jetzt aus ihrem Status ermittelt und die gespeicherte Priorität als Zahl aus dem Statusattribut `prioritaet` angezeigt.
+- Die Reihenfolge wird über den eigenen Dienst `smartify_energy.set_priority_order` gespeichert. Eine sichtbare `number.priority`-Entität wird dafür nicht mehr benötigt.
+
 ## 0.2.12 – Bezeichnung der Startzeiten
 - Haushaltsgeräte: Anzeigename der Zeit-Entität auf **„Frühester Start“** vereinheitlicht; **„Spätester Start“** bleibt bestehen.
 - Keine Änderung der technischen Entitätsschlüssel oder gespeicherten Zeitwerte.
