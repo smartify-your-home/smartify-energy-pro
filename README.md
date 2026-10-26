@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.12** · Integrationsdomain: `smartify_energy`
+Version: **0.2.13** · Integrationsdomain: `smartify_energy`
 
 ## Dokumentation und Updates
 
@@ -85,3 +85,5 @@ Der Standardwert für **neu angelegte** Haushaltsgeräte lautet **+1.500 W**: Er
 ### Startzeit und Priorität
 
 Haushaltsgeräte haben eine **früheste automatische Startzeit** (Standard 00:00). Vor dieser Uhrzeit erfolgt keine automatische Freigabe – auch nicht durch Spätstart oder Sofortfenster. Ein ausdrücklich gedrückter **Sofort-Start** bleibt möglich. Die bisherigen Prioritäts-Nummern werden nicht mehr als Einstellungs-Entitäten angezeigt; die Prioritätslogik bleibt intern für die spätere grafische Anordnung erhalten.
+
+**Prioritäten:** Die Prioritäts-Zahlen-Entitäten sind bewusst nicht mehr sichtbar. Die grafische Übersicht zeigt die intern gespeicherte Priorität aus dem Gerätestatus; per Drag & Drop wird die Reihenfolge über `smartify_energy.set_priority_order` dauerhaft gespeichert.
