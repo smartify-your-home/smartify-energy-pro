@@ -139,6 +139,9 @@ class BaseDevice:
             "empfehlung": self.would,
             "reserviert_w": round(d.power) if d and d.on else 0,
             "pflicht": bool(d and d.forced),
+            # Snapshot of the budget available at this device's priority
+            # position (before its own start). Used by SEP's priority card.
+            **self.manager.device_budgets.get(self.id, {}),
         }
 
     # ── Zustand ──────────────────────────────────────────────────────────────
