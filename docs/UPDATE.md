@@ -38,7 +38,7 @@ Automatik zuerst in den Beobachtungs- bzw. sicheren manuellen Betrieb versetzen.
 
 ## Besonderheiten von 0.2.9 – Haushaltsgeräte
 
-Bei neuen Haushaltsgeräten gelten SEM-v3-nahe Standardwerte: Mindestüberschuss -1000 W, späteste Startzeit 16:00, Fertigerkennung 2 Minuten. Bereits gespeicherte Werte werden nicht automatisch überschrieben. Nach dem Update prüfen, ob Start, Heizphase, Unterbrechung bei fehlender Erstfreigabe, Warten, Freigabe und Reset wie vorgesehen funktionieren. Insbesondere echte Steckdosen und Geräte zunächst nur beaufsichtigt testen.
+Bei neuen Haushaltsgeräten gelten SEM-v3-nahe Standardwerte: Mindestüberschuss **+1.500 W** (aktuelle Korrektur; zuvor −1.000 W), späteste Startzeit 16:00, Fertigerkennung 2 Minuten. Bereits gespeicherte Werte werden nicht automatisch überschrieben. Nach dem Update prüfen, ob Start, Heizphase, Unterbrechung bei fehlender Erstfreigabe, Warten, Freigabe und Reset wie vorgesehen funktionieren. Insbesondere echte Steckdosen und Geräte zunächst nur beaufsichtigt testen.
 
 ## Name in Home Assistant
 
