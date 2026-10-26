@@ -137,10 +137,14 @@ class WeatherStartTests(unittest.TestCase):
         self.assertEqual(self.dev.reclaimable_power(), 0)
         self.assertEqual(self.dev.own_budget_power(2000, 0), 0)
 
-    def test_running_boost_not_stopped_by_weather(self):
-        self.dev.state.update(active=True, started=self.now.timestamp())
-        self.values.update({'sensor.sun': '-10', 'sensor.next': '100'})
-        self.assertTrue(self.allowed())
+    def test_running_ww_ladung_is_not_retriggered_or_stopped_by_weather(self):
+        self.dev.cfg['ww_active_entity'] = 'binary_sensor.ww_active'
+        self.values.update({'binary_sensor.ww_active': 'on', 'sensor.sun': '-10', 'sensor.next': '100'})
+        result = self.dev.decide(self.ctx, 3000)
+        self.assertFalse(result.on)
+        self.assertIn('Warmwasserladung läuft', result.reason)
+        self.assertTrue(self.dev.is_on())
+
 
     def test_existing_temperature_idle_and_power_gates_remain(self):
         self.dev.params['target_temp'] = 50
