@@ -24,7 +24,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.2.4";
+const CARD_VERSION = "1.2.5";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -304,7 +304,7 @@ const CARD_CSS = `
   .col .pv { position:absolute; left:0; right:0; bottom:0; border-radius:3px 3px 0 0; opacity:.22; background:${grad(PV_GRADIENT).replace("to right", "to top")}; }
   .col .seg { position:relative; width:100%; }
   .col .seg:last-child { border-radius:3px 3px 0 0; }
-  .col.gap { margin-left:8px; }
+  .pv-break { flex:0 0 30px; min-width:30px; height:100%; border-left:1px dashed var(--divider-color); border-right:1px dashed var(--divider-color); display:flex; align-items:center; justify-content:center; color:var(--secondary-text-color); font-size:9px; writing-mode:vertical-rl; box-sizing:border-box; background:var(--secondary-background-color,transparent); opacity:.8; }\n  .pv-break-label { flex:0 0 30px !important; min-width:30px !important; }\n  .col.gap { margin-left:8px; }
   .col.gap::before { content:""; position:absolute; left:-6px; top:20%; bottom:0; border-left:1px dotted var(--divider-color); }
   .col.now::after { content:""; position:absolute; top:-2px; bottom:0; left:-1px; border-left:2px dashed var(--primary-color); }
   .labels { display:flex; gap:2px; margin-top:3px; }
@@ -537,30 +537,50 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const horizon = new Date();
     horizon.setDate(horizon.getDate() + 2);
     horizon.setHours(0, 0, 0, 0);
-    const cols = hours.filter(h => { const t = Date.parse(h.zeit); return t + 3600e3 > now && t < horizon.getTime(); });
+    const visible = hours.filter(h => {
+      const t = Date.parse(h.zeit);
+      return t + 3600e3 > now && t < horizon.getTime();
+    });
+    // Do not draw zero-PV hours as full-width columns. Preserve a visible
+    // separator for each consecutive gap, including the overnight interval.
+    const cols = visible.filter(h => (Number(h.pv_w) || 0) > 0 ||
+      Object.values(h.geraete || {}).some(w => Number(w) > 0));
     if (!cols.length) return `<div class="timeline"><div class="empty">Kein PV-Ertrag im Zeitraum.</div></div>`;
     const colorOf = name => name === "Speicher" ? BATTERY_GRADIENT : (d.devices.find(x => x.name === name)?.color || PALETTE[6]);
     const max = Math.max(...cols.map(h => Math.max(h.pv_w || 0, Object.values(h.geraete || {}).reduce((a, b) => a + b, 0))), 1);
     const used = new Set();
-    const bars = cols.map((h, i) => {
+    const bars = [];
+    const labels = [];
+    const step = cols.length > 16 ? 3 : cols.length > 8 ? 2 : 1;
+    cols.forEach((h, i) => {
       const t = Date.parse(h.zeit);
-      const gap = i > 0 && t - Date.parse(cols[i - 1].zeit) > 3600e3;
+      const elapsedHours = i ? Math.round((t - Date.parse(cols[i - 1].zeit)) / 3600e3) : 1;
+      if (elapsedHours > 1) {
+        const omitted = elapsedHours - 1;
+        const from = new Date(Date.parse(cols[i - 1].zeit) + 3600e3);
+        const to = new Date(t);
+        const night = from.toDateString() !== to.toDateString() ||
+          (from.getHours() >= 18 || to.getHours() <= 7);
+        const label = night ? "Nacht" : "PV-Pause";
+        const tooltip = `${omitted} h ohne PV-Ertrag (${from.toLocaleString("de-AT")} – ${to.toLocaleString("de-AT")})`;
+        bars.push(`<div class="pv-break" title="${esc(tooltip)}"><span>${label}</span></div>`);
+        labels.push(`<div class="pv-break-label">⋯</div>`);
+      }
       const isNow = t <= now && now < t + 3600e3;
       const segs = Object.entries(h.geraete || {}).map(([name, w]) => {
         used.add(name);
         const g = colorOf(name);
         return `<div class="seg" title="${esc(name)}: ${fmtW(w)}" style="height:${(w / max) * 100}%;background:linear-gradient(to top,${g.join(",")})"></div>`;
       }).join("");
-      const label = new Date(t).toLocaleTimeString("de-AT", { hour: "2-digit" });
-      return `<div class="col ${isNow ? "now" : ""} ${gap ? "gap" : ""}" title="${label} Uhr – PV ${fmtW(h.pv_w)}, frei ${fmtW(h.frei_w)}">
-          <div class="pv" style="height:${((h.pv_w || 0) / max) * 100}%"></div>${segs}</div>`;
-    }).join("");
-    const step = cols.length > 16 ? 3 : cols.length > 8 ? 2 : 1;
-    const labels = cols.map((h, i) => `<div style="${i > 0 && Date.parse(h.zeit) - Date.parse(cols[i - 1].zeit) > 3600e3 ? "margin-left:8px" : ""}">${i % step === 0 ? new Date(Date.parse(h.zeit)).getHours() : ""}</div>`).join("");
+      const hour = new Date(t).toLocaleTimeString("de-AT", { hour: "2-digit" });
+      bars.push(`<div class="col ${isNow ? "now" : ""}" title="${hour} Uhr – PV ${fmtW(h.pv_w)}, frei ${fmtW(h.frei_w)}">
+          <div class="pv" style="height:${((h.pv_w || 0) / max) * 100}%"></div>${segs}</div>`);
+      labels.push(`<div>${i % step === 0 || elapsedHours > 1 ? new Date(t).getHours() : ""}</div>`);
+    });
     const legend = [`<span><i style="background:${grad(PV_GRADIENT)};opacity:.5"></i>PV-Prognose</span>`]
       .concat([...used].map(n => `<span><i style="background:${grad(colorOf(n))}"></i>${esc(n)}</span>`)).join("");
     const next = plan?.state && plan.state !== "–" ? `<div class="next">Als Nächstes: ${esc(plan.state)}</div>` : "";
-    return `<div class="timeline"><div class="bars">${bars}</div><div class="labels">${labels}</div>
+    return `<div class="timeline"><div class="bars">${bars.join("")}</div><div class="labels">${labels.join("")}</div>
       <div class="legend">${legend}</div></div>${next}`;
   }
 
