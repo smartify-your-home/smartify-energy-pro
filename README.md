@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.28** · Integrationsdomain: `smartify_energy`
+Version: **0.2.29** · Integrationsdomain: `smartify_energy`
 
 ## Dokumentation und Updates
 
@@ -107,3 +107,7 @@ Haushaltsgeräte haben eine **früheste automatische Startzeit** (Standard 00:00
 Unter **Gerät hinzufügen → Wäschetrockner** kann ein Trockner separat konfiguriert werden (Standard 800 W, 2,5 Stunden). SEP reserviert während des freigegebenen Programms die eingestellte Dauerlast als erwartete Leistung, berücksichtigt die bereits am Netzanschluss gemessene Leistung und darf sie nicht doppelt als zusätzlichen Verbrauch ansetzen.
 
 **Wiederanlauf nach Stromunterbrechung vorher am eigenen Gerät prüfen:** Bei **„Nein – kein Wiederanlauf“ (sichere Voreinstellung)** lässt SEP die Steckdose vollständig unangetastet. Der Trockner wird manuell am Gerät gestartet und von SEP nur überwacht; ein verzögerter automatischer PV-Start ist dann nicht möglich. **„Ja“** ausschließlich auswählen, wenn das Gerät nach Wegfall und Rückkehr der Netzspannung ein zuvor laufendes Programm zuverlässig fortsetzt. Dann ist vor der einmaligen PV-Freigabe ein Abschalten der Steckdose möglich; nach Freigabe wird das Programm nicht wegen sinkender PV-Leistung unterbrochen. Den Wiederanlauf nur unter sicheren Bedingungen nach Herstellerangaben testen.
+
+## WW-Boost bei laufender Warmwasserbereitung (0.2.29)
+
+Für einmalige WW-Boost-Auslöser (Button/Schalter/Input-Boolean) darf SEP auch während einer bereits laufenden Warmwasserbereitung einmalig boosten, sobald der konfigurierte WW-Aktiv-Binärsensor **mindestens 10 Minuten durchgehend `on`** ist und das **aktuelle prioritätsbereinigte Steuerbudget mindestens 0 W** beträgt. Die normale Mindestleistungsfreigabe und WP-Ruhebedingung werden in diesem speziellen Fall nicht benötigt; Solltemperatur, Temperaturhysterese, optionale Wetterbedingungen und Boost-Startsperre bleiben wirksam. Pro erfasstem WW-Zyklus wird höchstens ein Boost ausgelöst. Ohne gültigen WW-Aktiv-Sensor ist diese Sonderfreigabe nicht möglich. Sollwertgesteuerte Number-Boosts bleiben vorerst unverändert.
