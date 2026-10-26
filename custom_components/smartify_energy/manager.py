@@ -71,6 +71,7 @@ class EnergyManager:
         self._pending_run = None
         self._last_run: datetime | None = None
         self._last_plan: datetime | None = None
+        self._plan_dirty = False
         # Messwerte für Sensoren
         self.grid_export = 0.0
         self.sinks = 0.0
@@ -256,6 +257,9 @@ class EnergyManager:
 
     @callback
     def async_param_changed(self) -> None:
+        # Changing a device mode/parameter must immediately invalidate the
+        # displayed forecast allocation instead of waiting for PLAN_INTERVAL.
+        self._plan_dirty = True
         self._store.async_delay_save(self._dump, 5)
         self._schedule_run()
 
@@ -357,13 +361,12 @@ class EnergyManager:
         dt = min(max(dt, 0.0), 300.0)
         self._last_run = now
 
-        if self._last_plan is None or now - self._last_plan >= PLAN_INTERVAL:
+        forecast_due = self._last_plan is None or now - self._last_plan >= PLAN_INTERVAL
+        plan_due = forecast_due or self._plan_dirty
+        if forecast_due:
             if self.forecast.configured:
                 await self.forecast.async_refresh()
             self._last_plan = now
-            plan_due = True
-        else:
-            plan_due = False
 
         self._read_inputs()
         self._battery_strategy(now)
@@ -406,6 +409,7 @@ class EnergyManager:
         self.allocated = ctx.alloc_base - left
 
         if plan_due:
+            self._plan_dirty = False
             self._plan(now)
         self._store.async_delay_save(self._dump, 60)
 
