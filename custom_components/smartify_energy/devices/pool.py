@@ -84,6 +84,11 @@ class PoolDevice(BaseDevice):
     def is_on(self) -> bool:
         return is_on(self.hass, self.switch)
 
+    def own_budget_power(self, measured_w: float, reclaimed_w: float) -> float:
+        # Existing pool draw is already reflected in the grid. It can count
+        # toward maintaining its own run, never toward another device's start.
+        return measured_w if self.mode == "auto" and self.is_on() else 0.0
+
     @property
     def water_temp(self) -> float | None:
         return state_float(self.hass, self.cfg.get(CONF_TEMP_SENSOR))
