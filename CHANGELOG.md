@@ -1,3 +1,11 @@
+## 0.2.20 – Aktuelles Einzelbudget pro Gerät und kombinierte Heizreservierung
+- Die Freigabe des nächsten PV-Haushaltsgeräts bewertet **aktuelles** und **gemitteltes** Steuerbudget getrennt und berücksichtigt in beiden Budgets alle noch offenen Heizleistungs-Reservierungen vorheriger Geräte. Ein hoher alter Mittelwert ersetzt niemals eine zu geringe momentane Leistung.
+- Im Grundsatz: PV-Budget jetzt − Vorreservierungen ≥ erwartete Heizlast des nächsten Geräts **und** PV-Budget Mittelwert − Vorreservierungen ≥ erwartete Heizlast. Bereits tatsächlich gemessener Verbrauch wird nicht doppelt abgezogen; die noch nicht eingetretene Heizlast bleibt vollständig reserviert.
+- Die Zustandsmeldung zeigt bei einer Ablehnung jetzt **aktuell / Ø / benötigt / Vorreservierungen** nachvollziehbar an.
+- In der **Prioritätenliste** steht direkt neben der gemessenen Geräteleistung das **aktuell pro Gerät verfügbare Budget**; darunter der Mittelwert und die Reservierungen der weiter oben eingeplanten Verbraucher. Die Ansicht wird mit jedem Regelzyklus aktualisiert. Statusattribute und die „Verteilt“-Sensorattribute enthalten ebenfalls diese Werte.
+- Regressionstests simulieren zwei gleichzeitige 2-kW-Heizer, alten hohen Mittelwert, zu niedrigen aktuellen Wert, drei Geräte mit dritter Ablehnung, tatsächlich gemessene Heizleistung und Ende der Heizphase.
+- Bereits freigegebene Programme werden bei später fehlender Sonne weiterhin nicht abgeschaltet; Sofort- und Spätstarts behalten ihre Ausnahmen. Die historische Wärmepumpen-Abtauhaltezeit des früheren **saldo_manager** wurde nicht übernommen: Dessen beabsichtigte 15-min-Nennleistungs-Haltezeit enthielt eine vorzeitige Rücksetzung und war nicht zuverlässig.
+
 ## 0.2.19 – Veraltete PV-Freigabe bei Haushaltsgeräten korrigiert
 - Laufende freigegebene Haushaltsgeräte zeigen nicht länger den bei Programmstart gemessenen Überschuss als angeblich aktuellen Wert; sie melden stattdessen „Programm läuft – bereits freigegeben“.
 - Eine reguläre PV-Freigabe wird nicht mehr fälschlich als Pflicht-Start gekennzeichnet. Sofortfenster, Spätstart und manueller Sofort-Start bleiben erzwungene Freigaben.
