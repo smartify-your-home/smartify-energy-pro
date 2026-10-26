@@ -1,3 +1,10 @@
+## 0.2.27 – Eigenes Wäschetrockner-Modell
+
+- Neuer Untereintrag **Wäschetrockner** mit standardmäßig 800 W Leistungsbedarf und 2,5 h Programmdauer.
+- Dauerlastreservierung über die gesamte freigegebene Laufzeit statt Heizphasenende wie bei Waschmaschine/GS; berücksichtigt tatsächliche Messung ohne Doppelzählung.
+- **Wiederanlauf nach Stromausfall** muss vom Benutzer am konkreten Trockner geprüft und ausdrücklich bestätigt werden. Standard `Nein`: SEP schaltet die Steckdose niemals, Trockner läuft nur manuell und wird überwacht. Option `Ja`: PV-Startsteuerung über die Steckdose zulässig; nach Freigabe keine PV-bedingte Unterbrechung.
+- Testhinweis: Zunächst im Modus Beobachten prüfen, dann Schaltverhalten beaufsichtigen.
+
 ## 0.2.26 – Netzsaldo/Steuerbudget bündig anzeigen
 
 - Im kompakten SEP-Header stehen die Kennzeichen **Ø** und **akt.** in einer eigenen Spalte unterhalb der jeweiligen Überschrift.
