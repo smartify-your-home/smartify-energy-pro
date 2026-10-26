@@ -4,7 +4,7 @@ from __future__ import annotations
 DOMAIN = "smartify_energy"
 NAME = "Smartify Energy Pro"
 MANUFACTURER = "smartify"
-VERSION = "0.2.15"
+VERSION = "0.2.17"
 
 PLATFORMS = ["sensor", "binary_sensor", "select", "number", "switch", "time", "button"]
 
@@ -14,7 +14,7 @@ CONF_GRID_SIGN = "grid_sign"
 CONF_GRID_EXPORT_SENSOR = "grid_export_sensor"  # optional: getrennter Einspeise-Sensor
 GRID_SIGN_EXPORT_POSITIVE = "export_positive"
 GRID_SIGN_IMPORT_POSITIVE = "import_positive"
-CONF_SINK_SENSORS = "sink_sensors"          # z. B. Ohmpilot/Heizstab: wird zum Überschuss addiert
+CONF_SINK_SENSORS = "sink_sensors"          # externe Überschusssenken, informativ (ohne Stellzugriff nicht rückrechenbar)
 CONF_FORECAST_ENTRIES = "forecast_entries"  # Config-Entries mit Energie-Plattform (Forecast.Solar, Solcast, …)
 CONF_FORECAST_SENSORS = "forecast_sensors"  # Fallback: Sensoren mit Prognose-Attributen
 CONF_BAT_SOC = "battery_soc"
@@ -58,6 +58,7 @@ CONF_EFFICIENCY = "efficiency"
 CONF_DAYS_ENTITY = "days_entity"
 CONF_BOOST_ENTITY = "boost_entity"
 CONF_BOOST_TYPE = "boost_type"
+CONF_WW_ACTIVE_ENTITY = "ww_active_entity"
 BOOST_SWITCH = "switch"
 BOOST_BUTTON = "button"
 BOOST_NUMBER = "number"
