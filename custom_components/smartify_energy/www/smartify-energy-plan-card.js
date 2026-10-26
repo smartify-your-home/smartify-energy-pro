@@ -24,7 +24,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.2.5";
+const CARD_VERSION = "1.2.6";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -224,8 +224,8 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
       <div class="hint">Bei mehreren Energiemanagern wählen Sie hier das gewünschte Haus oder System. Automatisch verwendet den ersten gefundenen Manager.</div>
       ${hubs.size ? "" : `<div class="hint">Kein smartify Energiemanager gefunden – Integration installiert?</div>`}
       <div class="section">Bereiche</div>
-      <div class="row"><input type="checkbox" id="show_header" ${chk("show_header")}><label for="show_header">Überschuss-Leiste</label></div>
-      <div class="hint">Zeigt die Kacheln für Überschuss, zugeteilte Leistung, Prognose und Speicher-Vorrang.</div>
+      <div class="row"><input type="checkbox" id="show_header" ${chk("show_header")}><label for="show_header">Netzsaldo- und Budgetleiste</label></div>
+      <div class="hint">Zeigt den echten Netzsaldo (+ Einspeisung, − Bezug) getrennt vom rechnerischen Steuerbudget sowie Verteilung, Prognose und Speicherdaten.</div>
       <div class="row"><input type="checkbox" id="show_priorities" ${chk("show_priorities")}><label for="show_priorities">Prioritäten (Drag &amp; Drop)</label></div>
       <div class="hint">Zeigt die Geräteliste mit ihrer Reihenfolge. Ziehen verändert, wer den verfügbaren Solarstrom zuerst bekommt.</div>
       <div class="row"><input type="checkbox" id="show_mode" ${chk("show_mode")}><label for="show_mode">Modus-Auswahl je Gerät</label></div>
@@ -259,8 +259,8 @@ const CARD_CSS = `
              color:var(--secondary-text-color); margin:14px 2px 6px; display:flex; justify-content:space-between; }
   .section span:last-child { text-transform:none; letter-spacing:0; font-weight:400; }
 
-  .tiles { display:flex; gap:4px; }
-  .tile { flex:1 1 0; min-width:0; container-type:inline-size; background:var(--row-bg); border-radius:var(--radius); padding:8px 4px 6px;
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:4px; }
+  .tile { min-width:0; container-type:inline-size; background:var(--row-bg); border-radius:var(--radius); padding:8px 4px 6px;
           display:flex; flex-direction:column; align-items:center; cursor:pointer; box-sizing:border-box;
           border-style:solid; border-width:0 0 4px 0; border-image-slice:1; box-shadow:var(--ha-card-box-shadow,none); }
   .tile ha-icon { --mdc-icon-size:22px; }
@@ -402,13 +402,18 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const e = d.ents;
     const surplus = this._st(e["sensor:surplus"]);
     const avg = this._st(e["sensor:surplus_avg"]);
+    const budget = this._st(e["sensor:budget"]);
+    const budgetAvg = this._st(e["sensor:budget_avg"]);
     const alloc = this._st(e["sensor:allocated"]);
     const fc = this._st(e["sensor:forecast_today"]);
     const bat = this._st(e["sensor:battery_priority"]);
     const s = num(surplus?.state);
+    const b = num(budget?.state);
     const tiles = [
-      { ent: e["sensor:surplus"], icon: "mdi:solar-power-variant", v: fmtW(s), n: "Überschuss", g: s > 0 ? ["#81C784", "#00ACC1"] : ["#FFB74D", "#E65100"] },
-      { ent: e["sensor:surplus_avg"], icon: "mdi:chart-bell-curve", v: fmtW(num(avg?.state)), n: "Ø Überschuss", g: ["#B0BEC5", "#546E7A"] },
+      { ent: e["sensor:surplus"], icon: "mdi:transmission-tower", v: fmtW(s), n: "Netzsaldo (− Bezug)", g: s >= 0 ? ["#81C784", "#00ACC1"] : ["#FFB74D", "#E65100"] },
+      { ent: e["sensor:budget"], icon: "mdi:solar-power-variant", v: budget ? fmtW(b) : "–", n: "Steuerbudget", g: b > 0 ? ["#81C784", "#00ACC1"] : ["#FFB74D", "#E65100"] },
+      { ent: e["sensor:surplus_avg"], icon: "mdi:chart-bell-curve", v: fmtW(num(avg?.state)), n: "Ø Netzsaldo", g: ["#B0BEC5", "#546E7A"] },
+      { ent: e["sensor:budget_avg"], icon: "mdi:chart-bell-curve", v: budgetAvg ? fmtW(num(budgetAvg.state)) : "–", n: "Ø Steuerbudget", g: ["#B0BEC5", "#546E7A"] },
       { ent: e["sensor:allocated"], icon: "mdi:call-split", v: fmtW(num(alloc?.state)), n: "Verteilt", g: PALETTE[0] },
     ];
     if (fc && fc.state !== "unknown" && fc.state !== "unavailable") {
