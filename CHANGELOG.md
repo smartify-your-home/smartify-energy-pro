@@ -2,6 +2,15 @@
 
 Die Versionsnummer bezeichnet die Home-Assistant-Integration. Angaben zur Reaktionszeit beziehen sich auf die interne Planung und sind **keine garantierten Hardware-Schaltzeiten**. Eine Prüfung an einer realen Home-Assistant-Anlage steht noch aus.
 
+## 0.2.9 – Haushaltsgeräte an SEM v3 angeglichen (26.10.2026)
+- Programmerkennung bei eingeschalteter Steckdose nun erst nach 5 Sekunden stabil über 9 W (ohne Sensor über den Schaltzustand).
+- Abschlusszustand „Fertig“ bleibt bis zum ausdrücklichen Reset erhalten; kein automatischer Neustart allein durch wieder steigende Leistung.
+- Standardwerte für **neue** Haushaltsgeräte aus SEM v3: Mindestüberschuss -1000 W, Spätstart 16:00, Fertigerkennung 2 Minuten; Heizphasenerkennung > max(200 W, 8 % Nennleistung) über 10 Sekunden.
+- Bei erstem Leistungsanstieg >100 W wird die Freigabe geprüft; bereits freigegebene Programme laufen weiter.
+- Unterschied zur SEM-Vorlage: SEP verwendet die manuell festgelegten Geräteprioritäten anstelle der ausschließlich zeitlichen Reihenfolge. Die 10-Minuten-Mittelwertprüfung und Heizphasen-Sperre für wartende Geräte bleiben erhalten.
+- Diese Änderungen sind im Repository umgesetzt, aber **nicht auf einer realen HA-Installation getestet**.
+- Bei bestehenden Geräten bleiben bereits gespeicherte Parameterwerte unverändert.
+
 ## 0.2.8 – Schnellere Wallbox-Regelung (26.10.2026)
 - Änderungen des Netzleistungssensors, des konfigurierten Speicher-Leistungssensors sowie von Wallbox-Leistungs- und Stromsensoren stoßen eine gebündelte Neubewertung mit ca. 0,5 s Verzögerung an; andere verfolgte Entitäten weiterhin ca. 2 s. Der reguläre Zyklus läuft zusätzlich.
 - Eine bereits laufende PV-Ladung berechnet ihren Strom nun aus dem momentanen Restbudget einschließlich vorrangiger Reservierungen, nicht länger aus dem geglätteten 2-Minuten-Wert.
