@@ -316,6 +316,52 @@
       "abort": {
         "reconfigure_successful": "Saved."
       }
+    },
+    "heater": {
+      "entry_type": "Heater / PV surplus sink",
+      "initiate_flow": {
+        "user": "Add PV surplus heater"
+      },
+      "step": {
+        "user": {
+          "title": "Heater / PV surplus sink",
+          "data": {
+            "name": "Name",
+            "switch": "Switch / input boolean",
+            "power_sensor": "Power sensor (optional)",
+            "temperature_sensor": "Water temperature sensor",
+            "nominal_power": "Heater rated power"
+          },
+          "data_description": {
+            "name": "Choose a descriptive name for this PV heater.",
+            "switch": "Required writable switch.* or input_boolean.* controlling the heater relay. Do not choose the normal domestic-hot-water boost button.",
+            "power_sensor": "Optional actual heater power in W or kW. It avoids double-reserving the heater draw already embedded in the grid meter. If omitted, reservations remain conservative.",
+            "temperature_sensor": "Required actual tank temperature. If missing, unknown or unavailable, the heater is switched OFF immediately.",
+            "nominal_power": "Rated heating power in W, e.g. 2000 W; used to protect other devices' budgets."
+          }
+        },
+        "reconfigure": {
+          "title": "Heater / PV surplus sink",
+          "data": {
+            "name": "Name",
+            "switch": "Switch / input boolean",
+            "power_sensor": "Power sensor (optional)",
+            "temperature_sensor": "Water temperature sensor",
+            "nominal_power": "Heater rated power"
+          },
+          "data_description": {
+            "name": "Choose a descriptive name for this PV heater.",
+            "switch": "Required writable switch.* or input_boolean.* controlling the heater relay. Do not choose the normal domestic-hot-water boost button.",
+            "power_sensor": "Optional actual heater power in W or kW. It avoids double-reserving the heater draw already embedded in the grid meter. If omitted, reservations remain conservative.",
+            "temperature_sensor": "Required actual tank temperature. If missing, unknown or unavailable, the heater is switched OFF immediately.",
+            "nominal_power": "Rated heating power in W, e.g. 2000 W; used to protect other devices' budgets."
+          }
+        }
+      },
+      "error": {},
+      "abort": {
+        "reconfigure_successful": "Saved."
+      }
     }
   },
   "selector": {
@@ -454,6 +500,24 @@
       },
       "trigger_cooldown": {
         "name": "Minimum WW boost interval"
+      },
+      "heater_max_temp": {
+        "name": "Maximum temperature"
+      },
+      "heater_hysteresis": {
+        "name": "Temperature hysteresis"
+      },
+      "heater_start_surplus": {
+        "name": "PV surplus to switch on"
+      },
+      "heater_stop_surplus": {
+        "name": "Budget cutoff / switch off"
+      },
+      "heater_min_on": {
+        "name": "Minimum on-time (optional)"
+      },
+      "heater_min_off": {
+        "name": "Minimum off-time (optional)"
       }
     },
     "time": {
@@ -480,6 +544,9 @@
       },
       "deadline": {
         "name": "Ready by / departure"
+      },
+      "heater_earliest_start": {
+        "name": "Heater earliest start"
       }
     },
     "switch": {
