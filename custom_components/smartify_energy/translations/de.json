@@ -16,7 +16,7 @@
           "name": "**Pflicht:** Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
           "grid_sensor": "**Pflicht:** Wählen Sie die aktuelle Leistung am Haus-Netzanschluss in W oder kW, nicht einen Energiezähler in kWh. Bei getrennten Sensoren wählen Sie hier den Netzbezug.",
           "grid_sign": "**Pflicht:** Welche Zahl zeigt Ihr Netzsensor beim Einspeisen? Positive Zahl: „Einspeisung positiv“. Minuszeichen: „Bezug positiv“. Eine falsche Auswahl vertauscht Überschuss und Netzbezug.",
-          "sink_sensors": "**Optional:** Nur für Verbraucher, die selbstständig den übrigen Solarstrom aufnehmen, etwa einen geregelten Heizstab. Deren Leistung wird zum verteilbaren Budget addiert. Normale Haushaltsverbraucher und bereits von SEP gesteuerte Geräte hier nicht nochmals auswählen.",
+          "sink_sensors": "**Optional:** Externe Überschuss-Senken wie Ohmpilot oder Heizstab können zur Information angezeigt werden. Solange SEP sie nicht tatsächlich selbst abregeln kann, wird deren Leistung nicht zum Steuerbudget addiert. Keine normalen Verbraucher oder doppelte Sensoren eintragen.",
           "interval": "**Pflicht:** Abstand der regelmäßigen Prüfungen in Sekunden. Standard: 30 Sekunden. Sensoränderungen lösen zusätzlich nach etwa 2 Sekunden eine gebündelte Prüfung aus. Mindestlaufzeiten und Pausen gelten trotzdem.",
           "grid_export_sensor": "**Optional:** Nur bei getrennten Messwerten für Bezug und Einspeisung ausfüllen. Hier kommt die Einspeiseleistung hinein; beide Sensoren müssen positive Werte liefern. Die Vorzeichenauswahl wird dann ignoriert."
         }
@@ -66,7 +66,7 @@
           "name": "**Optional:** Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
           "grid_sensor": "**Pflicht:** Wählen Sie die aktuelle Leistung am Haus-Netzanschluss in W oder kW, nicht einen Energiezähler in kWh. Bei getrennten Sensoren wählen Sie hier den Netzbezug.",
           "grid_sign": "**Pflicht:** Welche Zahl zeigt Ihr Netzsensor beim Einspeisen? Positive Zahl: „Einspeisung positiv“. Minuszeichen: „Bezug positiv“. Eine falsche Auswahl vertauscht Überschuss und Netzbezug.",
-          "sink_sensors": "**Optional:** Nur für Verbraucher, die selbstständig den übrigen Solarstrom aufnehmen, etwa einen geregelten Heizstab. Deren Leistung wird zum verteilbaren Budget addiert. Normale Haushaltsverbraucher und bereits von SEP gesteuerte Geräte hier nicht nochmals auswählen.",
+          "sink_sensors": "**Optional:** Externe Überschuss-Senken wie Ohmpilot oder Heizstab können zur Information angezeigt werden. Solange SEP sie nicht tatsächlich selbst abregeln kann, wird deren Leistung nicht zum Steuerbudget addiert. Keine normalen Verbraucher oder doppelte Sensoren eintragen.",
           "interval": "**Pflicht:** Abstand der regelmäßigen Prüfungen in Sekunden. Standard: 30 Sekunden. Sensoränderungen lösen zusätzlich nach etwa 2 Sekunden eine gebündelte Prüfung aus. Mindestlaufzeiten und Pausen gelten trotzdem.",
           "grid_export_sensor": "**Optional:** Nur bei getrennten Messwerten für Bezug und Einspeisung ausfüllen. Hier kommt die Einspeiseleistung hinein; beide Sensoren müssen positive Werte liefern. Die Vorzeichenauswahl wird dann ignoriert."
         }
