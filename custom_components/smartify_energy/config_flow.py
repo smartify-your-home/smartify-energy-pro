@@ -269,6 +269,7 @@ class LoadSubentryFlow(_DeviceFlow):
     def schema(self, d: dict) -> vol.Schema:
         return vol.Schema({
             _req(CONF_NAME, d): sel.TextSelector(),
+            _req("appliance_type", d, "washing_machine"): _choice(["washing_machine", "dishwasher", "other"], "appliance_type"),
             _req(CONF_SWITCH, d): _ent(SWITCH_DOMAINS),
             _opt(CONF_POWER_SENSOR, d): _ent("sensor", "power"),
             _req(CONF_NOMINAL, d, 2200): _num(100, 4000, 50, "W"),
