@@ -31,8 +31,14 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         registry = dr.async_get(hass)
         if len(set(device_ids)) != len(device_ids):
             raise vol.Invalid("Duplicate SEP device in priority order")
-        devices = [registry.async_get(device_id) for device_id in device_ids]
-        if any(device is None for device in devices):
+        # The battery is a virtual, drag-sortable item (no HA device).
+        # Its rank is persisted in the hub; all other IDs remain HA devices.
+        battery_token = "__battery__"
+        has_battery_item = battery_token in device_ids
+        devices = [registry.async_get(device_id) if device_id != battery_token else None
+                   for device_id in device_ids]
+        if any(device is None for token, device in zip(device_ids, devices)
+               if token != battery_token):
             raise vol.Invalid("Unknown SEP device")
         for entry in hass.config_entries.async_entries(DOMAIN):
             manager = getattr(entry, "runtime_data", None)
@@ -41,14 +47,22 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             by_identifier = {(DOMAIN, sub_id): dev for sub_id, dev in manager.devices.items()}
             matches = [
                 next((by_identifier[key] for key in device.identifiers if key in by_identifier), None)
+                if device is not None else None
                 for device in devices
             ]
-            if not any(matches):
+            non_battery = [dev for dev in matches if dev is not None]
+            if not non_battery and not (has_battery_item and manager.has_battery
+                                        and len(manager.devices) == 0):
                 continue
-            if len(matches) != len(by_identifier) or any(dev is None for dev in matches):
-                raise vol.Invalid("Priority order must include every device of one SEP hub")
-            for rank, dev in enumerate(matches, start=1):
-                dev.set_param("priority", rank)
+            if (len(non_battery) != len(by_identifier)
+                    or len(set(dev.id for dev in non_battery)) != len(by_identifier)
+                    or (has_battery_item != manager.has_battery)):
+                raise vol.Invalid("Priority order must include all devices and the configured battery")
+            for rank, (token, dev) in enumerate(zip(device_ids, matches), start=1):
+                if token == battery_token:
+                    manager.set_param("battery_rank", rank)
+                else:
+                    dev.set_param("priority", rank)
             return
         raise vol.Invalid("SEP device priority order not found")
 
