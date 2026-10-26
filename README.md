@@ -9,6 +9,7 @@ Version: **0.2.8** · Integrationsdomain: `smartify_energy`
 - [Änderungsprotokoll (0.2.8 und Vorgängerversionen)](CHANGELOG.md)
 - [Update-Anleitung und Funktionstest](docs/UPDATE.md)
 - [Funktionsstand und bekannte Grenzen](docs/FUNCTIONS.md)
+- [Pflichtfelder, optionale und bedingte Entitäten je Funktion](docs/REQUIRED_FIELDS.md)
 
 ## Funktionen
 
