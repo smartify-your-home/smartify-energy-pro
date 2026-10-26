@@ -14,7 +14,7 @@
         },
         "data_description": {
           "grid_sensor": "Power at the grid connection point.",
-          "sink_sensors": "Power of these loads is added back – they only take what is left.",
+          "sink_sensors": "Power of external surplus sinks is shown for information but not credited to SEP's control budget without direct curtailment.",
           "grid_export_sensor": "Optional. If set: grid sensor = import, this sensor = export (both positive); sign is ignored."
         }
       },
@@ -55,7 +55,7 @@
         },
         "data_description": {
           "grid_sensor": "Power at the grid connection point.",
-          "sink_sensors": "Power of these loads is added back – they only take what is left.",
+          "sink_sensors": "Power of external surplus sinks is shown for information but not credited to SEP's control budget without direct curtailment.",
           "grid_export_sensor": "Optional. If set: grid sensor = import, this sensor = export (both positive); sign is ignored."
         }
       },
