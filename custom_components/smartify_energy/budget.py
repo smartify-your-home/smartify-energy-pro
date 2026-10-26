@@ -44,3 +44,14 @@ def pv_start_remaining(
     now_left = budget_now_w - previous_reservations + max(0.0, own_metered_w)
     avg_left = budget_avg_w - previous_reservations
     return now_left, avg_left, previous_reservations
+
+
+def battery_priority_credit(charge_w: float, battery_rank: int, device_rank: int) -> float:
+    """Self-regulating battery's measured charge is reclaimable only upstream.
+
+    It is already embedded in net export. Return this extra headroom exactly
+    once when a higher-priority device is being evaluated.
+    """
+    if device_rank >= battery_rank:
+        return 0.0
+    return max(0.0, charge_w)
