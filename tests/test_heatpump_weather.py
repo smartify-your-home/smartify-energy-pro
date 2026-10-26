@@ -128,6 +128,15 @@ class WeatherStartTests(unittest.TestCase):
         self.values['sensor.next'] = '100'
         self.assertFalse(self.allowed())
 
+    def test_ww_power_is_never_reclaimable(self):
+        # A triggered WW cycle is controlled by the heat pump itself.
+        self.dev.params["mode"] = "auto"
+        self.dev.state["active"] = True
+        self.values["sensor.power"] = "2000"
+        self.assertEqual(self.dev.power_now(), 2000)
+        self.assertEqual(self.dev.reclaimable_power(), 0)
+        self.assertEqual(self.dev.own_budget_power(2000, 0), 0)
+
     def test_running_boost_not_stopped_by_weather(self):
         self.dev.state.update(active=True, started=self.now.timestamp())
         self.values.update({'sensor.sun': '-10', 'sensor.next': '100'})
