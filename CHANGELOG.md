@@ -1,3 +1,7 @@
+## 0.2.10 – Startzeit und grafische Priorisierung vorbereiten
+- Haushaltsgeräte: neue einstellbare Uhrzeit **Frühester automatischer Start** (Standard 00:00). Sperrt automatische PV-, Spätstart- und Sofortfensterfreigabe bis zur Uhrzeit. Manueller Sofort-Start bleibt möglich.
+- Prioritätseingaben (number-Entities) aller Gerätetypen aus der angezeigten Parameterauswahl entfernt. Gespeicherte Prioritäten bleiben erhalten und werden intern berücksichtigt; grafische Bedienung folgt separat.
+
 # Änderungsprotokoll – Smartify Energy Pro
 
 ## Anzeigename (26.10.2026)
