@@ -24,7 +24,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.2.6";
+const CARD_VERSION = "1.2.7";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -99,20 +99,21 @@ const SETTING_HELP = {
   "pv_share": "Mindestens erforderlicher Solar-Anteil an der kleinsten Ladeleistung. 100 % startet nur bei vollständig gedeckter Mindestleistung; 50 % erlaubt den Rest aus dem Netz. Verzögerungen können vorübergehend zusätzlichen Netzbezug verursachen.",
   "phase_mode": "Einphasig eignet sich für wenig Solarüberschuss, dreiphasig für höhere Ladeleistung. Automatik wählt passend zum Überschuss. In der aktuellen Version verwenden Sofort- und Pflichtladung bei vorhandener Umschaltung dennoch drei Phasen.",
   "stop_delay": "So lange darf zu wenig Solarüberschuss vorhanden sein, bevor SEP den Betrieb beendet. Kurze Wolken führen dadurch nicht gleich zum Stopp. Währenddessen kann Netzstrom nötig sein.",
-  "target_temp": "Warmwasser-Zieltemperatur. Bei Erreichen beendet SEP die Boost-Freigabe. Ein neuer Start ist erst unter Zieltemperatur minus Hysterese möglich. Ein ausgelöster Button kann die tatsächliche Ladung nicht abbrechen.",
-  "max_per_day": "Maximale Dauer der von SEP erfassten Boost-Freigabe pro Kalendertag. Beispiel: 120 Minuten. Bei einem Button ist das eine interne Zeitmessung, keine bestätigte Kompressorlaufzeit.",
+  "target_temp": "Warmwasser-Zieltemperatur: Ein neuer WW-Boost darf nur starten, wenn der Speicher um die Hysterese darunter liegt. Einmal ausgelöste WW-Ladungen über Button/Schalter werden von der Wärmepumpe selbst beendet. Bei Sollwert-Boost regelt SEP weiterhin aktiv.",
+  "max_per_day": "Maximale Dauer der aktiv geregelten Sollwert-Boost-Freigabe pro Kalendertag (nur bei Number-Boost). Einmalige WW-Starts verwenden stattdessen den einstellbaren Mindestabstand.",
   "boost_value": "Diesen Sollwert schreibt SEP beim Start an die ausgewählte Number-Entität der Wärmepumpe. Er gilt nur bei Boost-Art „Sollwert“. Einheit und erlaubten Bereich der Ziel-Entität beachten.",
   "normal_value": "Diesen festen Sollwert schreibt SEP beim Ende des Boosts zurück. Der vorherige Wert wird nicht automatisch gemerkt. Wählen Sie hier den gewünschten normalen Warmwasser-Sollwert.",
-  "boost_hysteresis": "Temperaturabstand für einen erneuten Start. 4 Kelvin entsprechen 4 °C Unterschied: Bei 50 °C Ziel darf Boost nur unter 46 °C starten, bei genau 46 °C noch nicht.",
+  "boost_hysteresis": "Temperaturabstand für den Start. 4 Kelvin entsprechen 4 °C Unterschied: Bei 50 °C Ziel darf WW-Boost nur unter 46 °C starten; bei genau 46 °C noch nicht.",
   "idle_power_threshold": "Unter dieser gemessenen WP-Leistung zählt die Wärmepumpe als ruhend. Beispiel: 5 W. Ab genau 5 W beginnt die Wartezeit später wieder von vorn. Den Wert passend zum tatsächlichen Standby-Verbrauch wählen.",
-  "idle_minutes": "So lange muss die WP-Leistung durchgehend unter der Ruheschwelle liegen, bevor Boost starten darf. Standard: 15 Minuten. Aktivität, ungültige Werte und ein Neustart setzen die Messung zurück. Die Mindestpause gilt zusätzlich.",
+  "idle_minutes": "So lange muss die WP-Leistung unter der Ruheschwelle liegen, bevor ein neuer WW-Boost gestartet werden darf. Standard: 15 Minuten. Aktivität, ungültige Werte und ein Neustart setzen die Ruheerkennung zurück. Unabhängig davon gilt der dauerhafte WW-Boost-Mindestabstand.",
   "start_now": "Gibt das Haushaltsgerät sofort frei und schaltet bei Bedarf seine Steckdose ein – auch ohne Solarüberschuss. Diese Taste löst direkt eine Aktion aus.",
   "reset": "Setzt die Erkennung des Haushaltsgeräts auf „Bereit“ zurück. Das Programm am Gerät wird dadurch nicht zurückgesetzt und die Steckdose nicht ausgeschaltet.",
   "sun_angle_min": "Optionaler Mindestwinkel. Beispiel: 12° erlaubt den Boost ab genau 12°. Leer bedeutet: Sonnenwinkel-Prüfung wird ignoriert. Entität in der Gerätekonfiguration auswählen und Prüfung aktivieren.",
   "cloud_now_max": "Boost startet nur bei einem Wert kleiner als diese Grenze. Beispiel: unter 75 %; genau 75 % sperrt den Start. Beide Stunden müssen ihre Grenze einhalten. Bei unvollständigen Angaben wird die gesamte Bewölkungsprüfung ignoriert.",
   "cloud_next_max": "Boost startet nur, wenn auch die kommende Stunde unter dieser Grenze liegt. Beispiel: unter 50 %; genau 50 % sperrt. Leer bedeutet bei dieser Prüfung: ignorieren, bis beide Entitäten und Grenzen vollständig sind.",
   "sun_filter_active": "Ein: Vor einem neuen Boost wird der Sonnenwinkel geprüft, wenn Entität und Mindestwinkel eingetragen sind. Aus oder unvollständige Angaben: ignorieren. Ein ungültiger Messwert bei vollständig aktiver Prüfung verhindert den Start. Laufende Boosts werden dadurch nicht beendet.",
-  "cloud_filter_active": "Ein: Vor einem neuen Boost müssen aktuelle UND kommende Stunde unter ihrer jeweiligen Bewölkungsgrenze liegen. Beide Entitäten und Grenzen müssen eingetragen sein, sonst wird die Prüfung ignoriert. Bei vollständiger aktiver Prüfung sperrt ein ungültiger Messwert. Laufende Boosts werden dadurch nicht beendet."
+  "cloud_filter_active": "Ein: Vor einem neuen Boost müssen aktuelle UND kommende Stunde unter ihrer jeweiligen Bewölkungsgrenze liegen. Beide Entitäten und Grenzen müssen eingetragen sein, sonst wird die Prüfung ignoriert. Bei vollständiger aktiver Prüfung sperrt ein ungültiger Messwert. Laufende WW-Ladungen werden dadurch nicht beendet.",
+  "trigger_cooldown": "Mindestzeit zwischen zwei WW-Boost-Auslösungen in Minuten. Standard 60 min, einstellbar 60–720 min. Nach erfolgreicher Startfreigabe wird der Zeitstempel VOR dem WP-Befehl gespeichert und übersteht auch Home-Assistant-Neustarts. Die eingetragene Entität „Warmwasser aktiv“ verhindert während einer laufenden WW-Ladung zusätzliche Starts."
 };
 
 const SETTING_DOMAINS = ["select", "switch", "time", "number", "button"];
