@@ -287,12 +287,14 @@ const CARD_CSS = `
   .tile ha-icon { --mdc-icon-size:22px; }
   .tile .v { font-weight:bold; font-size:min(17px, 21cqw); margin-top:2px; white-space:nowrap; }
   .tile .n { font-size:min(11px, 16cqw); opacity:.75; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
-  .tile.paired { gap:1px; padding:7px 7px 6px; }
-  .tile.paired .n { font-size:11px; opacity:.85; }
-  .tile.paired .v { font-size:18px; margin-top:0; }
-  .tile.paired .instant { display:flex; align-items:baseline; justify-content:center; gap:5px;
-                          font-size:11px; color:var(--secondary-text-color); white-space:nowrap; }
-  .tile.paired .instant strong { font-size:13px; color:var(--txt); font-weight:600; }
+  .tile.paired { gap:2px; padding:7px 7px 6px; }
+  .tile.paired .n { font-size:11px; opacity:.85; margin-bottom:2px; }
+  .tile.paired .metrics { display:grid; grid-template-columns:28px auto; column-gap:6px;
+                           align-items:baseline; justify-content:center; font-variant-numeric:tabular-nums; }
+  .tile.paired .metric-label { font-size:11px; color:var(--secondary-text-color); text-align:right; }
+  .tile.paired .metric-value { font-weight:700; color:var(--txt); white-space:nowrap; text-align:right; }
+  .tile.paired .metric-value.avg { font-size:18px; }
+  .tile.paired .metric-value.now { font-size:13px; font-weight:600; }
 
 
   select.mode { appearance:none; -webkit-appearance:none; border:1px solid var(--divider-color); border-radius:12px;
@@ -477,9 +479,11 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       ${paired.map(t => `
         <div class="tile paired" data-more="${t.ent || ""}" style="border-image-source:${grad(t.g)}">
           <ha-icon icon="${t.icon}"></ha-icon>
-          <div class="n">${esc(t.title)} Ø</div>
-          <div class="v">${esc(t.avg)}</div>
-          <div class="instant" data-more="${t.nowEnt || ""}">Ist <strong>${esc(t.now)}</strong></div>
+          <div class="n">${esc(t.title)}</div>
+          <div class="metrics">
+            <span class="metric-label">Ø</span><span class="metric-value avg">${esc(t.avg)}</span>
+            <span class="metric-label">akt.</span><span class="metric-value now" data-more="${t.nowEnt || ""}">${esc(t.now)}</span>
+          </div>
         </div>`).join("")}
       ${tiles.map(t => `
         <div class="tile" data-more="${t.ent || ""}" style="border-image-source:${grad(t.g)}">
