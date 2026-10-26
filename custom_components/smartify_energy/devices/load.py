@@ -33,6 +33,16 @@ class LoadDevice(BaseDevice):
     TYPE = "load"
     ICON = "mdi:washing-machine"
 
+    @property
+    def appliance_icon(self) -> str:
+        return {"washing_machine": "mdi:washing-machine",
+                "dishwasher": "mdi:dishwasher",
+                "other": "mdi:power-plug"}.get(self.cfg.get("appliance_type", "washing_machine"), self.ICON)
+
+    def status_attrs(self) -> dict:
+        return {**super().status_attrs(), "icon": self.appliance_icon,
+                "haushaltsgeraet_typ": self.cfg.get("appliance_type", "washing_machine")}
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.state.setdefault("sm", IDLE)
@@ -60,7 +70,11 @@ class LoadDevice(BaseDevice):
         ]
 
     def sensor_specs(self) -> list[SensorSpec]:
-        return super().sensor_specs() + [
+        specs = super().sensor_specs()
+        for spec in specs:
+            if spec.key == "status":
+                spec.icon = self.appliance_icon
+        return specs + [
             SensorSpec("phase", lambda: self.state.get("sm"), icon="mdi:state-machine", diagnostic=True),
         ]
 
