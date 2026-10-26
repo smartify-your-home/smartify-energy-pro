@@ -13,9 +13,25 @@ class DryerDevice(LoadDevice):
     TYPE = "dryer"
     ICON = "mdi:tumble-dryer"
 
-    def param_specs(self) -> list[ParamSpec]:
+    def param_specs(self):
         specs = super().param_specs()
-        return specs
+        if self.cfg.get("dryer_resume", "never") == "yes":
+            return specs
+        return [s for s in specs if s.key in {
+            "nominal_power", "finish_threshold", "finish_minutes", "duration"
+        }]
+
+    def button_specs(self):
+        specs = super().button_specs()
+        return specs if self.can_resume else [s for s in specs if s.key == "reset"]
+
+    def status_attrs(self):
+        return {
+            **super().status_attrs(),
+            "wiederanlauf": self.can_resume,
+            "steckdose_von_sep_gesteuert": self.can_resume,
+            "dauerlast_reservierung": True,
+        }
 
     @property
     def can_resume(self) -> bool:
