@@ -532,7 +532,7 @@
       "night_end": {
         "name": "Sofortfenster Ende"
       },
-      "earliest_start": {"name": "Frühester automatischer Start"},
+      "earliest_start": {"name": "Frühester Start"},
       "latest_start": {
         "name": "Spätester Start"
       },
