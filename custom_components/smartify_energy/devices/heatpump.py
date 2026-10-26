@@ -125,6 +125,8 @@ class HeatPumpDevice(BaseDevice):
             **super().status_attrs(),
             "boost_startbedingungen": self._weather_checks(),
             "warmwasser_aktiv": self.ww_active,
+            "ww_aktiv_seit_min": self._ww_active_minutes(datetime.now().astimezone()),
+            "ww_zyklus_bereits_boost": self._ww_cycle_already_boosted(),
             "ww_aktiv_entitaet": self.cfg.get(CONF_WW_ACTIVE_ENTITY),
             "letzte_ausloesung": self.state.get("last_trigger"),
             "startsperre_rest_min": self._cooldown_remaining(datetime.now().astimezone()),
@@ -220,15 +222,38 @@ class HeatPumpDevice(BaseDevice):
         ts = self.state.get(key)
         return (now.timestamp() - float(ts)) / 60 if ts else 1e9
 
+    def _ww_active_minutes(self, now: datetime) -> float | None:
+        """Uninterrupted ON duration, based on Home Assistant's state timestamp."""
+        ent = self.cfg.get(CONF_WW_ACTIVE_ENTITY)
+        state = self.hass.states.get(ent) if ent else None
+        if state is None or state.state != "on":
+            return None
+        return max(0.0, (now - state.last_changed).total_seconds() / 60)
+
+    def _ww_cycle_already_boosted(self) -> bool:
+        """Prevent repeated commands within one continuous WW charging cycle."""
+        ent = self.cfg.get(CONF_WW_ACTIVE_ENTITY)
+        state = self.hass.states.get(ent) if ent else None
+        ts = self.state.get("last_trigger")
+        return bool(state and state.state == "on" and ts is not None
+                    and float(ts) >= state.last_changed.timestamp())
+
     def _decide_ww_once(self, ctx: Context, budget_left: float) -> Decision:
         """Determine whether to send a single WW-start command."""
         active = self.ww_active
         if active is None:
             self.status = "wartet"
             return Decision(False, 0, "Warmwasser-aktiv-Signal nicht verfügbar")
-        if active:
+        # Existing WW cycle: after 10 minutes a single boost is permitted
+        # with nonnegative current priority-adjusted control budget.
+        active_minutes = self._ww_active_minutes(ctx.now) if active else None
+        running_boost = active and active_minutes is not None and active_minutes >= 10
+        if active and not running_boost:
+            self.status = "wartet"
+            return Decision(False, 0, "WW läuft – Boost frühestens nach 10 Minuten")
+        if running_boost and self._ww_cycle_already_boosted():
             self.status = "boost"
-            return Decision(False, 0, "Warmwasserladung läuft – kein erneuter Start")
+            return Decision(False, 0, "WW-Zyklus bereits geboostet")
         if (self.cfg.get(CONF_BOOST_TYPE) != BOOST_BUTTON
                 and is_on(self.hass, self.entity)):
             self.status = "wartet"
@@ -248,8 +273,8 @@ class HeatPumpDevice(BaseDevice):
         if temp >= target - float(self.p("boost_hysteresis")):
             self.status = "bereit"
             return Decision(False, 0, f"Warmwasserspeicher warm ({temp:.1f} °C)")
-        if (self._idle_since is None or
-                ctx.now - self._idle_since < timedelta(minutes=float(self.p("idle_minutes")))):
+        if (not running_boost and (self._idle_since is None or
+                ctx.now - self._idle_since < timedelta(minutes=float(self.p("idle_minutes"))))):
             self.status = "wartet"
             return Decision(False, 0, "Wärmepumpe noch nicht lange genug in Ruhe")
         for check in self._weather_checks().values():
@@ -259,6 +284,15 @@ class HeatPumpDevice(BaseDevice):
         left_now = ctx.now_left(budget_left)
         left_avg = budget_left if ctx.history_ready else left_now
         need = self.nominal
+        if running_boost:
+            if left_now >= 0:
+                self.status = "bereit"
+                return Decision(True, 0,
+                                f"WW seit {active_minutes:.0f} min aktiv; "
+                                f"Steuerbudget {left_now:.0f} W >= 0 W – Boost auslösen")
+            self.status = "wartet"
+            return Decision(False, 0,
+                            f"WW aktiv, Steuerbudget {left_now:.0f} W < 0 W")
         if left_now >= need and left_avg >= need:
             self.status = "bereit"
             return Decision(True, need, "PV-Budget ausreichend – WW-Boost einmalig auslösen")
