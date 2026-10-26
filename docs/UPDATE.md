@@ -1,6 +1,6 @@
 # Installation und Updates
 
-Aktuelle Version: **0.2.28**. Integrationsdomain: `smartify_energy`.
+Aktuelle Version: **0.2.29**. Integrationsdomain: `smartify_energy`.
 
 ## Update über HACS
 1. Vor dem Update Home-Assistant-Backup erstellen und die bestehenden SEP-Geräteeinstellungen dokumentieren.
@@ -68,3 +68,7 @@ Für den neuen Gerätetyp **Wäschetrockner** die Nennleistung und Programmdauer
 ## 0.2.28 – Wiederherstellung bei `unavailable`
 
 Behebt den Fehler `homeassistant.helpers.translation TypeError: expected str, got list` durch Korrektur der Übersetzungsoptionen für den Trockner. Nach dem Update Home Assistant vollständig neu starten; die Integration nicht löschen oder neu anlegen. Vorhandene SEP-Konfigurationen bleiben erhalten.
+
+## 0.2.29 – Boost bei aktivem WW
+
+Ist ein WW-Aktiv-Binärsensor konfiguriert und mindestens zehn Minuten ununterbrochen `on`, darf ein einmaliger Boost schon bei einem aktuellen, prioritätsbereinigten SEP-Steuerbudget ≥ 0 W ausgelöst werden. Normale Temperatur- und Wetterbedingungen sowie Startsperre gelten weiterhin. Ein Boost-Auslöser wird je laufendem WW-Zyklus maximal einmal betätigt. Die Number-Sollwertsteuerung bleibt unverändert. Für HACS ein Release mit dem Tag `0.2.29` auf `main` veröffentlichen und Home Assistant nach dem Update neu starten.
