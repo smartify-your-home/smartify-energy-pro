@@ -81,6 +81,10 @@ class EnergyManager:
         self.managed = 0.0  # Only power SEP can actually curtail.
         self._measured_power: dict[str, float] = {}
         self._reclaimable_power: dict[str, float] = {}
+        # Snapshot of each device's budget BEFORE its own dispatch decision.
+        # The signed current/average headroom already subtracts all upstream
+        # pending-load reservations, without double-counting measured power.
+        self.device_budgets: dict[str, dict[str, float]] = {}
         self.battery_power = 0.0
         self.battery_soc: float | None = None
         self.battery_devices_first = True
@@ -186,6 +190,7 @@ class EnergyManager:
                 "reserviert_w": round(d.power) if d and d.on else 0,
                 "pflicht": bool(d and d.forced),
                 "grund": dev.reason,
+                **self.device_budgets.get(dev.id, {}),
             })
         return {"geraete": out}
 
@@ -442,12 +447,30 @@ class EnergyManager:
                              if d.TYPE == "load" and d.state.get("hp_active") and d.participates]
 
         left = ctx.alloc_base
+        self.device_budgets = {}
         for dev in self._sorted_devices(ctx):
             current = self._measured_power.get(dev.id, 0.0)
             reclaimed = self._reclaimable_power.get(dev.id, 0.0)
             # A modulating load may use its own already-paid-for minimum
             # power, but must never offer that power to another device.
             own_budget = dev.own_budget_power(current, reclaimed) if dev.mode == MODE_AUTO else 0.0
+            upstream = max(0.0, ctx.alloc_base - left)
+            available_now = ctx.budget_now - upstream + own_budget
+            available_avg = ctx.budget_avg - upstream + own_budget
+            if (dev.TYPE == "load" and dev.mode == MODE_AUTO
+                    and dev.state.get("sm") in ("erkannt", "wartet")
+                    and dev.is_on()):
+                # The device's current draw reduces the physical grid balance.
+                # Credit its own metered draw ONLY when assessing that device,
+                # never when assessing another consumer or the old average.
+                available_now += current
+            self.device_budgets[dev.id] = {
+                "aktuell_w": round(available_now),
+                "mittel_w": round(available_avg),
+                "vorreservierung_w": round(upstream),
+                "benoetigt_w": round(dev.pv_start_need) if dev.TYPE == "load" else round(dev.nominal),
+                "zusaetzlich_reserviert_w": 0,
+            }
             try:
                 decision = await dev.async_run(ctx, left + own_budget)
             except Exception:  # noqa: BLE001
@@ -455,7 +478,9 @@ class EnergyManager:
                 continue
             # Observe/manual modes do not actually actuate the load.
             if decision.on and dev.mode == MODE_AUTO:
-                left -= additional_reservation(decision.power, current, reclaimed)
+                extra = additional_reservation(decision.power, current, reclaimed)
+                left -= extra
+                self.device_budgets[dev.id]["zusaetzlich_reserviert_w"] = round(extra)
         self.allocated = ctx.alloc_base - left
 
         if plan_due:
