@@ -66,6 +66,7 @@ from .const import (
     NAME,
     TYPE_EV,
     TYPE_HEATPUMP,
+    TYPE_HEATER,
     TYPE_LOAD,
     TYPE_POOL,
 )
@@ -208,6 +209,7 @@ class SmartifyEnergyConfigFlow(_HubSteps, ConfigFlow, domain=DOMAIN):
             TYPE_POOL: PoolSubentryFlow,
             TYPE_EV: EvSubentryFlow,
             TYPE_HEATPUMP: HeatPumpSubentryFlow,
+            TYPE_HEATER: HeaterSubentryFlow,
         }
 
 
@@ -279,6 +281,19 @@ class PoolSubentryFlow(_DeviceFlow):
             _opt(CONF_POWER_SENSOR, d): _ent("sensor", "power"),
             _req(CONF_NOMINAL, d, 700): _num(50, 3000, 10, "W"),
             _opt(CONF_TEMP_SENSOR, d): _ent("sensor", "temperature"),
+        })
+
+
+class HeaterSubentryFlow(_DeviceFlow):
+    """A resistive PV surplus heater is NOT a household program load."""
+
+    def schema(self, d: dict) -> vol.Schema:
+        return vol.Schema({
+            _req(CONF_NAME, d, "Heizstab"): sel.TextSelector(),
+            _req(CONF_SWITCH, d): _ent(["switch", "input_boolean"]),
+            _opt(CONF_POWER_SENSOR, d): _ent("sensor", "power"),
+            _req(CONF_TEMP_SENSOR, d): _ent("sensor", "temperature"),
+            _req(CONF_NOMINAL, d, 2000): _num(100, 10000, 50, "W"),
         })
 
 
