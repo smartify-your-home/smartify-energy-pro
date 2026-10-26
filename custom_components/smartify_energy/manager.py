@@ -217,7 +217,16 @@ class EnergyManager:
         for dev in self.devices.values():
             if dev.TYPE == "heatpump" and event.data.get("entity_id") == dev.cfg.get("power_sensor"):
                 dev.observe_power(dt_util.now())
-        self._schedule_run()
+        # Grid / battery metering changes need a shorter control loop than
+        # forecast or miscellaneous device state changes.
+        entity_id = event.data.get("entity_id")
+        fast_inputs = {self.cfg.get(CONF_GRID_SENSOR), self.cfg.get(CONF_GRID_EXPORT_SENSOR),
+                       self.cfg.get(CONF_BAT_POWER)}
+        for dev in self.devices.values():
+            if dev.TYPE == "ev":
+                fast_inputs.add(dev.cfg.get("power_sensor"))
+                fast_inputs.add(dev.cfg.get("current_entity"))
+        self._schedule_run(0.5 if entity_id in fast_inputs else 2.0)
 
     def _weighted_average(self, now: datetime, window: timedelta, fallback: float) -> float:
         points = list(self._history)
@@ -251,7 +260,7 @@ class EnergyManager:
         self._schedule_run()
 
     @callback
-    def _schedule_run(self) -> None:
+    def _schedule_run(self, delay: float = 2.0) -> None:
         if self._pending_run:
             return
 
@@ -260,7 +269,7 @@ class EnergyManager:
             self._pending_run = None
             self.hass.async_create_task(self.async_run())
 
-        self._pending_run = async_call_later(self.hass, 2, _run)
+        self._pending_run = async_call_later(self.hass, delay, _run)
 
     async def async_request_run(self) -> None:
         self._schedule_run()
