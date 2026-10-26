@@ -86,7 +86,6 @@ class BaseDevice:
     def base_param_specs(self) -> list[ParamSpec]:
         return [
             ParamSpec("mode", "select", MODE_OBSERVE, "mdi:cog-transfer", options=DEVICE_MODES, config=False),
-            ParamSpec("priority", "number", 5, "mdi:sort-numeric-ascending", 1, 10, 1, config=False),
         ]
 
     def param_specs(self) -> list[ParamSpec]:
@@ -132,7 +131,7 @@ class BaseDevice:
         return {
             "geraetetyp": self.TYPE,
             "modus": self.mode,
-            "prioritaet": int(self.p("priority")),
+            "prioritaet": self.priority,
             "grund": self.reason,
             "empfehlung": self.would,
             "reserviert_w": round(d.power) if d and d.on else 0,
