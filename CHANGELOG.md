@@ -1,3 +1,11 @@
+## 0.2.23 – WW-Boost-Temperatur per Entität
+
+- Im Wärmepumpen-/WW-Boost-Gerät kann optional eine Entität **WW-Boost Solltemperatur** (`input_number`, `number` oder `sensor`) ausgewählt werden.
+- Ihr aktueller Wert (30–75 °C) ersetzt die feste **Zieltemperatur** für die Startprüfung mit Hysterese und das Temperaturziel bei laufender Sollwertregelung.
+- Bei einem als `number` gesteuerten Boost wird dieser Wert auch als Boost-Sollwert geschrieben; die bisherige **Normal-Sollwert**-Rückstellung bleibt erhalten.
+- Ohne Auswahl gilt weiterhin die bisherige SEP-Zieltemperatur. Ist eine ausgewählte Entität ungültig oder nicht verfügbar, wird ein neuer WW-Boost sicher gesperrt; der konfigurierte Wert und die Quelle erscheinen als Statusattribute.
+- Bei Button-/Schalter-Boost wird weiterhin nur der Start ausgelöst; die WP übernimmt ihren eigenen WW-Sollwert. Dieser wird durch die neue SEP-Entität **nicht** physisch in die WP geschrieben.
+
 ## 0.2.22 – PV-Akku in der Prioritätenliste
 
 - **PV-Akku als verschiebbare Zeile** im SEP-Prioritätenmanager (bei konfiguriertem Akku-Leistungs-/SoC-Sensor); zeigt Ladeleistung und SoC. Position wird als `number.*battery_rank` im Hub gespeichert.
