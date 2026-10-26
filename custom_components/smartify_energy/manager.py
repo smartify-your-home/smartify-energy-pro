@@ -416,7 +416,13 @@ class EnergyManager:
     # ── Prognose-Planer ──────────────────────────────────────────────────────
     def _plan(self, now: datetime) -> None:
         start = now.replace(minute=0, second=0, microsecond=0)
-        hours = [start + timedelta(hours=i) for i in range(36)]
+        # Rest des heutigen Tages und alle 24 Stunden von morgen.
+        end = (now + timedelta(days=2)).replace(hour=0, minute=0, second=0, microsecond=0)
+        hours = []
+        hour = start
+        while hour < end:
+            hours.append(hour)
+            hour += timedelta(hours=1)
         base = float(self.p("base_load"))
         rem: dict[datetime, float] = {}
         pv: dict[datetime, float] = {}
@@ -495,7 +501,7 @@ class EnergyManager:
 
         self.plan_hours = [
             {"zeit": h.isoformat(), "pv_w": round(pv[h]), "frei_w": round(rem[h]), "geraete": alloc[h]}
-            for h in hours if pv[h] > 0 or alloc[h]
+            for h in hours
         ]
         actions.sort()
         self.next_action = " · ".join(a for _, a in actions[:3])
