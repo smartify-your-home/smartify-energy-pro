@@ -332,7 +332,8 @@
             "cloud_now_max": "[Bedingt] Bewölkung aktuelle Stunde unter",
             "cloud_next_entity": "[Bedingt] Bewölkung kommende Stunde – Entität",
             "cloud_next_max": "[Bedingt] Bewölkung kommende Stunde unter",
-            "ww_active_entity": "[Optional] Warmwasser aktiv (Binary/Boolean)"
+            "ww_active_entity": "[Optional] Warmwasser aktiv (Binary/Boolean)",
+            "ww_boost_temp_entity": "[Optional] WW-Boost-Solltemperatur als Entität (°C)"
           },
           "data_description": {
             "name": "**Pflicht:** Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
@@ -347,7 +348,8 @@
             "cloud_now_max": "**Bedingt:** Boost startet nur bei einem Wert kleiner als diese Grenze. Beispiel: unter 75 %; genau 75 % sperrt den Start. Beide Stunden müssen ihre Grenze einhalten. Bei unvollständigen Angaben wird die gesamte Bewölkungsprüfung ignoriert. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten.",
             "cloud_next_entity": "**Bedingt:** Optional: Bewölkungsprognose für die kommende Stunde als Zahl von 0 bis 100 %. Die Datenquelle muss den Wert laufend auf die nächste Stunde beziehen. SEP liest den Zahlenzustand, keine Wetterliste in Attributen. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten.",
             "cloud_next_max": "**Bedingt:** Boost startet nur, wenn auch die kommende Stunde unter dieser Grenze liegt. Beispiel: unter 50 %; genau 50 % sperrt. Leer bedeutet bei dieser Prüfung: ignorieren, bis beide Entitäten und Grenzen vollständig sind. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten.",
-            "ww_active_entity": "**Optional:** Einen binary_sensor oder input_boolean auswählen, der bei einer laufenden Warmwasserbereitung EIN ist und sonst AUS. SEP verhindert während EIN einen neuen WW-Boost. Ist die konfigurierte Entität unbekannt/nicht verfügbar, wird aus Sicherheitsgründen kein neuer Boost gestartet. Die Entität dient nur zum Lesen und wird von SEP nicht geschaltet."
+            "ww_active_entity": "**Optional:** Einen binary_sensor oder input_boolean auswählen, der bei einer laufenden Warmwasserbereitung EIN ist und sonst AUS. SEP verhindert während EIN einen neuen WW-Boost. Ist die konfigurierte Entität unbekannt/nicht verfügbar, wird aus Sicherheitsgründen kein neuer Boost gestartet. Die Entität dient nur zum Lesen und wird von SEP nicht geschaltet.",
+            "ww_boost_temp_entity": "**Optional:** input_number, number oder Temperatursensor auswählen. Der aktuelle Wert (30–75 °C) ersetzt die feste WW-Boost-Zieltemperatur. Ist die Entität nicht verfügbar oder ungültig, wird kein neuer Boost gestartet. Ohne Auswahl bleibt der bisherige feste SEP-Sollwert erhalten. Bei Sollwert-/Number-Boost wird die Zieltemperatur ebenfalls als Boost-Sollwert geschrieben."
           }
         },
         "reconfigure": {
@@ -365,7 +367,8 @@
             "cloud_now_max": "[Bedingt] Bewölkung aktuelle Stunde unter",
             "cloud_next_entity": "[Bedingt] Bewölkung kommende Stunde – Entität",
             "cloud_next_max": "[Bedingt] Bewölkung kommende Stunde unter",
-            "ww_active_entity": "[Optional] Warmwasser aktiv (Binary/Boolean)"
+            "ww_active_entity": "[Optional] Warmwasser aktiv (Binary/Boolean)",
+            "ww_boost_temp_entity": "[Optional] WW-Boost-Solltemperatur als Entität (°C)"
           },
           "data_description": {
             "name": "**Pflicht:** Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
@@ -380,7 +383,8 @@
             "cloud_now_max": "**Bedingt:** Boost startet nur bei einem Wert kleiner als diese Grenze. Beispiel: unter 75 %; genau 75 % sperrt den Start. Beide Stunden müssen ihre Grenze einhalten. Bei unvollständigen Angaben wird die gesamte Bewölkungsprüfung ignoriert. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten.",
             "cloud_next_entity": "**Bedingt:** Optional: Bewölkungsprognose für die kommende Stunde als Zahl von 0 bis 100 %. Die Datenquelle muss den Wert laufend auf die nächste Stunde beziehen. SEP liest den Zahlenzustand, keine Wetterliste in Attributen. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten.",
             "cloud_next_max": "**Bedingt:** Boost startet nur, wenn auch die kommende Stunde unter dieser Grenze liegt. Beispiel: unter 50 %; genau 50 % sperrt. Leer bedeutet bei dieser Prüfung: ignorieren, bis beide Entitäten und Grenzen vollständig sind. Nur bei aktivem Bewölkungsfilter zusammen mit beiden Entitäten/Grenzwerten.",
-            "ww_active_entity": "**Optional:** Einen binary_sensor oder input_boolean auswählen, der bei einer laufenden Warmwasserbereitung EIN ist und sonst AUS. SEP verhindert während EIN einen neuen WW-Boost. Ist die konfigurierte Entität unbekannt/nicht verfügbar, wird aus Sicherheitsgründen kein neuer Boost gestartet. Die Entität dient nur zum Lesen und wird von SEP nicht geschaltet."
+            "ww_active_entity": "**Optional:** Einen binary_sensor oder input_boolean auswählen, der bei einer laufenden Warmwasserbereitung EIN ist und sonst AUS. SEP verhindert während EIN einen neuen WW-Boost. Ist die konfigurierte Entität unbekannt/nicht verfügbar, wird aus Sicherheitsgründen kein neuer Boost gestartet. Die Entität dient nur zum Lesen und wird von SEP nicht geschaltet.",
+            "ww_boost_temp_entity": "**Optional:** input_number, number oder Temperatursensor auswählen. Der aktuelle Wert (30–75 °C) ersetzt die feste WW-Boost-Zieltemperatur. Ist die Entität nicht verfügbar oder ungültig, wird kein neuer Boost gestartet. Ohne Auswahl bleibt der bisherige feste SEP-Sollwert erhalten. Bei Sollwert-/Number-Boost wird die Zieltemperatur ebenfalls als Boost-Sollwert geschrieben."
           }
         }
       },
