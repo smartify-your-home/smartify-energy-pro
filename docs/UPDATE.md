@@ -1,6 +1,6 @@
 # Installation und Updates
 
-Aktuelle Version: **0.2.8**. Integrationsdomain: `smartify_energy`.
+Aktuelle Version: **0.2.9**. Integrationsdomain: `smartify_energy`.
 
 ## Update über HACS
 1. Vor dem Update Home-Assistant-Backup erstellen und die bestehenden SEP-Geräteeinstellungen dokumentieren.
@@ -35,3 +35,7 @@ Automatik zuerst in den Beobachtungs- bzw. sicheren manuellen Betrieb versetzen.
 - [Änderungsprotokoll](../CHANGELOG.md)
 - [Repository und README](../README.md)
 - [Probleme melden](https://github.com/smartify-your-home/smartify-energy-pro/issues)
+
+## Besonderheiten von 0.2.9 – Haushaltsgeräte
+
+Bei neuen Haushaltsgeräten gelten SEM-v3-nahe Standardwerte: Mindestüberschuss -1000 W, späteste Startzeit 16:00, Fertigerkennung 2 Minuten. Bereits gespeicherte Werte werden nicht automatisch überschrieben. Nach dem Update prüfen, ob Start, Heizphase, Unterbrechung bei fehlender Erstfreigabe, Warten, Freigabe und Reset wie vorgesehen funktionieren. Insbesondere echte Steckdosen und Geräte zunächst nur beaufsichtigt testen.
