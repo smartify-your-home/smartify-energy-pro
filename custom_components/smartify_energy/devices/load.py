@@ -45,7 +45,7 @@ class LoadDevice(BaseDevice):
         return [
             ParamSpec("nominal_power", "number", float(self.cfg.get("nominal_power", 2200)),
                       "mdi:flash", 100, 4000, 50, "W"),
-            ParamSpec("min_surplus", "number", -1000, "mdi:solar-power", -3000, 4000, 50, "W"),
+            ParamSpec("min_surplus", "number", 1500, "mdi:solar-power", -3000, 4000, 50, "W"),
             ParamSpec("latest_start", "time", "16:00", "mdi:clock-alert-outline"),
             ParamSpec("finish_threshold", "number", 5, "mdi:power-plug-off", 0, 50, 0.5, "W"),
             ParamSpec("finish_minutes", "number", 2, "mdi:timer-sand", 1, 60, 1, "min"),
