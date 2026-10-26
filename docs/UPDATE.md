@@ -1,6 +1,6 @@
 # Installation und Updates
 
-Aktuelle Version: **0.2.14**. Integrationsdomain: `smartify_energy`.
+Aktuelle Version: **0.2.15**. Integrationsdomain: `smartify_energy`.
 
 ## Update über HACS
 1. Vor dem Update Home-Assistant-Backup erstellen und die bestehenden SEP-Geräteeinstellungen dokumentieren.
