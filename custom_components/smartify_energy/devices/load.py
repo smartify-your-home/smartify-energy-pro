@@ -2,12 +2,15 @@
 
 Übernommene Logik aus Smart Energy Manager v3:
   bereit → Gerät wird am Gerät gestartet (Steckdose an, Leistung > 5 W) → erkannt
-  erkannt + Leistung > 100 W → Freigabe prüfen (Sofortfenster, Priorität, Überschuss)
+  erkannt + Leistung > 100 W → Freigabe prüfen (Sofortfenster, PV-Budget, Mittelwert)
      ok    → läuft (bis fertig, wird nicht mehr unterbrochen)
      nein  → Steckdose AUS → wartet
-  wartet → Überschuss im Mittel ausreichend / Spätstart / Sofortfenster → Steckdose EIN → läuft
+  wartet → aktuelle UND gemittelte freie Leistung für erwartete Heizlast ausreichend
+            / Spätstart / Sofortfenster → Steckdose EIN → läuft
   läuft  → Leistung < Fertig-Schwelle für Fertig-Dauer → fertig (Reset per Taste)
 Neu: Reihenfolge über den Prioritätenmanager statt „wer zuerst eingeschaltet wurde“.
+Mehrere Heizphasen dürfen gleichzeitig laufen, wenn das gesamte PV-Budget reicht.
+Nicht gemessene Last wird konservativ mit der vollen Nennleistung reserviert.
 """
 from __future__ import annotations
 
@@ -17,7 +20,7 @@ from datetime import datetime, time, timedelta
 from homeassistant.util import dt as dt_util
 
 from ..const import CONF_POWER_SENSOR, CONF_SWITCH
-from ..helpers import BinarySpec, ButtonSpec, ParamSpec, SensorSpec, is_on, time_from_str
+from ..helpers import BinarySpec, ButtonSpec, ParamSpec, SensorSpec, is_on, power_w, time_from_str
 from .base import BaseDevice, Context, Decision, PlanDemand
 
 _LOGGER = logging.getLogger(__name__)
@@ -90,6 +93,21 @@ class LoadDevice(BaseDevice):
     def sort_key(self, ctx: Context) -> tuple:
         return (self.priority, self.state.get("since") or ctx.now.timestamp())
 
+    def power_accounted_in_grid(self) -> float:
+        """Credit only actual meter readings, never the nominal fallback.
+
+        If no meter is present or it is unavailable, the full heating
+        requirement is reserved; otherwise an assumed nominal wattage could
+        cancel its own reservation without real measurement.
+        """
+        measured = power_w(self.hass, self.cfg.get(CONF_POWER_SENSOR))
+        return max(0.0, measured) if measured is not None else 0.0
+
+    @property
+    def pv_start_need(self) -> float:
+        """Safe PV start must cover heating draw and configured threshold."""
+        return max(self.nominal, float(self.p("min_surplus")))
+
     def _reset(self) -> None:
         self.state.update(sm=IDLE, approved=False, hp_active=False, hp_done=False, since=None)
         self._detected_since = None
@@ -158,8 +176,10 @@ class LoadDevice(BaseDevice):
         late = ctx.now.time() >= latest
         earliest = time_from_str(self.p("earliest_start"), time(0, 0))
         before_earliest = ctx.now.time() < earliest
-        free = budget_left - p  # Überschuss ohne Eigenverbrauch
-        need = float(self.p("min_surplus"))
+        # Positive PV budgets are physical free power plus only genuinely
+        # controllable reductions (computed centrally by the manager).
+        # A PV start must cover the prospective heating power itself.
+        need = self.pv_start_need
 
         if sm == IDLE:
             # SEM v3: 5 seconds stable above 9 W (or switch on without sensor).
@@ -196,14 +216,23 @@ class LoadDevice(BaseDevice):
                 return self._wait(f"Frühester Start erst ab {earliest.strftime('%H:%M')}")
             if ctx.night_window:
                 return self._approve("Sofortfenster – freigegeben")
-            # The SEP manager sorts by configured priority; retain this
-            # instead of SEM's timestamp-only ordering.
-            # The SEM v3 feasibility threshold is based on the full
-            # currently available budget, not on subtracting own power twice.
-            surplus_now = ctx.now_left(budget_left)
-            if surplus_now >= need:
-                return self._approve(f"Überschuss ok ({surplus_now:.0f} W ≥ {need:.0f} W)")
-            return self._wait(f"Überschuss zu gering ({surplus_now:.0f} W < {need:.0f} W)")
+            # A newly detected appliance is already drawing some power:
+            # that *measured* power has reduced the physical grid export.
+            # Add it back only for its own start check, not as credit to
+            # any other appliance. Its future reservation remains in the
+            # manager (nominal - actually metered draw).
+            own_measured = self.power_accounted_in_grid() if sw_on else 0.0
+            surplus_now = ctx.now_left(budget_left) + own_measured
+            surplus_avg = budget_left
+            if not ctx.history_ready:
+                return self._wait("Mittelwert noch nicht verfügbar")
+            if surplus_now >= need and surplus_avg >= need:
+                return self._approve(
+                    f"PV-Budget aktuell und im Mittel ok ({min(surplus_now, surplus_avg):.0f} W ≥ {need:.0f} W)"
+                )
+            return self._wait(
+                f"PV-Budget zu gering ({min(surplus_now, surplus_avg):.0f} W < {need:.0f} W)"
+            )
 
         if self.state["sm"] == WAITING:
             self.status = "wartet"
@@ -213,17 +242,22 @@ class LoadDevice(BaseDevice):
                 return Decision(False, 0, f"Frühester Start erst ab {earliest.strftime('%H:%M')}")
             if late or ctx.night_window:
                 return self._approve("Spätstart/Sofortfenster erreicht", forced=True)
-            if any(n != self.name for n in ctx.loads_heating):
-                return Decision(False, 0, "Anderes Gerät in Heizphase")
+            # No hard lock if another device is heating. The running
+            # devices already reserve their still-expected heater draw in
+            # the manager. The next appliance can therefore start in
+            # parallel if *both* free budgets cover its full heater load.
             if not ctx.history_ready:
                 return Decision(False, 0, "Mittelwert noch nicht verfügbar")
-            free_now = ctx.now_left(budget_left) - p
-            # Both the averaged budget and the *current* budget must pass.
-            # Otherwise an older sunny period could start a washer while
-            # the grid is already importing power.
-            if free >= need and free_now >= need:
-                return self._approve(f"Überschuss aktuell und im Mittel ok ({min(free, free_now):.0f} W)")
-            return Decision(False, 0, f"Warte auf Überschuss ({min(free, free_now):.0f} W < {need:.0f} W)")
+            own_measured = self.power_accounted_in_grid() if sw_on else 0.0
+            free_now = ctx.now_left(budget_left) + own_measured
+            free_avg = budget_left
+            if free_avg >= need and free_now >= need:
+                return self._approve(
+                    f"PV-Budget aktuell und im Mittel ok ({min(free_avg, free_now):.0f} W ≥ {need:.0f} W)"
+                )
+            return Decision(
+                False, 0, f"Warte auf PV-Budget ({min(free_avg, free_now):.0f} W < {need:.0f} W)"
+            )
 
         return Decision(sw_on, p, "Unbekannter Zustand")
 
