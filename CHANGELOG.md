@@ -1,3 +1,8 @@
+## 0.2.19 – Veraltete PV-Freigabe bei Haushaltsgeräten korrigiert
+- Laufende freigegebene Haushaltsgeräte zeigen nicht länger den bei Programmstart gemessenen Überschuss als angeblich aktuellen Wert; sie melden stattdessen „Programm läuft – bereits freigegeben“.
+- Eine reguläre PV-Freigabe wird nicht mehr fälschlich als Pflicht-Start gekennzeichnet. Sofortfenster, Spätstart und manueller Sofort-Start bleiben erzwungene Freigaben.
+- Bereits freigegebene Programme werden durch sinkendes PV-Budget weiterhin nicht unterbrochen.
+
 ## 0.2.18 – Heizphasenkalkulation und paralleler PV-Start
 - Die bisherige pauschale Sperre „Anderes Gerät in Heizphase“ wurde entfernt. Ein wartendes zweites Haushaltsgerät darf auch dann starten, wenn das verbleibende reale und gemittelte Steuerbudget für seine erwartete Heizleistung reicht.
 - Jedes freigegebene Haushaltsgerät reserviert vor dem Ende seiner Heizphase die Nennleistung. Bereits **tatsächlich gemessene** Leistung wird nicht doppelt als noch zu reservieren abgezogen; nach einer abgeschlossenen Heizphase entfällt die zusätzliche Heizreservierung.
