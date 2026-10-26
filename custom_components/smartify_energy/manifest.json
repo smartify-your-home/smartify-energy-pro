@@ -16,6 +16,6 @@
   "integration_type": "hub",
   "iot_class": "calculated",
   "requirements": [],
-  "version": "0.2.13",
+  "version": "0.2.14",
   "issue_tracker": "https://github.com/smartify-your-home/smartify-energy-pro/issues"
 }
