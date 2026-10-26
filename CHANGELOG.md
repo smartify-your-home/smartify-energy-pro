@@ -1,3 +1,12 @@
+## 0.2.17 – WW-Aktiv-Rückmeldung und dauerhafte Boost-Startsperre
+- Optionales Feld **Warmwasser aktiv** im Wärmepumpen-Konfigurationsformular (nur `binary_sensor` oder `input_boolean`). Wenn EIN, gibt SEP keinen neuen WW-Boost aus; bei nicht verfügbarem konfiguriertem Signal wird ein neuer Start vorsorglich gesperrt.
+- Button-/Schalter-Boosts lösen ausschließlich einen **einmaligen WW-Start** aus. SEP beendet die danach laufende Warmwasserladung nicht wegen Netzbezug, Bewölkung oder Modus Aus. Ein Schalter muss extern wieder AUS werden, um eine neue Auslösung zu ermöglichen.
+- Neue Geräteeinstellung **WW-Boost Mindestabstand**: Standard **60 Minuten**, einstellbar **60–720 Minuten**. Die harte Untergrenze von 60 Minuten garantiert höchstens einen Start pro Stunde.
+- Vor dem Aktor-Befehl wird der Auslösezeitpunkt unverzüglich in HA Storage geschrieben. Die Sperre bleibt so auch bei einem HA-Neustart oder fehlgeschlagenem/unsicherem Aktoraufruf erhalten. Vorhandene Startzeitstempel älterer SEP-Versionen werden übernommen.
+- Die normalen Prüfungen auf PV-Budget, Temperatur, WP-Ruhezeit sowie optional Sonne und Bewölkung gelten weiterhin **nur für den Start**.
+- Number-basierte Sollwert-Boosts behalten die aktive Rückstellung, erhalten aber ebenso die dauerhaft gespeicherte Startsperre. FBH bleibt außerhalb des Funktionsumfangs.
+- Automatisierte Regressionstests für 60-/125-Minuten-Sperre, Neustart, WW-Aktiv-Sensor, Sensorfehler und Einmalbefehl ergänzt.
+
 ## 0.2.16 – Echtes Netzsaldo und sicheres Steuerbudget
 - Die bestehende Entität `surplus` zeigt jetzt den gemessenen signierten Netzsaldo: Einspeisung positiv, Netzbezug negativ. `surplus_avg` ist der Mittelwert dieses echten Netzsaldos.
 - Neue Entitäten `budget` und `budget_avg` zeigen das getrennte, für die SEP-Regelung verwendete Steuerbudget.
