@@ -521,16 +521,10 @@
       }
     },
     "dryer_resume": {
-      "options": [
-        {
-          "value": "never",
-          "label": "Nein – kein Wiederanlauf, Steckdose nie schalten"
-        },
-        {
-          "value": "yes",
-          "label": "Ja – Programm läuft nach Stromwiederkehr weiter"
-        }
-      ]
+      "options": {
+        "never": "Nein – kein Wiederanlauf, Steckdose nie schalten",
+        "yes": "Ja – Programm läuft nach Stromwiederkehr weiter"
+      }
     },
     "appliance_type": {
       "options": {
