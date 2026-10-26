@@ -1,3 +1,7 @@
+## 0.2.14 – PV-Plan einschließlich des ganzen morgigen Tages
+- Der Planungszeitraum reicht ab der aktuellen Stunde bis zum Ende des morgigen Kalendertages (00:00 Uhr übermorgen).
+- Auch Stunden ohne Sonnenleistung werden in der Prognosezeitleiste gezeigt; frühere Anzeigegrenzen von 24/36 Stunden entfallen.
+
 ## 0.2.13 – Prioritätsanzeige und Drag & Drop repariert
 - Fehler korrigiert: Nach Entfernung der Prioritäts-Zahlen-Entitäten zeigte die grafische Übersicht für jedes Gerät `?` und erwartete nicht mehr vorhandene Entitäten.
 - Geräte werden jetzt aus ihrem Status ermittelt und die gespeicherte Priorität als Zahl aus dem Statusattribut `prioritaet` angezeigt.
