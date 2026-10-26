@@ -1,3 +1,10 @@
+## 0.2.24 – Kompakte Saldo-Anzeige im SEP-Header
+
+- Vier separate Kacheln für Netzsaldo und Steuerbudget (Ist und Durchschnitt) werden zu zwei kompakten Kacheln zusammengefasst.
+- Je Kachel erscheint der **Durchschnittswert groß**, darunter der **Ist-Wert kleiner**. Die Anzeige des Netzbezugs bleibt negativ; Netzsaldo und Steuerbudget bleiben zwei verschiedene Messgrößen.
+- Weitere Kacheln (Verteilt, Prognose, Speichervorrang) bleiben erhalten. Durch Antippen der oberen Kachel öffnet sich die gemittelte Sensorentität; Ist-Wert hat eigenen Info-Aufruf.
+- Unveränderte WW-Boost-Boolean-Logik: Eine externe Automation übernimmt weiterhin das Zurücksetzen.
+
 ## 0.2.23 – WW-Boost-Temperatur per Entität
 
 - Im Wärmepumpen-/WW-Boost-Gerät kann optional eine Entität **WW-Boost Solltemperatur** (`input_number`, `number` oder `sensor`) ausgewählt werden.
