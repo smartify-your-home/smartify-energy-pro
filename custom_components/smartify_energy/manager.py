@@ -38,7 +38,7 @@ from .const import (
     SIGNAL_UPDATE,
     STORAGE_VERSION,
 )
-from .budget import additional_reservation, control_budget
+from .budget import additional_reservation, battery_priority_credit, control_budget
 from .devices import DEVICE_CLASSES, BaseDevice, Context
 from .forecast import ForecastProvider
 from .helpers import ParamSpec, SensorSpec, in_window, power_w, state_float, time_from_str
@@ -477,7 +477,7 @@ class EnergyManager:
             # Measured battery charging has reduced the physical grid export.
             # Credit it ONLY ahead of battery rank, assuming its external
             # regulator yields automatically to a higher priority consumer.
-            battery_credit = battery_w if not battery_passed else 0.0
+            battery_credit = battery_priority_credit(battery_w, battery_rank, dev.priority)
             original_now = ctx.budget_now
             # Credit the battery just ONCE through the instantaneous context.
             # Keep left and averaged budgets unchanged.
