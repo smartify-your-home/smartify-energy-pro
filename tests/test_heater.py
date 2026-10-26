@@ -3,16 +3,29 @@ import importlib.util
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace as NS
 import unittest
+import sys
+import types
+from unittest.mock import patch
 
 from test_load_budget import Context, ROOT, load_device
 
-# This loads the existing lightweight fake Home Assistant test modules.
+# The lightweight fake HA loader clears its temporary package roots after
+# import. Reinstall the roots around heater module import, keeping its already
+# loaded pure helpers / base class in sys.modules.
 load_device()
-spec = importlib.util.spec_from_file_location(
-    "sep_load_test.devices.heater", ROOT / "devices" / "heater.py"
-)
-heater_module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(heater_module)
+package = types.ModuleType("sep_load_test")
+package.__path__ = [str(ROOT)]
+devices_package = types.ModuleType("sep_load_test.devices")
+devices_package.__path__ = [str(ROOT / "devices")]
+with patch.dict(sys.modules, {
+    "sep_load_test": package,
+    "sep_load_test.devices": devices_package,
+}):
+    spec = importlib.util.spec_from_file_location(
+        "sep_load_test.devices.heater", ROOT / "devices" / "heater.py"
+    )
+    heater_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(heater_module)
 HeaterDevice = heater_module.HeaterDevice
 
 
