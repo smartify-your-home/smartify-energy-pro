@@ -1,3 +1,7 @@
+## 0.2.15 – PV-Pausen kompakt darstellen
+- Stunden ohne prognostizierten PV-Ertrag werden in der Zeitleiste nicht mehr als einzelne Balken angezeigt. Eine kompakte markierte Lücke zeigt den übersprungenen Zeitraum als „Nacht“ oder „PV-Pause“; genaue Dauer per Tooltip.
+- Planungshorizont bleibt bis zum Ende des morgigen Tages erhalten.
+
 ## 0.2.14 – PV-Plan einschließlich des ganzen morgigen Tages
 - Der Planungszeitraum reicht ab der aktuellen Stunde bis zum Ende des morgigen Kalendertages (00:00 Uhr übermorgen).
 - Auch Stunden ohne Sonnenleistung werden in der Prognosezeitleiste gezeigt; frühere Anzeigegrenzen von 24/36 Stunden entfallen.
