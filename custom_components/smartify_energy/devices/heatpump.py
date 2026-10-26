@@ -42,6 +42,14 @@ class HeatPumpDevice(BaseDevice):
             ParamSpec("min_on", "number", 30, "mdi:timer-lock-outline", 5, 180, 5, "min"),
             ParamSpec("min_off", "number", 60, "mdi:timer-lock-open-outline", 5, 360, 5, "min"),
             ParamSpec("max_per_day", "number", 120, "mdi:timer-alert-outline", 0, 720, 10, "min"),
+            ParamSpec("sun_filter_active", "switch", False, "mdi:weather-sunny"),
+            ParamSpec("sun_angle_min", "number", self.cfg.get("sun_angle_min"),
+                      "mdi:sun-angle", -90, 90, 0.5, "°"),
+            ParamSpec("cloud_filter_active", "switch", False, "mdi:weather-cloudy"),
+            ParamSpec("cloud_now_max", "number", self.cfg.get("cloud_now_max"),
+                      "mdi:weather-cloudy", 0, 100, 1, "%"),
+            ParamSpec("cloud_next_max", "number", self.cfg.get("cloud_next_max"),
+                      "mdi:weather-cloudy-clock", 0, 100, 1, "%"),
             ParamSpec("stop_delay", "number", 10, "mdi:timer-pause", 1, 60, 1, "min"),
         ]
         if self.cfg.get(CONF_BOOST_TYPE) == BOOST_NUMBER:
@@ -50,6 +58,60 @@ class HeatPumpDevice(BaseDevice):
                 ParamSpec("normal_value", "number", 46, "mdi:arrow-down-bold", 0, 80, 0.5),
             ]
         return specs
+
+    def load(self, data: dict) -> None:
+        # Removing a configured threshold must also remove its stored parameter.
+        data = dict(data)
+        data["params"] = dict(data.get("params") or {})
+        old_cfg = data.get("cfg") or {}
+        for key in ("sun_angle_min", "cloud_now_max", "cloud_next_max"):
+            if old_cfg.get(key) != self.cfg.get(key):
+                data["params"].pop(key, None)
+        super().load(data)
+
+    def _weather_checks(self) -> dict[str, dict]:
+        """Optional start gates. Incomplete/disabled gates do not read inputs."""
+        result = {}
+        groups = (
+            ("sun", "sun_filter_active", (("sun_angle_entity", "sun_angle_min", -90, 90),)),
+            ("cloud", "cloud_filter_active", (
+                ("cloud_now_entity", "cloud_now_max", 0, 100),
+                ("cloud_next_entity", "cloud_next_max", 0, 100),
+            )),
+        )
+        for name, active, fields in groups:
+            enabled = bool(self.p(active))
+            configured = all(self.cfg.get(entity) and self.p(limit) is not None
+                             for entity, limit, _, _ in fields)
+            check = {"aktiv": enabled, "vollstaendig": bool(configured), "wirksam": False,
+                     "erlaubt": True, "grund": "Ignoriert: ausgeschaltet" if not enabled
+                     else "Ignoriert: Entität oder Grenzwert fehlt"}
+            result[name] = check
+            if not enabled or not configured:
+                continue
+            check.update(wirksam=True, erlaubt=True, grund="Bedingung erfüllt")
+            for entity, limit, low, high in fields:
+                value = state_float(self.hass, self.cfg[entity])
+                try:
+                    threshold = float(self.p(limit))
+                except (TypeError, ValueError):
+                    threshold = math.nan
+                label = {"sun_angle_entity": "Sonnenwinkel", "cloud_now_entity": "Bewölkung aktuelle Stunde",
+                         "cloud_next_entity": "Bewölkung kommende Stunde"}[entity]
+                if (value is None or not math.isfinite(value) or not low <= value <= high
+                        or not math.isfinite(threshold) or not low <= threshold <= high):
+                    check.update(erlaubt=False, grund=f"{label}: Messwert oder Grenzwert ungültig")
+                    break
+                passed = value >= threshold if name == "sun" else value < threshold
+                if not passed:
+                    unit = "°" if name == "sun" else "%"
+                    relation = "mindestens" if name == "sun" else "unter"
+                    check.update(erlaubt=False, grund=f"{label}: {value:g}{unit}, benötigt {relation} {threshold:g}{unit}")
+                    break
+        return result
+
+    def status_attrs(self) -> dict:
+        return {**super().status_attrs(), "boost_startbedingungen": self._weather_checks()}
 
     def sensor_specs(self) -> list[SensorSpec]:
         return super().sensor_specs() + [
@@ -130,6 +192,9 @@ class HeatPumpDevice(BaseDevice):
             return Decision(False, 0, f"Warte auf {float(self.p('idle_minutes')):g} Minuten WP-Leistung unter Ruheschwelle")
         if self._elapsed("stopped", ctx.now) < float(self.p("min_off")):
             return Decision(False, 0, "Mindestpause läuft")
+        for check in self._weather_checks().values():
+            if not check["erlaubt"]:
+                return Decision(False, 0, check["grund"])
         if left_now >= need and left_avg >= need:
             return Decision(True, need, "PV-Überschuss – Boost")
         return Decision(False, 0, f"Überschuss zu niedrig ({min(left_now, left_avg):.0f} W < {need:.0f} W)")

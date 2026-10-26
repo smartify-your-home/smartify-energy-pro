@@ -325,7 +325,13 @@
             "boost_entity": "Boost-Entity",
             "power_sensor": "Leistungssensor",
             "nominal_power": "Leistung im Boost",
-            "temperature_sensor": "Speichertemperatur"
+            "temperature_sensor": "Speichertemperatur",
+            "sun_angle_entity": "Sonnenwinkel – Entität",
+            "sun_angle_min": "Sonnenwinkel mindestens",
+            "cloud_now_entity": "Bewölkung aktuelle Stunde – Entität",
+            "cloud_now_max": "Bewölkung aktuelle Stunde unter",
+            "cloud_next_entity": "Bewölkung kommende Stunde – Entität",
+            "cloud_next_max": "Bewölkung kommende Stunde unter"
           },
           "data_description": {
             "name": "Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
@@ -333,7 +339,13 @@
             "boost_entity": "Wählen Sie den passenden Warmwasser-Auslöser Ihrer Wärmepumpe. Bei einem Boolean muss eine vorhandene Automation dessen Zustand in einen WP-Befehl umsetzen. Ein beliebiger Helfer allein schaltet die Wärmepumpe nicht.",
             "power_sensor": "Für Boost erforderlich: aktuelle elektrische Leistung der Wärmepumpe in W oder kW. Nur dieser Messwert bestätigt die Ruhezeit; eine eingeschaltete Freigabe allein reicht nicht.",
             "nominal_power": "Typischer Strombedarf während des Betriebs in Watt (W). Bei Waschmaschinen ist meist die Heizphase entscheidend. SEP nutzt diesen Wert zur Reservierung und als Ersatz, wenn keine Leistung messbar ist.",
-            "temperature_sensor": "Für Boost erforderlich: aktuelle Warmwassertemperatur in °C. Start nur unter Zieltemperatur minus Hysterese; ohne gültigen Messwert wird kein neuer Boost ausgelöst."
+            "temperature_sensor": "Für Boost erforderlich: aktuelle Warmwassertemperatur in °C. Start nur unter Zieltemperatur minus Hysterese; ohne gültigen Messwert wird kein neuer Boost ausgelöst.",
+            "sun_angle_entity": "Optional: Sensor mit der Sonnenhöhe über dem Horizont in Grad. Nicht die Himmelsrichtung (Azimut) verwenden. Bei sun.sun steht die Höhe nur im Attribut elevation; dafür benötigen Sie einen eigenen Zahlensensor. Wirkt nur mit Grenzwert und eingeschalteter Sonnenwinkel-Prüfung.",
+            "sun_angle_min": "Optionaler Mindestwinkel. Beispiel: 12° erlaubt den Boost ab genau 12°. Leer bedeutet: Sonnenwinkel-Prüfung wird ignoriert. Entität in der Gerätekonfiguration auswählen und Prüfung aktivieren.",
+            "cloud_now_entity": "Optional: Bewölkungsprognose für die aktuelle Stunde als Zahl von 0 bis 100 %. 0 bedeutet wolkenlos. Nur zusammen mit beiden Grenzwerten, der Entität der kommenden Stunde und aktiver Bewölkungsprüfung wirksam.",
+            "cloud_now_max": "Boost startet nur bei einem Wert kleiner als diese Grenze. Beispiel: unter 75 %; genau 75 % sperrt den Start. Beide Stunden müssen ihre Grenze einhalten. Bei unvollständigen Angaben wird die gesamte Bewölkungsprüfung ignoriert.",
+            "cloud_next_entity": "Optional: Bewölkungsprognose für die kommende Stunde als Zahl von 0 bis 100 %. Die Datenquelle muss den Wert laufend auf die nächste Stunde beziehen. SEP liest den Zahlenzustand, keine Wetterliste in Attributen.",
+            "cloud_next_max": "Boost startet nur, wenn auch die kommende Stunde unter dieser Grenze liegt. Beispiel: unter 50 %; genau 50 % sperrt. Leer bedeutet bei dieser Prüfung: ignorieren, bis beide Entitäten und Grenzen vollständig sind."
           }
         },
         "reconfigure": {
@@ -344,7 +356,13 @@
             "boost_entity": "Boost-Entity",
             "power_sensor": "Leistungssensor",
             "nominal_power": "Leistung im Boost",
-            "temperature_sensor": "Speichertemperatur"
+            "temperature_sensor": "Speichertemperatur",
+            "sun_angle_entity": "Sonnenwinkel – Entität",
+            "sun_angle_min": "Sonnenwinkel mindestens",
+            "cloud_now_entity": "Bewölkung aktuelle Stunde – Entität",
+            "cloud_now_max": "Bewölkung aktuelle Stunde unter",
+            "cloud_next_entity": "Bewölkung kommende Stunde – Entität",
+            "cloud_next_max": "Bewölkung kommende Stunde unter"
           },
           "data_description": {
             "name": "Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
@@ -352,7 +370,13 @@
             "boost_entity": "Wählen Sie den passenden Warmwasser-Auslöser Ihrer Wärmepumpe. Bei einem Boolean muss eine vorhandene Automation dessen Zustand in einen WP-Befehl umsetzen. Ein beliebiger Helfer allein schaltet die Wärmepumpe nicht.",
             "power_sensor": "Für Boost erforderlich: aktuelle elektrische Leistung der Wärmepumpe in W oder kW. Nur dieser Messwert bestätigt die Ruhezeit; eine eingeschaltete Freigabe allein reicht nicht.",
             "nominal_power": "Typischer Strombedarf während des Betriebs in Watt (W). Bei Waschmaschinen ist meist die Heizphase entscheidend. SEP nutzt diesen Wert zur Reservierung und als Ersatz, wenn keine Leistung messbar ist.",
-            "temperature_sensor": "Für Boost erforderlich: aktuelle Warmwassertemperatur in °C. Start nur unter Zieltemperatur minus Hysterese; ohne gültigen Messwert wird kein neuer Boost ausgelöst."
+            "temperature_sensor": "Für Boost erforderlich: aktuelle Warmwassertemperatur in °C. Start nur unter Zieltemperatur minus Hysterese; ohne gültigen Messwert wird kein neuer Boost ausgelöst.",
+            "sun_angle_entity": "Optional: Sensor mit der Sonnenhöhe über dem Horizont in Grad. Nicht die Himmelsrichtung (Azimut) verwenden. Bei sun.sun steht die Höhe nur im Attribut elevation; dafür benötigen Sie einen eigenen Zahlensensor. Wirkt nur mit Grenzwert und eingeschalteter Sonnenwinkel-Prüfung.",
+            "sun_angle_min": "Optionaler Mindestwinkel. Beispiel: 12° erlaubt den Boost ab genau 12°. Leer bedeutet: Sonnenwinkel-Prüfung wird ignoriert. Entität in der Gerätekonfiguration auswählen und Prüfung aktivieren.",
+            "cloud_now_entity": "Optional: Bewölkungsprognose für die aktuelle Stunde als Zahl von 0 bis 100 %. 0 bedeutet wolkenlos. Nur zusammen mit beiden Grenzwerten, der Entität der kommenden Stunde und aktiver Bewölkungsprüfung wirksam.",
+            "cloud_now_max": "Boost startet nur bei einem Wert kleiner als diese Grenze. Beispiel: unter 75 %; genau 75 % sperrt den Start. Beide Stunden müssen ihre Grenze einhalten. Bei unvollständigen Angaben wird die gesamte Bewölkungsprüfung ignoriert.",
+            "cloud_next_entity": "Optional: Bewölkungsprognose für die kommende Stunde als Zahl von 0 bis 100 %. Die Datenquelle muss den Wert laufend auf die nächste Stunde beziehen. SEP liest den Zahlenzustand, keine Wetterliste in Attributen.",
+            "cloud_next_max": "Boost startet nur, wenn auch die kommende Stunde unter dieser Grenze liegt. Beispiel: unter 50 %; genau 50 % sperrt. Leer bedeutet bei dieser Prüfung: ignorieren, bis beide Entitäten und Grenzen vollständig sind."
           }
         }
       },
@@ -490,6 +514,15 @@
       },
       "idle_minutes": {
         "name": "WP-Ruhezeit vor Boost"
+      },
+      "sun_angle_min": {
+        "name": "Sonnenwinkel mindestens"
+      },
+      "cloud_now_max": {
+        "name": "Bewölkung aktuelle Stunde unter"
+      },
+      "cloud_next_max": {
+        "name": "Bewölkung kommende Stunde unter"
       }
     },
     "time": {
@@ -521,6 +554,12 @@
       },
       "lock_enabled": {
         "name": "Sperrzeit aktiv"
+      },
+      "sun_filter_active": {
+        "name": "Sonnenwinkel-Prüfung aktiv"
+      },
+      "cloud_filter_active": {
+        "name": "Bewölkungsprüfung aktiv"
       }
     },
     "sensor": {

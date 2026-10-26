@@ -24,7 +24,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.2.1";
+const CARD_VERSION = "1.2.2";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -107,7 +107,12 @@ const SETTING_HELP = {
   "idle_power_threshold": "Unter dieser gemessenen WP-Leistung zählt die Wärmepumpe als ruhend. Beispiel: 5 W. Ab genau 5 W beginnt die Wartezeit später wieder von vorn. Den Wert passend zum tatsächlichen Standby-Verbrauch wählen.",
   "idle_minutes": "So lange muss die WP-Leistung durchgehend unter der Ruheschwelle liegen, bevor Boost starten darf. Standard: 15 Minuten. Aktivität, ungültige Werte und ein Neustart setzen die Messung zurück. Die Mindestpause gilt zusätzlich.",
   "start_now": "Gibt das Haushaltsgerät sofort frei und schaltet bei Bedarf seine Steckdose ein – auch ohne Solarüberschuss. Diese Taste löst direkt eine Aktion aus.",
-  "reset": "Setzt die Erkennung des Haushaltsgeräts auf „Bereit“ zurück. Das Programm am Gerät wird dadurch nicht zurückgesetzt und die Steckdose nicht ausgeschaltet."
+  "reset": "Setzt die Erkennung des Haushaltsgeräts auf „Bereit“ zurück. Das Programm am Gerät wird dadurch nicht zurückgesetzt und die Steckdose nicht ausgeschaltet.",
+  "sun_angle_min": "Optionaler Mindestwinkel. Beispiel: 12° erlaubt den Boost ab genau 12°. Leer bedeutet: Sonnenwinkel-Prüfung wird ignoriert. Entität in der Gerätekonfiguration auswählen und Prüfung aktivieren.",
+  "cloud_now_max": "Boost startet nur bei einem Wert kleiner als diese Grenze. Beispiel: unter 75 %; genau 75 % sperrt den Start. Beide Stunden müssen ihre Grenze einhalten. Bei unvollständigen Angaben wird die gesamte Bewölkungsprüfung ignoriert.",
+  "cloud_next_max": "Boost startet nur, wenn auch die kommende Stunde unter dieser Grenze liegt. Beispiel: unter 50 %; genau 50 % sperrt. Leer bedeutet bei dieser Prüfung: ignorieren, bis beide Entitäten und Grenzen vollständig sind.",
+  "sun_filter_active": "Ein: Vor einem neuen Boost wird der Sonnenwinkel geprüft, wenn Entität und Mindestwinkel eingetragen sind. Aus oder unvollständige Angaben: ignorieren. Ein ungültiger Messwert bei vollständig aktiver Prüfung verhindert den Start. Laufende Boosts werden dadurch nicht beendet.",
+  "cloud_filter_active": "Ein: Vor einem neuen Boost müssen aktuelle UND kommende Stunde unter ihrer jeweiligen Bewölkungsgrenze liegen. Beide Entitäten und Grenzen müssen eingetragen sein, sonst wird die Prüfung ignoriert. Bei vollständiger aktiver Prüfung sperrt ein ungültiger Messwert. Laufende Boosts werden dadurch nicht beendet."
 };
 
 const SETTING_DOMAINS = ["select", "switch", "time", "number", "button"];
@@ -443,11 +448,12 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const st = this._st(item.id);
     if (!st) return "";
     const a = st.attributes || {};
-    const dis = ["unavailable", "unknown"].includes(st.state) && item.dom !== "button" ? "disabled" : "";
+    const unsetLimit = item.dom === "number" && ["sun_angle_min", "cloud_now_max", "cloud_next_max"].includes(item.key) && st.state === "unknown";
+    const dis = ["unavailable", "unknown"].includes(st.state) && item.dom !== "button" && !unsetLimit ? "disabled" : "";
     switch (item.dom) {
       case "number": {
         const unit = a.unit_of_measurement ? `<span class="unit">${esc(a.unit_of_measurement)}</span>` : "";
-        return `<input type="number" data-num="${item.id}" value="${esc(st.state)}" min="${a.min ?? ""}" max="${a.max ?? ""}" step="${a.step ?? "any"}" ${dis}>${unit}`;
+        return `<input type="number" data-num="${item.id}" placeholder="Nicht festgelegt" value="${unsetLimit ? "" : esc(st.state)}" min="${a.min ?? ""}" max="${a.max ?? ""}" step="${a.step ?? "any"}" ${dis}>${unit}`;
       }
       case "select":
         return `<select class="set" data-select="${item.id}" ${dis}>${(a.options || []).map(o =>

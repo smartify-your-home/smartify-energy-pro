@@ -259,10 +259,22 @@
             "boost_entity": "Boost entity",
             "power_sensor": "Power sensor",
             "nominal_power": "Power while boosting",
-            "temperature_sensor": "Tank temperature"
+            "temperature_sensor": "Tank temperature",
+            "sun_angle_entity": "Sun elevation entity",
+            "sun_angle_min": "Minimum sun elevation",
+            "cloud_now_entity": "Cloud cover current hour entity",
+            "cloud_now_max": "Current hour cloud cover below",
+            "cloud_next_entity": "Cloud cover next hour entity",
+            "cloud_next_max": "Next hour cloud cover below"
           },
           "data_description": {
-            "boost_entity": "EMS-ESP: one-time charging switch or setpoint number."
+            "boost_entity": "EMS-ESP: one-time charging switch or setpoint number.",
+            "sun_angle_entity": "Optional numeric sun elevation in degrees, not azimuth. For sun.sun, expose its elevation attribute through a numeric sensor. Requires a threshold and the active switch.",
+            "sun_angle_min": "Optional minimum elevation. 12° allows starting at exactly 12°. Unset means ignored. Also select an entity and enable the check.",
+            "cloud_now_entity": "Optional current-hour cloud forecast from 0 to 100 percent. Requires both hourly entities, both thresholds and an active cloud check.",
+            "cloud_now_max": "Start requires cloud cover strictly below this value: 75% blocks at exactly 75%. Both hours must pass. Incomplete configuration ignores the entire cloud check.",
+            "cloud_next_entity": "Optional next-hour cloud forecast from 0 to 100 percent. The source must keep this value relative to the next hour. SEP reads its numeric state, not a forecast attribute list.",
+            "cloud_next_max": "Next-hour cloud cover must also be strictly below this limit: exactly 50% blocks a 50% limit. An unset limit ignores this check until both sources and limits are complete."
           }
         },
         "reconfigure": {
@@ -273,10 +285,22 @@
             "boost_entity": "Boost entity",
             "power_sensor": "Power sensor",
             "nominal_power": "Power while boosting",
-            "temperature_sensor": "Tank temperature"
+            "temperature_sensor": "Tank temperature",
+            "sun_angle_entity": "Sun elevation entity",
+            "sun_angle_min": "Minimum sun elevation",
+            "cloud_now_entity": "Cloud cover current hour entity",
+            "cloud_now_max": "Current hour cloud cover below",
+            "cloud_next_entity": "Cloud cover next hour entity",
+            "cloud_next_max": "Next hour cloud cover below"
           },
           "data_description": {
-            "boost_entity": "EMS-ESP: one-time charging switch or setpoint number."
+            "boost_entity": "EMS-ESP: one-time charging switch or setpoint number.",
+            "sun_angle_entity": "Optional numeric sun elevation in degrees, not azimuth. For sun.sun, expose its elevation attribute through a numeric sensor. Requires a threshold and the active switch.",
+            "sun_angle_min": "Optional minimum elevation. 12° allows starting at exactly 12°. Unset means ignored. Also select an entity and enable the check.",
+            "cloud_now_entity": "Optional current-hour cloud forecast from 0 to 100 percent. Requires both hourly entities, both thresholds and an active cloud check.",
+            "cloud_now_max": "Start requires cloud cover strictly below this value: 75% blocks at exactly 75%. Both hours must pass. Incomplete configuration ignores the entire cloud check.",
+            "cloud_next_entity": "Optional next-hour cloud forecast from 0 to 100 percent. The source must keep this value relative to the next hour. SEP reads its numeric state, not a forecast attribute list.",
+            "cloud_next_max": "Next-hour cloud cover must also be strictly below this limit: exactly 50% blocks a 50% limit. An unset limit ignores this check until both sources and limits are complete."
           }
         }
       },
@@ -414,6 +438,15 @@
       },
       "idle_minutes": {
         "name": "Heat pump idle time before boost"
+      },
+      "sun_angle_min": {
+        "name": "Minimum sun elevation"
+      },
+      "cloud_now_max": {
+        "name": "Current hour cloud cover below"
+      },
+      "cloud_next_max": {
+        "name": "Next hour cloud cover below"
       }
     },
     "time": {
@@ -445,6 +478,12 @@
       },
       "lock_enabled": {
         "name": "Lock active"
+      },
+      "sun_filter_active": {
+        "name": "Sun elevation check active"
+      },
+      "cloud_filter_active": {
+        "name": "Cloud cover check active"
       }
     },
     "sensor": {

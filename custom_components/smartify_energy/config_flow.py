@@ -326,6 +326,12 @@ class HeatPumpSubentryFlow(_DeviceFlow):
             _opt(CONF_POWER_SENSOR, d): _ent("sensor", "power"),
             _req(CONF_NOMINAL, d, 2000): _num(200, 10000, 50, "W"),
             _opt(CONF_TEMP_SENSOR, d): _ent("sensor", "temperature"),
+            _opt("sun_angle_entity", d): _ent(["sensor", "input_number", "number"]),
+            _opt("sun_angle_min", d): _num(-90, 90, 0.5, "°"),
+            _opt("cloud_now_entity", d): _ent(["sensor", "input_number", "number"]),
+            _opt("cloud_now_max", d): _num(0, 100, 1, "%"),
+            _opt("cloud_next_entity", d): _ent(["sensor", "input_number", "number"]),
+            _opt("cloud_next_max", d): _num(0, 100, 1, "%"),
         })
 
     def validate(self, data: dict) -> dict[str, str]:

@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.6** · Integrationsdomain: `smartify_energy`
+Version: **0.2.7** · Integrationsdomain: `smartify_energy`
 
 ## Funktionen
 
@@ -52,3 +52,11 @@ Die deutsche Einrichtung und Gerätekonfiguration erklärt jedes Feld direkt dar
 ## Hauptschalter Aus (0.2.6)
 
 Beim zentralen Ausschalten schaltet SEP die Steckdosen aller angelegten Haushaltsgeräte einmal ein und setzt deren Programmerkennung zurück. Danach bleiben manuelle Schaltbefehle möglich. Bei erneutem Ausschalten sowie beim Laden der Integration mit Hauptmodus Aus erfolgt die Freigabe erneut. Dies gilt für Haushaltsgeräte, nicht für Pool, Wallbox oder Wärmepumpe. Die Steckdose liefert Strom; ob das angeschlossene Gerät sein Programm fortsetzt, hängt vom Gerät ab.
+
+## Optionale Boost-Startbedingungen (0.2.7)
+
+In der Gerätekonfiguration der Wärmepumpe können ein Sonnenhöhen-Sensor und zwei Bewölkungssensoren (aktuelle/kommende Stunde) mit optionalen Grenzwerten ausgewählt werden. Beide Prüfungen haben im Zahnrad-Menü einen eigenen Aktiv-Schalter; anfangs sind sie aus. Grenzwerte lassen sich dort ebenfalls einstellen. Fehlende Entitäten oder Grenzwerte deaktivieren die jeweilige Prüfung; bei Bewölkung müssen beide Entitäten und beide Grenzen vorhanden sein.
+
+Beispiel: Sonnenhöhe mindestens 12° (12° erlaubt), Bewölkung aktuell unter 75 % und kommende Stunde unter 50 % (Gleichheit sperrt). Sind beide Prüfungen aktiv und vollständig, müssen beide erfüllt sein. Ungültige Messwerte einer wirksamen Prüfung sperren neue Starts. Die zusätzlichen Bedingungen stoppen keinen bereits laufenden Boost. Die bisherigen Bedingungen für Überschuss, Temperatur und Ruhezeit gelten weiterhin. Der Gerätestatus zeigt unter boost_startbedingungen, ob eine Prüfung wirkt oder ignoriert wird.
+
+Die Entitäten müssen Zahlenzustände liefern; die Bewölkungssensoren müssen selbst stets die aktuelle bzw. kommende Stunde bereitstellen. Das ist eine zusätzliche Startfreigabe und keine automatische Wahl des besten Prognose-Zeitfensters.
