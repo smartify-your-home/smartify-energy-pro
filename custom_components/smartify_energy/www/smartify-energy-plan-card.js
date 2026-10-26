@@ -24,7 +24,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.2.0";
+const CARD_VERSION = "1.2.1";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -58,7 +58,7 @@ const STATUS_LABELS = {
 };
 
 const SETTING_HELP = {
-  "mode": "Automatik: SEP steuert dieses Gerät. Beobachten: SEP zeigt Empfehlungen, schaltet aber nicht. Manuell: Sie übernehmen die Bedienung. Aus: Die automatische Regelung ist ausgesetzt. Das Verhalten beim Ausschalten hängt vom Gerätetyp ab. Zentral gilt die Auswahl für den Manager. Aus ist kein Not-Aus: Haushaltsgeräte bleiben unverändert; Pool und Wallbox stoppen derzeit nur bei ihrem eigenen Modus Aus. Der WP-Boost wird beendet, eine Button-Ladung kann aber weiterlaufen.",
+  "mode": "Automatik: SEP steuert dieses Gerät. Beobachten: SEP zeigt Empfehlungen, schaltet aber nicht. Manuell: Sie übernehmen die Bedienung. Aus: Die automatische Regelung ist ausgesetzt. Das Verhalten beim Ausschalten hängt vom Gerätetyp ab. Zentral gilt die Auswahl für den Manager. Aus ist kein Not-Aus: Beim zentralen Ausschalten werden Haushaltsgeräte-Steckdosen einmal eingeschaltet und die Programmerkennung zurückgesetzt. Anschließend können Sie die Steckdosen manuell bedienen; Pool und Wallbox stoppen derzeit nur bei ihrem eigenen Modus Aus. Der WP-Boost wird beendet, eine Button-Ladung kann aber weiterlaufen.",
   "priority": "Kleinere Zahl bedeutet früher an der Reihe: 1 hat Vorrang vor 5. Bereits freigegebene Programme und Pflichtläufe können Vorrang behalten. Ziehen ändert diese Werte; ab dem zehnten Platz teilen Geräte Priorität 10.",
   "avg_window": "Über wie viele Minuten der Überschuss gemittelt wird. Ein größerer Wert reagiert ruhiger auf Wolken, aber langsamer auf dauerhaft mehr Sonne. Standard: 10 Minuten.",
   "grid_reserve": "Diese Leistung bleibt bei der Verteilung ungenutzt. Beispiel: 200 W halten einen kleinen Puffer gegen unbeabsichtigten Netzbezug frei. Pflichtläufe können trotzdem Strom aus dem Netz brauchen.",

@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.5** · Integrationsdomain: `smartify_energy`
+Version: **0.2.6** · Integrationsdomain: `smartify_energy`
 
 ## Funktionen
 
@@ -48,3 +48,7 @@ Für jeden automatischen Warmwasser-Boost sind Leistungs- und Temperatursensor n
 ## Verständliche Einstellungen (0.2.5)
 
 Die deutsche Einrichtung und Gerätekonfiguration erklärt jedes Feld direkt darunter. In der SEP-Karte stehen unter jeder Einstellung im Zahnrad-Menü verständliche Hinweise mit Beispielen; auch Modus und Priorität sind dort enthalten. Die Erklärungen sind ohne Maus-Hover auf Handy und Tablet lesbar. Der Karteneditor erklärt seine Anzeigeoptionen ebenfalls.
+
+## Hauptschalter Aus (0.2.6)
+
+Beim zentralen Ausschalten schaltet SEP die Steckdosen aller angelegten Haushaltsgeräte einmal ein und setzt deren Programmerkennung zurück. Danach bleiben manuelle Schaltbefehle möglich. Bei erneutem Ausschalten sowie beim Laden der Integration mit Hauptmodus Aus erfolgt die Freigabe erneut. Dies gilt für Haushaltsgeräte, nicht für Pool, Wallbox oder Wärmepumpe. Die Steckdose liefert Strom; ob das angeschlossene Gerät sein Programm fortsetzt, hängt vom Gerät ab.

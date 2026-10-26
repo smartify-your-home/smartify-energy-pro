@@ -38,6 +38,7 @@ class LoadDevice(BaseDevice):
         self._hp_since: datetime | None = None
         self._low_since: datetime | None = None
         self._nachladen_prev = False
+        self._hub_released = False
 
     def param_specs(self) -> list[ParamSpec]:
         return [
@@ -233,6 +234,19 @@ class LoadDevice(BaseDevice):
             await self._switch(self.switch, decision.on)
 
     async def async_run(self, ctx: Context, budget_left: float) -> Decision:
+        if self.manager.hub_mode == "off":
+            if not self._hub_released:
+                self._reset()
+                self.params["nachladen"] = False
+                self._nachladen_prev = False
+                if not self.is_on():
+                    await self._switch(self.switch, True)
+                self._hub_released = True
+                self.manager.async_param_changed()
+            self.status, self.reason, self.would = "manuell", "SEP aus – Steckdose zur manuellen Bedienung freigegeben", ""
+            self.last_decision = Decision(False, reason=self.reason)
+            return self.last_decision
+        self._hub_released = False
         if self.mode == "observe":
             # Beobachten: nur Empfehlung, Zustandsmaschine nicht verändern
             saved = dict(self.state)

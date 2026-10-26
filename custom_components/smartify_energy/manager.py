@@ -109,6 +109,10 @@ class EnergyManager:
         return self.params.get(key)
 
     def set_param(self, key: str, value: Any) -> None:
+        if key == "mode" and value != self.params.get(key):
+            for dev in self.devices.values():
+                if dev.TYPE == "load":
+                    dev._hub_released = False
         self.params[key] = value
         if key == "avg_window":
             self._history.clear()
