@@ -184,6 +184,18 @@ function collect(hass, hubId) {
       };
     })
     .filter(d => d.status);
+  // Virtual storage position: a passive PV sink, with its rank saved on
+  // the hub. It needs no real HA device and never receives charge commands.
+  if (byDevice[hub]?.["sensor:battery_priority"] && byDevice[hub]?.["number:battery_rank"]) {
+    devices.push({
+      id: "__battery__", name: "PV-Akku", virtualBattery: true,
+      status: byDevice[hub]["sensor:battery_priority"],
+      batteryBudget: byDevice[hub]["sensor:budget"],
+      rankEntity: byDevice[hub]["number:battery_rank"],
+      power: null, planned: null, priority: null, mode: null, active: null,
+      settings: [],
+    });
+  }
   devices.sort((a, b) => a.id.localeCompare(b.id));
   devices.forEach((d, i) => { d.color = PALETTE[i % PALETTE.length]; });
   return { hub, name: hubs.get(hub), ents: byDevice[hub] || {}, devices, hubSettings: settings[hub] || [] };
@@ -512,10 +524,28 @@ class SmartifyEnergyPlanCard extends HTMLElement {
 
   _devices(d) {
     const rows = d.devices
-      .map(dev => ({ dev, prio: num(this._st(dev.status)?.attributes?.prioritaet) ?? 5 }))
+      .map(dev => ({ dev, prio: dev.virtualBattery
+        ? (num(this._st(dev.rankEntity)?.state) ?? 99)
+        : (num(this._st(dev.status)?.attributes?.prioritaet) ?? 5) }))
       .sort((a, b) => a.prio - b.prio || a.dev.name.localeCompare(b.dev.name));
     if (!rows.length) return `<div class="empty">Noch keine Geräte – in der Integration „+ Gerät hinzufügen“.</div>`;
     return `<div class="list">${rows.map(({ dev, prio }) => {
+      if (dev.virtualBattery) {
+        const charge = Math.max(0, num(this._st(dev.batteryBudget)?.attributes?.speicher_w) || 0);
+        const soc = num(this._st(dev.status)?.attributes?.soc);
+        return `<div class="dev-wrap" data-wrap="__battery__">
+          <div class="dev" data-dev="__battery__" style="border-image-source:linear-gradient(var(--divider-color),var(--divider-color))">
+            <div class="handle" title="PV-Akku per Drag & Drop priorisieren">⠿</div>
+            <div class="badge" style="background:${grad(BATTERY_GRADIENT)}">${Math.round(prio)}</div>
+            <ha-icon icon="mdi:home-battery" style="color:var(--primary-text-color)"></ha-icon>
+            <div class="main"><div class="name"><span class="t">PV-Akku</span></div>
+              <div class="sub">Restverbraucher · Akku regelt selbst</div></div>
+            <div class="right"><div class="power-budget">
+              <div class="pb-item"><span class="pb-label">Lädt</span><span class="pw">${fmtW(charge)}</span></div>
+              <div class="pb-item"><span class="pb-label">SoC</span><span class="pb-budget">${soc == null ? "–" : soc.toFixed(0) + " %"}</span></div>
+            </div></div>
+          </div></div>`;
+      }
       const st = this._st(dev.status);
       const a = st?.attributes || {};
       const mode = a.modus || this._st(dev.mode)?.state;
