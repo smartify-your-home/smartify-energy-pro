@@ -1,4 +1,4 @@
-# Pflichtfelder und optionale Entitäten – SEP 0.2.8
+# Pflichtfelder und optionale Entitäten – SEP 0.2.17
 
 Diese Übersicht unterscheidet **Formular-Pflichtfelder** und **Funktionsvoraussetzungen**. Ein Feld, das sich technisch leer speichern lässt, kann für eine bestimmte Automatik trotzdem notwendig sein.
 
@@ -64,11 +64,13 @@ Diese Übersicht unterscheidet **Formular-Pflichtfelder** und **Funktionsvorauss
 |---|---|---|
 | Name, Boost-Art, Boost-Entität, Nennleistung | Pflicht | Boost-Ansteuerung und Leistungsbudget |
 | WP-Leistungssensor | **Bedingt – für automatischen Boost notwendig** | Nachweis, dass die WP durchgehend ruht |
+| Warmwasser aktiv (binary_sensor/input_boolean) | **Optional** | EIN verhindert erneute Boost-Auslösung während WW-Ladung; bei konfiguriertem aber ungültigem Signal wird der Start ausgesetzt |
 | Warmwassertemperatursensor | **Bedingt – für automatischen Boost notwendig** | Temperaturprüfung vor neuem Start |
 | Sonnenhöhe: Entität und Mindestgrenze | Bedingt | Nur wenn Sonnenhöhenfilter aktiviert und vollständig konfiguriert |
 | Bewölkung aktuell/kommende Stunde und beide Grenzen | Bedingt | Nur wenn Bewölkungsfilter aktiviert und alle vier Angaben vorliegen |
 | Filter-Aktiv-Schalter | Optional, standardmäßig aus | Zusatzprüfung vor Start |
-| Boost-Temperatur, Hysterese, WP-Ruhezeit, Mindestpausen | Einstellbare Parameter mit Standardwerten | Schützen vor unerwünschtem oder wiederholtem Start |
+| Boost-Temperatur, Hysterese, WP-Ruhezeit | Einstellbare Parameter mit Standardwerten | Gelten vor dem Start einer WW-Ladung |
+| WW-Boost Mindestabstand (60–720 min) | Einstellbarer Geräteparameter, Standard 60 min | Dauerhafter Schutz vor mehr als einer Auslösung pro Stunde auch nach Neustart |
 
 Die optionalen Wetterfilter werden bei fehlenden Entitäten/Grenzwerten ignoriert. Sind sie vollständig aktiviert, verhindern ungültige Messwerte den **Neustart**; laufende Boosts werden dadurch nicht abgebrochen.
 
