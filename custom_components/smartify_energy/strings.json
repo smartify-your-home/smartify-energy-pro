@@ -266,7 +266,8 @@
             "cloud_now_max": "Current hour cloud cover below",
             "cloud_next_entity": "Cloud cover next hour entity",
             "cloud_next_max": "Next hour cloud cover below",
-            "ww_active_entity": "Optional: Hot water active (binary sensor / input boolean)"
+            "ww_active_entity": "Optional: Hot water active (binary sensor / input boolean)",
+            "ww_active_minutes": "Hot water active: wait before boost"
           },
           "data_description": {
             "boost_entity": "The actuator to start a WW cycle. Button/switch/input_boolean triggers only once; SEP never sends an OFF for one-shot WW loads. A helper input_boolean needs its own automation. A switch must return to OFF externally before another trigger is possible. Number setpoints still use active boost/reset control.",
@@ -276,7 +277,8 @@
             "cloud_now_max": "Start requires cloud cover strictly below this value: 75% blocks at exactly 75%. Both hours must pass. Incomplete configuration ignores the entire cloud check.",
             "cloud_next_entity": "Optional next-hour cloud forecast from 0 to 100 percent. The source must keep this value relative to the next hour. SEP reads its numeric state, not a forecast attribute list.",
             "cloud_next_max": "Next-hour cloud cover must also be strictly below this limit: exactly 50% blocks a 50% limit. An unset limit ignores this check until both sources and limits are complete.",
-            "ww_active_entity": "Optional read-only binary_sensor or input_boolean that is on whenever a hot-water cycle runs and off otherwise. While on, SEP cannot trigger another hot-water boost. If configured but unavailable or unknown, new boosts are inhibited. SEP never switches this entity."
+            "ww_active_entity": "Optional binary_sensor/input_boolean: on during hot-water preparation, off otherwise. A one-shot boost is allowed after the configured wait with control budget ≥ 0 W. Unknown/unavailable signals inhibit starts. SEP only reads this entity.",
+            "ww_active_minutes": "Hot water must stay continuously on for this duration before a one-shot boost is allowed with current control budget ≥ 0 W. Default 10 minutes, range 0–180 (0 disables this special permission). Temperature, weather filters and cooldown still apply; at most one boost per cycle. Applies to button/switch/input_boolean, not number setpoints."
           }
         },
         "reconfigure": {
@@ -294,7 +296,8 @@
             "cloud_now_max": "Current hour cloud cover below",
             "cloud_next_entity": "Cloud cover next hour entity",
             "cloud_next_max": "Next hour cloud cover below",
-            "ww_active_entity": "Optional: Hot water active (binary sensor / input boolean)"
+            "ww_active_entity": "Optional: Hot water active (binary sensor / input boolean)",
+            "ww_active_minutes": "Hot water active: wait before boost"
           },
           "data_description": {
             "boost_entity": "The actuator to start a WW cycle. Button/switch/input_boolean triggers only once; SEP never sends an OFF for one-shot WW loads. A helper input_boolean needs its own automation. A switch must return to OFF externally before another trigger is possible. Number setpoints still use active boost/reset control.",
@@ -304,7 +307,8 @@
             "cloud_now_max": "Start requires cloud cover strictly below this value: 75% blocks at exactly 75%. Both hours must pass. Incomplete configuration ignores the entire cloud check.",
             "cloud_next_entity": "Optional next-hour cloud forecast from 0 to 100 percent. The source must keep this value relative to the next hour. SEP reads its numeric state, not a forecast attribute list.",
             "cloud_next_max": "Next-hour cloud cover must also be strictly below this limit: exactly 50% blocks a 50% limit. An unset limit ignores this check until both sources and limits are complete.",
-            "ww_active_entity": "Optional read-only binary_sensor or input_boolean that is on whenever a hot-water cycle runs and off otherwise. While on, SEP cannot trigger another hot-water boost. If configured but unavailable or unknown, new boosts are inhibited. SEP never switches this entity."
+            "ww_active_entity": "Optional binary_sensor/input_boolean: on during hot-water preparation, off otherwise. A one-shot boost is allowed after the configured wait with control budget ≥ 0 W. Unknown/unavailable signals inhibit starts. SEP only reads this entity.",
+            "ww_active_minutes": "Hot water must stay continuously on for this duration before a one-shot boost is allowed with current control budget ≥ 0 W. Default 10 minutes, range 0–180 (0 disables this special permission). Temperature, weather filters and cooldown still apply; at most one boost per cycle. Applies to button/switch/input_boolean, not number setpoints."
           }
         }
       },
@@ -518,6 +522,9 @@
       },
       "heater_min_off": {
         "name": "Minimum off-time (optional)"
+      },
+      "ww_active_minutes": {
+        "name": "Hot water active: wait before boost"
       }
     },
     "time": {

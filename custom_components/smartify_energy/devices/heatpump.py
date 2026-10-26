@@ -54,6 +54,9 @@ class HeatPumpDevice(BaseDevice):
             ParamSpec("cloud_next_max", "number", self.cfg.get("cloud_next_max"),
                       "mdi:weather-cloudy-clock", 0, 100, 1, "%"),
         ]
+        if self.one_shot:
+            specs.append(ParamSpec("ww_active_minutes", "number", self.cfg.get("ww_active_minutes", 10),
+                                   "mdi:timer-sand", 0, 180, 1, "min"))
         if self.cfg.get(CONF_BOOST_TYPE) == BOOST_NUMBER:
             specs += [
                 ParamSpec("min_on", "number", 30, "mdi:timer-lock-outline", 5, 180, 5, "min"),
@@ -125,6 +128,7 @@ class HeatPumpDevice(BaseDevice):
             **super().status_attrs(),
             "boost_startbedingungen": self._weather_checks(),
             "warmwasser_aktiv": self.ww_active,
+            "ww_aktiv_mindestdauer_min": self.p("ww_active_minutes"),
             "ww_aktiv_seit_min": self._ww_active_minutes(datetime.now().astimezone()),
             "ww_zyklus_bereits_boost": self._ww_cycle_already_boosted(),
             "ww_aktiv_entitaet": self.cfg.get(CONF_WW_ACTIVE_ENTITY),
@@ -244,13 +248,19 @@ class HeatPumpDevice(BaseDevice):
         if active is None:
             self.status = "wartet"
             return Decision(False, 0, "Warmwasser-aktiv-Signal nicht verfügbar")
-        # Existing WW cycle: after 10 minutes a single boost is permitted
+        # Existing WW cycle: after the configured duration a single boost is permitted
         # with nonnegative current priority-adjusted control budget.
         active_minutes = self._ww_active_minutes(ctx.now) if active else None
-        running_boost = active and active_minutes is not None and active_minutes >= 10
+        wait_minutes = float(self.p("ww_active_minutes"))
+        if not math.isfinite(wait_minutes) or not 0 <= wait_minutes <= 180:
+            return Decision(False, 0, "WW-Aktiv-Mindestdauer ungültig")
+        if active and wait_minutes == 0:
+            self.status = "wartet"
+            return Decision(False, 0, "WW läuft – Sonderfreigabe deaktiviert (0 Minuten)")
+        running_boost = active and active_minutes is not None and active_minutes >= wait_minutes
         if active and not running_boost:
             self.status = "wartet"
-            return Decision(False, 0, "WW läuft – Boost frühestens nach 10 Minuten")
+            return Decision(False, 0, f"WW läuft – Boost frühestens nach {wait_minutes:g} Minuten")
         if running_boost and self._ww_cycle_already_boosted():
             self.status = "boost"
             return Decision(False, 0, "WW-Zyklus bereits geboostet")

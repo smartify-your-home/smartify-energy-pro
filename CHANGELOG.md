@@ -1,3 +1,8 @@
+## 0.2.30 – Einstellbare WW-Aktiv-Wartezeit
+- Neue Einstellung **WW aktiv: Wartezeit bis Boost** in Gerätekonfiguration und SEP-Geräteeinstellungen: 0–180 Minuten (0 deaktiviert die Sonderfreigabe), Standard 10 Minuten. Bestehende Geräte behalten das bisherige Verhalten; Änderungen werden gespeichert.
+- Enthält die bisher unveröffentlichte Freigabe aus 0.2.29: einmaliger Boost während laufender WW-Bereitung nach der Wartezeit bei aktuellem prioritätsbereinigtem Steuerbudget ≥ 0 W. Temperatur, Wetterfilter, Startsperre und maximal ein Boost je WW-Zyklus bleiben wirksam; Number-Sollwertsteuerung unverändert.
+- Deutsche/englische Hilfetexte, dynamische Wartemeldung, Diagnosewert, README und Update-Anleitung aktualisiert. Regressionstests für Wartezeitgrenzen, Budget, Zyklus und Wiederherstellung ergänzt; Test-Fixtures korrigiert.
+
 ## 0.2.29 – WW-Boost nach zehn Minuten laufender Warmwasserbereitung
 - Einmaliger Boost per Button, Schalter oder Input-Boolean ist jetzt auch während aktiver WW-Bereitung zulässig: WW-Aktiv-Signal seit mindestens 10 Minuten ununterbrochen EIN und aktuelles prioritätsbereinigtes Steuerbudget ≥ 0 W.
 - Für diesen Sonderfall entfallen die normale Nennleistungs-Schwelle und WP-Ruhewartezeit, da die Wärmepumpe bereits läuft; Zieltemperatur/Hysterese, Wetterfilter und mindestens 60 Minuten Startsperre gelten weiterhin.
@@ -166,7 +171,7 @@ Die Versionsnummer bezeichnet die Home-Assistant-Integration. Angaben zur Reakti
 - Deutsche Hilfetexte bei Einrichtung, Gerätekonfiguration, Parametern und Priorität; Bedienung auch ohne Hover.
 
 ## 0.2.4 – WP-Ruhezeit einstellbar
-- Ruhezeit vor Boost von festen 15 Minuten auf einstellbare 1–180 Minuten geändert; Standard weiterhin 15 Minuten.
+- Ruhezeit vor Boost von festen 15 Minuten auf einstellbare 0–180 Minuten (0 deaktiviert die Sonderfreigabe) geändert; Standard weiterhin 15 Minuten.
 
 ## 0.2.3 – Boost-Startschutz und Ereignisreaktion
 - Leistungs-/Temperaturprüfung, WP-Ruhezeit und Hysterese vor Boost.

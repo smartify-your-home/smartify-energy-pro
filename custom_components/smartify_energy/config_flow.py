@@ -361,6 +361,7 @@ class HeatPumpSubentryFlow(_DeviceFlow):
             _req(CONF_NOMINAL, d, 2000): _num(200, 10000, 50, "W"),
             _opt(CONF_TEMP_SENSOR, d): _ent("sensor", "temperature"),
             _opt(CONF_WW_ACTIVE_ENTITY, d): _ent(["binary_sensor", "input_boolean"]),
+            _req("ww_active_minutes", d, 10): _num(0, 180, 1, "min"),
             _opt(CONF_WW_BOOST_TEMP_ENTITY, d): _ent(["input_number", "number", "sensor"]),
             _opt("sun_angle_entity", d): _ent(["sensor", "input_number", "number"]),
             _opt("sun_angle_min", d): _num(-90, 90, 0.5, "°"),

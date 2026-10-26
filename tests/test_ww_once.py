@@ -21,7 +21,7 @@ class WarmWaterOnceTests(unittest.IsolatedAsyncioTestCase):
 
         def get(entity):
             value = self.values.get(entity)
-            return NS(state=value, attributes={}) if value is not None else None
+            return NS(state=value, attributes={}, last_changed=self.now) if value is not None else None
 
         async def save():
             self.saved.append(self.dev.dump())
@@ -148,6 +148,43 @@ class WarmWaterOnceTests(unittest.IsolatedAsyncioTestCase):
                        "cfg": self.cfg})
         self.assertEqual(self.dev.state["last_trigger"], start)
         self.assertGreater(self.dev._cooldown_remaining(self.now), 0)
+
+    async def test_configured_wait_boundaries_and_zero_budget(self):
+        self.values["binary_sensor.ww"] = "on"
+        self.dev._idle_since = None
+        for minutes in (1, 10, 25, 180):
+            self.dev.params["ww_active_minutes"] = minutes
+            before = self.now + timedelta(minutes=minutes, seconds=-1)
+            at = self.now + timedelta(minutes=minutes)
+            self.assertFalse(self.dev.decide(self.ctx(before, 0), 0).on)
+            self.assertTrue(self.dev.decide(self.ctx(at, 0), 0).on)
+            self.assertFalse(self.dev.decide(self.ctx(at, -1), -1).on)
+
+    async def test_zero_disables_running_permission_only(self):
+        self.dev.params["ww_active_minutes"] = 0
+        self.values["binary_sensor.ww"] = "on"
+        self.assertFalse(self.dev.decide(self.ctx(self.now + timedelta(hours=5)), 3000).on)
+        self.values["binary_sensor.ww"] = "off"
+        self.assertTrue(self.dev.decide(self.ctx(), 3000).on)
+
+    async def test_running_cycle_only_once_after_cooldown(self):
+        self.values["binary_sensor.ww"] = "on"
+        self.assertTrue((await self.run_cycle(self.now + timedelta(minutes=10), 0)).on)
+        self.values["input_boolean.trigger"] = "off"
+        self.assertFalse((await self.run_cycle(self.now + timedelta(minutes=90), 3000)).on)
+        self.assertEqual(len(self.calls), 1)
+
+    def test_wait_default_and_restart(self):
+        self.assertEqual(self.dev.p("ww_active_minutes"), 10)
+        self.dev.params["ww_active_minutes"] = 0
+        saved = self.dev.dump()
+        self.dev = self.device()
+        self.dev.load(saved)
+        self.assertEqual(self.dev.p("ww_active_minutes"), 0)
+        self.cfg["ww_active_minutes"] = 25
+        self.dev = self.device()
+        self.dev.load(saved)
+        self.assertEqual(self.dev.p("ww_active_minutes"), 25)
 
 
 if __name__ == "__main__":

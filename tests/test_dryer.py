@@ -5,12 +5,7 @@ from types import SimpleNamespace as NS
 from test_load_budget import ROOT, Context, LoadDevice
 from unittest.mock import AsyncMock
 
-spec = importlib.util.spec_from_file_location("sep_load_test.devices.dryer", ROOT / "devices/dryer.py")
-import sys
-module = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = module
-spec.loader.exec_module(module)
-DryerDevice = module.DryerDevice
+from test_load_budget import DryerDevice
 
 class DryerChecks(unittest.IsolatedAsyncioTestCase):
     def setUp(self):

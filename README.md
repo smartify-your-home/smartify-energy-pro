@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.29** · Integrationsdomain: `smartify_energy`
+Version: **0.2.30** · Integrationsdomain: `smartify_energy`
 
 ## Dokumentation und Updates
 
@@ -54,7 +54,7 @@ Die Geräteeinstellung **WW-Boost Mindestabstand** ist standardmäßig **60 min*
 
 ## Boost-Startschutz (0.2.3)
 
-Für jeden automatischen Warmwasser-Boost sind Leistungs- und Temperatursensor nötig. Die WP-Leistung muss durchgehend für die einstellbare „WP-Ruhezeit vor Boost“ (1–180 Minuten, Standard 15 Minuten) unter der einstellbaren WP-Ruheschwelle (Standard 5 W) liegen. Aktivität oder ungültige Leistungswerte setzen die Wartezeit zurück; nach Neustart/Reload beginnt sie neu. Start nur unter Zieltemperatur minus Boost-Hysterese (Standard 4 K): bei 50 °C Ziel also unter 46 °C. Der dauerhafte Mindestabstand seit der letzten WW-Auslösung und die PV-Bedingungen gelten zusätzlich. Ein gestarteter Boost verbraucht die Ruhefreigabe.
+Für jeden automatischen Warmwasser-Boost sind Leistungs- und Temperatursensor nötig. Die WP-Leistung muss durchgehend für die einstellbare „WP-Ruhezeit vor Boost“ (0–180 Minuten (0 deaktiviert die Sonderfreigabe), Standard 15 Minuten) unter der einstellbaren WP-Ruheschwelle (Standard 5 W) liegen. Aktivität oder ungültige Leistungswerte setzen die Wartezeit zurück; nach Neustart/Reload beginnt sie neu. Start nur unter Zieltemperatur minus Boost-Hysterese (Standard 4 K): bei 50 °C Ziel also unter 46 °C. Der dauerhafte Mindestabstand seit der letzten WW-Auslösung und die PV-Bedingungen gelten zusätzlich. Ein gestarteter Boost verbraucht die Ruhefreigabe.
 
 Seit 0.2.8 lösen ausgewählte Leistungs- und Wallbox-Messwerte nach etwa 0,5 Sekunden eine gebündelte Neubewertung aus; sonstige beobachtete Eingänge bleiben bei ungefähr 2 Sekunden. Der periodische Zyklus bleibt erhalten; Mittelwerte sind zeitgewichtet.
 
@@ -110,4 +110,8 @@ Unter **Gerät hinzufügen → Wäschetrockner** kann ein Trockner separat konfi
 
 ## WW-Boost bei laufender Warmwasserbereitung (0.2.29)
 
-Für einmalige WW-Boost-Auslöser (Button/Schalter/Input-Boolean) darf SEP auch während einer bereits laufenden Warmwasserbereitung einmalig boosten, sobald der konfigurierte WW-Aktiv-Binärsensor **mindestens 10 Minuten durchgehend `on`** ist und das **aktuelle prioritätsbereinigte Steuerbudget mindestens 0 W** beträgt. Die normale Mindestleistungsfreigabe und WP-Ruhebedingung werden in diesem speziellen Fall nicht benötigt; Solltemperatur, Temperaturhysterese, optionale Wetterbedingungen und Boost-Startsperre bleiben wirksam. Pro erfasstem WW-Zyklus wird höchstens ein Boost ausgelöst. Ohne gültigen WW-Aktiv-Sensor ist diese Sonderfreigabe nicht möglich. Sollwertgesteuerte Number-Boosts bleiben vorerst unverändert.
+Für einmalige WW-Boost-Auslöser (Button/Schalter/Input-Boolean) darf SEP auch während einer bereits laufenden Warmwasserbereitung einmalig boosten, sobald der konfigurierte WW-Aktiv-Binärsensor **für die eingestellte Wartezeit durchgehend `on`** (Standard 10 Minuten) ist und das **aktuelle prioritätsbereinigte Steuerbudget mindestens 0 W** beträgt. Die normale Mindestleistungsfreigabe und WP-Ruhebedingung werden in diesem speziellen Fall nicht benötigt; Solltemperatur, Temperaturhysterese, optionale Wetterbedingungen und Boost-Startsperre bleiben wirksam. Pro erfasstem WW-Zyklus wird höchstens ein Boost ausgelöst. Ohne gültigen WW-Aktiv-Sensor ist diese Sonderfreigabe nicht möglich. Sollwertgesteuerte Number-Boosts bleiben vorerst unverändert.
+
+## 0.2.30 – WW-Aktiv-Wartezeit einstellen
+
+Unter Gerätekonfiguration → Wärmepumpe Boost steht **WW aktiv: Wartezeit bis Boost** zur Verfügung: **0–180 Minuten (0 deaktiviert die Sonderfreigabe)**, Standard **10 Minuten**. Der Wert ist auch als Zahlen-Entität in den SEP-Geräteeinstellungen änderbar und bleibt nach einem Neustart erhalten. Bestehende Geräte verwenden weiterhin 10 Minuten. Die Wartezeit gilt nur für einmalige Button-/Schalter-/Boolean-Boosts bei laufender Warmwasserbereitung. Das aktuelle prioritätsbereinigte Steuerbudget muss ≥ 0 W sein; Temperatur, Wetterfilter, Startsperre und höchstens ein Boost je WW-Zyklus gelten weiterhin. Nach dem HACS-Update Home Assistant neu starten.

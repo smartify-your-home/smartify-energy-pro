@@ -46,7 +46,7 @@ class WeatherStartTests(unittest.TestCase):
                        'sensor.power': '0', 'sensor.temp': '40'}
         def get(entity):
             value = self.values.get(entity)
-            return NS(state=value, attributes={}) if value is not None else None
+            return NS(state=value, attributes={}, last_changed=self.now) if value is not None else None
         hass = NS(states=NS(get=get))
         self.manager = NS(hass=hass, hub_mode='auto', async_param_changed=lambda: None)
         self.cfg = {'boost_type': 'button', 'boost_entity': 'button.boost',
@@ -142,7 +142,7 @@ class WeatherStartTests(unittest.TestCase):
         self.values.update({'binary_sensor.ww_active': 'on', 'sensor.sun': '-10', 'sensor.next': '100'})
         result = self.dev.decide(self.ctx, 3000)
         self.assertFalse(result.on)
-        self.assertIn('Warmwasserladung läuft', result.reason)
+        self.assertIn('WW läuft', result.reason)
         self.assertTrue(self.dev.is_on())
 
 

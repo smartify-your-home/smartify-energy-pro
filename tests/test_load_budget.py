@@ -39,6 +39,7 @@ def load_device():
             ("helpers", "helpers.py"),
             ("devices.base", "devices/base.py"),
             ("devices.load", "devices/load.py"),
+            ("devices.dryer", "devices/dryer.py"),
         ]:
             fullname = "sep_load_test." + name
             spec = importlib.util.spec_from_file_location(fullname, ROOT / file)
@@ -46,10 +47,10 @@ def load_device():
             sys.modules[fullname] = module
             spec.loader.exec_module(module)
             loaded[name] = module
-        return loaded["devices.load"].LoadDevice, loaded["devices.base"].Context
+        return loaded["devices.load"].LoadDevice, loaded["devices.base"].Context, loaded["devices.dryer"].DryerDevice
 
 
-LoadDevice, Context = load_device()
+LoadDevice, Context, DryerDevice = load_device()
 
 
 class HouseholdBudgetStartTests(unittest.TestCase):
