@@ -479,8 +479,10 @@ class EnergyManager:
             # regulator yields automatically to a higher priority consumer.
             battery_credit = battery_w if not battery_passed else 0.0
             original_now = ctx.budget_now
+            # Credit the battery just ONCE through the instantaneous context.
+            # Keep left and averaged budgets unchanged.
             ctx.budget_now += battery_credit
-            effective_left = left + battery_credit
+            effective_left = left
             try:
                 current = self._measured_power.get(dev.id, 0.0)
                 reclaimed = self._reclaimable_power.get(dev.id, 0.0)
@@ -516,7 +518,7 @@ class EnergyManager:
                     self.device_budgets[dev.id]["zusaetzlich_reserviert_w"] = round(extra)
             finally:
                 ctx.budget_now = original_now
-            left = effective_left - battery_credit
+            left = effective_left
         if self.has_battery and not battery_passed:
             self.device_budgets["__battery__"] = {
                 "aktuell_w": round(ctx.budget_now + battery_w - max(0.0, ctx.alloc_base - left)),
