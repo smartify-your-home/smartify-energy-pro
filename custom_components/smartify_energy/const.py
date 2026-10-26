@@ -30,6 +30,7 @@ TYPE_LOAD = "load"
 TYPE_POOL = "pool"
 TYPE_EV = "ev"
 TYPE_HEATPUMP = "heatpump"
+TYPE_HEATER = "heater"
 
 # Geräte-Konfiguration
 CONF_NAME = "name"
