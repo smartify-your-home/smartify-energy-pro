@@ -86,6 +86,7 @@ class EnergyManager:
         # pending-load reservations, without double-counting measured power.
         self.device_budgets: dict[str, dict[str, float]] = {}
         self.battery_power = 0.0
+        self.battery_charging_w = 0.0
         self.battery_soc: float | None = None
         self.battery_devices_first = True
         self.battery_reason = ""
@@ -100,6 +101,7 @@ class EnergyManager:
         specs = [
             ParamSpec("mode", "select", MODE_AUTO, "mdi:home-lightning-bolt", options=HUB_MODES, config=False),
             ParamSpec("avg_window", "number", 10, "mdi:chart-bell-curve", 1, 30, 1, "min"),
+            ParamSpec("battery_rank", "number", 99, "mdi:home-battery", 1, 101, 1),
             ParamSpec("grid_reserve", "number", 0, "mdi:transmission-tower-export", 0, 5000, 50, "W"),
             ParamSpec("base_load", "number", 400, "mdi:home-import-outline", 0, 5000, 50, "W"),
             ParamSpec("night_start", "time", "00:00", "mdi:weather-night"),
@@ -192,6 +194,16 @@ class EnergyManager:
                 "grund": dev.reason,
                 **self.device_budgets.get(dev.id, {}),
             })
+        if self.has_battery:
+            out.append({
+                "name": "PV-Akku", "prioritaet": int(self.p("battery_rank")),
+                "modus": "automatisch (externer Speicherregler)",
+                "ein": self.battery_charging_w > 0,
+                "reserviert_w": round(self.battery_charging_w),
+                "grund": "Eigenregler: nimmt verbleibenden PV-Überschuss auf",
+                **self.device_budgets.get("__battery__", {}),
+            })
+            out.sort(key=lambda item: item["prioritaet"])
         return {"geraete": out}
 
     def _fc_kwh(self, day_offset: int) -> float | None:
@@ -337,6 +349,7 @@ class EnergyManager:
         if self.cfg.get(CONF_BAT_SIGN) == BAT_SIGN_DISCHARGE_POSITIVE:
             bat = -bat
         self.battery_power = bat
+        self.battery_charging_w = max(0.0, bat)
         self.battery_soc = state_float(self.hass, self.cfg.get(CONF_BAT_SOC))
         # A normal WW cycle, released household program, forced EV charge or
         # minimum-runtime pool is already part of the measured grid balance.
@@ -448,39 +461,70 @@ class EnergyManager:
 
         left = ctx.alloc_base
         self.device_budgets = {}
+        battery_rank = int(self.p("battery_rank")) if self.has_battery else 999
+        battery_w = self.battery_charging_w if self.has_battery else 0.0
+        battery_passed = False
         for dev in self._sorted_devices(ctx):
-            current = self._measured_power.get(dev.id, 0.0)
-            reclaimed = self._reclaimable_power.get(dev.id, 0.0)
-            # A modulating load may use its own already-paid-for minimum
-            # power, but must never offer that power to another device.
-            own_budget = dev.own_budget_power(current, reclaimed) if dev.mode == MODE_AUTO else 0.0
-            upstream = max(0.0, ctx.alloc_base - left)
-            available_now = ctx.budget_now - upstream + own_budget
-            available_avg = ctx.budget_avg - upstream + own_budget
-            if (dev.TYPE == "load" and dev.mode == MODE_AUTO
-                    and dev.state.get("sm") in ("erkannt", "wartet")
-                    and dev.is_on()):
-                # The device's current draw reduces the physical grid balance.
-                # Credit its own metered draw ONLY when assessing that device,
-                # never when assessing another consumer or the old average.
-                available_now += current
-            self.device_budgets[dev.id] = {
-                "aktuell_w": round(available_now),
-                "mittel_w": round(available_avg),
-                "vorreservierung_w": round(upstream),
-                "benoetigt_w": round(dev.pv_start_need) if dev.TYPE == "load" else round(dev.nominal),
-                "zusaetzlich_reserviert_w": 0,
-            }
+            if self.has_battery and not battery_passed and dev.priority >= battery_rank:
+                battery_passed = True
+                self.device_budgets["__battery__"] = {
+                    "aktuell_w": round(ctx.budget_now + battery_w - max(0.0, ctx.alloc_base - left)),
+                    "mittel_w": round(ctx.budget_avg - max(0.0, ctx.alloc_base - left)),
+                    "vorreservierung_w": round(max(0.0, ctx.alloc_base - left)),
+                    "benoetigt_w": 0,
+                    "zusaetzlich_reserviert_w": round(battery_w),
+                }
+            # Measured battery charging has reduced the physical grid export.
+            # Credit it ONLY ahead of battery rank, assuming its external
+            # regulator yields automatically to a higher priority consumer.
+            battery_credit = battery_w if not battery_passed else 0.0
+            original_now = ctx.budget_now
+            ctx.budget_now += battery_credit
+            effective_left = left + battery_credit
             try:
-                decision = await dev.async_run(ctx, left + own_budget)
-            except Exception:  # noqa: BLE001
-                _LOGGER.exception("[%s] Fehler", dev.name)
-                continue
-            # Observe/manual modes do not actually actuate the load.
-            if decision.on and dev.mode == MODE_AUTO:
-                extra = additional_reservation(decision.power, current, reclaimed)
-                left -= extra
-                self.device_budgets[dev.id]["zusaetzlich_reserviert_w"] = round(extra)
+                current = self._measured_power.get(dev.id, 0.0)
+                reclaimed = self._reclaimable_power.get(dev.id, 0.0)
+                # A modulating load may use its own already-paid-for minimum
+                # power, but must never offer that power to another device.
+                own_budget = dev.own_budget_power(current, reclaimed) if dev.mode == MODE_AUTO else 0.0
+                upstream = max(0.0, ctx.alloc_base - left)
+                available_now = ctx.budget_now - upstream + own_budget
+                available_avg = ctx.budget_avg - upstream + own_budget
+                if (dev.TYPE == "load" and dev.mode == MODE_AUTO
+                        and dev.state.get("sm") in ("erkannt", "wartet")
+                        and dev.is_on()):
+                    # The device's current draw reduces the physical grid balance.
+                    # Credit its own metered draw ONLY when assessing that device,
+                    # never when assessing another consumer or the old average.
+                    available_now += current
+                self.device_budgets[dev.id] = {
+                    "aktuell_w": round(available_now),
+                    "mittel_w": round(available_avg),
+                    "vorreservierung_w": round(upstream),
+                    "benoetigt_w": round(dev.pv_start_need) if dev.TYPE == "load" else round(dev.nominal),
+                    "zusaetzlich_reserviert_w": 0,
+                }
+                try:
+                    decision = await dev.async_run(ctx, effective_left + own_budget)
+                except Exception:  # noqa: BLE001
+                    _LOGGER.exception("[%s] Fehler", dev.name)
+                    continue
+                # Observe/manual modes do not actually actuate the load.
+                if decision.on and dev.mode == MODE_AUTO:
+                    extra = additional_reservation(decision.power, current, reclaimed)
+                    effective_left -= extra
+                    self.device_budgets[dev.id]["zusaetzlich_reserviert_w"] = round(extra)
+            finally:
+                ctx.budget_now = original_now
+            left = effective_left - battery_credit
+        if self.has_battery and not battery_passed:
+            self.device_budgets["__battery__"] = {
+                "aktuell_w": round(ctx.budget_now + battery_w - max(0.0, ctx.alloc_base - left)),
+                "mittel_w": round(ctx.budget_avg - max(0.0, ctx.alloc_base - left)),
+                "vorreservierung_w": round(max(0.0, ctx.alloc_base - left)),
+                "benoetigt_w": 0,
+                "zusaetzlich_reserviert_w": round(battery_w),
+            }
         self.allocated = ctx.alloc_base - left
 
         if plan_due:
