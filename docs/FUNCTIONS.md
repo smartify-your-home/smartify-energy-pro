@@ -1,6 +1,6 @@
 # Funktionsstand und Grenzen
 
-Stand: **0.2.20**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
+Stand: **0.2.21**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
 
 ## Regelung
 - Der Sensor `surplus` ist der **reale Netzsaldo** (+ Einspeisung, − Netzbezug), `surplus_avg` dessen zeitlicher Mittelwert. `budget` und `budget_avg` zeigen dagegen das intern verwendete Steuerbudget.
@@ -29,6 +29,15 @@ Stand: **0.2.20**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten 
 - Ein Schalter muss wieder AUS sein, bevor er erneut eingeschaltet werden darf; Number-basierte Boosts behalten die aktive Rückstellung und bekommen ebenfalls die dauerhafte Startsperre.
 - Optional Sonnenhöhenwinkel sowie zwei stündliche Bewölkungswerte als Startfilter.
 - Die Wetterfilter betreffen nur neue Boosts; sie ersetzen keine prognosebasierte Suche nach dem besten Boost-Zeitfenster.
+
+## Heizstab / PV-Überschusssenke (ab 0.2.21)
+- Eigener Gerätetyp mit `switch`/`input_boolean`-Stellglied, erforderlichem Temperaturwert, optionalem Leistungssensor und konfigurierbarer Nennleistung.
+- Heizstab **saugt das direkt gemessene aktuelle Restbudget auf**, soweit bei einem fest schaltbaren Heizstab genügend Leistung für einen ganzen Schaltvorgang verfügbar ist. **Kein** gleitender Mittelwert oder Prognosewert bei Start und Stop. Vorrangige Vorreservierungen werden abgezogen. Ein bereits laufender Heizstab ist im Netzsaldo enthalten.
+- Einstellbare **EIN-Schwelle** (Standard 2200 W, mindestens die Nennleistung), **AUS-Schwelle** (Standard 0 W), **Maximaltemperatur** (55 °C), **Hysterese** (3 K), **frühester Start** (10:00) und jeweils optionale **Mindestlauf-/Mindestpause** (Standard 0 min).
+- Temperatur ungültig oder Temperatur ≥ Maximaltemperatur ⇒ AUS ohne Mindestlaufzeit. Unter max − Hysterese darf ein neuer Start erfolgen; genau an der unteren Schwelle noch nicht.
+- Schaltpause nur wenn > 0 konfiguriert, Zeitstempel wird direkt nach dem Schaltbefehl persistiert. Positiver Mindestlaufzeit-Wert kann absichtlich kurzen Netzbezug zulassen; Temperatur-Sicherheit hat Vorrang.
+- Modus Aus (auch Hub Aus) schaltet ab; Beobachten zeigt nur Empfehlungen, Manuell übernimmt keine Steuerung. Kein eigener stufenloser Leistungssteller.
+- Die physische Sicherheitskette des Heizelements bleibt zwingend unabhängig; bei nicht lesbarer Aktor-Entität kann SEP keine physische AUS-Bestätigung garantieren.
 
 ## Bekannte Risiken und Tests
 - Sensoren können langsamer aktualisieren als SEP prüft; Serviceaufrufe an Ladegeräte können verzögert sein.
