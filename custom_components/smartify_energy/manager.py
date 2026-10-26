@@ -70,6 +70,7 @@ class EnergyManager:
         self._grid_history: deque[tuple[datetime, float]] = deque()
         self._battery_history: deque[tuple[datetime, float]] = deque()
         self.battery_avg_w = 0.0
+        self.battery_short_w = 0.0
         self._lock = asyncio.Lock()
         self._unsubs: list = []
         self._pending_run = None
@@ -452,6 +453,8 @@ class EnergyManager:
         self.battery_avg_w = self._weighted_average(
             now, window, self.battery_charging_w, self._battery_history)
         short_avg = self._weighted_average(now, SHORT_WINDOW, budget)
+        self.battery_short_w = self._weighted_average(
+            now, SHORT_WINDOW, self.battery_charging_w, self._battery_history)
         ready = now - self._history[0][0] >= window * 0.9
 
         night = in_window(now, time_from_str(self.p("night_start"), time(0)),
@@ -488,10 +491,13 @@ class EnergyManager:
             # The current and historic battery measurements are separate.
             # Adding equal average credit to the allocation base and 'left'
             # preserves ctx.now_left() and leaves the 2-min EV gate unchanged.
-            original_now, original_avg, original_base = (
-                ctx.budget_now, ctx.budget_avg, ctx.alloc_base)
+            short_credit = battery_priority_credit(
+                self.battery_short_w, battery_rank, dev.priority)
+            original_now, original_avg, original_short, original_base = (
+                ctx.budget_now, ctx.budget_avg, ctx.budget_short, ctx.alloc_base)
             ctx.budget_now += battery_credit
             ctx.budget_avg += avg_credit
+            ctx.budget_short += short_credit
             ctx.alloc_base += avg_credit
             effective_left = left + avg_credit
             try:
@@ -528,8 +534,8 @@ class EnergyManager:
                     effective_left -= extra
                     self.device_budgets[dev.id]["zusaetzlich_reserviert_w"] = round(extra)
             finally:
-                ctx.budget_now, ctx.budget_avg, ctx.alloc_base = (
-                    original_now, original_avg, original_base)
+                ctx.budget_now, ctx.budget_avg, ctx.budget_short, ctx.alloc_base = (
+                    original_now, original_avg, original_short, original_base)
             left = effective_left - avg_credit
         if self.has_battery and not battery_passed:
             self.device_budgets["__battery__"] = {
