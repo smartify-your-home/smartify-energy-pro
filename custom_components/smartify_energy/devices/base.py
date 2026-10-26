@@ -75,6 +75,9 @@ class BaseDevice:
         self.name = title
         self.cfg = cfg
         self.params: dict[str, Any] = {s.key: s.default for s in self.all_param_specs()}
+        # Priority is an internal persistent setting, controlled by the dashboard.
+        # It is deliberately not exposed as a number entity.
+        self.params["priority"] = 5
         self.state: dict[str, Any] = {}
         self.status = "init"
         self.reason = ""
