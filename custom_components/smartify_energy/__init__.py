@@ -4,8 +4,10 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+import voluptuous as vol
+
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.typing import ConfigType
@@ -15,6 +17,7 @@ from .manager import EnergyManager
 
 _LOGGER = logging.getLogger(__name__)
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+SERVICE_PRIORITY_ORDER = "set_priority_order"
 CARD_FILE = "smartify-energy-plan-card.js"
 CARD_URL = f"/{DOMAIN}/{CARD_FILE}"
 
@@ -22,7 +25,40 @@ type SmartifyEnergyConfigEntry = ConfigEntry[EnergyManager]
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Dashboard-Card automatisch bereitstellen (keine Ressource nötig)."""
+    """Dashboard-Card bereitstellen und Prioritäten-Dienst registrieren."""
+    async def set_priority_order(call: ServiceCall) -> None:
+        device_ids = call.data["device_ids"]
+        registry = dr.async_get(hass)
+        if len(set(device_ids)) != len(device_ids):
+            raise vol.Invalid("Duplicate SEP device in priority order")
+        devices = [registry.async_get(device_id) for device_id in device_ids]
+        if any(device is None for device in devices):
+            raise vol.Invalid("Unknown SEP device")
+        for entry in hass.config_entries.async_entries(DOMAIN):
+            manager = getattr(entry, "runtime_data", None)
+            if manager is None:
+                continue
+            by_identifier = {(DOMAIN, sub_id): dev for sub_id, dev in manager.devices.items()}
+            matches = [
+                next((by_identifier[key] for key in device.identifiers if key in by_identifier), None)
+                for device in devices
+            ]
+            if not any(matches):
+                continue
+            if len(matches) != len(by_identifier) or any(dev is None for dev in matches):
+                raise vol.Invalid("Priority order must include every device of one SEP hub")
+            for rank, dev in enumerate(matches, start=1):
+                dev.set_param("priority", rank)
+            return
+        raise vol.Invalid("SEP device priority order not found")
+
+    if not hass.services.has_service(DOMAIN, SERVICE_PRIORITY_ORDER):
+        hass.services.async_register(
+            DOMAIN, SERVICE_PRIORITY_ORDER, set_priority_order,
+            schema=vol.Schema({
+                vol.Required("device_ids"): vol.All([cv.string], vol.Length(min=1, max=100)),
+            }),
+        )
     if getattr(hass, "http", None) is None or "frontend" not in hass.config.components:
         return True
     try:
