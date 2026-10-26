@@ -44,7 +44,7 @@ from ..const import (
     EV_PHASE_AUTO,
     EV_PHASE_MODES,
 )
-from ..helpers import ParamSpec, SensorSpec, clamp, state_float, state_str, time_from_str
+from ..helpers import ParamSpec, SensorSpec, clamp, power_w, state_float, state_str, time_from_str
 from .base import BaseDevice, Context, Decision, PlanDemand
 
 _LOGGER = logging.getLogger(__name__)
@@ -171,6 +171,33 @@ class EvDevice(BaseDevice):
             return 0.0
         amps = state_float(self.hass, self.cfg.get(CONF_CURRENT_ENTITY), self.min_a) or 0
         return amps * self.voltage * (self.current_phases or self.max_phases)
+
+    def _can_reclaim_pv_power(self) -> bool:
+        """Only an active, metered, modulated PV charge has immediately reducible power."""
+        return bool(
+            self.mode == "auto"
+            and self.p("goal") == EV_GOAL_PV
+            and self.connected
+            and self.is_on()
+            and self.cfg.get("power_sensor")
+            and self.cfg.get(CONF_CURRENT_ENTITY)
+        )
+
+    def reclaimable_power(self) -> float:
+        if not self._can_reclaim_pv_power():
+            return 0.0
+        measured = power_w(self.hass, self.cfg.get("power_sensor"))
+        if measured is None:
+            return 0.0
+        # The current minimum remains drawn during the stop delay. Do not
+        # promise it to a different consumer as instantly available power.
+        minimum = self.min_a * self.voltage * (self.current_phases or self.max_phases)
+        return max(0.0, measured - minimum)
+
+    def own_budget_power(self, measured_w: float, reclaimed_w: float) -> float:
+        # The wallbox may account for its already-running minimum when
+        # modulating itself, but may not offer that minimum to other loads.
+        return max(0.0, measured_w - reclaimed_w) if self._can_reclaim_pv_power() else 0.0
 
     @property
     def current_phases(self) -> int | None:
