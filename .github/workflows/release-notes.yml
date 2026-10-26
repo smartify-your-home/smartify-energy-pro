@@ -1,0 +1,59 @@
+name: Synchronize release notes
+on:
+  push:
+    branches: [main]
+    paths:
+      - CHANGELOG.md
+      - .github/workflows/release-notes.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Populate existing GitHub releases from changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+          import tempfile
+          from pathlib import Path
+
+          changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
+          header = re.compile(r"^##\s+(0\.\d+\.\d+)\b[^\n]*$", re.M)
+          matches = list(header.finditer(changelog))
+          notes = {
+              m.group(1): changelog[m.end():matches[i + 1].start() if i + 1 < len(matches) else len(changelog)].strip()
+              for i, m in enumerate(matches)
+          }
+          # Last 0.2.3 section includes unversioned notes. Stop at these headings.
+          for tag, body in list(notes.items()):
+              body = re.split(r"(?m)^##\s+(?:Bekannte Grenzen|Anzeigename|Korrektur des Standardwerts)\b", body)[0].strip()
+              notes[tag] = body
+
+          releases = json.loads(subprocess.check_output([
+              "gh", "release", "list", "--limit", "100",
+              "--json", "tagName,isDraft"
+          ], text=True))
+          for release in releases:
+              tag = release["tagName"]
+              version = tag.removeprefix("v")
+              body = notes.get(version)
+              if not body:
+                  print(f"No changelog section for {tag}, leaving unchanged")
+                  continue
+              with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".md") as f:
+                  f.write(body + "\n")
+                  f.flush()
+                  subprocess.run(["gh", "release", "edit", tag, "--notes-file", f.name], check=True)
+              print(f"Release notes updated: {tag}")
+          PY
