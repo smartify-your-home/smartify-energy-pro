@@ -565,10 +565,16 @@
     },
     "sensor": {
       "surplus": {
-        "name": "Überschuss"
+        "name": "Tatsächlicher Netzüberschuss"
       },
       "surplus_avg": {
-        "name": "Überschuss Mittelwert"
+        "name": "Netzüberschuss Mittelwert"
+      },
+      "budget": {
+        "name": "Verfügbares Steuerbudget"
+      },
+      "budget_avg": {
+        "name": "Steuerbudget Mittelwert"
       },
       "allocated": {
         "name": "Verteilt"
