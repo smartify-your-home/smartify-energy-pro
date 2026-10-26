@@ -69,6 +69,7 @@ from .const import (
     TYPE_HEATPUMP,
     TYPE_HEATER,
     TYPE_LOAD,
+    TYPE_DRYER,
     TYPE_POOL,
 )
 from .forecast import async_default_forecast_entries, async_forecast_entry_options
@@ -207,6 +208,7 @@ class SmartifyEnergyConfigFlow(_HubSteps, ConfigFlow, domain=DOMAIN):
     def async_get_supported_subentry_types(cls, config_entry: ConfigEntry) -> dict[str, type[ConfigSubentryFlow]]:
         return {
             TYPE_LOAD: LoadSubentryFlow,
+            TYPE_DRYER: DryerSubentryFlow,
             TYPE_POOL: PoolSubentryFlow,
             TYPE_EV: EvSubentryFlow,
             TYPE_HEATPUMP: HeatPumpSubentryFlow,
@@ -271,6 +273,20 @@ class LoadSubentryFlow(_DeviceFlow):
             _opt(CONF_POWER_SENSOR, d): _ent("sensor", "power"),
             _req(CONF_NOMINAL, d, 2200): _num(100, 4000, 50, "W"),
             _req(CONF_DURATION, d, 2.0): _num(0.5, 6, 0.25, "h"),
+        })
+
+
+class DryerSubentryFlow(_DeviceFlow):
+    """Dryer startup behavior must be selected explicitly."""
+
+    def schema(self, d: dict) -> vol.Schema:
+        return vol.Schema({
+            _req(CONF_NAME, d, "Wäschetrockner"): sel.TextSelector(),
+            _req(CONF_SWITCH, d): _ent(SWITCH_DOMAINS),
+            _req(CONF_POWER_SENSOR, d): _ent("sensor", "power"),
+            _req(CONF_NOMINAL, d, 800): _num(100, 3000, 50, "W"),
+            _req(CONF_DURATION, d, 2.5): _num(0.5, 8, 0.25, "h"),
+            _req("dryer_resume", d, "never"): _choice(["never", "yes"], "dryer_resume"),
         })
 
 
