@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "smartify energy manager – grid",
+        "title": "Smartify Energy Pro – grid",
         "description": "Basis: export at the grid connection.",
         "data": {
           "name": "Name",
