@@ -171,6 +171,10 @@ class BaseDevice:
                 return max(val, 0.0)
         return float(self.nominal) if self.is_on() else 0.0
 
+    def power_accounted_in_grid(self) -> float:
+        """Measured consumption already embedded in the physical grid balance."""
+        return self.power_now()
+
     def reclaimable_power(self) -> float:
         """Only power SEP can reliably curtail may increase another device's budget."""
         return 0.0
