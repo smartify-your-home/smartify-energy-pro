@@ -77,3 +77,7 @@ Bei Änderungen am Netzleistungs-, Batterie-Leistungs- oder Wallbox-Leistungssen
 ## Haushaltsgeräte: SEM-v3-Abgleich (0.2.9)
 
 Die Zustandsmaschine wurde anhand der bereitgestellten SEM-v3-Integration abgeglichen: 5 Sekunden stabile Leistung über 9 W zur Programmerkennung (ohne Leistungssensor bei eingeschalteter Steckdose), 10 Sekunden über max(200 W, 8 % Nennleistung) zur Heizphasenerkennung, 2 Minuten unter der einstellbaren Fertigschwelle als Standard, standardmäßige Spätstartzeit 16:00 und Zustand „Fertig“ bis zum manuellen Reset. Bereits ausdrücklich freigegebene Programme werden nicht wegen später sinkenden Überschusses gestoppt. SEP behält jedoch die zentral einstellbaren Prioritätszahlen anstelle der ausschließlich zeitlichen Reihenfolge von SEM. Neue Standardwerte betreffen neue Einträge; bereits gespeicherte Parameter bleiben bestehen. Eine Prüfung mit echten Geräten steht aus.
+
+## Mindestüberschuss für Haushaltsgeräte
+
+Der Standardwert für **neu angelegte** Haushaltsgeräte lautet **+1.500 W**: Erst bei einem berechneten Überschuss von mindestens 1.500 W ist die PV-Startbedingung erfüllt. Bereits gespeicherte Geräteparameter werden durch Updates nicht automatisch geändert. Vorhandene Geräte bei Bedarf manuell auf +1.500 W einstellen.
