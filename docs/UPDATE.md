@@ -1,6 +1,6 @@
 # Installation und Updates
 
-Aktuelle Version: **0.2.27**. Integrationsdomain: `smartify_energy`.
+Aktuelle Version: **0.2.28**. Integrationsdomain: `smartify_energy`.
 
 ## Update über HACS
 1. Vor dem Update Home-Assistant-Backup erstellen und die bestehenden SEP-Geräteeinstellungen dokumentieren.
@@ -64,3 +64,7 @@ Nach dieser Aktualisierung zeigen die Gerätekacheln die Priorität wieder als Z
 ## Wäschetrockner (0.2.27)
 
 Für den neuen Gerätetyp **Wäschetrockner** die Nennleistung und Programmdauer passend zum eigenen Modell eintragen. Vor der Einstellung „Programm läuft nach Stromwiederkehr weiter“ den tatsächlichen Wiederanlauf nach Spannungsunterbrechung am Gerät sicher testen. Bei „Nein“ ist die SEP-Steckdosensteuerung gesperrt und es erfolgt ausschließlich eine Beobachtung nach manuellem Start. Bei „Ja“ darf SEP einmalig für eine spätere PV-Startfreigabe unterbrechen; ein freigegebenes Programm läuft unabhängig vom weiteren Überschuss durch. Test zunächst im Modus Beobachten und unter Aufsicht durchführen.
+
+## 0.2.28 – Wiederherstellung bei `unavailable`
+
+Behebt den Fehler `homeassistant.helpers.translation TypeError: expected str, got list` durch Korrektur der Übersetzungsoptionen für den Trockner. Nach dem Update Home Assistant vollständig neu starten; die Integration nicht löschen oder neu anlegen. Vorhandene SEP-Konfigurationen bleiben erhalten.
