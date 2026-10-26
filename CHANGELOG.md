@@ -1,3 +1,9 @@
+## 0.2.26 – Netzsaldo/Steuerbudget bündig anzeigen
+
+- Im kompakten SEP-Header stehen die Kennzeichen **Ø** und **akt.** in einer eigenen Spalte unterhalb der jeweiligen Überschrift.
+- Durchschnitt und aktuelle Leistung werden in einer gemeinsamen Zweispalten-Anordnung dargestellt: Zahlen und Watt-Einheit sind rechtsbündig exakt untereinander ausgerichtet.
+- Der aktuelle Wert ersetzt die bisherige Bezeichnung „Ist“; Live-Werte und Steuerlogik bleiben unverändert.
+
 ## 0.2.25 – Modus-Auswahl bleibt während Sensorupdates geöffnet
 
 - Der SEP-Header und die Geräteeinstellungen werden bei Live-Sensorupdates **nicht mehr vollständig neu gerendert**, während ein Auswahlfeld (z. B. Automatik / Beobachten / Manuell / Aus) fokussiert ist.
