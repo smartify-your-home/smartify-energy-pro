@@ -1,3 +1,7 @@
+## 0.2.12 – Bezeichnung der Startzeiten
+- Haushaltsgeräte: Anzeigename der Zeit-Entität auf **„Frühester Start“** vereinheitlicht; **„Spätester Start“** bleibt bestehen.
+- Keine Änderung der technischen Entitätsschlüssel oder gespeicherten Zeitwerte.
+
 ## 0.2.11 – Planungsanzeige bei Moduswechsel
 - Fehler behoben: Nach dem Schalten eines Geräts (z. B. WP-Boost) auf „Aus“ wird die grafische Prognoseplanung unmittelbar neu berechnet; veraltete Boost-Balken bleiben nicht bis zum nächsten 15-Minuten-Planungsintervall stehen.
 - Regelmäßiger Prognose-Abruf bleibt im bisherigen Intervall; eine Einstellungsänderung erzwingt nur die Neuplanung.
