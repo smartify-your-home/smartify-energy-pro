@@ -441,16 +441,10 @@
       }
     },
     "dryer_resume": {
-      "options": [
-        {
-          "value": "never",
-          "label": "No – never switch plug"
-        },
-        {
-          "value": "yes",
-          "label": "Yes – resumes after power restoration"
-        }
-      ]
+      "options": {
+        "never": "No – never switch plug",
+        "yes": "Yes – resumes after power restoration"
+      }
     },
     "appliance_type": {
       "options": {
