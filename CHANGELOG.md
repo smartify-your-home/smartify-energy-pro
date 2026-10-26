@@ -1,3 +1,9 @@
+## 0.2.25 – Modus-Auswahl bleibt während Sensorupdates geöffnet
+
+- Der SEP-Header und die Geräteeinstellungen werden bei Live-Sensorupdates **nicht mehr vollständig neu gerendert**, während ein Auswahlfeld (z. B. Automatik / Beobachten / Manuell / Aus) fokussiert ist.
+- Der vorherige Schutz für Zahlen- und Uhrzeitfelder bleibt bestehen. Nach Verlassen des Auswahlfeldes werden die zwischenzeitlich eingegangenen Sensorwerte automatisch nachgezeichnet.
+- Steuerlogik und WW-Boost-Boolean bleiben unverändert.
+
 ## 0.2.24 – Kompakte Saldo-Anzeige im SEP-Header
 
 - Vier separate Kacheln für Netzsaldo und Steuerbudget (Ist und Durchschnitt) werden zu zwei kompakten Kacheln zusammengefasst.
