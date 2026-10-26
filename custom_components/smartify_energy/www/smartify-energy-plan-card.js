@@ -24,7 +24,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.2.3";
+const CARD_VERSION = "1.2.4";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -234,9 +234,7 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
       <div class="hint">Zeigt das Zahnrad mit Einstellungen und Erklärungen. Ausblenden verändert keine Regelung und ist keine Zugriffssperre.</div>
       <div class="row"><input type="checkbox" id="show_timeline" ${chk("show_timeline")}><label for="show_timeline">PV-Plan (Zeitleiste)</label></div>
       <div class="hint">Zeigt die Prognose und die empfohlenen Zeiträume. Der Plan ist eine Empfehlung, keine feste Startzusage.</div>
-      <label>Zeitleiste – Stunden</label>
-      <input type="number" id="timeline_hours" min="6" max="36" value="${c.timeline_hours ?? 24}">
-      <div class="hint">Wie viele kommende Stunden der Plan zeigt, von 6 bis 36. Ändert nur die Anzeige.</div>
+      <div class="hint">Zeigt den restlichen heutigen Tag und den gesamten morgigen Tag (00:00–24:00 Uhr), einschließlich Stunden ohne PV-Ertrag.</div>
     `;
     const set = (k, v) => { this._config = { ...this._config, [k]: v }; if (v === "" || v == null) delete this._config[k]; this._emit(); };
     const $ = id => this.shadowRoot.getElementById(id);
@@ -244,7 +242,7 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
     $("hub").addEventListener("change", e => set("hub", e.target.value));
     ["show_header", "show_priorities", "show_mode", "show_settings", "show_timeline"].forEach(k =>
       $(k).addEventListener("change", e => set(k, e.target.checked)));
-    $("timeline_hours").addEventListener("change", e => set("timeline_hours", parseInt(e.target.value) || 24));
+
   }
 }
 customElements.define("smartify-energy-plan-card-editor", SmartifyEnergyPlanCardEditor);
@@ -536,8 +534,10 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const hours = (plan?.attributes?.stunden || []).slice();
     if (!hours.length) return `<div class="timeline"><div class="empty">Keine Prognose verfügbar.</div></div>`;
     const now = Date.now();
-    const horizon = now + (this._config.timeline_hours || 24) * 3600e3;
-    const cols = hours.filter(h => { const t = Date.parse(h.zeit); return t + 3600e3 > now && t < horizon; });
+    const horizon = new Date();
+    horizon.setDate(horizon.getDate() + 2);
+    horizon.setHours(0, 0, 0, 0);
+    const cols = hours.filter(h => { const t = Date.parse(h.zeit); return t + 3600e3 > now && t < horizon.getTime(); });
     if (!cols.length) return `<div class="timeline"><div class="empty">Kein PV-Ertrag im Zeitraum.</div></div>`;
     const colorOf = name => name === "Speicher" ? BATTERY_GRADIENT : (d.devices.find(x => x.name === name)?.color || PALETTE[6]);
     const max = Math.max(...cols.map(h => Math.max(h.pv_w || 0, Object.values(h.geraete || {}).reduce((a, b) => a + b, 0))), 1);
@@ -582,7 +582,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         ${this._open.has("hub") ? this._settings(d.hubSettings, d.name, "hub") : ""}
         ${c.show_header ? this._header(d) : ""}
         ${c.show_priorities ? `<div class="section"><span>Prioritäten</span><span>1 = hoher Vorrang · ziehen zum Sortieren</span></div>${this._devices(d)}` : ""}
-        ${c.show_timeline ? `<div class="section"><span>PV-Plan</span><span>${c.timeline_hours || 24} h</span></div>${this._timeline(d)}` : ""}
+        ${c.show_timeline ? `<div class="section"><span>PV-Plan</span><span>Heute + morgen</span></div>${this._timeline(d)}` : ""}
       </ha-card>`;
     this._bind(d);
   }
