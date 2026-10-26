@@ -93,26 +93,30 @@
           "title": "Appliance (smart plug)",
           "data": {
             "name": "Name",
+            "appliance_type": "Appliance type",
             "switch": "Switch",
             "power_sensor": "Power sensor",
             "nominal_power": "Rated power",
             "duration": "Typical program duration"
           },
           "data_description": {
-            "switch": "Plug stays on; start the program at the appliance."
+            "switch": "Plug stays on; start the program at the appliance.",
+            "appliance_type": "Choose washing machine, dishwasher, or other. Sets the icon for the device status and priority card without changing load control."
           }
         },
         "reconfigure": {
           "title": "Appliance (smart plug)",
           "data": {
             "name": "Name",
+            "appliance_type": "Appliance type",
             "switch": "Switch",
             "power_sensor": "Power sensor",
             "nominal_power": "Rated power",
             "duration": "Typical program duration"
           },
           "data_description": {
-            "switch": "Plug stays on; start the program at the appliance."
+            "switch": "Plug stays on; start the program at the appliance.",
+            "appliance_type": "Choose washing machine, dishwasher, or other. Sets the icon for the device status and priority card without changing load control."
           }
         }
       },
@@ -447,6 +451,13 @@
           "label": "Yes – resumes after power restoration"
         }
       ]
+    },
+    "appliance_type": {
+      "options": {
+        "washing_machine": "Washing machine",
+        "dishwasher": "Dishwasher",
+        "other": "Other appliance"
+      }
     }
   },
   "entity": {
