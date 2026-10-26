@@ -1,4 +1,4 @@
-# Pflichtfelder und optionale Entitäten – SEP 0.2.17
+# Pflichtfelder und optionale Entitäten – SEP 0.2.18
 
 Diese Übersicht unterscheidet **Formular-Pflichtfelder** und **Funktionsvoraussetzungen**. Ein Feld, das sich technisch leer speichern lässt, kann für eine bestimmte Automatik trotzdem notwendig sein.
 
