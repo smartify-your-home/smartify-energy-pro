@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.15** · Integrationsdomain: `smartify_energy`
+Version: **0.2.17** · Integrationsdomain: `smartify_energy`
 
 ## Dokumentation und Updates
 
@@ -42,13 +42,17 @@ Die Integration nutzt aktuelle Home-Assistant-Schnittstellen, unter anderem Konf
 
 Fehler und Verbesserungsvorschläge: [Issues](https://github.com/smartify-your-home/smartify-energy-pro/issues).
 
-## Warmwasser-Boost per Button
+## Warmwasser-Boost: ein Start, Wärmepumpe übernimmt den Zyklus (0.2.17)
 
-Als Boost-Art kann Schalter, Button oder Sollwert gewählt werden. Button unterstützt `button` und `input_button` und löst beim Start einmal `press` aus. Während der intern verwalteten Boost-Phase wird nicht erneut gedrückt. Ein Button liefert keinen Laufstatus und kann die Einmalladung nicht abbrechen: Zieltemperatur, Zeitlimit und Aus beenden nur die interne Freigabe; den tatsächlichen Ladezyklus beendet die Wärmepumpe. Nach Ende der internen Phase gilt die Mindestpause vor einer erneuten Auslösung.
+SEP kann für **Warmwasser aktiv** optional einen bestehenden `binary_sensor` oder `input_boolean` auswählen (unter **Wärmepumpe → Neu konfigurieren**). **EIN** bedeutet WW läuft: Ein weiterer Boost wird dann nicht ausgelöst. Wenn das Feld nicht belegt ist, schützt weiterhin die Leistungs-Ruheerkennung zusammen mit der Startsperre. Ist das Feld belegt, aber die Entität nicht verfügbar, löst SEP aus Sicherheitsgründen nichts aus.
+
+Bei **Button** (`button` / `input_button`) sendet SEP einmal `press`; bei **Schalter** (`switch` / `input_boolean`) einmal `turn_on`. SEP sendet bei diesen Einmalstartern **kein `turn_off`** zum Beenden des WW-Zyklus; die Wärmepumpe steuert die eigentliche Ladung selbst. Ein Schalter, der auf EIN stehen bleibt, verhindert weitere Startbefehle und muss extern wieder auf AUS zurückgehen. Sollwert-/Number-Boosts bleiben davon verschieden, da dort ein Normal-Sollwert zurückgesetzt werden muss.
+
+Die Geräteeinstellung **WW-Boost Mindestabstand** ist standardmäßig **60 min** und lässt sich von **60 bis 720 min** einstellen. **Unter 60 Minuten ist nicht erlaubt**, damit maximal ein Start pro Stunde erfolgt. Vor dem Startbefehl speichert SEP den letzten Startzeitpunkt sofort dauerhaft in Home Assistant. Nach HA-Neustart läuft die Restzeit weiter; auch ein unklarer Aktorfehler hebt die Sperre nicht auf.
 
 ## Boost-Startschutz (0.2.3)
 
-Für jeden automatischen Warmwasser-Boost sind Leistungs- und Temperatursensor nötig. Die WP-Leistung muss durchgehend für die einstellbare „WP-Ruhezeit vor Boost“ (1–180 Minuten, Standard 15 Minuten) unter der einstellbaren WP-Ruheschwelle (Standard 5 W) liegen. Aktivität oder ungültige Leistungswerte setzen die Wartezeit zurück; nach Neustart/Reload beginnt sie neu. Start nur unter Zieltemperatur minus Boost-Hysterese (Standard 4 K): bei 50 °C Ziel also unter 46 °C. Die bestehende Mindestpause und PV-Bedingungen gelten zusätzlich. Ein gestarteter Boost verbraucht die Ruhefreigabe.
+Für jeden automatischen Warmwasser-Boost sind Leistungs- und Temperatursensor nötig. Die WP-Leistung muss durchgehend für die einstellbare „WP-Ruhezeit vor Boost“ (1–180 Minuten, Standard 15 Minuten) unter der einstellbaren WP-Ruheschwelle (Standard 5 W) liegen. Aktivität oder ungültige Leistungswerte setzen die Wartezeit zurück; nach Neustart/Reload beginnt sie neu. Start nur unter Zieltemperatur minus Boost-Hysterese (Standard 4 K): bei 50 °C Ziel also unter 46 °C. Der dauerhafte Mindestabstand seit der letzten WW-Auslösung und die PV-Bedingungen gelten zusätzlich. Ein gestarteter Boost verbraucht die Ruhefreigabe.
 
 Seit 0.2.8 lösen ausgewählte Leistungs- und Wallbox-Messwerte nach etwa 0,5 Sekunden eine gebündelte Neubewertung aus; sonstige beobachtete Eingänge bleiben bei ungefähr 2 Sekunden. Der periodische Zyklus bleibt erhalten; Mittelwerte sind zeitgewichtet.
 
