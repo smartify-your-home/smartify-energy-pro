@@ -35,6 +35,7 @@ class LoadDevice(BaseDevice):
         self.state.setdefault("approved", False)
         self.state.setdefault("hp_active", False)
         self.state.setdefault("hp_done", False)
+        self._detected_since: datetime | None = None
         self._hp_since: datetime | None = None
         self._low_since: datetime | None = None
         self._nachladen_prev = False
@@ -44,10 +45,10 @@ class LoadDevice(BaseDevice):
         return [
             ParamSpec("nominal_power", "number", float(self.cfg.get("nominal_power", 2200)),
                       "mdi:flash", 100, 4000, 50, "W"),
-            ParamSpec("min_surplus", "number", 1000, "mdi:solar-power", -3000, 4000, 50, "W"),
+            ParamSpec("min_surplus", "number", -1000, "mdi:solar-power", -3000, 4000, 50, "W"),
             ParamSpec("latest_start", "time", "15:00", "mdi:clock-alert-outline"),
             ParamSpec("finish_threshold", "number", 5, "mdi:power-plug-off", 0, 50, 0.5, "W"),
-            ParamSpec("finish_minutes", "number", 20, "mdi:timer-sand", 1, 60, 1, "min"),
+            ParamSpec("finish_minutes", "number", 2, "mdi:timer-sand", 1, 60, 1, "min"),
             ParamSpec("duration", "number", float(self.cfg.get("duration", 2.0)),
                       "mdi:timer-outline", 0.5, 6, 0.25, "h"),
             ParamSpec("nachladen", "switch", False, "mdi:washing-machine-alert", config=False),
@@ -90,6 +91,7 @@ class LoadDevice(BaseDevice):
 
     def _reset(self) -> None:
         self.state.update(sm=IDLE, approved=False, hp_active=False, hp_done=False, since=None)
+        self._detected_since = None
         self._hp_since = None
         self._low_since = None
 
@@ -125,7 +127,7 @@ class LoadDevice(BaseDevice):
                 self._low_since = None
 
     def _check_heating(self, p: float, now: datetime) -> None:
-        threshold = max(200.0, self.nominal * 0.08)
+        threshold = self.nominal * 0.8
         if p > threshold:
             if self._hp_since is None:
                 self._hp_since = now
@@ -157,21 +159,28 @@ class LoadDevice(BaseDevice):
         need = float(self.p("min_surplus"))
 
         if sm == IDLE:
-            if sw_on and (p > 5 or not self.cfg.get(CONF_POWER_SENSOR)):
-                self.state.update(sm=DETECTED, since=ctx.now.timestamp(), approved=False)
-                if ctx.night_window:
-                    return self._approve("Sofortfenster – sofort freigegeben")
-            else:
+            # SEM v3: 5 seconds stable above 9 W (or switch on without sensor).
+            detected = sw_on and (p > 9 or not self.cfg.get(CONF_POWER_SENSOR))
+            if not detected:
+                self._detected_since = None
                 self.status = "bereit"
                 return Decision(False, 0, "Bereit – Gerät am Gerät starten")
+            if self._detected_since is None:
+                self._detected_since = ctx.now
+                self.status = "bereit"
+                return Decision(False, 0, "Programmerkennung: 5 Sekunden prüfen")
+            if ctx.now - self._detected_since < timedelta(seconds=5):
+                self.status = "bereit"
+                return Decision(False, 0, "Programmerkennung: 5 Sekunden prüfen")
+            self._detected_since = None
+            self.state.update(sm=DETECTED, since=ctx.now.timestamp(), approved=False)
+            if ctx.night_window:
+                return self._approve("Sofortfenster – sofort freigegeben")
 
         if sm == FINISHED:
+            # SEM v3: finished is latched until the explicit reset button.
             self.status = "fertig"
-            if sw_on and p > 5 and self._low_since is None:
-                # wieder gestartet ohne Reset
-                self.state.update(sm=DETECTED, since=ctx.now.timestamp())
-            else:
-                return Decision(sw_on, p, "Fertig – Reset zum Neustart")
+            return Decision(sw_on, p, "Fertig – Reset zum Neustart")
 
         if self.state["sm"] == RUNNING and (self.state["approved"]):
             self.status = "laeuft"
@@ -181,14 +190,16 @@ class LoadDevice(BaseDevice):
             self.status = "erkannt"
             if p <= 100 and self.cfg.get(CONF_POWER_SENSOR):
                 return Decision(True, p, "Programm gewählt – warte auf Start")
-            if ctx.night_window or late:
-                return self._approve("Spätstart/Sofortfenster – freigegeben")
-            if any(n != self.name for n in ctx.loads_heating):
-                return self._wait("Anderes Gerät in Heizphase")
-            free_now = ctx.now_left(budget_left) - p
-            if min(free, free_now) >= need:
-                return self._approve(f"Überschuss ok ({min(free, free_now):.0f} W ≥ {need:.0f} W)")
-            return self._wait(f"Überschuss zu gering ({min(free, free_now):.0f} W < {need:.0f} W)")
+            if ctx.night_window:
+                return self._approve("Sofortfenster – freigegeben")
+            # The SEP manager sorts by configured priority; retain this
+            # instead of SEM's timestamp-only ordering.
+            # The SEM v3 feasibility threshold is based on the full
+            # currently available budget, not on subtracting own power twice.
+            surplus_now = ctx.now_left(budget_left)
+            if surplus_now >= need:
+                return self._approve(f"Überschuss ok ({surplus_now:.0f} W ≥ {need:.0f} W)")
+            return self._wait(f"Überschuss zu gering ({surplus_now:.0f} W < {need:.0f} W)")
 
         if self.state["sm"] == WAITING:
             self.status = "wartet"
@@ -201,7 +212,7 @@ class LoadDevice(BaseDevice):
             if not ctx.history_ready:
                 return Decision(False, 0, "Mittelwert noch nicht verfügbar")
             free_now = ctx.now_left(budget_left) - p
-            if free >= need and free_now >= need:
+            if free >= need:
                 return self._approve(f"Überschuss im Mittel ok ({free:.0f} W)")
             return Decision(False, 0, f"Warte auf Überschuss ({min(free, free_now):.0f} W < {need:.0f} W)")
 
@@ -214,6 +225,7 @@ class LoadDevice(BaseDevice):
 
     def _wait(self, reason: str) -> Decision:
         self.state.update(sm=WAITING, approved=False, hp_active=False, hp_done=False)
+        self._detected_since = None
         self._hp_since = None
         self._low_since = None
         self.status = "wartet"
