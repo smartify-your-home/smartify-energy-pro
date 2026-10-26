@@ -68,6 +68,8 @@ class EnergyManager:
         self._store = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}")
         self._history: deque[tuple[datetime, float]] = deque()
         self._grid_history: deque[tuple[datetime, float]] = deque()
+        self._battery_history: deque[tuple[datetime, float]] = deque()
+        self.battery_avg_w = 0.0
         self._lock = asyncio.Lock()
         self._unsubs: list = []
         self._pending_run = None
@@ -129,6 +131,7 @@ class EnergyManager:
         if key == "avg_window":
             self._history.clear()
             self._grid_history.clear()
+            self._battery_history.clear()
         self.async_param_changed()
 
     @property
@@ -438,13 +441,16 @@ class EnergyManager:
         window = timedelta(minutes=float(self.p("avg_window")))
         self._history.append((now, budget))
         self._grid_history.append((now, self.grid_export))
+        self._battery_history.append((now, self.battery_charging_w))
         retention = max(window, SHORT_WINDOW)
-        for history in (self._history, self._grid_history):
+        for history in (self._history, self._grid_history, self._battery_history):
             while len(history) > 1 and now - history[1][0] >= retention:
                 history.popleft()
         self.budget_avg = self._weighted_average(now, window, budget)
         self.grid_avg = self._weighted_average(now, window, self.grid_export,
                                                self._grid_history)
+        self.battery_avg_w = self._weighted_average(
+            now, window, self.battery_charging_w, self._battery_history)
         short_avg = self._weighted_average(now, SHORT_WINDOW, budget)
         ready = now - self._history[0][0] >= window * 0.9
 
@@ -478,18 +484,23 @@ class EnergyManager:
             # Credit it ONLY ahead of battery rank, assuming its external
             # regulator yields automatically to a higher priority consumer.
             battery_credit = battery_priority_credit(battery_w, battery_rank, dev.priority)
-            original_now = ctx.budget_now
-            # Credit the battery just ONCE through the instantaneous context.
-            # Keep left and averaged budgets unchanged.
+            avg_credit = battery_priority_credit(self.battery_avg_w, battery_rank, dev.priority)
+            # The current and historic battery measurements are separate.
+            # Adding equal average credit to the allocation base and 'left'
+            # preserves ctx.now_left() and leaves the 2-min EV gate unchanged.
+            original_now, original_avg, original_base = (
+                ctx.budget_now, ctx.budget_avg, ctx.alloc_base)
             ctx.budget_now += battery_credit
-            effective_left = left
+            ctx.budget_avg += avg_credit
+            ctx.alloc_base += avg_credit
+            effective_left = left + avg_credit
             try:
                 current = self._measured_power.get(dev.id, 0.0)
                 reclaimed = self._reclaimable_power.get(dev.id, 0.0)
                 # A modulating load may use its own already-paid-for minimum
                 # power, but must never offer that power to another device.
                 own_budget = dev.own_budget_power(current, reclaimed) if dev.mode == MODE_AUTO else 0.0
-                upstream = max(0.0, ctx.alloc_base - left)
+                upstream = max(0.0, ctx.alloc_base - effective_left)
                 available_now = ctx.budget_now - upstream + own_budget
                 available_avg = ctx.budget_avg - upstream + own_budget
                 if (dev.TYPE == "load" and dev.mode == MODE_AUTO
@@ -517,8 +528,9 @@ class EnergyManager:
                     effective_left -= extra
                     self.device_budgets[dev.id]["zusaetzlich_reserviert_w"] = round(extra)
             finally:
-                ctx.budget_now = original_now
-            left = effective_left
+                ctx.budget_now, ctx.budget_avg, ctx.alloc_base = (
+                    original_now, original_avg, original_base)
+            left = effective_left - avg_credit
         if self.has_battery and not battery_passed:
             self.device_budgets["__battery__"] = {
                 "aktuell_w": round(ctx.budget_now + battery_w - max(0.0, ctx.alloc_base - left)),
