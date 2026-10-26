@@ -1,4 +1,4 @@
-# Pflichtfelder und optionale Entitäten – SEP 0.2.18
+# Pflichtfelder und optionale Entitäten – SEP 0.2.21
 
 Diese Übersicht unterscheidet **Formular-Pflichtfelder** und **Funktionsvoraussetzungen**. Ein Feld, das sich technisch leer speichern lässt, kann für eine bestimmte Automatik trotzdem notwendig sein.
 
@@ -58,6 +58,17 @@ Diese Übersicht unterscheidet **Formular-Pflichtfelder** und **Funktionsvorauss
 | Tagesplan-Entität | Bedingt | Für die Funktion „Tage-Konfigurator“ |
 
 **Grenzen:** Die schnelle Stromanpassung arbeitet mit Messwerten und ganzzahligen Ampere-Schritten. Mindestladestrom, Abschaltverzögerung und Phasenwechsel-Sperre können Netzbezug verursachen.
+
+## Heizstab / PV-Überschusssenke
+| Feld | Status | Bedeutung |
+|---|---|---|
+| Schalter | **Pflicht** | `switch` oder `input_boolean`; bei Input-Boolean ein weiterer echter Aktor erforderlich |
+| Wassertemperatur | **Pflicht** | `sensor` in °C; fehlender/ungültiger Wert führt zu AUS |
+| Heizleistung | **Pflicht** | Watt-Nennleistung zur vollständigen PV-Startreservierung |
+| Leistungssensor | Optional | Tatsächlich gemessene W/kW zur Vermeidung übervorsichtiger zusätzlicher Reservierung |
+| Maximaltemperatur, Hysterese | Einstellbar | Standard 55 °C und 3 K |
+| Start-/Stoppschwelle, Uhrzeit | Einstellbar | Standard 2200 W, 0 W, 10:00; **Momentanwert**, kein Mittelwert |
+| Mindestlaufzeit / Mindestpause | Optional | Beide 0–120 min, Standard 0, nach Neustart erhalten; Temperatur-Sicherheit setzt Mindestlaufzeit außer Kraft |
 
 ## Wärmepumpe / Warmwasser-Boost
 | Feld | Status | Bedeutung |
