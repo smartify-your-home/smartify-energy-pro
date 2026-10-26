@@ -218,8 +218,11 @@ class LoadDevice(BaseDevice):
             if not ctx.history_ready:
                 return Decision(False, 0, "Mittelwert noch nicht verfügbar")
             free_now = ctx.now_left(budget_left) - p
-            if free >= need:
-                return self._approve(f"Überschuss im Mittel ok ({free:.0f} W)")
+            # Both the averaged budget and the *current* budget must pass.
+            # Otherwise an older sunny period could start a washer while
+            # the grid is already importing power.
+            if free >= need and free_now >= need:
+                return self._approve(f"Überschuss aktuell und im Mittel ok ({min(free, free_now):.0f} W)")
             return Decision(False, 0, f"Warte auf Überschuss ({min(free, free_now):.0f} W < {need:.0f} W)")
 
         return Decision(sw_on, p, "Unbekannter Zustand")
