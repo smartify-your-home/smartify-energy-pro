@@ -109,7 +109,7 @@ class LoadDevice(BaseDevice):
         return max(self.nominal, float(self.p("min_surplus")))
 
     def _reset(self) -> None:
-        self.state.update(sm=IDLE, approved=False, hp_active=False, hp_done=False, since=None)
+        self.state.update(sm=IDLE, approved=False, forced_start=False, hp_active=False, hp_done=False, since=None)
         self._detected_since = None
         self._hp_since = None
         self._low_since = None
@@ -120,7 +120,7 @@ class LoadDevice(BaseDevice):
         await self.manager.async_request_run()
 
     async def async_start_now(self) -> None:
-        self.state.update(sm=RUNNING, approved=True, since=dt_util.now().timestamp())
+        self.state.update(sm=RUNNING, approved=True, forced_start=True, since=dt_util.now().timestamp())
         self.reason = "Sofort-Start"
         if not self.is_on():
             await self._switch(self.switch, True)
@@ -206,7 +206,11 @@ class LoadDevice(BaseDevice):
 
         if self.state["sm"] == RUNNING and (self.state["approved"]):
             self.status = "laeuft"
-            return Decision(True, self.reserved_power, self.reason or "Läuft (freigegeben)", forced=True)
+            # Do not repeat a historical surplus check when conditions change.
+            # A released program must continue even if PV surplus disappears.
+            return Decision(True, self.reserved_power,
+                            "Programm läuft – bereits freigegeben (kein erneuter PV-Check)",
+                            forced=bool(self.state.get("forced_start", False)))
 
         if self.state["sm"] == DETECTED:
             self.status = "erkannt"
@@ -215,7 +219,7 @@ class LoadDevice(BaseDevice):
             if before_earliest:
                 return self._wait(f"Frühester Start erst ab {earliest.strftime('%H:%M')}")
             if ctx.night_window:
-                return self._approve("Sofortfenster – freigegeben")
+                return self._approve("Sofortfenster – freigegeben", forced=True)
             # A newly detected appliance is already drawing some power:
             # that *measured* power has reduced the physical grid export.
             # Add it back only for its own start check, not as credit to
@@ -262,9 +266,9 @@ class LoadDevice(BaseDevice):
         return Decision(sw_on, p, "Unbekannter Zustand")
 
     def _approve(self, reason: str, forced: bool = False) -> Decision:
-        self.state.update(sm=RUNNING, approved=True)
+        self.state.update(sm=RUNNING, approved=True, forced_start=forced)
         self.status = "laeuft"
-        return Decision(True, max(self._p(), self.nominal), reason, forced=True)
+        return Decision(True, max(self._p(), self.nominal), reason, forced=forced)
 
     def _wait(self, reason: str) -> Decision:
         self.state.update(sm=WAITING, approved=False, hp_active=False, hp_done=False)
