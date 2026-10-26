@@ -1,12 +1,12 @@
 # Funktionsstand und Grenzen
 
-Stand: **0.2.21**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
+Stand: **0.2.26**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
 
 ## Regelung
 - Der Sensor `surplus` ist der **reale Netzsaldo** (+ Einspeisung, − Netzbezug), `surplus_avg` dessen zeitlicher Mittelwert. `budget` und `budget_avg` zeigen dagegen das intern verwendete Steuerbudget.
 - SEP rechnet nur tatsächlich steuerbare, unmittelbar absenkbare Leistung wieder zum Budget hinzu. Laufender WW-Boost und freigegebene Haushaltsprogramme sind bereits im Netzsaldo enthalten und werden nicht zurückgerechnet.
 - Bei laufender PV-Wallbox-Ladung gilt nur der Teil oberhalb des aktuellen Mindeststroms als frei umverteilbar. Die Wallbox selbst darf ihre bereits belegte Mindestleistung für die eigene Modulation berücksichtigen.
-- Leistung von externen Überschuss-Senken und das Laden eines Akkus bleiben für die Budgetfreigabe ohne SEP-Stelleingriff unberücksichtigt. Batterie-Entladung wird sicherheitshalber vom verfügbaren PV-Budget abgezogen. Der angezeigte Batterie-Vorrang bleibt eine Planungshilfe, keine Steuerung des Batterie-Wechselrichters.
+- **Ab 0.2.22:** Die *gemessene Akkuladung* kann Geräten **oberhalb des PV-Akkus in der grafischen Prioritätenliste** als verfügbarer Überschuss angerechnet werden. Unterhalb des Speichers erfolgt keine solche Gutschrift. Voraussetzung ist, dass der Speicher seinen Ladevorgang bei zusätzlichem Verbrauch eigenständig zurückregelt. Akkuentladung wird sicherheitshalber vom PV-Budget abgezogen. Sonstige externe Überschusssenken sind weiterhin nicht pauschal rückrechenbar.
 - Lasten mit höherer Priorität werden vor nachgeordneten Geräten berücksichtigt; Pflicht- und Sofortladungen können Netzstrom beanspruchen.
 - Der reguläre Regelzyklus bleibt konfigurierbar. Änderungen ausgewählter Messwerte lösen schneller eine gebündelte Auswertung aus.
 
@@ -17,7 +17,7 @@ Stand: **0.2.21**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten 
 - Unterhalb der nötigen Leistung reduziert SEP bis zum Mindeststrom und schaltet erst nach Ablauf von `stop_delay` ab. Netzbezug ist dabei möglich.
 
 ## Batteriespeicher
-- SEP kann Speicherleistung, SoC, Kapazität und PV-Prognosen nutzen, um die Priorität von Speicher und Verbrauchern zu bestimmen.
+- SEP kann Speicherleistung, SoC, Kapazität und PV-Prognosen berücksichtigen. Seit 0.2.22 ist der **PV-Akku als passiver Teilnehmer in der Drag-and-Drop-Prioritätenliste** enthalten; seine Position bestimmt, welche höher priorisierten Geräte gemessene Akkuladung nutzen dürfen. Die Gutschrift verwendet getrennte Messreihen für Momentanwert, 2-Minuten- und konfigurierten Mittelwert.
 - Strategien: Speicher zuerst, Geräte zuerst oder prognosebasierte Entscheidung.
 - **Nicht vorhanden:** Direkte Vorgabe einer Batterie-Ladeleistung, aktives Regeln eines Wechselrichters oder koordinierte Ladestromkommandos an Wallbox **und** Akku.
 - Dafür sind passende schreibbare Home-Assistant-Entitäten und eine getrennt zu entwickelnde sichere Stellwertlogik nötig.
@@ -28,6 +28,7 @@ Stand: **0.2.21**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten 
 - **WW-Boost Mindestabstand:** 60–720 Minuten (Standard 60 min), dauerhafter letzter Startzeitpunkt wird vor dem Aktor-Befehl gespeichert. Auch ein HA-Neustart setzt die Sperre nicht zurück.
 - Ein Schalter muss wieder AUS sein, bevor er erneut eingeschaltet werden darf; Number-basierte Boosts behalten die aktive Rückstellung und bekommen ebenfalls die dauerhafte Startsperre.
 - Optional Sonnenhöhenwinkel sowie zwei stündliche Bewölkungswerte als Startfilter.
+- **Ab 0.2.23:** Eine optionale `input_number`-, `number`- oder `sensor`-Entität (30–75 °C) legt das WW-Boost-Temperaturziel fest. Ohne Auswahl gilt der feste Sollwert; eine konfigurierte, aber ungültige Entität sperrt neue Booststarts. Bei Sollwert-Steuerung wird dieser Wert zum Boost geschrieben. Bei einmaligem Button-/Boolean-Start wird nur der Auslöser betätigt: SEP schreibt den Temperaturwert **nicht** zusätzlich in die Wärmepumpe und schaltet einen Boolean **nicht** zurück. Das muss bei Bedarf die eigene HA-Automation übernehmen.
 - Die Wetterfilter betreffen nur neue Boosts; sie ersetzen keine prognosebasierte Suche nach dem besten Boost-Zeitfenster.
 
 ## Heizstab / PV-Überschusssenke (ab 0.2.21)
@@ -57,3 +58,8 @@ Stand: **0.2.21**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten 
 - Nach Freigabe läuft das Programm durch. Sinkender Überschuss allein unterbricht es nicht mehr.
 - Fertigerkennung gemäß Schwelle und Dauer, standardmäßig 5 W und zwei Minuten; Abschlussstatus bis Reset.
 - **Bewusster SEP-Unterschied:** Konfigurierbare Prioritätszahl statt SEMs ältestem Programmstart.
+
+## Dashboard ab 0.2.24–0.2.26
+- Netzsaldo und Steuerbudget jeweils in einer kombinierten Kachel: **Ø** mit großem Durchschnitt und **akt.** mit kleinerem Momentanwert. Die Zahlen inklusive `W` sind rechtsbündig untereinander ausgerichtet.
+- Die grafische Prioritätenliste einschließlich der passiven Akku-Zeile zeigt individuelle Gerätebudgets.
+- Native Modus-Auswahllisten werden während der Bedienung nicht mehr durch Sensorupdates geschlossen (0.2.25); die Werte werden nach Verlassen des Feldes erneut gerendert.
