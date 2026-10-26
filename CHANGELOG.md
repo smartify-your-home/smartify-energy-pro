@@ -1,3 +1,12 @@
+## 0.2.16 – Echtes Netzsaldo und sicheres Steuerbudget
+- Die bestehende Entität `surplus` zeigt jetzt den gemessenen signierten Netzsaldo: Einspeisung positiv, Netzbezug negativ. `surplus_avg` ist der Mittelwert dieses echten Netzsaldos.
+- Neue Entitäten `budget` und `budget_avg` zeigen das getrennte, für die SEP-Regelung verwendete Steuerbudget.
+- Laufende WW-Wärmepumpen-Ladungen, nicht unterbrechbare Haushaltsprogramme, Pflichtläufe und unveränderliche Lasten werden nicht länger fälschlich als frei verfügbarer Solarüberschuss addiert.
+- Im EV-PV-Modus wird nur die oberhalb des aktuellen Mindest-Ladestroms sofort reduzierbare Leistung als umverteilbar anerkannt; die bereits laufende Mindestleistung wird nur der Wallbox selbst zugerechnet.
+- Leistung von rein externen Überschuss-Senken und Speicherladeleistung wird ohne SEP-Stellmöglichkeit nicht mehr als frei verteilbar vorausgesetzt. Speichereinspeisung ins Haus wird weiterhin vorsichtig vom PV-Budget abgezogen.
+- Bestehender Verbrauch wird bei der Reservierung nicht doppelt abgezogen; Beobachten/Manuell bucht keine hypothetischen Schaltbefehle als real verteilt.
+- WW-Boost-Steuerung und FBH bleiben in dieser Korrektur unverändert. Regressionstests für Netzbezug und Gerätelasten ergänzt.
+
 ## 0.2.15 – PV-Pausen kompakt darstellen
 - Stunden ohne prognostizierten PV-Ertrag werden in der Zeitleiste nicht mehr als einzelne Balken angezeigt. Eine kompakte markierte Lücke zeigt den übersprungenen Zeitraum als „Nacht“ oder „PV-Pause“; genaue Dauer per Tooltip.
 - Planungshorizont bleibt bis zum Ende des morgigen Tages erhalten.
