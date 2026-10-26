@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Energy Pro – Netz",
+        "title": "Smartify Energy Pro – Netz",
         "description": "Grundlage: Was am Netzanschluss eingespeist wird.",
         "data": {
           "name": "[Pflicht] Name",
