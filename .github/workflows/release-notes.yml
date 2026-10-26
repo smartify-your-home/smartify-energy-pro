@@ -1,9 +1,12 @@
 name: Synchronize release notes
 on:
+  release:
+    types: [published, edited]
   push:
     branches: [main]
     paths:
       - CHANGELOG.md
+      - custom_components/smartify_energy/manifest.json
       - .github/workflows/release-notes.yml
   workflow_dispatch:
 
