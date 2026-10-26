@@ -1,3 +1,8 @@
+## 0.2.29 – WW-Boost nach zehn Minuten laufender Warmwasserbereitung
+- Einmaliger Boost per Button, Schalter oder Input-Boolean ist jetzt auch während aktiver WW-Bereitung zulässig: WW-Aktiv-Signal seit mindestens 10 Minuten ununterbrochen EIN und aktuelles prioritätsbereinigtes Steuerbudget ≥ 0 W.
+- Für diesen Sonderfall entfallen die normale Nennleistungs-Schwelle und WP-Ruhewartezeit, da die Wärmepumpe bereits läuft; Zieltemperatur/Hysterese, Wetterfilter und mindestens 60 Minuten Startsperre gelten weiterhin.
+- Maximal eine Boost-Auslösung je beobachtetem WW-Zyklus; Diagnoseattribute für WW-Aktivdauer und bereits erfolgte Auslösung ergänzt. Number-Sollwert-Boost bleibt unverändert.
+
 ## 0.2.28 – Kritischer Startfehler behoben
 - Die Optionsübersetzungen für den Trockner-Wiederanlauf waren irrtümlich als JSON-Liste statt als Schlüssel-Text-Objekt hinterlegt. Home Assistant 2026.10 brach deshalb beim Laden der Übersetzungen mit `TypeError: expected str, got list` ab und markierte sämtliche SEP-Entitäten als `unavailable`.
 - Deutsche und englische Übersetzungen auf das korrekte Format umgestellt; bestehende Einstellungen und gespeicherte Werte bleiben unverändert.
