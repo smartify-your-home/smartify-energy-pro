@@ -1,7 +1,7 @@
-# Änderungsprotokoll – Smart Energy Pro
+# Änderungsprotokoll – Smartify Energy Pro
 
 ## Anzeigename (26.10.2026)
-- Anzeigename in Home Assistant (Manifest und Standardname) auf **Smart Energy Pro** vereinheitlicht. Die Integrationsdomain `smartify_energy` bleibt für bestehende Installationen unverändert. Vorhandene, individuell benannte Integrationseinträge behalten unter Umständen ihren bisherigen Eintragstitel; diese können in Home Assistant umbenannt werden.
+- Anzeigename in Home Assistant (Manifest und Standardname) auf **Smartify Energy Pro** vereinheitlicht. Die Integrationsdomain `smartify_energy` bleibt für bestehende Installationen unverändert. Vorhandene, individuell benannte Integrationseinträge behalten unter Umständen ihren bisherigen Eintragstitel; diese können in Home Assistant umbenannt werden.
 
 
 Die Versionsnummer bezeichnet die Home-Assistant-Integration. Angaben zur Reaktionszeit beziehen sich auf die interne Planung und sind **keine garantierten Hardware-Schaltzeiten**. Eine Prüfung an einer realen Home-Assistant-Anlage steht noch aus.
