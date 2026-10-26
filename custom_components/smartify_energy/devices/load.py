@@ -46,7 +46,7 @@ class LoadDevice(BaseDevice):
             ParamSpec("nominal_power", "number", float(self.cfg.get("nominal_power", 2200)),
                       "mdi:flash", 100, 4000, 50, "W"),
             ParamSpec("min_surplus", "number", -1000, "mdi:solar-power", -3000, 4000, 50, "W"),
-            ParamSpec("latest_start", "time", "15:00", "mdi:clock-alert-outline"),
+            ParamSpec("latest_start", "time", "16:00", "mdi:clock-alert-outline"),
             ParamSpec("finish_threshold", "number", 5, "mdi:power-plug-off", 0, 50, 0.5, "W"),
             ParamSpec("finish_minutes", "number", 2, "mdi:timer-sand", 1, 60, 1, "min"),
             ParamSpec("duration", "number", float(self.cfg.get("duration", 2.0)),
@@ -127,7 +127,7 @@ class LoadDevice(BaseDevice):
                 self._low_since = None
 
     def _check_heating(self, p: float, now: datetime) -> None:
-        threshold = self.nominal * 0.8
+        threshold = max(200.0, self.nominal * 0.08)
         if p > threshold:
             if self._hp_since is None:
                 self._hp_since = now
@@ -153,7 +153,7 @@ class LoadDevice(BaseDevice):
         sm = self.state["sm"]
         p = self._p()
         sw_on = self.is_on()
-        latest = time_from_str(self.p("latest_start"), time(15, 0))
+        latest = time_from_str(self.p("latest_start"), time(16, 0))
         late = ctx.now.time() >= latest
         free = budget_left - p  # Überschuss ohne Eigenverbrauch
         need = float(self.p("min_surplus"))
