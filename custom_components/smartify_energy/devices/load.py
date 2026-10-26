@@ -46,6 +46,7 @@ class LoadDevice(BaseDevice):
             ParamSpec("nominal_power", "number", float(self.cfg.get("nominal_power", 2200)),
                       "mdi:flash", 100, 4000, 50, "W"),
             ParamSpec("min_surplus", "number", 1500, "mdi:solar-power", -3000, 4000, 50, "W"),
+            ParamSpec("earliest_start", "time", "00:00", "mdi:clock-start"),
             ParamSpec("latest_start", "time", "16:00", "mdi:clock-alert-outline"),
             ParamSpec("finish_threshold", "number", 5, "mdi:power-plug-off", 0, 50, 0.5, "W"),
             ParamSpec("finish_minutes", "number", 2, "mdi:timer-sand", 1, 60, 1, "min"),
@@ -155,6 +156,8 @@ class LoadDevice(BaseDevice):
         sw_on = self.is_on()
         latest = time_from_str(self.p("latest_start"), time(16, 0))
         late = ctx.now.time() >= latest
+        earliest = time_from_str(self.p("earliest_start"), time(0, 0))
+        before_earliest = ctx.now.time() < earliest
         free = budget_left - p  # Überschuss ohne Eigenverbrauch
         need = float(self.p("min_surplus"))
 
@@ -174,8 +177,7 @@ class LoadDevice(BaseDevice):
                 return Decision(False, 0, "Programmerkennung: 5 Sekunden prüfen")
             self._detected_since = None
             self.state.update(sm=DETECTED, since=ctx.now.timestamp(), approved=False)
-            if ctx.night_window:
-                return self._approve("Sofortfenster – sofort freigegeben")
+            # First detected cycle proceeds to DETECTED below; earliest time is checked there.
 
         if sm == FINISHED:
             # SEM v3: finished is latched until the explicit reset button.
@@ -190,6 +192,8 @@ class LoadDevice(BaseDevice):
             self.status = "erkannt"
             if p <= 100 and self.cfg.get(CONF_POWER_SENSOR):
                 return Decision(True, p, "Programm gewählt – warte auf Start")
+            if before_earliest:
+                return self._wait(f"Frühester Start erst ab {earliest.strftime('%H:%M')}")
             if ctx.night_window:
                 return self._approve("Sofortfenster – freigegeben")
             # The SEP manager sorts by configured priority; retain this
@@ -205,6 +209,8 @@ class LoadDevice(BaseDevice):
             self.status = "wartet"
             if self.p("nachladen"):
                 return Decision(True, p, "Nachladen – Steckdose kurz an", setpoint={"nachladen": True})
+            if before_earliest:
+                return Decision(False, 0, f"Frühester Start erst ab {earliest.strftime('%H:%M')}")
             if late or ctx.night_window:
                 return self._approve("Spätstart/Sofortfenster erreicht", forced=True)
             if any(n != self.name for n in ctx.loads_heating):
@@ -272,9 +278,13 @@ class LoadDevice(BaseDevice):
         if self.state["sm"] not in (DETECTED, WAITING):
             return None
         hours = float(self.p("duration"))
-        latest = time_from_str(self.p("latest_start"), time(15, 0))
+        latest = time_from_str(self.p("latest_start"), time(16, 0))
         latest_dt = now.replace(hour=latest.hour, minute=latest.minute, second=0, microsecond=0)
         if latest_dt < now:
             latest_dt = now
+        earliest = time_from_str(self.p("earliest_start"), time(0, 0))
+        earliest_dt = now.replace(hour=earliest.hour, minute=earliest.minute, second=0, microsecond=0)
+        if earliest_dt < now:
+            earliest_dt = now
         return PlanDemand(self.nominal * 0.6, self.nominal * 0.6 * hours,
-                          latest_dt + timedelta(hours=hours), interruptible=False)
+                          latest_dt + timedelta(hours=hours), earliest=earliest_dt, interruptible=False)
