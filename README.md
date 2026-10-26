@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.9** · Integrationsdomain: `smartify_energy`
+Version: **0.2.10** · Integrationsdomain: `smartify_energy`
 
 ## Dokumentation und Updates
 
@@ -81,3 +81,7 @@ Die Zustandsmaschine wurde anhand der bereitgestellten SEM-v3-Integration abgegl
 ## Mindestüberschuss für Haushaltsgeräte
 
 Der Standardwert für **neu angelegte** Haushaltsgeräte lautet **+1.500 W**: Erst bei einem berechneten Überschuss von mindestens 1.500 W ist die PV-Startbedingung erfüllt. Bereits gespeicherte Geräteparameter werden durch Updates nicht automatisch geändert. Vorhandene Geräte bei Bedarf manuell auf +1.500 W einstellen.
+
+### Startzeit und Priorität
+
+Haushaltsgeräte haben eine **früheste automatische Startzeit** (Standard 00:00). Vor dieser Uhrzeit erfolgt keine automatische Freigabe – auch nicht durch Spätstart oder Sofortfenster. Ein ausdrücklich gedrückter **Sofort-Start** bleibt möglich. Die bisherigen Prioritäts-Nummern werden nicht mehr als Einstellungs-Entitäten angezeigt; die Prioritätslogik bleibt intern für die spätere grafische Anordnung erhalten.
