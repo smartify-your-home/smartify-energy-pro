@@ -5,6 +5,7 @@
 - Im EV-PV-Modus wird nur die oberhalb des aktuellen Mindest-Ladestroms sofort reduzierbare Leistung als umverteilbar anerkannt; die bereits laufende Mindestleistung wird nur der Wallbox selbst zugerechnet.
 - Leistung von rein externen Überschuss-Senken und Speicherladeleistung wird ohne SEP-Stellmöglichkeit nicht mehr als frei verteilbar vorausgesetzt. Speichereinspeisung ins Haus wird weiterhin vorsichtig vom PV-Budget abgezogen.
 - Bestehender Verbrauch wird bei der Reservierung nicht doppelt abgezogen; Beobachten/Manuell bucht keine hypothetischen Schaltbefehle als real verteilt.
+- Wartende Haushaltsprogramme benötigen für PV-Freigabe jetzt sowohl den positiven geglätteten als auch den ausreichenden momentanen Wert; ein positiver historischer Mittelwert allein reicht bei aktuellem Netzbezug nicht.
 - WW-Boost-Steuerung und FBH bleiben in dieser Korrektur unverändert. Regressionstests für Netzbezug und Gerätelasten ergänzt.
 
 ## 0.2.15 – PV-Pausen kompakt darstellen
