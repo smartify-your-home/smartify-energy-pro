@@ -1,3 +1,13 @@
+## 0.2.18 – Heizphasenkalkulation und paralleler PV-Start
+- Die bisherige pauschale Sperre „Anderes Gerät in Heizphase“ wurde entfernt. Ein wartendes zweites Haushaltsgerät darf auch dann starten, wenn das verbleibende reale und gemittelte Steuerbudget für seine erwartete Heizleistung reicht.
+- Jedes freigegebene Haushaltsgerät reserviert vor dem Ende seiner Heizphase die Nennleistung. Bereits **tatsächlich gemessene** Leistung wird nicht doppelt als noch zu reservieren abgezogen; nach einer abgeschlossenen Heizphase entfällt die zusätzliche Heizreservierung.
+- Ohne gültige Leistungsmessung wird die erwartete Heizlast vorsichtshalber vollständig reserviert, anstatt eine nicht gemessene Nennleistung als bereits verbraucht anzurechnen.
+- Neue Starts benötigen in PV-Automatik mindestens **max(Nennleistung, konfigurierter Mindest-Überschuss)**, sowohl im Momentanwert als auch im reifen, einstellbaren Mittelwert. Damit führt z. B. 1500 W als Mindest-Überschuss nicht zur Freigabe eines erwarteten 2200-W-Heizers bei nur 1500 W freiem PV-Budget.
+- Bei einem gerade erst erkannten, noch eingeschalteten Programm wird die **eigene tatsächlich gemessene** Leistung nur für die eigene Startprüfung zum momentanen Budget berücksichtigt. Für andere Verbraucher wird diese Leistung nicht freigegeben.
+- Prioritäten, späteste Startzeit, Sofortfenster und ausdrücklich manueller Sofortstart bleiben wirksam. Die Änderung setzt vorhandene Einstellungen nicht zurück.
+- Erweiterte Regressionstests für parallele Heizphasen, Heizlast-Reservierung, Ende der Heizphase, fehlenden Zähler und fehlendes aktuelles/mittleres PV-Budget.
+- [SEM-zu-SEP-Entitätsnamen und Migrationshinweise](docs/SEM_ENTITY_MIGRATION.md) dokumentiert.
+
 ## 0.2.17 – WW-Aktiv-Rückmeldung und dauerhafte Boost-Startsperre
 - Optionales Feld **Warmwasser aktiv** im Wärmepumpen-Konfigurationsformular (nur `binary_sensor` oder `input_boolean`). Wenn EIN, gibt SEP keinen neuen WW-Boost aus; bei nicht verfügbarem konfiguriertem Signal wird ein neuer Start vorsorglich gesperrt.
 - Button-/Schalter-Boosts lösen ausschließlich einen **einmaligen WW-Start** aus. SEP beendet die danach laufende Warmwasserladung nicht wegen Netzbezug, Bewölkung oder Modus Aus. Ein Schalter muss extern wieder AUS werden, um eine neue Auslösung zu ermöglichen.
