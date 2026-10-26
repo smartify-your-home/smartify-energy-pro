@@ -2,11 +2,12 @@
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.17** · Integrationsdomain: `smartify_energy`
+Version: **0.2.18** · Integrationsdomain: `smartify_energy`
 
 ## Dokumentation und Updates
 
-- [Änderungsprotokoll (0.2.8 und Vorgängerversionen)](CHANGELOG.md)
+- [Änderungsprotokoll](CHANGELOG.md)
+- [SEM v3 → SEP: Entitätsnamen und Migration](docs/SEM_ENTITY_MIGRATION.md)
 - [Update-Anleitung und Funktionstest](docs/UPDATE.md)
 - [Funktionsstand und bekannte Grenzen](docs/FUNCTIONS.md)
 - [Pflichtfelder, optionale und bedingte Entitäten je Funktion](docs/REQUIRED_FIELDS.md)
@@ -78,13 +79,13 @@ Bei Änderungen am Netzleistungs-, Batterie-Leistungs- oder Wallbox-Leistungssen
 
 **Batterie:** SEP berücksichtigt Speicherleistung, SoC, Prognose und Strategie bei der Überschussverteilung, steuert jedoch aktuell **keinen Akku-Ladesollwert**. Die schnellere Messwertauswertung bedeutet daher noch keine direkte Akku-Laderegelung. Vor einer solchen Erweiterung müssen geeignete schreibbare Akku-Entitäten bekannt sein.
 
-## Haushaltsgeräte: SEM-v3-Abgleich (0.2.9)
+## Haushaltsgeräte: SEM-v3-Abgleich und parallele Heizphasen (0.2.18)
 
-Die Zustandsmaschine wurde anhand der bereitgestellten SEM-v3-Integration abgeglichen: 5 Sekunden stabile Leistung über 9 W zur Programmerkennung (ohne Leistungssensor bei eingeschalteter Steckdose), 10 Sekunden über max(200 W, 8 % Nennleistung) zur Heizphasenerkennung, 2 Minuten unter der einstellbaren Fertigschwelle als Standard, standardmäßige Spätstartzeit 16:00 und Zustand „Fertig“ bis zum manuellen Reset. Bereits ausdrücklich freigegebene Programme werden nicht wegen später sinkenden Überschusses gestoppt. SEP behält jedoch die zentral einstellbaren Prioritätszahlen anstelle der ausschließlich zeitlichen Reihenfolge von SEM. Neue Standardwerte betreffen neue Einträge; bereits gespeicherte Parameter bleiben bestehen. Eine Prüfung mit echten Geräten steht aus.
+Die Zustandsmaschine wurde anhand der bereitgestellten SEM-v3-Integration abgeglichen: 5 Sekunden stabile Leistung über 9 W zur Programmerkennung (ohne Leistungssensor bei eingeschalteter Steckdose), 10 Sekunden über max(200 W, 8 % Nennleistung) zur Heizphasenerkennung, 2 Minuten unter der einstellbaren Fertigschwelle als Standard, standardmäßige Spätstartzeit 16:00 und Zustand „Fertig“ bis zum manuellen Reset. Bereits ausdrücklich freigegebene Programme werden nicht wegen später sinkenden Überschusses gestoppt. SEP behält die grafisch angeordneten Prioritäten anstelle der ausschließlich zeitlichen Reihenfolge von SEM. **Ab 0.2.18 gibt es keine pauschale Sperre mehr bei anderer Heizphase:** Je freigegebenem Gerät wird die noch offene Nennheizleistung unter Abzug tatsächlich gemessener Watt reserviert. Das nächste Gerät darf bei ausreichend aktuellem und gemitteltem Budget auch parallel starten. Nach Heizphasenende entfällt die Reservierung und nur der reale PV-Mittelwert kann den nächsten Start weiterhin verzögern. Neue Standardwerte betreffen neue Einträge; bereits gespeicherte Parameter bleiben bestehen. Eine Prüfung mit echten Geräten steht aus.
 
 ## Mindestüberschuss für Haushaltsgeräte
 
-Der Standardwert für **neu angelegte** Haushaltsgeräte lautet **+1.500 W**: Erst bei einem berechneten Überschuss von mindestens 1.500 W ist die PV-Startbedingung erfüllt. Bereits gespeicherte Geräteparameter werden durch Updates nicht automatisch geändert. Vorhandene Geräte bei Bedarf manuell auf +1.500 W einstellen.
+Der Standardwert für **neu angelegte** Haushaltsgeräte lautet **+1.500 W**. Für einen PV-Automatikstart müssen jedoch mindestens die **erwartete Nennleistung des Geräts oder der höhere konfigurierte Mindest-Überschuss** gedeckt sein; Beispiel: 2.000 W Nennleistung und 1.500 W Mindest-Überschuss bedeuten 2.000 W erforderliches aktuelles und gemitteltes Restbudget. Negative Mindest-Überschuss-Einstellungen ermöglichen hier keinen zusätzlichen automatischen Netzbezug mehr. Spätstart, Sofortfenster und Sofortstart sind bewusst davon ausgenommen. Bereits gespeicherte Parameter bleiben bestehen.
 
 ### Startzeit und Priorität
 
