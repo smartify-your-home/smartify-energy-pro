@@ -171,6 +171,14 @@ class BaseDevice:
                 return max(val, 0.0)
         return float(self.nominal) if self.is_on() else 0.0
 
+    def reclaimable_power(self) -> float:
+        """Only power SEP can reliably curtail may increase another device's budget."""
+        return 0.0
+
+    def own_budget_power(self, measured_w: float, reclaimed_w: float) -> float:
+        """Own existing load may be considered for maintaining/modulating itself."""
+        return 0.0
+
     @property
     def nominal(self) -> float:
         return float(self.p("nominal_power") or self.cfg.get("nominal_power") or 1000)
