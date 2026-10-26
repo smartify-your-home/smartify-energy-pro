@@ -6,6 +6,9 @@
 
 Die Versionsnummer bezeichnet die Home-Assistant-Integration. Angaben zur Reaktionszeit beziehen sich auf die interne Planung und sind **keine garantierten Hardware-Schaltzeiten**. Eine Prüfung an einer realen Home-Assistant-Anlage steht noch aus.
 
+## Korrektur des Standardwerts (26.10.2026)
+- Mindestüberschuss bei **neu angelegten Haushaltsgeräten** jetzt **+1.500 W** statt −1.000 W. Bestehende Einstellungen werden nicht überschrieben. Die übrigen SEM-v3-Zustandsregeln bleiben unverändert.
+
 ## 0.2.9 – Haushaltsgeräte an SEM v3 angeglichen (26.10.2026)
 - Programmerkennung bei eingeschalteter Steckdose nun erst nach 5 Sekunden stabil über 9 W (ohne Sensor über den Schaltzustand).
 - Abschlusszustand „Fertig“ bleibt bis zum ausdrücklichen Reset erhalten; kein automatischer Neustart allein durch wieder steigende Leistung.
