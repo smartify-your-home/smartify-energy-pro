@@ -1,6 +1,6 @@
 # Installation und Updates
 
-Aktuelle Version: **0.2.15**. Integrationsdomain: `smartify_energy`.
+Aktuelle Version: **0.2.26**. Integrationsdomain: `smartify_energy`.
 
 ## Update über HACS
 1. Vor dem Update Home-Assistant-Backup erstellen und die bestehenden SEP-Geräteeinstellungen dokumentieren.
@@ -13,6 +13,15 @@ HACS-Repository: https://github.com/smartify-your-home/smartify-energy-pro (Kate
 
 ## Manuelles Update
 Den gesamten Ordner `custom_components/smartify_energy` aus dieser Repository-Version nach `/config/custom_components/smartify_energy` kopieren (Dateien ersetzen), Home Assistant neu starten und Dashboard neu laden. Keine einzelnen Python-Dateien verschiedener Versionen mischen.
+
+## Hinweise für 0.2.22–0.2.26
+- **0.2.22:** PV-Akku kann in der Prioritätenliste verschoben werden; höher priorisierte Verbraucher erhalten gemessene Akkuladung als Budgetgutschrift, wenn der Speicher seine Ladung autonom reduziert. Akkuentladung bleibt vom PV-Budget abgezogen.
+- **0.2.23:** WW-Boost-Zieltemperatur kann aus `sensor`, `number` oder `input_number` kommen. Bei Button-/Boolean-Boost wird der Wert **nicht** physisch zum Regler geschrieben; der Boolean muss bei Bedarf extern zurückgesetzt werden.
+- **0.2.24:** Netzsaldo und Steuerbudget erhalten kompakte gemeinsame Ist-/Durchschnittsanzeigen.
+- **0.2.25:** Offene Modus-Dropdowns schließen nicht mehr bei Sensordatenaktualisierung.
+- **0.2.26:** Ø und akt. unter der Überschrift, Wattwerte rechtsbündig ausgerichtet.
+- Nach HACS-Update immer HA neu starten und das Dashboard gegebenenfalls mit geleertem Browsercache neu laden, insbesondere bei JavaScript-Änderungen.
+- [Funktionsbeschreibung der aktuellen Version](SEP_CURRENT.md)
 
 ## Besonderheiten von 0.2.8
 - Der Strom einer laufenden PV-Wallbox folgt dem **momentanen** Restüberschuss. Vorher wurde für die Regelung ein 2-Minuten-Mittelwert verwendet.
