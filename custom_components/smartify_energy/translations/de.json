@@ -13,9 +13,12 @@
           "grid_export_sensor": "Einspeisung (nur bei getrennten Sensoren)"
         },
         "data_description": {
-          "grid_sensor": "Leistung am Netzanschlusspunkt. Einspeisung und Bezug im selben Sensor (oder nur Einspeisung).",
-          "sink_sensors": "Leistung dieser Verbraucher wird zum Überschuss addiert – sie nehmen nur den Rest.",
-          "grid_export_sensor": "Optional. Wenn gesetzt: Netzsensor = Bezug, dieser Sensor = Einspeisung (beide positiv). Das Vorzeichen-Feld wird dann ignoriert."
+          "name": "Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
+          "grid_sensor": "Wählen Sie die aktuelle Leistung am Haus-Netzanschluss in W oder kW, nicht einen Energiezähler in kWh. Bei getrennten Sensoren wählen Sie hier den Netzbezug.",
+          "grid_sign": "Welche Zahl zeigt Ihr Netzsensor beim Einspeisen? Positive Zahl: „Einspeisung positiv“. Minuszeichen: „Bezug positiv“. Eine falsche Auswahl vertauscht Überschuss und Netzbezug.",
+          "sink_sensors": "Nur für Verbraucher, die selbstständig den übrigen Solarstrom aufnehmen, etwa einen geregelten Heizstab. Deren Leistung wird zum verteilbaren Budget addiert. Normale Haushaltsverbraucher und bereits von SEP gesteuerte Geräte hier nicht nochmals auswählen.",
+          "interval": "Abstand der regelmäßigen Prüfungen in Sekunden. Standard: 30 Sekunden. Sensoränderungen lösen zusätzlich nach etwa 2 Sekunden eine gebündelte Prüfung aus. Mindestlaufzeiten und Pausen gelten trotzdem.",
+          "grid_export_sensor": "Nur bei getrennten Messwerten für Bezug und Einspeisung ausfüllen. Hier kommt die Einspeiseleistung hinein; beide Sensoren müssen positive Werte liefern. Die Vorzeichenauswahl wird dann ignoriert."
         }
       },
       "forecast": {
@@ -25,8 +28,8 @@
           "forecast_sensors": "Prognose-Sensoren (Fallback)"
         },
         "data_description": {
-          "forecast_entries": "Vorauswahl aus dem Energie-Dashboard. Ausgewählte Einträge werden summiert – pro Dachfläche nur eine Quelle wählen (z. B. nicht Forecast.Solar UND Open-Meteo für dieselbe Anlage).",
-          "forecast_sensors": "Nur nötig, wenn die Prognose-Integration keine Energie-Plattform hat (Attribute wh_period, watts oder detailedForecast)."
+          "forecast_entries": "Wählen Sie die Sonnenstrom-Prognose für Ihre PV-Anlage. Mehrere Dachflächen werden addiert. Jede Fläche nur einmal auswählen, damit der erwartete Ertrag nicht doppelt gezählt wird.",
+          "forecast_sensors": "Zusätzliche Prognosequelle über Sensorattribute. Nur nutzen, wenn dieselbe PV-Fläche nicht schon oben enthalten ist: Diese Werte werden ebenfalls addiert, nicht automatisch als Ersatz verwendet."
         }
       },
       "battery": {
@@ -37,6 +40,12 @@
           "battery_power": "Speicher Leistung",
           "battery_sign": "Vorzeichen Speicherleistung",
           "battery_capacity": "Nutzbare Kapazität"
+        },
+        "data_description": {
+          "battery_soc": "Aktueller Füllstand des Hausspeichers in Prozent, zum Beispiel 65 %. Ohne Hausspeicher leer lassen.",
+          "battery_power": "Aktuelle Lade- oder Entladeleistung des Hausspeichers in W oder kW. Zusammen mit dem Vorzeichen erkennt SEP, ob Strom in den Akku oder aus ihm fließt.",
+          "battery_sign": "Prüfen Sie den Leistungssensor während des Ladens: Ist der Wert positiv, wählen Sie „Laden positiv“. Ist er negativ, wählen Sie „Entladen positiv“.",
+          "battery_capacity": "Nutzbare Größe des Hausspeichers in kWh, zum Beispiel 5,12. SEP braucht sie, um die zum Füllen fehlende Energie zu berechnen."
         }
       }
     }
@@ -54,9 +63,12 @@
           "grid_export_sensor": "Einspeisung (nur bei getrennten Sensoren)"
         },
         "data_description": {
-          "grid_sensor": "Leistung am Netzanschlusspunkt. Einspeisung und Bezug im selben Sensor (oder nur Einspeisung).",
-          "sink_sensors": "Leistung dieser Verbraucher wird zum Überschuss addiert – sie nehmen nur den Rest.",
-          "grid_export_sensor": "Optional. Wenn gesetzt: Netzsensor = Bezug, dieser Sensor = Einspeisung (beide positiv). Das Vorzeichen-Feld wird dann ignoriert."
+          "name": "Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
+          "grid_sensor": "Wählen Sie die aktuelle Leistung am Haus-Netzanschluss in W oder kW, nicht einen Energiezähler in kWh. Bei getrennten Sensoren wählen Sie hier den Netzbezug.",
+          "grid_sign": "Welche Zahl zeigt Ihr Netzsensor beim Einspeisen? Positive Zahl: „Einspeisung positiv“. Minuszeichen: „Bezug positiv“. Eine falsche Auswahl vertauscht Überschuss und Netzbezug.",
+          "sink_sensors": "Nur für Verbraucher, die selbstständig den übrigen Solarstrom aufnehmen, etwa einen geregelten Heizstab. Deren Leistung wird zum verteilbaren Budget addiert. Normale Haushaltsverbraucher und bereits von SEP gesteuerte Geräte hier nicht nochmals auswählen.",
+          "interval": "Abstand der regelmäßigen Prüfungen in Sekunden. Standard: 30 Sekunden. Sensoränderungen lösen zusätzlich nach etwa 2 Sekunden eine gebündelte Prüfung aus. Mindestlaufzeiten und Pausen gelten trotzdem.",
+          "grid_export_sensor": "Nur bei getrennten Messwerten für Bezug und Einspeisung ausfüllen. Hier kommt die Einspeiseleistung hinein; beide Sensoren müssen positive Werte liefern. Die Vorzeichenauswahl wird dann ignoriert."
         }
       },
       "forecast": {
@@ -66,8 +78,8 @@
           "forecast_sensors": "Prognose-Sensoren (Fallback)"
         },
         "data_description": {
-          "forecast_entries": "Vorauswahl aus dem Energie-Dashboard. Ausgewählte Einträge werden summiert – pro Dachfläche nur eine Quelle wählen (z. B. nicht Forecast.Solar UND Open-Meteo für dieselbe Anlage).",
-          "forecast_sensors": "Nur nötig, wenn die Prognose-Integration keine Energie-Plattform hat (Attribute wh_period, watts oder detailedForecast)."
+          "forecast_entries": "Wählen Sie die Sonnenstrom-Prognose für Ihre PV-Anlage. Mehrere Dachflächen werden addiert. Jede Fläche nur einmal auswählen, damit der erwartete Ertrag nicht doppelt gezählt wird.",
+          "forecast_sensors": "Zusätzliche Prognosequelle über Sensorattribute. Nur nutzen, wenn dieselbe PV-Fläche nicht schon oben enthalten ist: Diese Werte werden ebenfalls addiert, nicht automatisch als Ersatz verwendet."
         }
       },
       "battery": {
@@ -78,6 +90,12 @@
           "battery_power": "Speicher Leistung",
           "battery_sign": "Vorzeichen Speicherleistung",
           "battery_capacity": "Nutzbare Kapazität"
+        },
+        "data_description": {
+          "battery_soc": "Aktueller Füllstand des Hausspeichers in Prozent, zum Beispiel 65 %. Ohne Hausspeicher leer lassen.",
+          "battery_power": "Aktuelle Lade- oder Entladeleistung des Hausspeichers in W oder kW. Zusammen mit dem Vorzeichen erkennt SEP, ob Strom in den Akku oder aus ihm fließt.",
+          "battery_sign": "Prüfen Sie den Leistungssensor während des Ladens: Ist der Wert positiv, wählen Sie „Laden positiv“. Ist er negativ, wählen Sie „Entladen positiv“.",
+          "battery_capacity": "Nutzbare Größe des Hausspeichers in kWh, zum Beispiel 5,12. SEP braucht sie, um die zum Füllen fehlende Energie zu berechnen."
         }
       }
     }
@@ -99,7 +117,11 @@
             "duration": "Typische Programmdauer"
           },
           "data_description": {
-            "switch": "Steckdose bleibt an; das Gerät wird am Gerät gestartet und bei zu wenig Überschuss pausiert."
+            "name": "Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
+            "switch": "Wählen Sie den Schalter, der dieses Gerät tatsächlich mit Strom versorgt oder freigibt. Die automatische Regelung darf diesen Schalter bedienen. Starten Sie das Programm am Gerät. Es muss nach einer Stromunterbrechung selbstständig weiterlaufen können.",
+            "power_sensor": "Aktuell gemessener Strombedarf dieses Geräts in W oder kW. Nicht den aufsummierten Verbrauch in kWh auswählen. Ein echter Messwert verbessert Erkennung und Leistungsverteilung.",
+            "nominal_power": "Typischer Strombedarf während des Betriebs in Watt (W). Bei Waschmaschinen ist meist die Heizphase entscheidend. SEP nutzt diesen Wert zur Reservierung und als Ersatz, wenn keine Leistung messbar ist.",
+            "duration": "Geschätzte Programmdauer in Stunden für die Startempfehlung. Beispiel: 2,5 für zweieinhalb Stunden. Das Gerät wird nach dieser Zeit nicht automatisch abgeschaltet."
           }
         },
         "reconfigure": {
@@ -112,7 +134,11 @@
             "duration": "Typische Programmdauer"
           },
           "data_description": {
-            "switch": "Steckdose bleibt an; das Gerät wird am Gerät gestartet und bei zu wenig Überschuss pausiert."
+            "name": "Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
+            "switch": "Wählen Sie den Schalter, der dieses Gerät tatsächlich mit Strom versorgt oder freigibt. Die automatische Regelung darf diesen Schalter bedienen. Starten Sie das Programm am Gerät. Es muss nach einer Stromunterbrechung selbstständig weiterlaufen können.",
+            "power_sensor": "Aktuell gemessener Strombedarf dieses Geräts in W oder kW. Nicht den aufsummierten Verbrauch in kWh auswählen. Ein echter Messwert verbessert Erkennung und Leistungsverteilung.",
+            "nominal_power": "Typischer Strombedarf während des Betriebs in Watt (W). Bei Waschmaschinen ist meist die Heizphase entscheidend. SEP nutzt diesen Wert zur Reservierung und als Ersatz, wenn keine Leistung messbar ist.",
+            "duration": "Geschätzte Programmdauer in Stunden für die Startempfehlung. Beispiel: 2,5 für zweieinhalb Stunden. Das Gerät wird nach dieser Zeit nicht automatisch abgeschaltet."
           }
         }
       },
@@ -141,7 +167,11 @@
             "temperature_sensor": "Wassertemperatur"
           },
           "data_description": {
-            "temperature_sensor": "Optional. Soll-Laufzeit = Temperatur × Faktor (Faustregel T/2)."
+            "name": "Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
+            "switch": "Wählen Sie den Schalter, der dieses Gerät tatsächlich mit Strom versorgt oder freigibt. Die automatische Regelung darf diesen Schalter bedienen.",
+            "power_sensor": "Aktuell gemessener Strombedarf dieses Geräts in W oder kW. Nicht den aufsummierten Verbrauch in kWh auswählen. Ein echter Messwert verbessert Erkennung und Leistungsverteilung.",
+            "nominal_power": "Typischer Strombedarf während des Betriebs in Watt (W). Bei Waschmaschinen ist meist die Heizphase entscheidend. SEP nutzt diesen Wert zur Reservierung und als Ersatz, wenn keine Leistung messbar ist.",
+            "temperature_sensor": "Optional: aktuelle Pool-Wassertemperatur in °C. Daraus wird die tägliche Pumpenlaufzeit berechnet. Ohne gültigen Wert gilt die feste Soll-Laufzeit."
           }
         },
         "reconfigure": {
@@ -154,7 +184,11 @@
             "temperature_sensor": "Wassertemperatur"
           },
           "data_description": {
-            "temperature_sensor": "Optional. Soll-Laufzeit = Temperatur × Faktor (Faustregel T/2)."
+            "name": "Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
+            "switch": "Wählen Sie den Schalter, der dieses Gerät tatsächlich mit Strom versorgt oder freigibt. Die automatische Regelung darf diesen Schalter bedienen.",
+            "power_sensor": "Aktuell gemessener Strombedarf dieses Geräts in W oder kW. Nicht den aufsummierten Verbrauch in kWh auswählen. Ein echter Messwert verbessert Erkennung und Leistungsverteilung.",
+            "nominal_power": "Typischer Strombedarf während des Betriebs in Watt (W). Bei Waschmaschinen ist meist die Heizphase entscheidend. SEP nutzt diesen Wert zur Reservierung und als Ersatz, wenn keine Leistung messbar ist.",
+            "temperature_sensor": "Optional: aktuelle Pool-Wassertemperatur in °C. Daraus wird die tägliche Pumpenlaufzeit berechnet. Ohne gültigen Wert gilt die feste Soll-Laufzeit."
           }
         }
       },
@@ -198,10 +232,26 @@
             "efficiency": "Ladewirkungsgrad"
           },
           "data_description": {
-            "control_entity": "go-eCharger: select …_frc mit „charge“ / „dont_charge“.",
-            "phase_entity": "go-eCharger: select …_psm mit „one_phase“ / „three_phases“.",
-            "connected_states": "Leer = alles außer idle/off/disconnected gilt als angesteckt.",
-            "days_entity": "JSON wie [[\"MO\",km,büro], …]. Für die Abfahrt zählt der nächste Wochentag."
+            "name": "Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
+            "current_entity": "Wählen Sie die Zahleneinstellung der Wallbox für den Ladestrom in Ampere (A). Eine Einstellung in kW passt hier nicht. Beispiel bei go-e: die Entität mit Endung _amp.",
+            "control_entity": "Schalter oder Auswahl, mit dem Laden erlaubt und gesperrt wird. Bei einer Auswahl müssen die genauen Werte für Ein und Aus in den nächsten Feldern eingetragen werden.",
+            "control_on": "Nur für eine Auswahl nötig: exakter Optionswert zum Erlauben des Ladens. Den Wert aus der ausgewählten Wallbox-Entität übernehmen; Schreibweise muss übereinstimmen.",
+            "control_off": "Nur für eine Auswahl nötig: exakter Optionswert zum Sperren des Ladens. Nicht die gleiche Option wie für Ein verwenden.",
+            "phase_entity": "Optional: Auswahl der Wallbox für ein- oder dreiphasiges Laden. Nur verwenden, wenn die Wallbox diese Umschaltung sicher unterstützt. Eine Number-Entität wird hier derzeit nicht unterstützt.",
+            "phase_1": "Exakter Optionswert Ihrer Phasenauswahl für einphasiges Laden. Er muss in der ausgewählten Entität vorhanden sein.",
+            "phase_3": "Exakter Optionswert Ihrer Phasenauswahl für dreiphasiges Laden. Er muss in der ausgewählten Entität vorhanden sein.",
+            "power_sensor": "Aktuell gemessener Strombedarf dieses Geräts in W oder kW. Nicht den aufsummierten Verbrauch in kWh auswählen. Ein echter Messwert verbessert Erkennung und Leistungsverteilung.",
+            "connected_entity": "Sensor, der meldet, ob das Auto angesteckt ist. Ohne diesen Sensor nimmt SEP an, dass ein Auto angeschlossen ist.",
+            "connected_states": "Zustände, die „Auto angesteckt“ bedeuten, getrennt durch Kommas, zum Beispiel connected,charging. Leer lassen verwendet die eingebaute Erkennung; bei herstellerspezifischen Werten besser ausdrücklich angeben.",
+            "soc_sensor": "Aktueller Akkustand des Autos in Prozent. Damit kann SEP Reichweite und Ladegrenze genauer berücksichtigen. Ohne gültigen Sensor ist eine SoC-Abschaltung nicht möglich.",
+            "capacity": "Nutzbare Akkugröße des Autos in kWh, zum Beispiel 60. Nicht die Größe des Hausspeichers eingeben.",
+            "consumption": "Durchschnittlicher Fahrzeugverbrauch in kWh je 100 km. Beispiel: 18. Ein höherer Wert plant mehr Ladeenergie für die gleiche Strecke ein.",
+            "days_entity": "Optionaler Helfer mit den Strecken je Wochentag, zum Beispiel [[\"MO\",50,\"Büro\"],[\"DI\",20,\"Einkauf\"]]. Die Zahl ist die Strecke in km. SEP liest den Tag der nächsten Abfahrtszeit; ein fehlender Tag hat kein festes Streckenziel.",
+            "min_current": "Kleinster zulässiger Ladestrom in Ampere, meist 6 A. Den von Wallbox und Auto unterstützten Wert verwenden. Darunter startet SEP keine normale Ladung.",
+            "max_current": "Größter Ladestrom, den SEP anfordern darf. Nur einen Wert innerhalb der zulässigen Grenze Ihrer Installation wählen. 16 A ergeben bei drei Phasen ungefähr 11 kW.",
+            "phases": "Anzahl der verwendeten Stromphasen ohne automatische Umschaltung: 1 oder 3. Bei gleicher Amperezahl liefert dreiphasiges Laden ungefähr die dreifache Leistung.",
+            "voltage": "Spannung je Phase in Volt. In Österreich normalerweise 230 V; im Zweifel den Standardwert belassen. SEP verwendet sie zur Umrechnung von Ampere in Watt.",
+            "efficiency": "Anteil der Ladeenergie, der im Autoakku ankommt. 90 % bedeutet: Von 10 kWh kommen ungefähr 9 kWh an. Verluste werden bei der Zeit- und Energieplanung berücksichtigt."
           }
         },
         "reconfigure": {
@@ -229,10 +279,26 @@
             "efficiency": "Ladewirkungsgrad"
           },
           "data_description": {
-            "control_entity": "go-eCharger: select …_frc mit „charge“ / „dont_charge“.",
-            "phase_entity": "go-eCharger: select …_psm mit „one_phase“ / „three_phases“.",
-            "connected_states": "Leer = alles außer idle/off/disconnected gilt als angesteckt.",
-            "days_entity": "JSON wie [[\"MO\",km,büro], …]. Für die Abfahrt zählt der nächste Wochentag."
+            "name": "Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
+            "current_entity": "Wählen Sie die Zahleneinstellung der Wallbox für den Ladestrom in Ampere (A). Eine Einstellung in kW passt hier nicht. Beispiel bei go-e: die Entität mit Endung _amp.",
+            "control_entity": "Schalter oder Auswahl, mit dem Laden erlaubt und gesperrt wird. Bei einer Auswahl müssen die genauen Werte für Ein und Aus in den nächsten Feldern eingetragen werden.",
+            "control_on": "Nur für eine Auswahl nötig: exakter Optionswert zum Erlauben des Ladens. Den Wert aus der ausgewählten Wallbox-Entität übernehmen; Schreibweise muss übereinstimmen.",
+            "control_off": "Nur für eine Auswahl nötig: exakter Optionswert zum Sperren des Ladens. Nicht die gleiche Option wie für Ein verwenden.",
+            "phase_entity": "Optional: Auswahl der Wallbox für ein- oder dreiphasiges Laden. Nur verwenden, wenn die Wallbox diese Umschaltung sicher unterstützt. Eine Number-Entität wird hier derzeit nicht unterstützt.",
+            "phase_1": "Exakter Optionswert Ihrer Phasenauswahl für einphasiges Laden. Er muss in der ausgewählten Entität vorhanden sein.",
+            "phase_3": "Exakter Optionswert Ihrer Phasenauswahl für dreiphasiges Laden. Er muss in der ausgewählten Entität vorhanden sein.",
+            "power_sensor": "Aktuell gemessener Strombedarf dieses Geräts in W oder kW. Nicht den aufsummierten Verbrauch in kWh auswählen. Ein echter Messwert verbessert Erkennung und Leistungsverteilung.",
+            "connected_entity": "Sensor, der meldet, ob das Auto angesteckt ist. Ohne diesen Sensor nimmt SEP an, dass ein Auto angeschlossen ist.",
+            "connected_states": "Zustände, die „Auto angesteckt“ bedeuten, getrennt durch Kommas, zum Beispiel connected,charging. Leer lassen verwendet die eingebaute Erkennung; bei herstellerspezifischen Werten besser ausdrücklich angeben.",
+            "soc_sensor": "Aktueller Akkustand des Autos in Prozent. Damit kann SEP Reichweite und Ladegrenze genauer berücksichtigen. Ohne gültigen Sensor ist eine SoC-Abschaltung nicht möglich.",
+            "capacity": "Nutzbare Akkugröße des Autos in kWh, zum Beispiel 60. Nicht die Größe des Hausspeichers eingeben.",
+            "consumption": "Durchschnittlicher Fahrzeugverbrauch in kWh je 100 km. Beispiel: 18. Ein höherer Wert plant mehr Ladeenergie für die gleiche Strecke ein.",
+            "days_entity": "Optionaler Helfer mit den Strecken je Wochentag, zum Beispiel [[\"MO\",50,\"Büro\"],[\"DI\",20,\"Einkauf\"]]. Die Zahl ist die Strecke in km. SEP liest den Tag der nächsten Abfahrtszeit; ein fehlender Tag hat kein festes Streckenziel.",
+            "min_current": "Kleinster zulässiger Ladestrom in Ampere, meist 6 A. Den von Wallbox und Auto unterstützten Wert verwenden. Darunter startet SEP keine normale Ladung.",
+            "max_current": "Größter Ladestrom, den SEP anfordern darf. Nur einen Wert innerhalb der zulässigen Grenze Ihrer Installation wählen. 16 A ergeben bei drei Phasen ungefähr 11 kW.",
+            "phases": "Anzahl der verwendeten Stromphasen ohne automatische Umschaltung: 1 oder 3. Bei gleicher Amperezahl liefert dreiphasiges Laden ungefähr die dreifache Leistung.",
+            "voltage": "Spannung je Phase in Volt. In Österreich normalerweise 230 V; im Zweifel den Standardwert belassen. SEP verwendet sie zur Umrechnung von Ampere in Watt.",
+            "efficiency": "Anteil der Ladeenergie, der im Autoakku ankommt. 90 % bedeutet: Von 10 kWh kommen ungefähr 9 kWh an. Verluste werden bei der Zeit- und Energieplanung berücksichtigt."
           }
         }
       },
@@ -262,7 +328,12 @@
             "temperature_sensor": "Speichertemperatur"
           },
           "data_description": {
-            "boost_entity": "EMS-ESP: switch.boiler_dhw_one_time_charging (Einmalladung) oder number.boiler_dhw_selected_temperature (Sollwert)."
+            "name": "Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
+            "boost_type": "Schalter: switch oder input_boolean ein-/ausschalten. Button: button oder input_button einmal drücken. Sollwert: einen Zahlenwert anheben und später zurückstellen. Ein Button kann eine begonnene Warmwasserladung nicht abbrechen.",
+            "boost_entity": "Wählen Sie den passenden Warmwasser-Auslöser Ihrer Wärmepumpe. Bei einem Boolean muss eine vorhandene Automation dessen Zustand in einen WP-Befehl umsetzen. Ein beliebiger Helfer allein schaltet die Wärmepumpe nicht.",
+            "power_sensor": "Für Boost erforderlich: aktuelle elektrische Leistung der Wärmepumpe in W oder kW. Nur dieser Messwert bestätigt die Ruhezeit; eine eingeschaltete Freigabe allein reicht nicht.",
+            "nominal_power": "Typischer Strombedarf während des Betriebs in Watt (W). Bei Waschmaschinen ist meist die Heizphase entscheidend. SEP nutzt diesen Wert zur Reservierung und als Ersatz, wenn keine Leistung messbar ist.",
+            "temperature_sensor": "Für Boost erforderlich: aktuelle Warmwassertemperatur in °C. Start nur unter Zieltemperatur minus Hysterese; ohne gültigen Messwert wird kein neuer Boost ausgelöst."
           }
         },
         "reconfigure": {
@@ -276,7 +347,12 @@
             "temperature_sensor": "Speichertemperatur"
           },
           "data_description": {
-            "boost_entity": "EMS-ESP: switch.boiler_dhw_one_time_charging (Einmalladung) oder number.boiler_dhw_selected_temperature (Sollwert)."
+            "name": "Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
+            "boost_type": "Schalter: switch oder input_boolean ein-/ausschalten. Button: button oder input_button einmal drücken. Sollwert: einen Zahlenwert anheben und später zurückstellen. Ein Button kann eine begonnene Warmwasserladung nicht abbrechen.",
+            "boost_entity": "Wählen Sie den passenden Warmwasser-Auslöser Ihrer Wärmepumpe. Bei einem Boolean muss eine vorhandene Automation dessen Zustand in einen WP-Befehl umsetzen. Ein beliebiger Helfer allein schaltet die Wärmepumpe nicht.",
+            "power_sensor": "Für Boost erforderlich: aktuelle elektrische Leistung der Wärmepumpe in W oder kW. Nur dieser Messwert bestätigt die Ruhezeit; eine eingeschaltete Freigabe allein reicht nicht.",
+            "nominal_power": "Typischer Strombedarf während des Betriebs in Watt (W). Bei Waschmaschinen ist meist die Heizphase entscheidend. SEP nutzt diesen Wert zur Reservierung und als Ersatz, wenn keine Leistung messbar ist.",
+            "temperature_sensor": "Für Boost erforderlich: aktuelle Warmwassertemperatur in °C. Start nur unter Zieltemperatur minus Hysterese; ohne gültigen Messwert wird kein neuer Boost ausgelöst."
           }
         }
       },

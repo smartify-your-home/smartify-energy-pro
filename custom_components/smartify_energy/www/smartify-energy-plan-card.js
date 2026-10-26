@@ -24,7 +24,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.1.0";
+const CARD_VERSION = "1.2.0";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -55,6 +55,59 @@ const STATUS_LABELS = {
   aus: "aus", manuell: "manuell", beobachten: "beobachten", inaktiv: "inaktiv", sperrzeit: "Sperrzeit",
   max_erreicht: "Max erreicht", nicht_verbunden: "nicht angesteckt", voll: "voll",
   laedt_pv: "lädt PV", laedt_pflicht: "lädt (Ziel)", laedt_sofort: "lädt sofort", boost: "Boost",
+};
+
+const SETTING_HELP = {
+  "mode": "Automatik: SEP steuert dieses Gerät. Beobachten: SEP zeigt Empfehlungen, schaltet aber nicht. Manuell: Sie übernehmen die Bedienung. Aus: Die automatische Regelung ist ausgesetzt. Das Verhalten beim Ausschalten hängt vom Gerätetyp ab. Zentral gilt die Auswahl für den Manager. Aus ist kein Not-Aus: Haushaltsgeräte bleiben unverändert; Pool und Wallbox stoppen derzeit nur bei ihrem eigenen Modus Aus. Der WP-Boost wird beendet, eine Button-Ladung kann aber weiterlaufen.",
+  "priority": "Kleinere Zahl bedeutet früher an der Reihe: 1 hat Vorrang vor 5. Bereits freigegebene Programme und Pflichtläufe können Vorrang behalten. Ziehen ändert diese Werte; ab dem zehnten Platz teilen Geräte Priorität 10.",
+  "avg_window": "Über wie viele Minuten der Überschuss gemittelt wird. Ein größerer Wert reagiert ruhiger auf Wolken, aber langsamer auf dauerhaft mehr Sonne. Standard: 10 Minuten.",
+  "grid_reserve": "Diese Leistung bleibt bei der Verteilung ungenutzt. Beispiel: 200 W halten einen kleinen Puffer gegen unbeabsichtigten Netzbezug frei. Pflichtläufe können trotzdem Strom aus dem Netz brauchen.",
+  "base_load": "Geschätzter Dauerverbrauch des Hauses, etwa Kühlschrank und Router. Wird von der PV-Prognose abgezogen. Beispiel: 400 W. Dieser Wert dient der Planung; die aktuelle Regelung nutzt die Messwerte.",
+  "battery_min_soc": "Unter diesem Akkustand erhält der Hausspeicher Vorrang. Beispiel: 20 % schützt eine kleine Reserve. SEP steuert den Speicher nicht direkt und garantiert damit keine Entladegrenze.",
+  "battery_target_soc": "Gewünschter Akkustand für die Speicherplanung. Beispiel: 90 %. Bei „Speicher zuerst“ erhalten Verbraucher erst ab diesem Stand Zugriff auf die Ladeleistung des Speichers.",
+  "battery_safety": "Zusätzlicher Puffer bei der Prognose: 1,5 verlangt das 1,5-Fache der noch benötigten Speicherenergie. Höhere Werte bevorzugen den Speicher vorsichtiger.",
+  "battery_strategy": "Speicher zuerst: verfügbare Speicherladeleistung erst nach Erreichen des Zielstands nutzen. Geräte zuerst: Verbraucher dürfen diese Leistung früher nutzen. Prognose: SEP prüft, ob später genug Sonne zum Füllen bleibt. Der Mindest-Akkustand hat Vorrang.",
+  "nominal_power": "Typischer Strombedarf während des Betriebs in Watt (W). Bei Waschmaschinen ist meist die Heizphase entscheidend. SEP nutzt diesen Wert zur Reservierung und als Ersatz, wenn keine Leistung messbar ist.",
+  "min_surplus": "Benötigter freier Überschuss für die Freigabe eines Haushaltsgeräts. 1000 W verlangt mindestens 1000 W. Negative Werte erlauben zusätzlich Netzbezug. Das ist keine Garantie, dass das ganze Programm nur mit Sonne läuft.",
+  "finish_threshold": "Unter dieser Leistung kann das Programm als fertig gelten, sobald die Fertigerkennung freigegeben ist. Beispiel: 5 W. Eine zu hohe Schwelle kann längere Programmpausen mit dem Programmende verwechseln.",
+  "finish_minutes": "So lange muss die Leistung unter der Fertig-Schwelle bleiben. Erst dann erscheint „Fertig“. Ein längerer Wert vermeidet Fehlmeldungen bei Pausen, meldet das Ende aber später.",
+  "duration": "Geschätzte Programmdauer in Stunden für die Startempfehlung. Beispiel: 2,5 für zweieinhalb Stunden. Das Gerät wird nach dieser Zeit nicht automatisch abgeschaltet.",
+  "nachladen": "Gibt bei einem wartenden Haushaltsgerät die Steckdose frei, damit Sie zum Beispiel Wäsche nachlegen können. Nach dem Ausschalten entscheidet SEP wieder nach Überschuss und Uhrzeit; das Programm kann dann auch sofort freigegeben werden.",
+  "latest_start": "Ab dieser Uhrzeit wird ein wartendes Programm auch ohne genügend Solarstrom freigegeben. Es kann dann Netzstrom verbrauchen. Das ist eine Startzeit, keine Fertigzeit.",
+  "night_start": "Beginn des Sofortfensters für Haushaltsgeräte. In diesem Fenster dürfen Programme ohne genügend Solarstrom starten. Beispiel: 22:00 bis 05:00 geht über Mitternacht.",
+  "night_end": "Ende des Sofortfensters. Bereits freigegebene Programme laufen weiter. Sind Beginn und Ende gleich, ist das Fenster deaktiviert.",
+  "fixed_runtime": "Tägliche Soll-Laufzeit der Poolpumpe, wenn keine Wassertemperatur verfügbar ist. Beispiel: 6 Stunden. Mit gültigem Temperatursensor wird die Laufzeit aus der Temperatur berechnet.",
+  "temp_factor": "Stunden Pumpenlaufzeit je Grad Wassertemperatur. Beispiel: 24 °C × 0,5 ergibt 12 Stunden, anschließend begrenzt durch die minimale und maximale Soll-Laufzeit.",
+  "runtime_min": "Untergrenze für die temperaturabhängig berechnete Pool-Soll-Laufzeit. Beispiel: mindestens 3 Stunden pro Tag. Gilt bei aktiver Saison.",
+  "runtime_max": "Obergrenze für die temperaturabhängig berechnete Pool-Soll-Laufzeit. Zusätzlicher Betrieb bei Sonne ist bis zur maximalen Gesamtlaufzeit möglich.",
+  "max_runtime": "Tägliche Gesamtlaufzeit der Poolpumpe einschließlich zusätzlicher Sonnenstunden. Mindestens die berechnete Soll-Laufzeit bleibt erlaubt: Eine kleinere Eingabe begrenzt diese Soll-Laufzeit derzeit nicht.",
+  "winter_temp": "Unterhalb dieser Wassertemperatur bleibt die Pumpe bei Saison „Automatik“ aus. Beispiel: 12 °C. Ohne gültige Temperatur wird die Saison als aktiv behandelt; eine Frostschutzregel ist das nicht.",
+  "vm_share": "Anteil der täglichen Soll-Laufzeit, der schon vormittags erreicht werden soll. Beispiel: 40 % von 6 Stunden sind 2 Stunden 24 Minuten. Falls nötig wird dafür Netzstrom genutzt.",
+  "vm_deadline": "Bis zu dieser Uhrzeit soll der Vormittagsanteil erledigt sein. SEP beginnt rechtzeitig einen Pflichtlauf, sofern andere Sperren ihn nicht verhindern.",
+  "season": "Sommer: Poolregelung aktiv. Winter: Pumpe wird in Automatik ausgeschaltet. Automatik: Die Wassertemperatur entscheidet anhand der Wintergrenze.",
+  "lock_enabled": "Aktiviert die tägliche Sperrzeit der Poolpumpe, zum Beispiel für eine ruhige Mittagspause. Währenddessen wird die Pumpe ausgeschaltet.",
+  "lock_start": "Beginn der Pumpensperre. Beispiel: 12:00. Die Sperre kann eine laufende Pumpenphase unterbrechen.",
+  "lock_end": "Ende der Pumpensperre. Danach gelten wieder die normalen Regeln. Gleiche Start- und Endzeit bedeuten keine Sperrzeit; ein Fenster über Mitternacht ist möglich.",
+  "min_on": "Mindestzeit, die ein gestartetes Gerät möglichst weiterläuft, damit es nicht ständig ein- und ausschaltet. Zieltemperatur, Tageslimit oder eine Pumpensperre können den Betrieb früher beenden.",
+  "min_off": "Mindestpause nach einem von SEP ausgelösten Stopp. Verhindert häufiges Neustarten. Bei der Wärmepumpe muss zusätzlich die gemessene WP-Ruhezeit erfüllt sein.",
+  "goal": "Nur PV: nach verfügbarem Solarstrom laden. km bis Uhrzeit: nötigenfalls mit Netzstrom für die geplante Strecke laden. Tage-Konfigurator: Strecke aus dem Tagesplan lesen. Sofort: mit maximalem Ladestrom laden; dabei kann Netzstrom nötig sein.",
+  "target_km": "Gewünschte Fahrstrecke bis zur eingestellten Abfahrtszeit. SEP schätzt die nötige Energie aus Verbrauch, Akkustand und Reserve. Gilt für das Ladeziel „km bis Uhrzeit“.",
+  "deadline": "Bis zu dieser Uhrzeit soll die benötigte Reichweite geladen sein. SEP berechnet daraus den spätesten Beginn einer Netzladung. Nach Ablauf wird die nächste entsprechende Uhrzeit verwendet.",
+  "reserve_soc": "Akkureserve des Autos, die bei der Reichweitenrechnung nicht als verfügbare Fahrenergie zählt. Beispiel: 20 %. Dies ist keine direkte Entladesperre im Fahrzeug.",
+  "max_soc": "Ab diesem gemeldeten Fahrzeug-Akkustand beendet SEP die Ladung. Beispiel: 80 %. Dafür muss ein gültiger Akkustandsensor vorhanden sein.",
+  "consumption": "Durchschnittlicher Fahrzeugverbrauch in kWh je 100 km. Beispiel: 18. Ein höherer Wert plant mehr Ladeenergie für die gleiche Strecke ein.",
+  "pv_share": "Mindestens erforderlicher Solar-Anteil an der kleinsten Ladeleistung. 100 % startet nur bei vollständig gedeckter Mindestleistung; 50 % erlaubt den Rest aus dem Netz. Verzögerungen können vorübergehend zusätzlichen Netzbezug verursachen.",
+  "phase_mode": "Einphasig eignet sich für wenig Solarüberschuss, dreiphasig für höhere Ladeleistung. Automatik wählt passend zum Überschuss. In der aktuellen Version verwenden Sofort- und Pflichtladung bei vorhandener Umschaltung dennoch drei Phasen.",
+  "stop_delay": "So lange darf zu wenig Solarüberschuss vorhanden sein, bevor SEP den Betrieb beendet. Kurze Wolken führen dadurch nicht gleich zum Stopp. Währenddessen kann Netzstrom nötig sein.",
+  "target_temp": "Warmwasser-Zieltemperatur. Bei Erreichen beendet SEP die Boost-Freigabe. Ein neuer Start ist erst unter Zieltemperatur minus Hysterese möglich. Ein ausgelöster Button kann die tatsächliche Ladung nicht abbrechen.",
+  "max_per_day": "Maximale Dauer der von SEP erfassten Boost-Freigabe pro Kalendertag. Beispiel: 120 Minuten. Bei einem Button ist das eine interne Zeitmessung, keine bestätigte Kompressorlaufzeit.",
+  "boost_value": "Diesen Sollwert schreibt SEP beim Start an die ausgewählte Number-Entität der Wärmepumpe. Er gilt nur bei Boost-Art „Sollwert“. Einheit und erlaubten Bereich der Ziel-Entität beachten.",
+  "normal_value": "Diesen festen Sollwert schreibt SEP beim Ende des Boosts zurück. Der vorherige Wert wird nicht automatisch gemerkt. Wählen Sie hier den gewünschten normalen Warmwasser-Sollwert.",
+  "boost_hysteresis": "Temperaturabstand für einen erneuten Start. 4 Kelvin entsprechen 4 °C Unterschied: Bei 50 °C Ziel darf Boost nur unter 46 °C starten, bei genau 46 °C noch nicht.",
+  "idle_power_threshold": "Unter dieser gemessenen WP-Leistung zählt die Wärmepumpe als ruhend. Beispiel: 5 W. Ab genau 5 W beginnt die Wartezeit später wieder von vorn. Den Wert passend zum tatsächlichen Standby-Verbrauch wählen.",
+  "idle_minutes": "So lange muss die WP-Leistung durchgehend unter der Ruheschwelle liegen, bevor Boost starten darf. Standard: 15 Minuten. Aktivität, ungültige Werte und ein Neustart setzen die Messung zurück. Die Mindestpause gilt zusätzlich.",
+  "start_now": "Gibt das Haushaltsgerät sofort frei und schaltet bei Bedarf seine Steckdose ein – auch ohne Solarüberschuss. Diese Taste löst direkt eine Aktion aus.",
+  "reset": "Setzt die Erkennung des Haushaltsgeräts auf „Bereit“ zurück. Das Programm am Gerät wird dadurch nicht zurückgesetzt und die Steckdose nicht ausgeschaltet."
 };
 
 const SETTING_DOMAINS = ["select", "switch", "time", "number", "button"];
@@ -90,8 +143,7 @@ function collect(hass, hubId) {
     if (e.platform !== DOMAIN || !e.device_id) continue;
     (byDevice[e.device_id] ||= {})[`${e.entity_id.split(".")[0]}:${e.translation_key}`] = e.entity_id;
     const dom = e.entity_id.split(".")[0];
-    if (SETTING_DOMAINS.includes(dom) && !["priority"].includes(e.translation_key)
-        && !(dom === "select" && e.translation_key === "mode")) {
+    if (SETTING_DOMAINS.includes(dom)) {
       (settings[e.device_id] ||= []).push({ id: e.entity_id, dom, key: e.translation_key, config: e.entity_category === "config" });
     }
   }
@@ -158,20 +210,28 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
       <div class="section">Allgemein</div>
       <label>Titel</label>
       <input type="text" id="title" value="${esc(c.title ?? "")}" placeholder="Name des Energiemanagers">
+      <div class="hint">Überschrift dieser Karte. Leer lassen übernimmt den Namen des Energiemanagers.</div>
       <label>Energiemanager</label>
       <select id="hub">
         <option value="">Automatisch (erster gefundener)</option>
         ${[...hubs].map(([id, name]) => `<option value="${id}" ${c.hub === id ? "selected" : ""}>${esc(name)}</option>`).join("")}
       </select>
+      <div class="hint">Bei mehreren Energiemanagern wählen Sie hier das gewünschte Haus oder System. Automatisch verwendet den ersten gefundenen Manager.</div>
       ${hubs.size ? "" : `<div class="hint">Kein smartify Energiemanager gefunden – Integration installiert?</div>`}
       <div class="section">Bereiche</div>
       <div class="row"><input type="checkbox" id="show_header" ${chk("show_header")}><label for="show_header">Überschuss-Leiste</label></div>
+      <div class="hint">Zeigt die Kacheln für Überschuss, zugeteilte Leistung, Prognose und Speicher-Vorrang.</div>
       <div class="row"><input type="checkbox" id="show_priorities" ${chk("show_priorities")}><label for="show_priorities">Prioritäten (Drag &amp; Drop)</label></div>
+      <div class="hint">Zeigt die Geräteliste mit ihrer Reihenfolge. Ziehen verändert, wer den verfügbaren Solarstrom zuerst bekommt.</div>
       <div class="row"><input type="checkbox" id="show_mode" ${chk("show_mode")}><label for="show_mode">Modus-Auswahl je Gerät</label></div>
+      <div class="hint">Zeigt die schnelle Betriebsmodus-Auswahl neben jedem Gerät.</div>
       <div class="row"><input type="checkbox" id="show_settings" ${chk("show_settings")}><label for="show_settings">Einstellungen (Zahnrad) erlauben</label></div>
+      <div class="hint">Zeigt das Zahnrad mit Einstellungen und Erklärungen. Ausblenden verändert keine Regelung und ist keine Zugriffssperre.</div>
       <div class="row"><input type="checkbox" id="show_timeline" ${chk("show_timeline")}><label for="show_timeline">PV-Plan (Zeitleiste)</label></div>
+      <div class="hint">Zeigt die Prognose und die empfohlenen Zeiträume. Der Plan ist eine Empfehlung, keine feste Startzusage.</div>
       <label>Zeitleiste – Stunden</label>
       <input type="number" id="timeline_hours" min="6" max="36" value="${c.timeline_hours ?? 24}">
+      <div class="hint">Wie viele kommende Stunden der Plan zeigt, von 6 bis 36. Ändert nur die Anzeige.</div>
     `;
     const set = (k, v) => { this._config = { ...this._config, [k]: v }; if (v === "" || v == null) delete this._config[k]; this._emit(); };
     const $ = id => this.shadowRoot.getElementById(id);
@@ -229,6 +289,8 @@ const CARD_CSS = `
   .main .name span.t { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
   .main .sub { font-size:11px; color:var(--secondary-text-color); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .main .plan { font-size:11px; color:var(--secondary-text-color); }
+  .mode-help { font-size:11px; color:var(--secondary-text-color); }
+  .title { flex-wrap:wrap; }
   .right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
   .pw { font-size:13px; font-weight:bold; white-space:nowrap; }
   .chip { font-size:10px; padding:1px 6px; border-radius:8px; color:#000; font-weight:600; }
@@ -260,7 +322,8 @@ const CARD_CSS = `
   .settings.hub { border-radius:var(--radius); margin:0 0 10px; }
   .settings .grp { grid-column:1 / -1; font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
                    color:var(--secondary-text-color); margin-top:4px; }
-  .settings label { color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .settings label { color:var(--txt); white-space:normal; overflow-wrap:anywhere; }
+  .setting-help { grid-column:1 / -1; font-size:12px; line-height:1.5; color:var(--secondary-text-color); padding:0 0 12px; border-bottom:1px solid var(--divider-color); white-space:normal; overflow-wrap:anywhere; }
   .settings .ctl { display:flex; align-items:center; gap:4px; justify-self:end; }
   .settings input[type=number], .settings input[type=time], .settings select.set {
     background:var(--card-background-color); color:var(--txt); border:1px solid var(--divider-color);
@@ -364,9 +427,9 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const st = this._st(entityId);
     if (!st) return "";
     const opts = st.attributes.options || Object.keys(MODE_LABELS);
-    return `<select class="mode ${esc(st.state)} ${cls}" data-select="${entityId}">
+    return `<select class="mode ${esc(st.state)} ${cls}" data-select="${entityId}" aria-label="Betriebsmodus">
       ${opts.map(o => `<option value="${esc(o)}" ${o === st.state ? "selected" : ""}>${esc(MODE_LABELS[o] || o)}</option>`).join("")}
-    </select>`;
+    </select><span class="mode-help">${esc(({auto:"SEP steuert", observe:"Nur Empfehlung", manual:"Sie steuern", off:"Regelung ausgesetzt"})[st.state] || "")}</span>`;
   }
 
   _label(entityId, prefix) {
@@ -406,7 +469,8 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const cfg = items.filter(i => i.config);
     const rows = list => list.map(i => `
       <label title="${esc(this._label(i.id, prefix))}">${esc(this._label(i.id, prefix))}</label>
-      <div class="ctl">${this._control(i)}</div>`).join("");
+      <div class="ctl">${this._control(i)}</div>
+      <div class="setting-help">${esc(SETTING_HELP[i.key] || "")}</div>`).join("");
     return `<div class="settings ${cls}">
       ${main.length ? `<div class="grp">Bedienung</div>${rows(main)}` : ""}
       ${cfg.length ? `<div class="grp">Einstellungen</div>${rows(cfg)}` : ""}
@@ -511,7 +575,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
           ${c.show_settings !== false && d.hubSettings.length ? `<button class="gear ${this._open.has("hub") ? "open" : ""}" data-gear="hub" title="Einstellungen Energiemanager"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}</div>` : ""}
         ${this._open.has("hub") ? this._settings(d.hubSettings, d.name, "hub") : ""}
         ${c.show_header ? this._header(d) : ""}
-        ${c.show_priorities ? `<div class="section"><span>Prioritäten</span><span>ziehen zum Sortieren</span></div>${this._devices(d)}` : ""}
+        ${c.show_priorities ? `<div class="section"><span>Prioritäten</span><span>1 = hoher Vorrang · ziehen zum Sortieren</span></div>${this._devices(d)}` : ""}
         ${c.show_timeline ? `<div class="section"><span>PV-Plan</span><span>${c.timeline_hours || 24} h</span></div>${this._timeline(d)}` : ""}
       </ha-card>`;
     this._bind(d);

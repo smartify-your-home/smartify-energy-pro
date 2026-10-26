@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.4** · Integrationsdomain: `smartify_energy`
+Version: **0.2.5** · Integrationsdomain: `smartify_energy`
 
 ## Funktionen
 
@@ -44,3 +44,7 @@ Als Boost-Art kann Schalter, Button oder Sollwert gewählt werden. Button unters
 Für jeden automatischen Warmwasser-Boost sind Leistungs- und Temperatursensor nötig. Die WP-Leistung muss durchgehend für die einstellbare „WP-Ruhezeit vor Boost“ (1–180 Minuten, Standard 15 Minuten) unter der einstellbaren WP-Ruheschwelle (Standard 5 W) liegen. Aktivität oder ungültige Leistungswerte setzen die Wartezeit zurück; nach Neustart/Reload beginnt sie neu. Start nur unter Zieltemperatur minus Boost-Hysterese (Standard 4 K): bei 50 °C Ziel also unter 46 °C. Die bestehende Mindestpause und PV-Bedingungen gelten zusätzlich. Ein gestarteter Boost verbraucht die Ruhefreigabe.
 
 Änderungen relevanter Eingänge lösen eine innerhalb von 2 Sekunden gebündelte Neubewertung aus. Der periodische Zyklus bleibt erhalten; Mittelwerte sind zeitgewichtet.
+
+## Verständliche Einstellungen (0.2.5)
+
+Die deutsche Einrichtung und Gerätekonfiguration erklärt jedes Feld direkt darunter. In der SEP-Karte stehen unter jeder Einstellung im Zahnrad-Menü verständliche Hinweise mit Beispielen; auch Modus und Priorität sind dort enthalten. Die Erklärungen sind ohne Maus-Hover auf Handy und Tablet lesbar. Der Karteneditor erklärt seine Anzeigeoptionen ebenfalls.
