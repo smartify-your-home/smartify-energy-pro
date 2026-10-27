@@ -1,6 +1,9 @@
 """Localize diagnostic reasons while retaining legacy German attributes."""
 # Dynamic numbers/times remain unchanged. Longest phrases are replaced first.
 ENGLISH = {
+    "PV-Trend: Messhistorie noch nicht vollständig": "PV trend: measurement history incomplete",
+    "PV-Trend fällt um": "PV trend falling by",
+    "Toleranz": "tolerance",
     "Modus: Aus": "Mode: Off", "Modus: Manuell – keine Steuerung": "Mode: Manual – no control",
     "Aktor nicht verfügbar": "Actuator unavailable", "Aktor-Wiederholpause": "Actuator retry cooldown",
     "Auto nicht angesteckt": "Car not connected", "Max-SoC erreicht": "Maximum charge level reached",
