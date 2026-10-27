@@ -8,6 +8,14 @@ Aktuelle Version: **0.3.1**. Integrationsdomain: `smartify_energy`.
 - Es werden nur automatische PV-Freigaben von Haushaltsgeräten blockiert; Sofortstart, Spätstart und laufende Programme bleiben unberührt.
 - Ein bereits gespeicherter Mittelungswert (z. B. zehn Minuten) wird beim Update **nicht automatisch auf 20 Minuten überschrieben**. Dafür den SEP-Zahlenwert manuell anpassen.
 
+## Neu in 0.3.4 – Lastverdrängung
+- Ein nachrangiger Heizstab darf nur bei aktiv steuerbarem Schalter und abgelaufener Mindestlaufzeit zurückgenommen werden.
+- Eine nachrangige Wallbox darf nur während freiwilligem PV-Laden und mit schaltbarem OFF-Aktor unterbrochen werden. Sofort- und Pflichtladung bleiben geschützt.
+- Rücknahme wird **nicht** ohne bestätigende neue Netz-/Leistungsmesswerte als freie Leistung gebucht. Die automatische Haushaltsfreigabe benötigt weiterhin aktuelle Leistung, Durchschnitt und Trend.
+- Bei unzureichender Summe der gemessenen rücknehmbaren Lasten findet keine vorsorgliche Abschaltung statt.
+- Externe Überschusssenken/Ohmpilot wurden nicht verändert; keine neue Prioritätsintegration.
+- Nach dem Update die realen Lasten und Prioritäten in einem sicheren Testlauf prüfen.
+
 ## Update über HACS
 1. Vor dem Update Home-Assistant-Backup erstellen und die bestehenden SEP-Geräteeinstellungen dokumentieren.
 2. In HACS **Smartify Energy Pro** öffnen und die neue Version herunterladen. Falls sie nicht angeboten wird, Repository in HACS neu laden.
