@@ -36,7 +36,7 @@ ENGLISH = {
     "Max-Laufzeit erreicht": "Maximum run time reached", "Mittelwert zu niedrig": "Average too low",
     "Tagesziel erreicht": "Daily target reached", "seit 15 min": "for 15 min", "VM-Ziel erreicht, kein Überschuss": "Morning target reached, no surplus",
     "PV-Überschuss": "PV surplus", "Unbekannter Zustand": "Unknown state",
-    "Fertig – Reset zum Neustart": "Finished – reset to start again", "Programm läuft – bereits freigegeben (kein erneuter PV-Check)": "Program running – already approved (no repeated PV check)",
+    "Fertig – Reset zum Neustart": "Finished – reset to start again", "Fertig – neues Programm wird automatisch erkannt": "Finished – next program is detected automatically", "Automatischer Reset – neues Programm erkannt": "Automatic reset – new program detected", "Programm läuft – bereits freigegeben (kein erneuter PV-Check)": "Program running – already approved (no repeated PV check)",
     "Warte auf PV-Budget: aktuell": "Waiting for PV budget: current", "benötigt": "required", "andere Vorreservierungen": "other reservations",
     "Bereit – Gerät am Gerät starten": "Ready – start the program on the appliance", "Programmerkennung: 5 Sekunden prüfen": "Program detection: checking for 5 seconds",
     "Programm gewählt – warte auf Start": "Program selected – waiting for start", "Nachladen – Steckdose kurz an": "Reload – plug temporarily on",
