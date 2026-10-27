@@ -12,7 +12,7 @@ maximum temperature, and integration/device OFF always stop immediately.
 from __future__ import annotations
 
 import math
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 
 from ..const import CONF_POWER_SENSOR, CONF_SWITCH, CONF_TEMP_SENSOR
 from ..helpers import ParamSpec, is_on, power_w, state_float, state_str, time_from_str
@@ -65,6 +65,23 @@ class HeaterDevice(BaseDevice):
     def start_need(self) -> float:
         # Even an accidentally low start threshold must cover the full heater.
         return max(self.nominal, float(self.p("heater_start_surplus")))
+
+    def can_preempt(self, now: datetime) -> bool:
+        """An ON heater may yield to a higher-ranked device after minimum-on."""
+        return (self.mode == "auto" and self.is_on()
+                and not self._unavailable_actor()
+                and now.timestamp() >= self._actuator_retry_at
+                and self._remaining(now, True) == 0)
+
+    async def async_preempt(self, ctx: Context) -> None:
+        """Shed and hold off while the upstream device obtains a stable budget."""
+        await self._switch(self.switch, False)
+        self.state["last_switch"] = ctx.now.timestamp()
+        self.state["last_switch_state"] = False
+        self.state["preempt_until"] = (ctx.now + timedelta(
+            minutes=max(2, float(self.manager.p("avg_window") or 20)
+                        + 2 * float(self.manager.p("trend_window") or 10)))).timestamp()
+        await self.manager.async_save_now()
 
     def power_accounted_in_grid(self) -> float:
         # Only an ACTUAL measurement can cancel nominal reservation; never
@@ -145,6 +162,8 @@ class HeaterDevice(BaseDevice):
                             f"Temperatur {temp:.1f}/{high:.1f} °C")
 
         self.status = "wartet"
+        if ctx.now.timestamp() < float(self.state.get("preempt_until") or 0):
+            return Decision(False, 0, "Vorrangiger Verbraucher – Heizstab bleibt aus")
         if ctx.now.time() < time_from_str(self.p("heater_earliest_start"), time(10, 0)):
             return Decision(False, 0, f"Frühester Start {self.p('heater_earliest_start')}")
         if temp >= low:
