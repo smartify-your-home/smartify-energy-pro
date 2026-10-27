@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.3.0** · Integrationsdomain: `smartify_energy`
+Version: **0.3.1** · Integrationsdomain: `smartify_energy`
 
 ## Dokumentation und Updates
 
@@ -12,6 +12,14 @@ Version: **0.3.0** · Integrationsdomain: `smartify_energy`
 - [Funktionsstand und bekannte Grenzen](docs/FUNCTIONS.md)
 - [Pflichtfelder, optionale und bedingte Entitäten je Funktion](docs/REQUIRED_FIELDS.md)
 - [SEP 0.2.22–0.2.26: Prioritäten, Akku, WW-Boost und Dashboard](docs/SEP_CURRENT.md)
+
+## Einstellbare PV-Startfreigabe für Haushaltsgeräte
+
+- **Mittelungszeit:** 1–60 Minuten, Standard 20 Minuten (bei bestehenden Installationen bleibt der gespeicherte Wert erhalten).
+- **Trendzeitraum:** 1–30 Minuten, Standard 10 Minuten. SEP vergleicht zwei aufeinanderfolgende, jeweils gleich lange Trendabschnitte (insgesamt doppelte Trenddauer).
+- **Trendtoleranz:** 0–500 W, Standard 100 W. Automatischer PV-Start nur, wenn der neuere Durchschnitt nicht um mehr als die Toleranz unter dem älteren Durchschnitt liegt.
+- **Startregeln:** Das aktuelle und das gemittelte Gerätebudget müssen weiterhin den Bedarf decken. Fehlt die vollständige Trendhistorie, erfolgt kein automatischer PV-Start. Sofort- und Spätstarts sowie bereits freigegebene Programme bleiben davon ausgenommen. Für Trockner gilt die Prüfung nur, wenn automatische Wiederaufnahme erlaubt wurde.
+- Nach einer Änderung der Mittelungs- oder Trendzeit beginnt die betreffende Messhistorie neu. Die neuen Einstellungen sind als Zahlen-Entitäten des SEP-Hubs verfügbar.
 
 ## Funktionen
 
