@@ -1,3 +1,9 @@
+## 0.3.9 – SEP-Karten-Einstellungen und sofortiges Aktualisieren
+- Akku-Prioritätszahl nicht mehr als unbeschriftetes Feld in den allgemeinen Hub-Einstellungen; der PV-Akku bleibt in der Prioritätenliste samt Rang-Entität erhalten.
+- Einstellungsmenüs aktualisieren beim Öffnen und Schließen mit den neuesten Home-Assistant-Zuständen, auch wenn ein fokussiertes Auswahlfeld Live-Aktualisierungen zuvor zurückgestellt hat.
+- Beschriftung behält den vollständigen Namen, falls das Entfernen des Präfixes ein leeres Ergebnis erzeugen würde.
+- UI-Regressionstests für Akku-Priorität und Menü-Aktualisierung.
+
 ## 0.3.8 – Heizstab-Handbetrieb und vereinfachter WP-WW-Boost
 
 Dieses Update enthält auch die Änderungen der nicht veröffentlichten Versionen 0.3.6 und 0.3.7.
