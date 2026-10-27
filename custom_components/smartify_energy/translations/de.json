@@ -544,7 +544,7 @@
         "name": "Priorität"
       },
       "avg_window": {
-        "name": "Mittelungsfenster"
+        "name": "Mittelungszeit"
       },
       "grid_reserve": {
         "name": "Netz-Reserve"
@@ -677,6 +677,12 @@
       },
       "boost_forecast_min_kwh": {
         "name": "PV-Forecast Mindestenergie"
+      },
+      "trend_window": {
+        "name": "Trendzeitraum"
+      },
+      "trend_tolerance": {
+        "name": "Trendtoleranz"
       }
     },
     "time": {
