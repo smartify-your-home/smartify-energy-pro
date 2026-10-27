@@ -52,7 +52,6 @@ _LOGGER = logging.getLogger(__name__)
 DAY_LABELS = {"MO": 0, "DI": 1, "TU": 1, "MI": 2, "WE": 2, "DO": 3, "TH": 3,
               "FR": 4, "SA": 5, "SO": 6, "SU": 6}
 NOT_CONNECTED = {"off", "idle", "disconnected", "not_connected", "unplugged", "unavailable", "unknown"}
-PHASE_SWITCH_INTERVAL = timedelta(minutes=10)
 
 
 class EvDevice(BaseDevice):
@@ -115,7 +114,11 @@ class EvDevice(BaseDevice):
             ParamSpec("stop_delay", "number", 5, "mdi:timer-pause", 1, 30, 1, "min"),
         ]
         if self.cfg.get(CONF_PHASE_ENTITY):
-            specs.append(ParamSpec("phase_mode", "select", EV_PHASE_AUTO, "mdi:sine-wave", options=EV_PHASE_MODES))
+            specs += [
+                ParamSpec("phase_mode", "select", EV_PHASE_AUTO, "mdi:sine-wave", options=EV_PHASE_MODES),
+                ParamSpec("phase_switch_minutes", "number", 20, "mdi:timer-sync-outline", 5, 60, 5, "min"),
+                ParamSpec("phase_hysteresis", "number", 500, "mdi:arrow-expand-vertical", 0, 1500, 50, "W"),
+            ]
         return specs
 
     def on_param_changed(self, key: str) -> None:
@@ -296,9 +299,11 @@ class EvDevice(BaseDevice):
             return 3
         cur = self.current_phases or 3
         p3 = self.min_a * self.voltage * 3
-        want = 3 if avail >= (p3 - 300 if cur == 3 else p3 + 300) else 1
+        hyst = float(self.p("phase_hysteresis"))
+        want = 3 if avail >= (p3 - hyst if cur == 3 else p3 + hyst) else 1
         last = self.state.get("phase_switch")
-        if want != cur and last and ctx.now.timestamp() - float(last) < PHASE_SWITCH_INTERVAL.total_seconds():
+        interval = timedelta(minutes=float(self.p("phase_switch_minutes")))
+        if want != cur and last and ctx.now.timestamp() - float(last) < interval.total_seconds():
             return cur
         return want
 

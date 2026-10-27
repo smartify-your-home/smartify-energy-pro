@@ -109,6 +109,8 @@ const SETTING_HELP = {
   "max_soc": "Ab diesem gemeldeten Fahrzeug-Akkustand beendet SEP die Ladung. Beispiel: 80 %. Dafür muss ein gültiger Akkustandsensor vorhanden sein.",
   "consumption": "Durchschnittlicher Fahrzeugverbrauch in kWh je 100 km. Beispiel: 18. Ein höherer Wert plant mehr Ladeenergie für die gleiche Strecke ein.",
   "pv_share": "Mindestens erforderlicher Solar-Anteil an der kleinsten Ladeleistung. 100 % startet nur bei vollständig gedeckter Mindestleistung; 50 % erlaubt den Rest aus dem Netz. Verzögerungen können vorübergehend zusätzlichen Netzbezug verursachen.",
+  "phase_switch_minutes": "So lange muss mindestens zwischen zwei Umschaltungen ein-/dreiphasig liegen. Beispiel: 20 min. Längere Werte schonen Wallbox und Auto, nutzen schwankenden Überschuss aber ungenauer.",
+  "phase_hysteresis": "Abstand zur Dreiphasen-Mindestleistung (6 A × 3). Dreiphasig ab Mindestleistung plus diesem Wert, zurück auf einphasig unter Mindestleistung minus diesem Wert. Beispiel: 500 W → ca. 4,6 kW hoch, 3,6 kW zurück.",
   "phase_mode": "Einphasig eignet sich für wenig Solarüberschuss, dreiphasig für höhere Ladeleistung. Automatik wählt passend zum Überschuss. In der aktuellen Version verwenden Sofort- und Pflichtladung bei vorhandener Umschaltung dennoch drei Phasen.",
   "stop_delay": "So lange darf zu wenig Solarüberschuss vorhanden sein, bevor SEP den Betrieb beendet. Kurze Wolken führen dadurch nicht gleich zum Stopp. Währenddessen kann Netzstrom nötig sein.",
   "target_temp": "Warmwasser-Zieltemperatur: Ein neuer WW-Boost darf nur starten, wenn der Speicher um die Hysterese darunter liegt. Einmal ausgelöste WW-Ladungen über Button/Schalter werden von der Wärmepumpe selbst beendet. Bei Sollwert-Boost regelt SEP weiterhin aktiv.",
