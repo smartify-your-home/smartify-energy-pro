@@ -77,6 +77,26 @@ class HouseholdBudgetStartTests(unittest.TestCase):
         )
         return self.load.decide(ctx, average)
 
+
+    def test_falling_trend_blocks_automatic_pv_start(self):
+        ctx = Context(self.now, 30, 2900, 2900, 2900, True, False, 2900,
+                      trend_delta=-600, trend_ready=True)
+        decision = self.load.decide(ctx, 2900)
+        self.assertFalse(decision.on)
+        self.assertIn("PV-Trend", decision.reason)
+
+    def test_stable_trend_allows_automatic_pv_start(self):
+        ctx = Context(self.now, 30, 2900, 2900, 2900, True, False, 2900,
+                      trend_delta=-60, trend_ready=True)
+        self.assertTrue(self.load.decide(ctx, 2900).on)
+
+    def test_missing_trend_history_blocks_automatic_pv_start(self):
+        ctx = Context(self.now, 30, 2900, 2900, 2900, True, False, 2900,
+                      trend_delta=0, trend_ready=False)
+        decision = self.load.decide(ctx, 2900)
+        self.assertFalse(decision.on)
+        self.assertIn("Messhistorie", decision.reason)
+
     def test_old_positive_average_cannot_start_at_grid_import(self):
         d = self.run_check(-1000, 3000)
         self.assertFalse(d.on)
