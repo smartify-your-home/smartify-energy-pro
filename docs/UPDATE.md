@@ -1,5 +1,14 @@
 # Installation und Updates
 
+## Heizstab: temperaturgeregelter Handbetrieb (0.3.6)
+
+**Manuell** schaltet den Heizstab temperaturabhängig, auch mit Netzstrom. Bei 50 °C Soll und 1 K Hysterese startet er unter 49 °C, läuft bis 50 °C und schaltet dann ab. Solange Manuell gewählt bleibt, wird nach Abkühlung erneut geheizt; dies ist keine einmalige Nachladung. Zum Beenden **Aus**, für PV-Betrieb **Automatik** wählen.
+
+PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrücknahme gelten nur in Automatik. Im Handbetrieb bleiben Mindestpause, Temperaturüberwachung und sofortige Abschaltung bei ungültiger Temperatur oder Geräte-/Hub-Aus aktiv. Die Mindestlaufzeit kann die Temperaturabschaltung nicht verzögern. Manuelle Heizleistung ist nicht für andere Geräte rücknehmbar; noch nicht gemessene Heizleistung wird vor PV-Freigaben reserviert. Andere Gerätetypen behalten ihr bisheriges manuelles Verhalten.
+
+Nach dem Update Home Assistant neu starten und die Dashboard-Seite neu laden. **Achtung beim bisherigen Modus Manuell:** Dieser regelt den Heizstab ab jetzt aktiv; vor dem Update bei unerwünschter Nachheizung auf Aus stellen.
+
+
 Aktuelle Version: **0.3.1**. Integrationsdomain: `smartify_energy`.
 
 ## Neu in 0.3.1
@@ -118,3 +127,4 @@ Im Forecast-Modus verhindern fehlende Quellen, Fehler, ungültige/fehlende Stund
 Recorder-Entlastung, zuverlässige Neubewertung, Aktor-Timeouts und Verfügbarkeitsschutz, übersetzte ENUM-Statuscodes, Diagnose-Download sowie neue CI/Release-Pipeline. **Rohzustände ändern sich:** etwa `wartet` → `waiting`, `laeuft` → `running`. Bestehende IDs und deutsche Attribute bleiben erhalten. Vor dem Update Statusvergleiche in eigenen Templates/Automationen anpassen oder das Attribut `legacy_status` nutzen.
 
 [Alle Änderungen und Migration](REVIEW_0.3.0.md). Nach dem Update Home Assistant neu starten. Mindestversion: **2025.7.0**.
+

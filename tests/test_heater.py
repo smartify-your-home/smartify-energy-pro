@@ -90,6 +90,54 @@ class HeaterTests(unittest.IsolatedAsyncioTestCase):
         # Pass allocation base minus upstream extra heater reservations.
         return self.heater.decide(ctx, ctx.alloc_base - upstream)
 
+    async def test_manual_thermostat_with_grid_import_and_hysteresis(self):
+        self.heater.params.update(mode="manual", heater_max_temp=50, heater_hysteresis=1)
+        self.now = self.now.replace(hour=8)
+        self.heater.state["preempt_until"] = self.now.timestamp() + 3600
+        ctx = self.context(-5000)
+        decision = await self.heater.async_run(ctx, -5000)
+        self.assertTrue(decision.on)
+        self.assertTrue(decision.forced)
+        self.assertTrue(self.heater.is_on())
+        self.assertFalse(self.heater.can_preempt(self.now))
+        self.states["sensor.temp"] = "49.5"
+        self.assertTrue((await self.heater.async_run(ctx, -5000)).on)
+        self.states["sensor.temp"] = "50"
+        self.assertFalse((await self.heater.async_run(ctx, -5000)).on)
+        self.assertFalse(self.heater.is_on())
+        self.states["sensor.temp"] = "49"
+        self.assertFalse((await self.heater.async_run(ctx, -5000)).on)
+        self.states["sensor.temp"] = "48.9"
+        self.assertTrue((await self.heater.async_run(ctx, -5000)).on)
+
+    async def test_manual_sensor_failure_and_hub_off_stop_immediately(self):
+        self.heater.params.update(mode="manual", heater_min_on=120)
+        ctx = self.context(-5000)
+        await self.heater.async_run(ctx, -5000)
+        self.states["sensor.temp"] = "unavailable"
+        await self.heater.async_run(ctx, -5000)
+        self.assertFalse(self.heater.is_on())
+        self.states["sensor.temp"] = "45"
+        await self.heater.async_run(ctx, -5000)
+        self.manager.hub_mode = "off"
+        await self.heater.async_run(ctx, -5000)
+        self.assertFalse(self.heater.is_on())
+
+    async def test_manual_minimum_pause_and_return_to_automatic(self):
+        self.heater.params.update(mode="manual", heater_min_off=5)
+        self.heater.state["last_switch"] = self.now.timestamp()
+        self.assertFalse((await self.heater.async_run(self.context(-5000), -5000)).on)
+        self.now += timedelta(minutes=5)
+        self.assertTrue((await self.heater.async_run(self.context(-5000), -5000)).on)
+        self.heater.params["mode"] = "auto"
+        self.assertFalse((await self.heater.async_run(self.context(-5000), -5000)).on)
+        self.assertFalse(self.heater.is_on())
+
+    async def test_observe_does_not_actuate(self):
+        self.heater.params["mode"] = "observe"
+        await self.heater.async_run(self.context(5000), 5000)
+        self.assertEqual(self.calls, [])
+
     def test_no_average_gate_even_if_average_very_negative(self):
         self.assertTrue(self.decide(2500, mean=-9000).on)
         self.assertFalse(self.decide(2100, mean=9000).on)
@@ -187,3 +235,4 @@ class HeaterTests(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

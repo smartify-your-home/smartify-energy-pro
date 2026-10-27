@@ -1,5 +1,12 @@
 # Funktionsstand und Grenzen
 
+## Heizstab: temperaturgeregelter Handbetrieb (0.3.6)
+
+**Manuell** schaltet den Heizstab temperaturabhängig, auch mit Netzstrom. Bei 50 °C Soll und 1 K Hysterese startet er unter 49 °C, läuft bis 50 °C und schaltet dann ab. Solange Manuell gewählt bleibt, wird nach Abkühlung erneut geheizt; dies ist keine einmalige Nachladung. Zum Beenden **Aus**, für PV-Betrieb **Automatik** wählen.
+
+PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrücknahme gelten nur in Automatik. Im Handbetrieb bleiben Mindestpause, Temperaturüberwachung und sofortige Abschaltung bei ungültiger Temperatur oder Geräte-/Hub-Aus aktiv. Die Mindestlaufzeit kann die Temperaturabschaltung nicht verzögern. Manuelle Heizleistung ist nicht für andere Geräte rücknehmbar; noch nicht gemessene Heizleistung wird vor PV-Freigaben reserviert. Andere Gerätetypen behalten ihr bisheriges manuelles Verhalten.
+
+
 Stand: **0.2.26**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
 
 ## Regelung
@@ -37,7 +44,7 @@ Stand: **0.2.26**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten 
 - Einstellbare **EIN-Schwelle** (Standard 2200 W, mindestens die Nennleistung), **AUS-Schwelle** (Standard 0 W), **Maximaltemperatur** (55 °C), **Hysterese** (3 K), **frühester Start** (10:00) und jeweils optionale **Mindestlauf-/Mindestpause** (Standard 0 min).
 - Temperatur ungültig oder Temperatur ≥ Maximaltemperatur ⇒ AUS ohne Mindestlaufzeit. Unter max − Hysterese darf ein neuer Start erfolgen; genau an der unteren Schwelle noch nicht.
 - Schaltpause nur wenn > 0 konfiguriert, Zeitstempel wird direkt nach dem Schaltbefehl persistiert. Positiver Mindestlaufzeit-Wert kann absichtlich kurzen Netzbezug zulassen; Temperatur-Sicherheit hat Vorrang.
-- Modus Aus (auch Hub Aus) schaltet ab; Beobachten zeigt nur Empfehlungen, Manuell übernimmt keine Steuerung. Kein eigener stufenloser Leistungssteller.
+- Modus Aus (auch Hub Aus) schaltet ab; Beobachten zeigt nur Empfehlungen, Manuell regelt die Heizstabtemperatur auch mit Netzstrom. Kein eigener stufenloser Leistungssteller.
 - Die physische Sicherheitskette des Heizelements bleibt zwingend unabhängig; bei nicht lesbarer Aktor-Entität kann SEP keine physische AUS-Bestätigung garantieren.
 
 ## Bekannte Risiken und Tests
@@ -63,3 +70,4 @@ Stand: **0.2.26**, 26.10.2026. Diese Seite beschreibt implementiertes Verhalten 
 - Netzsaldo und Steuerbudget jeweils in einer kombinierten Kachel: **Ø** mit großem Durchschnitt und **akt.** mit kleinerem Momentanwert. Die Zahlen inklusive `W` sind rechtsbündig untereinander ausgerichtet.
 - Die grafische Prioritätenliste einschließlich der passiven Akku-Zeile zeigt individuelle Gerätebudgets.
 - Native Modus-Auswahllisten werden während der Bedienung nicht mehr durch Sensorupdates geschlossen (0.2.25); die Werte werden nach Verlassen des Feldes erneut gerendert.
+

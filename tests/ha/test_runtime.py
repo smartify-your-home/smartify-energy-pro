@@ -324,3 +324,34 @@ async def test_preemption_respects_priority_and_minimum_on_time(hass):
     heater.async_preempt.assert_not_awaited()
     await m.async_stop()
 
+
+
+
+async def test_manual_heater_reserves_before_higher_priority_pv_consumer(hass):
+    from custom_components.smartify_energy.devices.heater import HeaterDevice
+    m = manager(hass)
+    hass.states.async_set('sensor.grid', '-3000', {'unit_of_measurement': 'W'})
+    hass.states.async_set('sensor.temp', '45')
+    hass.states.async_set('switch.heater', 'off')
+    heater = HeaterDevice(m, 'heater', 'Heater', {
+        'switch': 'switch.heater', 'temperature_sensor': 'sensor.temp', 'nominal_power': 2000})
+    heater.params.update(mode='manual', priority=99)
+    heater.async_apply = AsyncMock()
+    seen = []
+
+    class Consumer(BaseDevice):
+        def is_on(self): return False
+        def decide(self, ctx, left):
+            seen.append(ctx.now_left(left))
+            return Decision(False)
+        async def async_apply(self, decision, ctx): pass
+
+    consumer = Consumer(m, 'load', 'PV consumer', {})
+    consumer.params.update(mode='auto', priority=1)
+    m.devices = {'load': consumer, 'heater': heater}
+    m.async_save_now = AsyncMock()
+    await m._async_run()
+    assert heater.last_decision.on and heater.last_decision.forced
+    assert seen == [1000]  # 3000 W export minus 2000 W pending manual heating.
+    assert m.device_budgets['heater']['zusaetzlich_reserviert_w'] == 2000
+    assert m._reclaimable_power['heater'] == 0

@@ -362,9 +362,10 @@ class EnergyManager:
         now = ctx.now if ctx else dt_util.now()
 
         def key(dev: BaseDevice):
+            manual_heating = dev.mode == "manual" and dev.CONTROLS_MANUAL
             forced = bool(dev.last_decision and dev.last_decision.forced and dev.last_decision.on)
             since = dev.state.get("since") or now.timestamp()
-            return (0 if forced else 1, dev.priority, since)
+            return (-1 if manual_heating else 0 if forced else 1, dev.priority, since)
 
         return sorted(self.devices.values(), key=key)
 
@@ -651,8 +652,9 @@ class EnergyManager:
                     previous = dev.last_decision
                     power = max(current, previous.power if previous and previous.on else 0.0)
                     decision = Decision(power > 0, power, "Aktorfehler – Leistung vorsorglich reserviert")
-                # Observe/manual modes do not actually actuate the load.
-                if decision.on and dev.mode == MODE_AUTO:
+                # Reserve newly commanded manual heating before PV allocations, too.
+                if decision.on and (dev.mode == MODE_AUTO or (
+                        dev.mode == "manual" and dev.CONTROLS_MANUAL)):
                     extra = additional_reservation(decision.power, current, reclaimed)
                     effective_left -= extra
                     self.device_budgets[dev.id]["zusaetzlich_reserviert_w"] = round(extra)
@@ -761,3 +763,4 @@ class EnergyManager:
         ]
         actions.sort()
         self.next_action = " · ".join(a for _, a in actions[:3])
+

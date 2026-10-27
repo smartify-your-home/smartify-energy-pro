@@ -1,3 +1,10 @@
+## 0.3.6 – Heizstab mit temperaturgeregeltem Handbetrieb
+- Manuell regelt den Heizstab auf die eingestellte Solltemperatur, unabhängig vom PV-Budget, frühester Startzeit und Prioritätspause. Netzbezug ist ausdrücklich erlaubt.
+- Wiederanlauf unter Soll minus Hysterese; wiederholtes Heizen, solange Manuell gewählt bleibt. Mindestpause, Temperaturabschaltung, ungültiger Temperatursensor und Geräte-/Hub-Aus bleiben wirksam.
+- Manuelle Heizleistung ist nicht rücknehmbar. Noch ungemessene Leistung wird vor automatischen PV-Freigaben reserviert.
+- Dashboard-Hilfe, Modusanzeige, README, Funktions- und Update-Dokumentation ergänzt. Verhaltensänderung: bisheriges Manuell war ohne SEP-Steuerung; vor Update bei unerwünschter Nachheizung Aus wählen.
+- Regressionstests für Netzbezug, Hysterese, Sensorfehler, Hub-Aus, Mindestpause und Rückkehr zur Automatik; kein Test an realer Heizstab-Hardware.
+
 ## 0.3.5 – Phasenumschaltung einstellbar
 - Wallbox mit 1/3-Phasen-Umschaltung: neuer Mindestabstand zwischen zwei Umschaltungen (5–60 min, Standard 20 min; bisher fest 10 min) und neue Hysterese um die Dreiphasen-Mindestleistung (0–1500 W, Standard 500 W; bisher fest 300 W).
 - Beispiel 6 A Mindeststrom: dreiphasig ab ca. 4,6 kW, zurück auf einphasig unter ca. 3,6 kW.
@@ -237,3 +244,4 @@ Die Versionsnummer bezeichnet die Home-Assistant-Integration. Angaben zur Reakti
 - Schnellere interne Berechnung garantiert keine Antwortzeit der Wallbox oder des Akkus.
 - 6-A-Mindeststrom (oder abweichend konfigurierter Mindestwert), Abschaltverzögerung und Phasenwechsel-Sperre können kurzfristigen Netzbezug verursachen.
 - Die Akku-Priorität ist eine Budgetentscheidung, keine Schreibschnittstelle zum Batterie-Wechselrichter.
+

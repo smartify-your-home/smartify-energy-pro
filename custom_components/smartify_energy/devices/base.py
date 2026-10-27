@@ -84,6 +84,7 @@ class BaseDevice:
 
     TYPE = "base"
     ICON = "mdi:flash"
+    CONTROLS_MANUAL = False
 
     def __init__(self, manager: EnergyManager, subentry_id: str, title: str, cfg: dict) -> None:
         self.manager = manager
@@ -273,14 +274,14 @@ class BaseDevice:
                 self._actuator_retry_at = ctx.now.timestamp() + 30
                 raise
             return self.last_decision
-        if mode == MODE_MANUAL:
+        if mode == MODE_MANUAL and not self.CONTROLS_MANUAL:
             self.status, self.reason, self.would = "manuell", "Modus: Manuell – keine Steuerung", ""
             self.last_decision = Decision(False, reason=self.reason)
             return self.last_decision
         decision = self.decide(ctx, budget_left)
         self.last_decision = decision
         self.reason = decision.reason
-        if mode == MODE_AUTO:
+        if mode == MODE_AUTO or (mode == MODE_MANUAL and self.CONTROLS_MANUAL):
             self.would = ""
             try:
                 await self.async_apply(decision, ctx)
@@ -328,3 +329,4 @@ class BaseDevice:
             domain, "turn_on" if on else "turn_off", {"entity_id": entity_id}, blocking=True
         )
         _LOGGER.info("[%s] %s → %s (%s)", self.name, entity_id, "EIN" if on else "AUS", self.reason)
+

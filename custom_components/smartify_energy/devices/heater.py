@@ -22,6 +22,7 @@ from .base import BaseDevice, Context, Decision
 class HeaterDevice(BaseDevice):
     TYPE = "heater"
     ICON = "mdi:water-boiler"
+    CONTROLS_MANUAL = True
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -147,6 +148,19 @@ class HeaterDevice(BaseDevice):
             self.status = "max_erreicht"
             return Decision(False, 0, f"Maximaltemperatur erreicht ({temp:.1f} °C ≥ {high:.1f} °C)")
 
+        if self.mode == "manual":
+            self.status = "manuell"
+            if not on:
+                if temp >= low:
+                    return Decision(False, 0,
+                                    f"Manuell: Neustart erst unter {low:.1f} °C")
+                seconds = self._remaining(ctx.now, False)
+                if seconds > 0:
+                    return Decision(False, 0, f"Mindestpause noch {seconds:.0f} s")
+            return Decision(True, self.nominal,
+                            f"Manuell: Heizen bis {high:.1f} °C – Netzbezug erlaubt",
+                            forced=True)
+
         if on:
             self.status = "laeuft"
             stop_at = float(self.p("heater_stop_surplus"))
@@ -196,3 +210,4 @@ class HeaterDevice(BaseDevice):
             self.state["last_switch"] = ctx.now.timestamp()
             self.state["last_switch_state"] = False
             await self.manager.async_save_now()
+

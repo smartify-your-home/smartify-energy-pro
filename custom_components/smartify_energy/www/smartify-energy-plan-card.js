@@ -69,7 +69,7 @@ const SETTING_HELP = {
   "heater_min_on": "Optionale Mindestlaufzeit gegen Flattern (0 = sofortige Abschaltung bei PV-Mangel). Temperaturfehler oder maximale Temperatur schalten dennoch sofort AUS.",
   "heater_min_off": "Optionale Mindestpause zwischen AUS und erneutem EIN (0 = keine Pause). Schaltzeitpunkt bleibt auch nach einem Home-Assistant-Neustart gespeichert.",
 
-  "mode": "Automatik: SEP steuert dieses Gerät. Beobachten: SEP zeigt Empfehlungen, schaltet aber nicht. Manuell: Sie übernehmen die Bedienung. Aus: Die automatische Regelung ist ausgesetzt. Das Verhalten beim Ausschalten hängt vom Gerätetyp ab. Zentral gilt die Auswahl für den Manager. Aus ist kein Not-Aus: Beim zentralen Ausschalten werden Haushaltsgeräte-Steckdosen einmal eingeschaltet und die Programmerkennung zurückgesetzt. Anschließend können Sie die Steckdosen manuell bedienen; Pool und Wallbox stoppen derzeit nur bei ihrem eigenen Modus Aus. Der WP-Boost wird beendet, eine Button-Ladung kann aber weiterlaufen.",
+  "mode": "Automatik: SEP steuert dieses Gerät. Beobachten: SEP zeigt Empfehlungen, schaltet aber nicht. Manuell: Sie übernehmen die Bedienung. Ausnahme Heizstab: SEP regelt weiter auf die eingestellte Solltemperatur, auch mit Netzstrom. Start unter Soll minus Hysterese, Abschaltung bei Soll; erneutes Heizen bleibt aktiv, bis Sie Automatik oder Aus wählen. PV-Schwellen, früheste Startzeit und Prioritätspause werden ignoriert; Mindestpause und Temperaturüberwachung bleiben aktiv. Aus: Die automatische Regelung ist ausgesetzt. Das Verhalten beim Ausschalten hängt vom Gerätetyp ab. Zentral gilt die Auswahl für den Manager. Aus ist kein Not-Aus: Beim zentralen Ausschalten werden Haushaltsgeräte-Steckdosen einmal eingeschaltet und die Programmerkennung zurückgesetzt. Anschließend können Sie die Steckdosen manuell bedienen; Pool und Wallbox stoppen derzeit nur bei ihrem eigenen Modus Aus. Der WP-Boost wird beendet, eine Button-Ladung kann aber weiterlaufen.",
   "priority": "Kleinere Zahl bedeutet früher an der Reihe: 1 hat Vorrang vor 5. Bereits freigegebene Programme und Pflichtläufe können Vorrang behalten. Ziehen ändert diese Werte; ab dem zehnten Platz teilen Geräte Priorität 10.",
   "avg_window": "Über wie viele Minuten Netzsaldo und Steuerbudget separat gemittelt werden. Ein größerer Wert reagiert ruhiger auf Wolken, aber langsamer auf dauerhaft mehr Sonne. Standard: 10 Minuten.",
   "grid_reserve": "Diese Leistung bleibt bei der Verteilung ungenutzt. Beispiel: 200 W halten einen kleinen Puffer gegen unbeabsichtigten Netzbezug frei. Pflichtläufe können trotzdem Strom aus dem Netz brauchen.",
@@ -522,11 +522,11 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         </div>`).join("")}</div>`;
   }
 
-  _modeSelect(entityId, cls = "") {
+  _modeSelect(entityId, cls = "", heater = false) {
     const st = this._st(entityId);
     if (!st) return "";
     const opts = st.attributes.options || Object.keys(MODE_LABELS);
-    const label = o => [MODE_LABELS[o] || o, MODE_HELP[o]].filter(Boolean).join(" · ");
+    const label = o => [MODE_LABELS[o] || o, (heater && o === "manual" ? "Temperaturregelung · Netz erlaubt" : MODE_HELP[o])].filter(Boolean).join(" · ");
     return `<select class="mode ${esc(st.state)} ${cls}" data-select="${entityId}" aria-label="Betriebsmodus">
       ${opts.map(o => `<option value="${esc(o)}" ${o === st.state ? "selected" : ""}>${esc(label(o))}</option>`).join("")}
     </select>`;
@@ -649,7 +649,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
                 <span class="pb-label">Budget aktuell</span>
                 <span class="pb-budget ${budgetNow == null ? "" : budgetNow < 0 ? "negative" : budgetOk ? "positive" : ""}">${fmtW(budgetNow)}</span>
               </div>
-              ${this._config.show_mode ? this._modeSelect(dev.mode) : ""}
+              ${this._config.show_mode ? this._modeSelect(dev.mode, "", a.geraetetyp === "heater") : ""}
               ${this._config.show_settings !== false && dev.settings.length ? `<button class="gear ${open ? "open" : ""}" data-gear="${dev.id}" title="Einstellungen"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}
             </div>
             <div class="pb-extra">
@@ -842,3 +842,4 @@ window.customCards.push({
   preview: false,
 });
 console.info(`%c SMARTIFY-ENERGY-PLAN-CARD %c v${CARD_VERSION} `, "background:#00ACC1;color:#fff", "background:#333;color:#fff");
+
