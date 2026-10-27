@@ -30,7 +30,7 @@ SEP erzeugt Home-Assistant-Entitäten unter eigenen Geräten und verwendet **üb
 | `number.sem_v3_<nid>_latest_h` + `_latest_m` | `time` **Spätester Start** (`latest_start`) | Ein Uhrzeitfeld |
 | Nicht vorhanden | `time` **Frühester Start** (`earliest_start`) | Neue Option |
 | `switch.sem_v3_nachladen_<nid>` | `switch` **Nachladen** (`nachladen`) | HA-generierte ID statt fester SEM-ID |
-| SEM **Fertig**-Schalter | `binary_sensor` **Fertig** (`finished`) + `button` **Reset** (`reset`) | Fertig ist ein Sensor, Rücksetzen geschieht über Reset-Taste |
+| SEM **Fertig**-Schalter | `binary_sensor` **Fertig** (`finished`) + `button` **Reset** (`reset`) | Fertig ist ein Sensor; ein neuer Programmstart setzt automatisch zurück, die Reset-Taste ist optional |
 | SEM **Wartet**-Binary | `binary_sensor` **Wartet** (`waiting`) | Gleiche Bedeutung, neue eindeutige Identität |
 | SEM **Heizphase**-Binary | `binary_sensor` **Heizphase** (`heating`) | Gleiche Bedeutung, neue eindeutige Identität |
 | SEM **Läuft**-Binary | `sensor` **Zustand** (`phase`, Wert `laeuft`) + `binary_sensor` **Aktiv** (`active`) | `active` bedeutet physische Freigabe/Steckdose EIN, nicht zwingend das SEM-`RUNNING`-Flag |

@@ -52,6 +52,7 @@ class LoadDevice(BaseDevice):
         self._detected_since: datetime | None = None
         self._hp_since: datetime | None = None
         self._low_since: datetime | None = None
+        self._finished_off_seen = False
         self._nachladen_prev = False
         self._hub_released = False
 
@@ -152,6 +153,7 @@ class LoadDevice(BaseDevice):
         self._detected_since = None
         self._hp_since = None
         self._low_since = None
+        self._finished_off_seen = False
 
     async def async_reset(self) -> None:
         self._reset()
@@ -198,6 +200,27 @@ class LoadDevice(BaseDevice):
                 self.state["hp_active"] = False
                 self.state["hp_done"] = True
 
+    def _new_program_detected(self, ctx: Context, sw_on: bool, p: float) -> bool:
+        """Neuer Programmstart im Zustand „fertig“ (ersetzt den Reset-Klick).
+
+        Mit Leistungssensor: wie in „bereit“ 5 s stabil über 9 W.
+        Ohne Sensor: Steckdose muss seit „fertig“ einmal aus gewesen sein und
+        wieder eingeschaltet werden, sonst würde die noch eingeschaltete
+        Steckdose sofort einen neuen Lauf auslösen.
+        """
+        if not self.cfg.get(CONF_POWER_SENSOR):
+            if not sw_on:
+                self._finished_off_seen = True
+                return False
+            return self._finished_off_seen
+        if not (sw_on and p > 9):
+            self._detected_since = None
+            return False
+        if self._detected_since is None:
+            self._detected_since = ctx.now
+            return False
+        return ctx.now - self._detected_since >= timedelta(seconds=5)
+
     @property
     def reserved_power(self) -> float:
         """Laufendes Gerät: Nennleistung bis zum Ende der Heizphase reservieren."""
@@ -239,9 +262,17 @@ class LoadDevice(BaseDevice):
             # First detected cycle proceeds to DETECTED below; earliest time is checked there.
 
         if sm == FINISHED:
-            # SEM v3: finished is latched until the explicit reset button.
+            # Finished stays visible until the next program start. A new
+            # start (stable draw above 9 W for 5 s) resets automatically and
+            # continues with normal detection; the reset button is optional.
             self.status = "fertig"
-            return Decision(sw_on, p, "Fertig – Reset zum Neustart")
+            if self._new_program_detected(ctx, sw_on, p):
+                _LOGGER.info("[%s] neues Programm erkannt – automatischer Reset", self.name)
+                self._reset()
+                self.state.update(sm=DETECTED, since=ctx.now.timestamp(), approved=False)
+                self.reason = "Automatischer Reset – neues Programm erkannt"
+                return self.decide(ctx, budget_left)
+            return Decision(sw_on, p, "Fertig – neues Programm wird automatisch erkannt")
 
         if self.state["sm"] == RUNNING and (self.state["approved"]):
             self.status = "laeuft"

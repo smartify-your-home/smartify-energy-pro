@@ -51,6 +51,7 @@ const OPTION_LABELS = {
   one: "1-phasig", three: "3-phasig",
 };
 const MODE_LABELS = { auto: "Automatik", observe: "Beobachten", manual: "Manuell", off: "Aus" };
+const MODE_HELP = { auto: "SEP steuert", observe: "nur Empfehlung", manual: "Sie steuern", off: "ausgesetzt" };
 const TYPE_ICONS = { load: "mdi:washing-machine", pool: "mdi:pool", ev: "mdi:ev-station", heatpump: "mdi:heat-pump", heater: "mdi:water-boiler" };
 const STATUS_LABELS = {"initializing": "Initialisierung", "ready": "Bereit", "detected": "Erkannt", "waiting": "Wartet", "running": "Läuft", "finished": "Fertig", "off": "Aus", "manual": "Manuell", "observing": "Beobachten", "inactive": "Inaktiv", "locked": "Sperrzeit", "limit_reached": "Grenze erreicht", "disconnected": "Nicht verbunden", "full": "Voll", "charging_now": "Lädt sofort", "charging_required": "Pflichtladen", "charging_pv": "PV-Laden", "boost": "Boost", "actuator_unavailable": "Aktor nicht verfügbar", "actuator_error": "Aktorfehler",
   laeuft: "läuft", wartet: "wartet", bereit: "bereit", erkannt: "erkannt", fertig: "fertig",
@@ -117,7 +118,7 @@ const SETTING_HELP = {
   "idle_power_threshold": "Unter dieser gemessenen WP-Leistung zählt die Wärmepumpe als ruhend. Beispiel: 5 W. Ab genau 5 W beginnt die Wartezeit später wieder von vorn. Den Wert passend zum tatsächlichen Standby-Verbrauch wählen.",
   "idle_minutes": "So lange muss die WP-Leistung unter der Ruheschwelle liegen, bevor ein neuer WW-Boost gestartet werden darf. Standard: 15 Minuten. Aktivität, ungültige Werte und ein Neustart setzen die Ruheerkennung zurück. Unabhängig davon gilt der dauerhafte WW-Boost-Mindestabstand.",
   "start_now": "Gibt das Haushaltsgerät sofort frei und schaltet bei Bedarf seine Steckdose ein – auch ohne Solarüberschuss. Diese Taste löst direkt eine Aktion aus.",
-  "reset": "Setzt die Erkennung des Haushaltsgeräts auf „Bereit“ zurück. Das Programm am Gerät wird dadurch nicht zurückgesetzt und die Steckdose nicht ausgeschaltet.",
+  "reset": "Optional: Setzt die Erkennung des Haushaltsgeräts sofort auf „Bereit“ zurück. Normalerweise nicht nötig – ein neuer Programmstart nach „Fertig“ wird automatisch erkannt. Das Programm am Gerät wird nicht zurückgesetzt und die Steckdose nicht ausgeschaltet.",
   "sun_angle_min": "Optionaler Mindestwinkel. Beispiel: 12° erlaubt den Boost ab genau 12°. Leer bedeutet: Sonnenwinkel-Prüfung wird ignoriert. Entität in der Gerätekonfiguration auswählen und Prüfung aktivieren.",
   "cloud_now_max": "Boost startet nur bei einem Wert kleiner als diese Grenze. Beispiel: unter 75 %; genau 75 % sperrt den Start. Beide Stunden müssen ihre Grenze einhalten. Bei unvollständigen Angaben wird die gesamte Bewölkungsprüfung ignoriert.",
   "cloud_next_max": "Boost startet nur, wenn auch die kommende Stunde unter dieser Grenze liegt. Beispiel: unter 50 %; genau 50 % sperrt. Leer bedeutet bei dieser Prüfung: ignorieren, bis beide Entitäten und Grenzen vollständig sind.",
@@ -304,13 +305,13 @@ const CARD_CSS = `
 
   select.mode { appearance:none; -webkit-appearance:none; border:1px solid var(--divider-color); border-radius:12px;
                 background:var(--secondary-background-color); color:var(--txt); font-size:11px;
-                padding:3px 10px; cursor:pointer; max-width:110px; }
+                padding:2px 10px; cursor:pointer; max-width:180px; white-space:nowrap; text-overflow:ellipsis; }
   select.mode.auto { border-color:#43A047; } select.mode.observe { border-color:#0288D1; }
   select.mode.off { border-color:#E65100; }
 
   .list { display:flex; flex-direction:column; gap:4px; position:relative; }
   .dev { display:grid; grid-template-columns:22px 26px 28px minmax(0,1fr) auto; align-items:center; gap:8px;
-         background:var(--row-bg); border-radius:var(--radius); padding:8px 8px 8px 4px; box-sizing:border-box;
+         background:var(--row-bg); border-radius:var(--radius); padding:4px 8px 4px 4px; box-sizing:border-box;
          border-style:solid; border-width:0 0 4px 0; border-image-slice:1; position:relative;
          transition:transform .18s ease; user-select:none; }
   .dev-wrap { transition:transform .18s ease; }
@@ -327,9 +328,8 @@ const CARD_CSS = `
   .main .name span.t { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
   .main .sub { font-size:11px; color:var(--secondary-text-color); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .main .plan { font-size:11px; color:var(--secondary-text-color); }
-  .mode-help { font-size:11px; color:var(--secondary-text-color); }
   .title { flex-wrap:wrap; }
-  .right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; min-width:0; }
+  .right { display:flex; flex-direction:column; align-items:flex-end; gap:2px; min-width:0; }
   .power-budget { display:flex; gap:10px; justify-content:flex-end; align-items:center; flex-wrap:wrap; }
   .pb-item { display:flex; flex-direction:column; align-items:flex-end; gap:1px; white-space:nowrap; }
   .pb-label { font-size:10px; opacity:.72; }
@@ -523,9 +523,10 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const st = this._st(entityId);
     if (!st) return "";
     const opts = st.attributes.options || Object.keys(MODE_LABELS);
+    const label = o => [MODE_LABELS[o] || o, MODE_HELP[o]].filter(Boolean).join(" · ");
     return `<select class="mode ${esc(st.state)} ${cls}" data-select="${entityId}" aria-label="Betriebsmodus">
-      ${opts.map(o => `<option value="${esc(o)}" ${o === st.state ? "selected" : ""}>${esc(MODE_LABELS[o] || o)}</option>`).join("")}
-    </select><span class="mode-help">${esc(({auto:"SEP steuert", observe:"Nur Empfehlung", manual:"Sie steuern", off:"Regelung ausgesetzt"})[st.state] || "")}</span>`;
+      ${opts.map(o => `<option value="${esc(o)}" ${o === st.state ? "selected" : ""}>${esc(label(o))}</option>`).join("")}
+    </select>`;
   }
 
   _label(entityId, prefix) {
@@ -645,13 +646,13 @@ class SmartifyEnergyPlanCard extends HTMLElement {
                 <span class="pb-label">Budget aktuell</span>
                 <span class="pb-budget ${budgetNow == null ? "" : budgetNow < 0 ? "negative" : budgetOk ? "positive" : ""}">${fmtW(budgetNow)}</span>
               </div>
+              ${this._config.show_mode ? this._modeSelect(dev.mode) : ""}
               ${this._config.show_settings !== false && dev.settings.length ? `<button class="gear ${open ? "open" : ""}" data-gear="${dev.id}" title="Einstellungen"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}
             </div>
             <div class="pb-extra">
               <span>Ø ${fmtW(budgetAverage)}</span>
               <span>Vorreserviert ${fmtW(upstream)}</span>
             </div>
-            ${this._config.show_mode ? this._modeSelect(dev.mode) : ""}
           </div>
         </div>
         ${open ? this._settings(dev.settings, dev.name) : ""}

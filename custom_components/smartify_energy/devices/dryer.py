@@ -53,8 +53,15 @@ class DryerDevice(LoadDevice):
         p = self._p() if on else 0
         sm = self.state["sm"]
         if sm == FINISHED:
-            self.status = FINISHED
-            return Decision(on, p, "Fertig – Reset erforderlich")
+            if not self._new_program_detected(ctx, on, p):
+                self.status = FINISHED
+                return Decision(on, p, "Fertig – neues Programm wird automatisch erkannt")
+            # Neuer Programmstart: automatischer Reset, direkt als laufend übernehmen.
+            self._reset()
+            self.state.update(sm=RUNNING, approved=True, forced_start=False,
+                              since=ctx.now.timestamp(), hp_done=False)
+            self.reason = "Automatischer Reset – neues Programm erkannt"
+            sm = RUNNING
         if sm in (IDLE, DETECTED, WAITING):
             if on and p > 9:
                 if self._detected_since is None:
