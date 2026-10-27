@@ -167,7 +167,7 @@ function collect(hass, hubId) {
     (byDevice[e.device_id] ||= {})[`${e.entity_id.split(".")[0]}:${e.translation_key}`] = e.entity_id;
     const dom = e.entity_id.split(".")[0];
     if (SETTING_DOMAINS.includes(dom)) {
-      if (e.translation_key !== "priority") (settings[e.device_id] ||= []).push({ id: e.entity_id, dom, key: e.translation_key, config: e.entity_category === "config" });
+      if (!["priority", "battery_rank"].includes(e.translation_key)) (settings[e.device_id] ||= []).push({ id: e.entity_id, dom, key: e.translation_key, config: e.entity_category === "config" });
     }
   }
   for (const list of Object.values(settings)) {
@@ -535,7 +535,10 @@ class SmartifyEnergyPlanCard extends HTMLElement {
   _label(entityId, prefix) {
     const st = this._st(entityId);
     let name = st?.attributes?.friendly_name || entityId;
-    if (prefix && name.startsWith(prefix)) name = name.slice(prefix.length).trim();
+    if (prefix && name.startsWith(prefix)) {
+      const trimmed = name.slice(prefix.length).trim();
+      if (trimmed) name = trimmed;
+    }
     return name;
   }
 
@@ -759,6 +762,12 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         e.stopPropagation();
         const id = el.dataset.gear;
         this._open.has(id) ? this._open.delete(id) : this._open.add(id);
+        // A focused select may have blocked incoming HA updates. The cached
+        // data/signature must be discarded on menu transitions, especially
+        // on close, even when no new HA event arrives afterward.
+        this._pendingBlur = false;
+        this._sig = "";
+        this._data = collect(this._hass, this._config.hub);
         this._render();
       } else if (el.dataset.press) {
         e.stopPropagation();
