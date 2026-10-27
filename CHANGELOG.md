@@ -1,3 +1,10 @@
+## 0.3.1 – Mittelungszeit und PV-Trend separat einstellbar
+- SEP-Hub: Mittelungszeit 1–60 Minuten (Standard 20) und Trendzeitraum 1–30 Minuten (Standard 10) unabhängig einstellbar; bestehende gespeicherte Mittelungswerte bleiben erhalten.
+- Automatischer PV-Start von Waschmaschine, Geschirrspüler und wiederanlauffähigem Trockner benötigt zusätzlich zu aktuellem und durchschnittlichem Gerätebudget einen stabilen Trend: Mittelwert des jüngsten Trendfensters minus vorheriges Trendfenster mindestens minus Trendtoleranz (0–500 W, Standard 100 W).
+- Bei unvollständiger Trendhistorie bleibt die automatische Freigabe aus. Sofort-/Spätstart und bereits laufende Programme werden nicht blockiert oder unterbrochen.
+- Deutsche und englische Bezeichnungen für alle neuen SEP-Zahlen-Entitäten.
+- Softwareprüfung im GitHub-Workflow; keine Bestätigung für reale Hardwaregeräte.
+
 ## 0.3.0 – Recorder, reaktive Regelung und HA-Qualität
 - Recorder entlastet: Budget-/Planattribute nicht aufzeichnen, identische Zustände nicht schreiben; Live-Werte gebündelt veröffentlichen.
 - Keine verlorenen Regelläufe: während eines laufenden Zyklus angeforderte Neubewertungen unmittelbar nachholen.
