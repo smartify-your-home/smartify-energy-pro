@@ -462,6 +462,57 @@ class EnergyManager:
                 "vorreservierung_w": round(upstream), "benoetigt_w": 0,
                 "zusaetzlich_reserviert_w": round(battery_w)}
 
+    async def _preempt_lower_priority(self, ctx: Context) -> bool:
+        """Shed controllable downstream loads before an upstream PV start.
+
+        Never use a promised release as real grid power: return from this
+        cycle, then wait for a new physical grid reading and the average/trend
+        gates. Thus an OFF timeout cannot fund another consumer.
+        """
+        if self.hub_mode != MODE_AUTO or ctx.night_window:
+            return False
+        devices = self._sorted_devices(ctx)
+        for target in devices:
+            if (target.TYPE != "load" or target.mode != MODE_AUTO
+                    or target.state.get("sm") != "wartet"
+                    or target.state.get("approved")
+                    or not ctx.history_ready or not ctx.trend_ready
+                    or ctx.trend_delta < -float(self.p("trend_tolerance"))):
+                continue
+            earliest = time_from_str(target.p("earliest_start"), time(0))
+            latest = time_from_str(target.p("latest_start"), time(23, 59))
+            if ctx.now.time() < earliest or ctx.now.time() >= latest:
+                continue
+            need = target.pv_start_need
+            # The grid reading already contains downstream physical loads.
+            # The device's own load is not yet running while it waits.
+            deficit = max(need - ctx.budget_now, need - ctx.budget_avg)
+            if deficit <= 0:
+                continue
+            for lower in reversed(devices):
+                if lower.priority <= target.priority or lower.TYPE not in ("heater", "ev"):
+                    continue
+                can = getattr(lower, "can_preempt", None)
+                if not can or not can(ctx.now):
+                    continue
+                measured = self._measured_power.get(lower.id, 0.0)
+                if measured <= 0:
+                    continue
+                try:
+                    await lower.async_preempt(ctx)
+                except Exception:  # noqa: BLE001
+                    _LOGGER.exception("[%s] Rücknahme für [%s] fehlgeschlagen",
+                                      lower.name, target.name)
+                    lower._actuator_retry_at = ctx.now.timestamp() + 30
+                    continue
+                _LOGGER.info("[%s] gibt gemessene %.0f W für [%s] frei",
+                             lower.name, measured, target.name)
+                # Never credit the command itself. Sensor confirmation first.
+                self._plan_dirty = True
+                self._schedule_run(2.0)
+                return True
+        return False
+
     async def _async_run(self) -> None:
         now = dt_util.now()
         dt = (now - self._last_run).total_seconds() if self._last_run else 0.0
@@ -520,6 +571,8 @@ class EnergyManager:
                       budget_short=short_avg, history_ready=ready, night_window=night,
                       trend_delta=trend_delta, trend_ready=trend_ready)
         ctx.alloc_base = self.budget_avg if ready else budget
+        if await self._preempt_lower_priority(ctx):
+            return
 
         for dev in self.devices.values():
             if not dev._unavailable_actor():
