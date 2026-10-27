@@ -683,6 +683,12 @@
       },
       "trend_tolerance": {
         "name": "Trend tolerance"
+      },
+      "phase_switch_minutes": {
+        "name": "Phase switch minimum interval"
+      },
+      "phase_hysteresis": {
+        "name": "Phase switch hysteresis"
       }
     },
     "time": {

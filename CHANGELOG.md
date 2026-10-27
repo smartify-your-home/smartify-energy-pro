@@ -1,3 +1,8 @@
+## 0.3.4 – Phasenumschaltung einstellbar
+- Wallbox mit 1/3-Phasen-Umschaltung: neuer Mindestabstand zwischen zwei Umschaltungen (5–60 min, Standard 20 min; bisher fest 10 min) und neue Hysterese um die Dreiphasen-Mindestleistung (0–1500 W, Standard 500 W; bisher fest 300 W).
+- Beispiel 6 A Mindeststrom: dreiphasig ab ca. 4,6 kW, zurück auf einphasig unter ca. 3,6 kW.
+- Hilfetexte in der Card, deutsche/englische Bezeichnungen, Regressionstests. Keine bestätigte Prüfung an realen Geräten.
+
 ## 0.3.4 – Sichere prioritätsabhängige Lastverdrängung
 - Nachrangige, gemessene Heizstäbe und freiwillige PV-Wallboxladung können vor dem Start einer höher priorisierten Waschmaschine oder eines Geschirrspülers zurückgenommen werden; Mindestlaufzeit, Modus und Aktorverfügbarkeit gelten weiter.
 - Neue Absicherung: keine unnötige Unterbrechung, wenn die Summe der rücknehmbaren Leistung das Leistungsdefizit nicht deckt; bereits an vorrangige Geräte anrechenbare, nachrangige Akku-Ladung fließt in diese Vorprüfung ein.
