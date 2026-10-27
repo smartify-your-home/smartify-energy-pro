@@ -1,6 +1,12 @@
 # Installation und Updates
 
-Aktuelle Version: **0.3.0**. Integrationsdomain: `smartify_energy`.
+Aktuelle Version: **0.3.1**. Integrationsdomain: `smartify_energy`.
+
+## Neu in 0.3.1
+- Der SEP-Hub bietet zwei getrennte Einstellungen: **Mittelungszeit** (1–60 Minuten, Standard 20) und **Trendzeitraum** (1–30 Minuten, Standard 10). Zusätzlich ist die Trendtoleranz (Standard 100 W) einstellbar.
+- Die Trendprüfung wartet nach Start oder Parameteränderung auf zwei vollständige Trendabschnitte. Bei zehn Minuten Trenddauer sind das 20 Minuten. Die Mittelung muss ebenfalls ausreichend gefüllt sein.
+- Es werden nur automatische PV-Freigaben von Haushaltsgeräten blockiert; Sofortstart, Spätstart und laufende Programme bleiben unberührt.
+- Ein bereits gespeicherter Mittelungswert (z. B. zehn Minuten) wird beim Update **nicht automatisch auf 20 Minuten überschrieben**. Dafür den SEP-Zahlenwert manuell anpassen.
 
 ## Update über HACS
 1. Vor dem Update Home-Assistant-Backup erstellen und die bestehenden SEP-Geräteeinstellungen dokumentieren.
