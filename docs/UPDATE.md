@@ -32,6 +32,9 @@ Aktuelle Version: **0.3.9**. Integrationsdomain: `smartify_energy`.
 - Externe Überschusssenken/Ohmpilot wurden nicht verändert; keine neue Prioritätsintegration.
 - Nach dem Update die realen Lasten und Prioritäten in einem sicheren Testlauf prüfen.
 
+## Neu in 0.3.9
+Die allgemeine SEP-Konfiguration zeigt den Akku-Rang nicht mehr als leeres Zahlenfeld. Der Rang bleibt bei den Prioritäten des PV-Akkus erhalten. Nach dem Schließen eines Einstellungsmenüs wird die Karte sofort aus dem letzten HA-Zustand aktualisiert. Nach Installation über HACS: Home Assistant und bei Bedarf die Dashboard-Ansicht neu laden.
+
 ## Update über HACS
 1. Vor dem Update Home-Assistant-Backup erstellen und die bestehenden SEP-Geräteeinstellungen dokumentieren.
 2. In HACS **Smartify Energy Pro** öffnen und die neue Version herunterladen. Falls sie nicht angeboten wird, Repository in HACS neu laden.
