@@ -1,5 +1,7 @@
 # Smartify Energy Pro
 
+**Update auf 0.3.8:** Heizstab im Modus Manuell heizt jetzt aktiv mit erlaubtem Netzbezug. Vor dem Update bei unerwünschter Nachheizung auf Aus stellen. Danach Home Assistant neu starten und das Dashboard neu laden. WP-WW-Einmalladung: Manuell/Aus werden zu Deaktiviert zusammengeführt; laufende Ladungen bleiben unberührt.
+
 ## WP-WW-Einmalladung: vereinfachte Modi (0.3.7)
 
 Nur bei der WP-WW-Einmalladung heißen die Modi jetzt **Automatik**, **Beobachten** und **Deaktiviert**. Automatik löst den Boost nach den eingestellten Bedingungen aus; Beobachten zeigt nur Empfehlungen. Deaktiviert löst keinen neuen Boost aus und verändert weder den Auslöser noch eine bereits laufende WW-Ladung. Diese wird von der Wärmepumpe beendet. Bisher gespeicherte Werte Manuell und Aus werden beim Laden zu Deaktiviert zusammengeführt; auch alte interne Moduswerte bleiben ohne Startfreigabe.
@@ -16,7 +18,7 @@ PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrüc
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.3.1** · Integrationsdomain: `smartify_energy`
+Version: **0.3.8** · Integrationsdomain: `smartify_energy`
 
 ## Dokumentation und Updates
 
@@ -25,7 +27,7 @@ Version: **0.3.1** · Integrationsdomain: `smartify_energy`
 - [Update-Anleitung und Funktionstest](docs/UPDATE.md)
 - [Funktionsstand und bekannte Grenzen](docs/FUNCTIONS.md)
 - [Pflichtfelder, optionale und bedingte Entitäten je Funktion](docs/REQUIRED_FIELDS.md)
-- [SEP 0.2.22–0.2.26: Prioritäten, Akku, WW-Boost und Dashboard](docs/SEP_CURRENT.md)
+- [SEP: Prioritäten, Akku, WW-Boost und Dashboard](docs/SEP_CURRENT.md)
 
 ## Einstellbare PV-Startfreigabe für Haushaltsgeräte
 

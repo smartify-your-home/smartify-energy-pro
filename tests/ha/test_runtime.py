@@ -330,7 +330,7 @@ async def test_preemption_respects_priority_and_minimum_on_time(hass):
 async def test_manual_heater_reserves_before_higher_priority_pv_consumer(hass):
     from custom_components.smartify_energy.devices.heater import HeaterDevice
     m = manager(hass)
-    hass.states.async_set('sensor.grid', '-3000', {'unit_of_measurement': 'W'})
+    hass.states.async_set('sensor.grid', '3000', {'unit_of_measurement': 'W'})
     hass.states.async_set('sensor.temp', '45')
     hass.states.async_set('switch.heater', 'off')
     heater = HeaterDevice(m, 'heater', 'Heater', {

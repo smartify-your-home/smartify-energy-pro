@@ -1,4 +1,4 @@
-# Smartify Energy Pro – aktueller Funktionsstand 0.2.26
+# Smartify Energy Pro – aktueller Funktionsstand 0.3.8
 
 ## WP-WW-Einmalladung: vereinfachte Modi (0.3.7)
 
@@ -14,7 +14,7 @@ Heizstab, andere Verbraucher und der WP-Boost über einen dauerhaften Zahlensoll
 PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrücknahme gelten nur in Automatik. Im Handbetrieb bleiben Mindestpause, Temperaturüberwachung und sofortige Abschaltung bei ungültiger Temperatur oder Geräte-/Hub-Aus aktiv. Die Mindestlaufzeit kann die Temperaturabschaltung nicht verzögern. Manuelle Heizleistung ist nicht für andere Geräte rücknehmbar; noch nicht gemessene Heizleistung wird vor PV-Freigaben reserviert. Andere Gerätetypen behalten ihr bisheriges manuelles Verhalten.
 
 
-**Stand:** 26. Oktober 2026. Diese Dokumentation erklärt die tatsächlich implementierten Funktionen. Automatisierte Regressionstests ersetzen keinen Test mit realen Verbrauchern.
+**Stand:** 27. Oktober 2026. Diese Dokumentation erklärt die tatsächlich implementierten Funktionen. Automatisierte Regressionstests ersetzen keinen Test mit realen Verbrauchern.
 
 ## 1. Zentrale Berechnungen
 

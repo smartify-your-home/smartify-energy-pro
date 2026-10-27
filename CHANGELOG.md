@@ -1,3 +1,14 @@
+## 0.3.8 – Heizstab-Handbetrieb und vereinfachter WP-WW-Boost
+
+Dieses Update enthält auch die Änderungen der nicht veröffentlichten Versionen 0.3.6 und 0.3.7.
+
+- **Heizstab – Manuell:** SEP heizt temperaturgeregelt auch mit Netzstrom. Abschaltung bei Solltemperatur, erneuter Start unter Soll minus Hysterese (z. B. 50 °C / unter 49 °C). Das wiederholt sich, solange Manuell aktiv bleibt. Aus beendet das Heizen, Automatik stellt auf PV-Regelung zurück. Temperaturüberwachung und Mindestpause bleiben aktiv.
+- **Vor dem Update:** War der Heizstab bisher auf Manuell, bei unerwünschter Nachheizung vorher auf Aus stellen. Manuell bedeutete bisher keine SEP-Steuerung und erlaubt jetzt aktives Heizen mit Netzstrom.
+- **Nur WP-WW-Einmalladung:** Automatik, Beobachten, Deaktiviert. Die bisherigen Einstellungen Manuell/Aus werden zu Deaktiviert übernommen. Deaktiviert startet keinen neuen Boost; eine laufende WW-Ladung wird nicht unterbrochen. Andere Geräte und der WP-Zahlensollwert behalten ihre Modi.
+- **Nach dem Update:** Home Assistant neu starten, danach das Dashboard neu laden. Bei weiterhin alter Kartendarstellung den Browser-Cache aktualisieren.
+- **Release-Korrektur:** Falsches Netzsaldo-Vorzeichen im neuen HA-Integrationstest korrigiert. Die Veröffentlichung von 0.3.6/0.3.7 war deshalb blockiert; keine Abschwächung der Testaussage.
+- README (auch HACS-Infoseite), Funktionsstand, Update-Anleitung und Release-Hinweise aktualisiert. Kein Test an realer Heizstab-/WP-Hardware.
+
 ## 0.3.7 – Deaktiviert für WP-WW-Einmalladung
 - Nur bei der WP-WW-Einmalladung werden Manuell und Aus zu Deaktiviert zusammengeführt. Auswahl: Automatik, Beobachten, Deaktiviert.
 - Bestehende manuelle/ausgeschaltete Einmalladungen bleiben deaktiviert; laufende WW-Ladungen und Auslöser werden nicht zurückgesetzt.
