@@ -253,3 +253,74 @@ async def test_failed_off_does_not_free_power(hass):
     m._read_inputs()
     assert m.managed==0  # cannot reclaim power during retry cooldown
     await m.async_stop()
+
+async def test_preemption_only_if_lower_priority_can_cover_deficit(hass):
+    m = manager(hass)
+    m.params.update(avg_window=20, trend_window=10, trend_tolerance=100,
+                    battery_rank=99)
+    hass.states.async_set('sensor.grid', '500', {'unit_of_measurement':'W'})
+    from custom_components.smartify_energy.devices.load import LoadDevice
+    from custom_components.smartify_energy.devices.heater import HeaterDevice
+    from custom_components.smartify_energy.devices.base import Context
+    from unittest.mock import AsyncMock
+
+    washer = LoadDevice(m, 'washer', 'Waschmaschine', {
+        'switch': 'switch.washer', 'nominal_power': 2200})
+    washer.params.update(mode='auto', priority=1, latest_start='23:59')
+    washer.state['sm'] = 'wartet'
+    m.devices['washer'] = washer
+
+    heater = HeaterDevice(m, 'heater', 'Heizstab', {
+        'switch': 'switch.heater', 'power_sensor': 'sensor.heater_power',
+        'temperature_sensor': 'sensor.temp', 'nominal_power': 2000})
+    heater.params.update(mode='auto', priority=5)
+    heater.async_preempt = AsyncMock()
+    m.devices['heater'] = heater
+    hass.states.async_set('switch.washer', 'off')
+    hass.states.async_set('switch.heater', 'on')
+    hass.states.async_set('sensor.temp', '40')
+    hass.states.async_set('sensor.heater_power', '2000', {'unit_of_measurement':'W'})
+    m._read_inputs()
+    ctx = Context(now=dt_util.now(), dt=30, budget_now=500, budget_avg=500,
+                  budget_short=500, history_ready=True, night_window=False,
+                  trend_ready=True, trend_delta=0)
+    assert await m._preempt_lower_priority(ctx)
+    heater.async_preempt.assert_awaited_once()
+    heater.async_preempt.reset_mock()
+    m._measured_power['heater'] = 1500
+    assert not await m._preempt_lower_priority(ctx)
+    heater.async_preempt.assert_not_awaited()
+    await m.async_stop()
+
+
+async def test_preemption_respects_priority_and_minimum_on_time(hass):
+    m = manager(hass)
+    from custom_components.smartify_energy.devices.load import LoadDevice
+    from custom_components.smartify_energy.devices.heater import HeaterDevice
+    from custom_components.smartify_energy.devices.base import Context
+    from unittest.mock import AsyncMock
+    washer = LoadDevice(m, 'washer', 'Waschmaschine', {
+        'switch':'switch.washer', 'nominal_power':2200})
+    washer.params.update(mode='auto', priority=4, latest_start='23:59')
+    washer.state['sm'] = 'wartet'
+    heater = HeaterDevice(m, 'heater', 'Heizstab', {
+        'switch':'switch.heater', 'power_sensor':'sensor.heater_power',
+        'temperature_sensor':'sensor.temp','nominal_power':2500})
+    heater.params.update(mode='auto', priority=2, heater_min_on=5)
+    heater.async_preempt = AsyncMock()
+    m.devices.update(washer=washer, heater=heater)
+    hass.states.async_set('switch.washer', 'off')
+    hass.states.async_set('switch.heater', 'on')
+    hass.states.async_set('sensor.heater_power', '2500', {'unit_of_measurement':'W'})
+    hass.states.async_set('sensor.temp', '40')
+    m._read_inputs()
+    ctx = Context(now=dt_util.now(), dt=30, budget_now=0, budget_avg=0,
+                  budget_short=0, history_ready=True, night_window=False,
+                  trend_ready=True, trend_delta=0)
+    assert not await m._preempt_lower_priority(ctx)
+    heater.params['priority'] = 6
+    heater.state.update(last_switch=ctx.now.timestamp(), last_switch_state=True)
+    assert not await m._preempt_lower_priority(ctx)
+    heater.async_preempt.assert_not_awaited()
+    await m.async_stop()
+
