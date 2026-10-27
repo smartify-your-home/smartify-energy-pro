@@ -52,7 +52,7 @@ const OPTION_LABELS = {
 };
 const MODE_LABELS = { auto: "Automatik", observe: "Beobachten", manual: "Manuell", off: "Aus" };
 const TYPE_ICONS = { load: "mdi:washing-machine", pool: "mdi:pool", ev: "mdi:ev-station", heatpump: "mdi:heat-pump", heater: "mdi:water-boiler" };
-const STATUS_LABELS = {
+const STATUS_LABELS = {"initializing": "Initialisierung", "ready": "Bereit", "detected": "Erkannt", "waiting": "Wartet", "running": "Läuft", "finished": "Fertig", "off": "Aus", "manual": "Manuell", "observing": "Beobachten", "inactive": "Inaktiv", "locked": "Sperrzeit", "limit_reached": "Grenze erreicht", "disconnected": "Nicht verbunden", "full": "Voll", "charging_now": "Lädt sofort", "charging_required": "Pflichtladen", "charging_pv": "PV-Laden", "boost": "Boost", "actuator_unavailable": "Aktor nicht verfügbar", "actuator_error": "Aktorfehler",
   laeuft: "läuft", wartet: "wartet", bereit: "bereit", erkannt: "erkannt", fertig: "fertig",
   aus: "aus", manuell: "manuell", beobachten: "beobachten", inaktiv: "inaktiv", sperrzeit: "Sperrzeit",
   max_erreicht: "Max erreicht", nicht_verbunden: "nicht angesteckt", voll: "voll",
@@ -395,6 +395,29 @@ const CARD_CSS = `
   .tgl input:checked + span::before { transform:translateX(16px); }
 `;
 
+// Patch live values in place. Preserve nodes, handlers, focus and scroll position.
+function patchChildren(parent, source) {
+  const key = node => node.nodeType === 1 ? (node.getAttribute("data-device") || node.getAttribute("data-select") || node.getAttribute("data-num") || node.getAttribute("data-gear") || "") : "";
+  const same = (a, b) => a && a.nodeType === b.nodeType && a.nodeName === b.nodeName && key(a) === key(b);
+  const wanted = [...source.childNodes];
+  wanted.forEach((next, i) => {
+    let old = parent.childNodes[i];
+    if (!same(old, next)) {
+      const match = key(next) && [...parent.childNodes].slice(i + 1).find(n => same(n, next));
+      if (match) { parent.insertBefore(match, old || null); old = match; }
+      else { const copy = next.cloneNode(true); parent.insertBefore(copy, old || null); old = copy; }
+    }
+    if (old.nodeType === 3) { if (old.textContent !== next.textContent) old.textContent = next.textContent; return; }
+    if (old.nodeType !== 1) return;
+    for (const attr of [...old.attributes]) if (!next.hasAttribute(attr.name)) old.removeAttribute(attr.name);
+    for (const attr of next.attributes) if (old.getAttribute(attr.name) !== attr.value) old.setAttribute(attr.name, attr.value);
+    patchChildren(old, next);
+    if (old.matches("input")) { old.value = next.value; old.checked = next.checked; }
+    if (old.matches("select")) old.value = next.value;
+  });
+  while (parent.childNodes.length > wanted.length) parent.lastChild.remove();
+}
+
 class SmartifyEnergyPlanCard extends HTMLElement {
   constructor() {
     super();
@@ -593,7 +616,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const icon = a.icon || TYPE_ICONS[a.geraetetyp] || "mdi:flash";
       const border = forced ? FORCED_GRADIENT : on ? dev.color : null;
       const statusTxt = STATUS_LABELS[st?.state] || st?.state || "";
-      const sub = mode === "observe" && a.empfehlung ? `Empfehlung: ${a.empfehlung}` : (a.grund || statusTxt);
+      const sub = mode === "observe" && a.empfehlung ? `Empfehlung: ${a.empfehlung}` : (a.reason || a.grund || statusTxt);
       const planned = this._st(dev.planned);
       const pt = planned && planned.state && !["unknown", "unavailable"].includes(planned.state) ? fmtTime(planned.state) : null;
       const planTxt = pt ? `Empf. Start ${pt}${planned.attributes.pv_anteil_prozent != null ? ` · ${planned.attributes.pv_anteil_prozent} % PV` : ""}` : "";
@@ -701,7 +724,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       return;
     }
     const title = c.title ?? d.name;
-    this.shadowRoot.innerHTML = `
+    const markup = `
       <style>${CARD_CSS}</style>
       <ha-card>
         ${title || d.ents["select:mode"] ? `<div class="title"><span>${esc(title || "")}</span><span class="sp"></span>${this._modeSelect(d.ents["select:mode"])}
@@ -711,40 +734,41 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         ${c.show_priorities ? `<div class="section"><span>Prioritäten</span><span>1 = hoher Vorrang · ziehen zum Sortieren</span></div>${this._devices(d)}` : ""}
         ${c.show_timeline ? `<div class="section"><span>PV-Plan</span><span>Heute + morgen</span></div>${this._timeline(d)}` : ""}
       </ha-card>`;
+    const template = document.createElement("template");
+    template.innerHTML = markup;
+    patchChildren(this.shadowRoot, template.content);
     this._bind(d);
   }
 
   _bind(d) {
+    this._boundData = d;
+    if (this._eventsBound) return;
+    this._eventsBound = true;
     const root = this.shadowRoot;
-    root.querySelectorAll("[data-more]").forEach(el =>
-      el.addEventListener("click", () => this._moreInfo(el.dataset.more)));
-    root.querySelectorAll("select[data-select]").forEach(el => {
-      el.addEventListener("click", e => e.stopPropagation());
-      el.addEventListener("change", e => {
-        const [domain] = el.dataset.select.split(".");
-        this._hass.callService(domain, "select_option", { entity_id: el.dataset.select, option: e.target.value });
-      });
+    root.addEventListener("click", e => {
+      const el = e.target.closest?.("[data-gear], [data-more], [data-press], select");
+      if (!el) return;
+      if (el.matches("select")) { e.stopPropagation(); return; }
+      if (el.dataset.gear) {
+        e.stopPropagation();
+        const id = el.dataset.gear;
+        this._open.has(id) ? this._open.delete(id) : this._open.add(id);
+        this._render();
+      } else if (el.dataset.press) {
+        e.stopPropagation();
+        this._hass.callService("button", "press", {entity_id: el.dataset.press});
+      } else this._moreInfo(el.dataset.more);
     });
-    root.querySelectorAll(".handle").forEach(h => h.addEventListener("pointerdown", e => this._dragStart(e, d)));
-    root.querySelectorAll("[data-gear]").forEach(el => el.addEventListener("click", e => {
-      e.stopPropagation();
-      const id = el.dataset.gear;
-      this._open.has(id) ? this._open.delete(id) : this._open.add(id);
-      this._render();
-    }));
-    root.querySelectorAll("input[data-num]").forEach(el => el.addEventListener("change", e => {
-      const v = parseFloat(e.target.value);
-      if (!isNaN(v)) this._hass.callService("number", "set_value", { entity_id: el.dataset.num, value: v });
-    }));
-    root.querySelectorAll("input[data-switch]").forEach(el => el.addEventListener("change", e =>
-      this._hass.callService("switch", e.target.checked ? "turn_on" : "turn_off", { entity_id: el.dataset.switch })));
-    root.querySelectorAll("input[data-time]").forEach(el => el.addEventListener("change", e => {
-      if (e.target.value) this._hass.callService("time", "set_value", { entity_id: el.dataset.time, time: `${e.target.value}:00` });
-    }));
-    root.querySelectorAll("button[data-press]").forEach(el => el.addEventListener("click", e => {
-      e.stopPropagation();
-      this._hass.callService("button", "press", { entity_id: el.dataset.press });
-    }));
+    root.addEventListener("change", e => {
+      const el = e.target;
+      if (el.dataset.select) this._hass.callService(el.dataset.select.split(".")[0], "select_option", {entity_id: el.dataset.select, option: el.value});
+      else if (el.dataset.num && Number.isFinite(parseFloat(el.value))) this._hass.callService("number", "set_value", {entity_id: el.dataset.num, value: parseFloat(el.value)});
+      else if (el.dataset.switch) this._hass.callService("switch", el.checked ? "turn_on" : "turn_off", {entity_id: el.dataset.switch});
+      else if (el.dataset.time && el.value) this._hass.callService("time", "set_value", {entity_id: el.dataset.time, time: `${el.value}:00`});
+    });
+    root.addEventListener("pointerdown", e => {
+      if (e.target.closest?.(".handle")) this._dragStart(e, this._boundData);
+    });
   }
 
   // ── Drag & Drop (Maus + Touch, ohne externe Bibliothek) ──────────────────

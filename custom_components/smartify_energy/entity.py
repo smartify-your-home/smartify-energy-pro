@@ -1,7 +1,9 @@
 """Gemeinsame Entity-Basis."""
 from __future__ import annotations
 
-from typing import Any, Callable, Iterable
+from collections.abc import Callable, Iterable
+from copy import deepcopy
+from typing import Any
 
 from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
@@ -9,7 +11,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN, MANUFACTURER, NAME, SIGNAL_UPDATE, VERSION
+from .const import DOMAIN, MANUFACTURER, NAME, SIGNAL_UPDATE
 from .devices import BaseDevice
 from .manager import EnergyManager
 
@@ -24,6 +26,7 @@ class SmartifyEntity(Entity):
         self.manager = manager
         self.owner = owner
         self._key = key
+        self._last_written = None
         self._attr_translation_key = key
         if isinstance(owner, BaseDevice):
             self._attr_unique_id = f"{manager.entry.entry_id}_{owner.id}_{key}"
@@ -40,7 +43,7 @@ class SmartifyEntity(Entity):
                 name=manager.entry.title,
                 manufacturer=MANUFACTURER,
                 model=NAME,
-                sw_version=VERSION,
+                sw_version=getattr(manager, "integration_version", None),
                 entry_type=DeviceEntryType.SERVICE,
             )
 
@@ -53,6 +56,10 @@ class SmartifyEntity(Entity):
 
     @callback
     def _handle_update(self) -> None:
+        snapshot = (self.state, self.available, self.extra_state_attributes)
+        if snapshot == self._last_written:
+            return
+        self._last_written = deepcopy(snapshot)
         self.async_write_ha_state()
 
 

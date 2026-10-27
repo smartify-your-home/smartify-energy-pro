@@ -10,15 +10,20 @@ aktive Rückstellung und behält deshalb den bisherigen Regelmodus.
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta
 import math
+from datetime import datetime, timedelta
 
 from ..const import (
-    BOOST_BUTTON, BOOST_NUMBER, CONF_BOOST_ENTITY, CONF_BOOST_TYPE,
-    CONF_TEMP_SENSOR, CONF_WW_ACTIVE_ENTITY, CONF_WW_BOOST_TEMP_ENTITY,
+    BOOST_BUTTON,
+    BOOST_NUMBER,
+    CONF_BOOST_ENTITY,
+    CONF_BOOST_TYPE,
+    CONF_TEMP_SENSOR,
+    CONF_WW_ACTIVE_ENTITY,
+    CONF_WW_BOOST_TEMP_ENTITY,
 )
 from ..forecast_window import rolling_energy
-from ..helpers import ParamSpec, SensorSpec, is_on, state_float, state_str, power_w
+from ..helpers import ParamSpec, SensorSpec, is_on, power_w, state_float, state_str
 from .base import BaseDevice, Context, Decision, PlanDemand
 
 
@@ -446,7 +451,7 @@ class HeatPumpDevice(BaseDevice):
         if self.cfg.get(CONF_BOOST_TYPE) == BOOST_BUTTON:
             # Trigger once per boost session; buttons cannot stop a physical cycle.
             if on:
-                await self.hass.services.async_call(
+                await self._call_actor(
                     self.entity.split(".")[0], "press",
                     {"entity_id": self.entity}, blocking=True
                 )
@@ -456,7 +461,7 @@ class HeatPumpDevice(BaseDevice):
                      else float(self.p("boost_value" if on else "normal_value")))
             if value is None:
                 raise ValueError("WW-Boost-Solltemperatur nicht verfügbar")
-            await self.hass.services.async_call(self.entity.split(".")[0], "set_value",
+            await self._call_actor(self.entity.split(".")[0], "set_value",
                                                 {"entity_id": self.entity, "value": value}, blocking=True)
         else:
             await self._switch(self.entity, on)

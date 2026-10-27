@@ -363,7 +363,7 @@ class EvDevice(BaseDevice):
         if state_float(self.hass, ent) == float(amps):
             return
         domain = ent.split(".")[0]
-        await self.hass.services.async_call(domain, "set_value", {"entity_id": ent, "value": amps}, blocking=True)
+        await self._call_actor(domain, "set_value", {"entity_id": ent, "value": amps}, blocking=True)
 
     async def _set_phases(self, phases: int | None, ctx: Context) -> None:
         ent = self.cfg.get(CONF_PHASE_ENTITY)
@@ -372,7 +372,7 @@ class EvDevice(BaseDevice):
         option = self.cfg.get(CONF_PHASE_1 if phases == 1 else CONF_PHASE_3)
         if not option or state_str(self.hass, ent) == option:
             return
-        await self.hass.services.async_call(ent.split(".")[0], "select_option",
+        await self._call_actor(ent.split(".")[0], "select_option",
                                             {"entity_id": ent, "option": option}, blocking=True)
         self.state["phase_switch"] = ctx.now.timestamp()
         self.state["phases"] = phases
@@ -387,11 +387,11 @@ class EvDevice(BaseDevice):
         if domain in ("select", "input_select"):
             option = self.cfg.get(CONF_CONTROL_ON if on else CONF_CONTROL_OFF)
             if option:
-                await self.hass.services.async_call(domain, "select_option",
+                await self._call_actor(domain, "select_option",
                                                     {"entity_id": ent, "option": option}, blocking=True)
         elif domain in ("button", "input_button"):
             if on:
-                await self.hass.services.async_call(domain, "press", {"entity_id": ent}, blocking=True)
+                await self._call_actor(domain, "press", {"entity_id": ent}, blocking=True)
         else:
             await self._switch(ent, on)
         _LOGGER.info("[%s] Laden %s (%s)", self.name, "EIN" if on else "AUS", self.reason)

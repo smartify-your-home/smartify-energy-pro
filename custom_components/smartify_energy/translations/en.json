@@ -15,7 +15,10 @@
         "data_description": {
           "grid_sensor": "Power at the grid connection point.",
           "sink_sensors": "Power of external surplus sinks is shown for information but not credited to SEP's control budget without direct curtailment.",
-          "grid_export_sensor": "Optional. If set: grid sensor = import, this sensor = export (both positive); sign is ignored."
+          "grid_export_sensor": "Optional. If set: grid sensor = import, this sensor = export (both positive); sign is ignored.",
+          "name": "Choose a distinct display name so you can identify this device easily.",
+          "grid_sign": "Select which sign your grid sensor shows while exporting. A wrong choice reverses import and export.",
+          "interval": "Regular control interval in seconds, default 30. Relevant sensor events also request a faster coalesced evaluation. Minimum run and pause times still apply."
         }
       },
       "forecast": {
@@ -37,6 +40,12 @@
           "battery_power": "Battery power",
           "battery_sign": "Battery power sign",
           "battery_capacity": "Usable capacity"
+        },
+        "data_description": {
+          "battery_soc": "Optional home battery charge level in percent. Leave empty if there is no home battery.",
+          "battery_power": "Optional home battery charge/discharge power in W or kW, not energy in kWh.",
+          "battery_sign": "Check the power sensor while charging: choose charge positive for positive values, discharge positive for negative values.",
+          "battery_capacity": "Usable home battery capacity in kWh. Used to estimate energy needed to fill it."
         }
       }
     }
@@ -56,7 +65,10 @@
         "data_description": {
           "grid_sensor": "Power at the grid connection point.",
           "sink_sensors": "Power of external surplus sinks is shown for information but not credited to SEP's control budget without direct curtailment.",
-          "grid_export_sensor": "Optional. If set: grid sensor = import, this sensor = export (both positive); sign is ignored."
+          "grid_export_sensor": "Optional. If set: grid sensor = import, this sensor = export (both positive); sign is ignored.",
+          "name": "Choose a distinct display name so you can identify this device easily.",
+          "grid_sign": "Select which sign your grid sensor shows while exporting. A wrong choice reverses import and export.",
+          "interval": "Regular control interval in seconds, default 30. Relevant sensor events also request a faster coalesced evaluation. Minimum run and pause times still apply."
         }
       },
       "forecast": {
@@ -78,6 +90,12 @@
           "battery_power": "Battery power",
           "battery_sign": "Battery power sign",
           "battery_capacity": "Usable capacity"
+        },
+        "data_description": {
+          "battery_soc": "Optional home battery charge level in percent. Leave empty if there is no home battery.",
+          "battery_power": "Optional home battery charge/discharge power in W or kW, not energy in kWh.",
+          "battery_sign": "Check the power sensor while charging: choose charge positive for positive values, discharge positive for negative values.",
+          "battery_capacity": "Usable home battery capacity in kWh. Used to estimate energy needed to fill it."
         }
       }
     }
@@ -101,7 +119,11 @@
           },
           "data_description": {
             "switch": "Plug stays on; start the program at the appliance.",
-            "appliance_type": "Choose washing machine, dishwasher, or other. Sets the icon for the device status and priority card without changing load control."
+            "appliance_type": "Choose washing machine, dishwasher, or other. Sets the icon for the device status and priority card without changing load control.",
+            "name": "Choose a distinct display name so you can identify this device easily.",
+            "power_sensor": "Measured electrical power of this device in W or kW, not cumulative energy in kWh. Improves detection and allocation.",
+            "nominal_power": "Typical electrical demand in W; for household appliances use heating power. Used for reservations and as a fallback if no measurement is available.",
+            "duration": "Estimated program duration in hours, e.g. 2.5. Used for planning, not automatic shutdown."
           }
         },
         "reconfigure": {
@@ -116,7 +138,11 @@
           },
           "data_description": {
             "switch": "Plug stays on; start the program at the appliance.",
-            "appliance_type": "Choose washing machine, dishwasher, or other. Sets the icon for the device status and priority card without changing load control."
+            "appliance_type": "Choose washing machine, dishwasher, or other. Sets the icon for the device status and priority card without changing load control.",
+            "name": "Choose a distinct display name so you can identify this device easily.",
+            "power_sensor": "Measured electrical power of this device in W or kW, not cumulative energy in kWh. Improves detection and allocation.",
+            "nominal_power": "Typical electrical demand in W; for household appliances use heating power. Used for reservations and as a fallback if no measurement is available.",
+            "duration": "Estimated program duration in hours, e.g. 2.5. Used for planning, not automatic shutdown."
           }
         }
       },
@@ -145,7 +171,11 @@
             "temperature_sensor": "Water temperature"
           },
           "data_description": {
-            "temperature_sensor": "Optional."
+            "temperature_sensor": "Optional.",
+            "name": "Choose a distinct display name so you can identify this device easily.",
+            "switch": "Select the switch that supplies or enables this device. Automatic control may operate it.",
+            "power_sensor": "Measured electrical power of this device in W or kW, not cumulative energy in kWh. Improves detection and allocation.",
+            "nominal_power": "Typical electrical demand in W; for household appliances use heating power. Used for reservations and as a fallback if no measurement is available."
           }
         },
         "reconfigure": {
@@ -158,7 +188,11 @@
             "temperature_sensor": "Water temperature"
           },
           "data_description": {
-            "temperature_sensor": "Optional."
+            "temperature_sensor": "Optional.",
+            "name": "Choose a distinct display name so you can identify this device easily.",
+            "switch": "Select the switch that supplies or enables this device. Automatic control may operate it.",
+            "power_sensor": "Measured electrical power of this device in W or kW, not cumulative energy in kWh. Improves detection and allocation.",
+            "nominal_power": "Typical electrical demand in W; for household appliances use heating power. Used for reservations and as a fallback if no measurement is available."
           }
         }
       },
@@ -205,7 +239,23 @@
             "control_entity": "go-eCharger: select …_frc.",
             "phase_entity": "go-eCharger: select …_psm.",
             "connected_states": "Empty = anything but idle/off.",
-            "days_entity": "JSON like [[\"MO\",km,office], …]."
+            "days_entity": "JSON like [[\"MO\",km,office], …].",
+            "name": "Choose a distinct display name so you can identify this device easily.",
+            "current_entity": "Wallbox current setting in amperes, not kW (for go-e, typically the entity ending in _amp).",
+            "control_on": "For select/input_select control: exact option that enables charging. Spelling must match the entity.",
+            "control_off": "For select/input_select control: exact option that disables charging. Must differ from the enable option.",
+            "phase_1": "Exact phase-selector option for single-phase charging; required when phase switching is configured.",
+            "phase_3": "Exact phase-selector option for three-phase charging; required when phase switching is configured.",
+            "power_sensor": "Measured electrical power of this device in W or kW, not cumulative energy in kWh. Improves detection and allocation.",
+            "connected_entity": "Optional connection sensor. Without it SEP assumes a car is connected.",
+            "soc_sensor": "Optional car battery charge percentage. A valid reading is required for state-of-charge cutoff.",
+            "capacity": "Usable car battery capacity in kWh, not home battery capacity.",
+            "consumption": "Average car consumption in kWh per 100 km. Higher values plan more energy for the same distance.",
+            "min_current": "Minimum charging current supported by the car and wallbox, usually 6 A.",
+            "max_current": "Maximum charging current SEP may request, within the limits of your installation. 16 A on three phases is approximately 11 kW.",
+            "phases": "Number of phases without automatic switching: 1 or 3.",
+            "voltage": "Voltage per phase in V, normally 230 V in Austria. Used to convert current to power.",
+            "efficiency": "Percentage of input energy reaching the car battery. For example, 90% means 9 kWh stored from 10 kWh supplied."
           }
         },
         "reconfigure": {
@@ -236,7 +286,23 @@
             "control_entity": "go-eCharger: select …_frc.",
             "phase_entity": "go-eCharger: select …_psm.",
             "connected_states": "Empty = anything but idle/off.",
-            "days_entity": "JSON like [[\"MO\",km,office], …]."
+            "days_entity": "JSON like [[\"MO\",km,office], …].",
+            "name": "Choose a distinct display name so you can identify this device easily.",
+            "current_entity": "Wallbox current setting in amperes, not kW (for go-e, typically the entity ending in _amp).",
+            "control_on": "For select/input_select control: exact option that enables charging. Spelling must match the entity.",
+            "control_off": "For select/input_select control: exact option that disables charging. Must differ from the enable option.",
+            "phase_1": "Exact phase-selector option for single-phase charging; required when phase switching is configured.",
+            "phase_3": "Exact phase-selector option for three-phase charging; required when phase switching is configured.",
+            "power_sensor": "Measured electrical power of this device in W or kW, not cumulative energy in kWh. Improves detection and allocation.",
+            "connected_entity": "Optional connection sensor. Without it SEP assumes a car is connected.",
+            "soc_sensor": "Optional car battery charge percentage. A valid reading is required for state-of-charge cutoff.",
+            "capacity": "Usable car battery capacity in kWh, not home battery capacity.",
+            "consumption": "Average car consumption in kWh per 100 km. Higher values plan more energy for the same distance.",
+            "min_current": "Minimum charging current supported by the car and wallbox, usually 6 A.",
+            "max_current": "Maximum charging current SEP may request, within the limits of your installation. 16 A on three phases is approximately 11 kW.",
+            "phases": "Number of phases without automatic switching: 1 or 3.",
+            "voltage": "Voltage per phase in V, normally 230 V in Austria. Used to convert current to power.",
+            "efficiency": "Percentage of input energy reaching the car battery. For example, 90% means 9 kWh stored from 10 kWh supplied."
           }
         }
       },
@@ -271,7 +337,8 @@
             "cloud_next_entity": "Cloud cover next hour entity",
             "cloud_next_max": "Next hour cloud cover below",
             "ww_active_entity": "Optional: Hot water active (binary sensor / input boolean)",
-            "ww_active_minutes": "Hot water active: wait before boost"
+            "ww_active_minutes": "Hot water active: wait before boost",
+            "ww_boost_temp_entity": "Optional: Hot-water boost target entity (°C)"
           },
           "data_description": {
             "boost_entity": "The actuator to start a WW cycle. Button/switch/input_boolean triggers only once; SEP never sends an OFF for one-shot WW loads. A helper input_boolean needs its own automation. A switch must return to OFF externally before another trigger is possible. Number setpoints still use active boost/reset control.",
@@ -282,7 +349,13 @@
             "cloud_next_entity": "Optional next-hour cloud forecast from 0 to 100 percent. The source must keep this value relative to the next hour. SEP reads its numeric state, not a forecast attribute list.",
             "cloud_next_max": "Next-hour cloud cover must also be strictly below this limit: exactly 50% blocks a 50% limit. An unset limit ignores this check until both sources and limits are complete.",
             "ww_active_entity": "Optional binary_sensor/input_boolean: on during hot-water preparation, off otherwise. A one-shot boost is allowed after the configured wait with control budget ≥ 0 W. Unknown/unavailable signals inhibit starts. SEP only reads this entity.",
-            "ww_active_minutes": "Hot water must stay continuously on for this duration before a one-shot boost is allowed with current control budget ≥ 0 W. Default 10 minutes, range 0–180 (0 disables this special permission). Temperature, optional sun-angle filter and cooldown still apply; cloud filters are ignored for this special permission; at most one boost per cycle. Applies to button/switch/input_boolean, not number setpoints."
+            "ww_active_minutes": "Hot water must stay continuously on for this duration before a one-shot boost is allowed with current control budget ≥ 0 W. Default 10 minutes, range 0–180 (0 disables this special permission). Temperature, optional sun-angle filter and cooldown still apply; cloud filters are ignored for this special permission; at most one boost per cycle. Applies to button/switch/input_boolean, not number setpoints.",
+            "name": "Choose a distinct display name so you can identify this device easily.",
+            "boost_type": "Switch/button triggers hot water once. SEP does not reset this trigger or abort the hot-water cycle. Number control raises the setpoint and later restores it.",
+            "power_sensor": "Actual heat-pump electrical power in W or kW. Required to confirm idle time for normal automatic starts; an enable switch alone is not sufficient.",
+            "nominal_power": "Typical electrical demand in W; for household appliances use heating power. Used for reservations and as a fallback if no measurement is available.",
+            "temperature_sensor": "Current hot-water temperature in °C. Boost starts require temperature below target minus hysteresis; invalid readings block starts.",
+            "ww_boost_temp_entity": "Optional number/input_number/temperature sensor, 30–75 °C, replacing the fixed boost target. Invalid selected values block new starts. Number boosts also write this target to the heat pump."
           }
         },
         "reconfigure": {
@@ -301,7 +374,8 @@
             "cloud_next_entity": "Cloud cover next hour entity",
             "cloud_next_max": "Next hour cloud cover below",
             "ww_active_entity": "Optional: Hot water active (binary sensor / input boolean)",
-            "ww_active_minutes": "Hot water active: wait before boost"
+            "ww_active_minutes": "Hot water active: wait before boost",
+            "ww_boost_temp_entity": "Optional: Hot-water boost target entity (°C)"
           },
           "data_description": {
             "boost_entity": "The actuator to start a WW cycle. Button/switch/input_boolean triggers only once; SEP never sends an OFF for one-shot WW loads. A helper input_boolean needs its own automation. A switch must return to OFF externally before another trigger is possible. Number setpoints still use active boost/reset control.",
@@ -312,7 +386,13 @@
             "cloud_next_entity": "Optional next-hour cloud forecast from 0 to 100 percent. The source must keep this value relative to the next hour. SEP reads its numeric state, not a forecast attribute list.",
             "cloud_next_max": "Next-hour cloud cover must also be strictly below this limit: exactly 50% blocks a 50% limit. An unset limit ignores this check until both sources and limits are complete.",
             "ww_active_entity": "Optional binary_sensor/input_boolean: on during hot-water preparation, off otherwise. A one-shot boost is allowed after the configured wait with control budget ≥ 0 W. Unknown/unavailable signals inhibit starts. SEP only reads this entity.",
-            "ww_active_minutes": "Hot water must stay continuously on for this duration before a one-shot boost is allowed with current control budget ≥ 0 W. Default 10 minutes, range 0–180 (0 disables this special permission). Temperature, optional sun-angle filter and cooldown still apply; cloud filters are ignored for this special permission; at most one boost per cycle. Applies to button/switch/input_boolean, not number setpoints."
+            "ww_active_minutes": "Hot water must stay continuously on for this duration before a one-shot boost is allowed with current control budget ≥ 0 W. Default 10 minutes, range 0–180 (0 disables this special permission). Temperature, optional sun-angle filter and cooldown still apply; cloud filters are ignored for this special permission; at most one boost per cycle. Applies to button/switch/input_boolean, not number setpoints.",
+            "name": "Choose a distinct display name so you can identify this device easily.",
+            "boost_type": "Switch/button triggers hot water once. SEP does not reset this trigger or abort the hot-water cycle. Number control raises the setpoint and later restores it.",
+            "power_sensor": "Actual heat-pump electrical power in W or kW. Required to confirm idle time for normal automatic starts; an enable switch alone is not sufficient.",
+            "nominal_power": "Typical electrical demand in W; for household appliances use heating power. Used for reservations and as a fallback if no measurement is available.",
+            "temperature_sensor": "Current hot-water temperature in °C. Boost starts require temperature below target minus hysteresis; invalid readings block starts.",
+            "ww_boost_temp_entity": "Optional number/input_number/temperature sensor, 30–75 °C, replacing the fixed boost target. Invalid selected values block new starts. Number boosts also write this target to the heat pump."
           }
         }
       },
@@ -668,7 +748,29 @@
         "name": "Battery priority"
       },
       "status": {
-        "name": "Status"
+        "name": "Status",
+        "state": {
+          "initializing": "Initializing",
+          "ready": "Ready",
+          "detected": "Detected",
+          "waiting": "Waiting",
+          "running": "Running",
+          "finished": "Finished",
+          "off": "Off",
+          "manual": "Manual",
+          "observing": "Observing",
+          "inactive": "Inactive",
+          "locked": "Locked",
+          "limit_reached": "Limit reached",
+          "disconnected": "Disconnected",
+          "full": "Full",
+          "charging_now": "Charging now",
+          "charging_required": "Charging required",
+          "charging_pv": "Charging pv",
+          "boost": "Boost",
+          "actuator_unavailable": "Actuator unavailable",
+          "actuator_error": "Actuator error"
+        }
       },
       "planned_start": {
         "name": "Recommended start"
@@ -773,6 +875,32 @@
         "state": {
           "1": "Next 1 hour",
           "2": "Next 2 hours"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "duplicate_device": {
+      "message": "A device was included more than once."
+    },
+    "unknown_device": {
+      "message": "A specified device was not found."
+    },
+    "incomplete_order": {
+      "message": "Include all SEP devices and the configured battery in the order."
+    },
+    "order_not_found": {
+      "message": "The devices do not match a loaded SEP hub."
+    }
+  },
+  "services": {
+    "set_priority_order": {
+      "name": "Save priority order",
+      "description": "Save the complete device and battery priority order.",
+      "fields": {
+        "device_ids": {
+          "name": "Device IDs",
+          "description": "Complete ordered list; __battery__ represents the battery."
         }
       }
     }

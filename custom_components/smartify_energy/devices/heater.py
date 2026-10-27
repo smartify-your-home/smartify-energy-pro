@@ -11,8 +11,8 @@ maximum temperature, and integration/device OFF always stop immediately.
 """
 from __future__ import annotations
 
-from datetime import datetime, time
 import math
+from datetime import datetime, time
 
 from ..const import CONF_POWER_SENSOR, CONF_SWITCH, CONF_TEMP_SENSOR
 from ..helpers import ParamSpec, is_on, power_w, state_float, state_str, time_from_str

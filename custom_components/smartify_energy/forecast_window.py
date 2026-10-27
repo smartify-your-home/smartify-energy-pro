@@ -1,6 +1,6 @@
 """Strict rolling forecast window for optional boost start checks (Wh)."""
-from datetime import timedelta, timezone
 import math
+from datetime import UTC, timedelta
 
 
 def rolling_energy(provider, now, hours):
@@ -12,8 +12,8 @@ def rolling_energy(provider, now, hours):
     updated = provider.last_update
     if updated is None or updated.tzinfo is None:
         return None, "PV-Prognose noch nicht verfügbar"
-    start = now.astimezone(timezone.utc)
-    age = (start - updated.astimezone(timezone.utc)).total_seconds()
+    start = now.astimezone(UTC)
+    age = (start - updated.astimezone(UTC)).total_seconds()
     if not 0 <= age <= 3600:
         return None, "PV-Prognose veraltet (älter als 60 Minuten)"
     end = start + timedelta(hours=hours)
@@ -21,7 +21,7 @@ def rolling_energy(provider, now, hours):
     for stamp, raw in provider.hours.items():
         if stamp.tzinfo is None:
             continue
-        left = stamp.astimezone(timezone.utc)
+        left = stamp.astimezone(UTC)
         right = left + timedelta(hours=1)
         if right <= start or left >= end:
             continue

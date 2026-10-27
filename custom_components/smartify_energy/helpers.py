@@ -1,9 +1,10 @@
 """Hilfsfunktionen und Entity-Spezifikationen."""
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, time
-from typing import Any, Callable
+from typing import Any
 
 from homeassistant.core import HomeAssistant
 

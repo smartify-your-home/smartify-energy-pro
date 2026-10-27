@@ -748,7 +748,29 @@
         "name": "Speicher-Vorrang"
       },
       "status": {
-        "name": "Status"
+        "name": "Status",
+        "state": {
+          "initializing": "Initialisierung",
+          "ready": "Bereit",
+          "detected": "Erkannt",
+          "waiting": "Wartet",
+          "running": "Läuft",
+          "finished": "Fertig",
+          "off": "Aus",
+          "manual": "Manuell",
+          "observing": "Beobachten",
+          "inactive": "Inaktiv",
+          "locked": "Sperrzeit",
+          "limit_reached": "Grenze erreicht",
+          "disconnected": "Nicht verbunden",
+          "full": "Voll",
+          "charging_now": "Lädt sofort",
+          "charging_required": "Pflichtladen",
+          "charging_pv": "PV-Laden",
+          "boost": "Boost",
+          "actuator_unavailable": "Aktor nicht verfügbar",
+          "actuator_error": "Aktorfehler"
+        }
       },
       "planned_start": {
         "name": "Empfohlener Start"
@@ -853,6 +875,32 @@
         "state": {
           "1": "Nächste 1 Stunde",
           "2": "Nächste 2 Stunden"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "duplicate_device": {
+      "message": "Ein Gerät wurde mehrfach angegeben."
+    },
+    "unknown_device": {
+      "message": "Ein angegebenes Gerät wurde nicht gefunden."
+    },
+    "incomplete_order": {
+      "message": "Die Reihenfolge muss alle SEP-Geräte und den konfigurierten Akku enthalten."
+    },
+    "order_not_found": {
+      "message": "Die Geräte passen zu keinem geladenen SEP-Hub."
+    }
+  },
+  "services": {
+    "set_priority_order": {
+      "name": "Prioritäten speichern",
+      "description": "Speichert die vollständige Reihenfolge der Geräte und des Akkus.",
+      "fields": {
+        "device_ids": {
+          "name": "Geräte-IDs",
+          "description": "Vollständige geordnete Liste; __battery__ steht für den Akku."
         }
       }
     }

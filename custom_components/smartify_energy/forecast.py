@@ -129,7 +129,7 @@ class ForecastProvider:
                     out[_hour(dt)] = out.get(_hour(dt), 0.0) + float(item.get("pv_estimate", 0)) * 500
         elif isinstance(attrs.get("watts"), dict):  # Momentanleistung je Zeitstempel
             pts = sorted((d, float(w)) for t, w in attrs["watts"].items() if (d := _parse(t)))
-            for (d1, w1), (d2, _w2) in zip(pts, pts[1:]):
+            for (d1, w1), (d2, _w2) in zip(pts, pts[1:], strict=False):
                 hours = (d2 - d1).total_seconds() / 3600
                 out[_hour(d1)] = out.get(_hour(d1), 0.0) + w1 * hours
         return out

@@ -1,3 +1,14 @@
+## 0.3.0 – Recorder, reaktive Regelung und HA-Qualität
+- Recorder entlastet: Budget-/Planattribute nicht aufzeichnen, identische Zustände nicht schreiben; Live-Werte gebündelt veröffentlichen.
+- Keine verlorenen Regelläufe: während eines laufenden Zyklus angeforderte Neubewertungen unmittelbar nachholen.
+- Aktoraufrufe auf 10 Sekunden begrenzt, 30 Sekunden Wiederholpause nach Fehlern, Reservierung bei unsicherem Befehlsausgang erhalten. Unbekannte/nicht verfügbare Aktoren werden in allen Gerätetypen gesperrt.
+- Statussensoren als übersetzte ENUMs mit englischen Codes. **Breaking Change für Templates mit Rohzustandsvergleichen:** z. B. `wartet` → `waiting`, `laeuft` → `running`. IDs bleiben erhalten; `legacy_status` und deutsche Detailattribute bleiben verfügbar. Vollständige Zuordnung: [Migrationshinweise](docs/REVIEW_0.3.0.md).
+- Vollständige Übersetzungen einschließlich Trockner, verständliche Dienstfehler, datensparsamer Diagnose-Download.
+- Speicherstrategie nutzt letzte positive Prognosestunde; Entity-Beobachtung explizit und schnelle Eingänge zwischengespeichert.
+- Card aktualisiert bestehende DOM-Elemente statt vollständigem Neuaufbau; Fokus/Dropdowns bleiben geschützt.
+- Ein gemeinsamer geprüfter Release-Workflow, Manifest als einzige Versionsquelle, HA-Mindestversion 2025.7.0. CI mit hassfest, HACS, Ruff, echten HA-Tests, Übersetzungsabgleich und DOM-Tests.
+- Keine bestätigte Prüfung an realen Aktoren; Softwaretests ersetzen keinen HA-Anlagentest.
+
 ## 0.2.32 – Optionaler PV-Forecast als alternativer WW-Startfilter
 - Neue Auswahl **Kein Filter / Bewölkung / PV-Forecast** in den SEP-Wärmepumpen-Geräteeinstellungen. Bestehende Bewölkung-Aktivierung und Grenzwerte werden übernommen.
 - Vorhandene SEP-Prognose für die nächsten **1 oder 2 Stunden ab jetzt**, anteilig je Stunde; Mindestenergie **0,1–100 kWh**, Standard **2 kWh in 2 Stunden**. Forecast und Bewölkung werden alternativ geprüft.

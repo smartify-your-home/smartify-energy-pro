@@ -1,6 +1,7 @@
 """Basisklasse für gesteuerte Geräte."""
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -10,11 +11,25 @@ from homeassistant.core import HomeAssistant
 
 from ..const import DEVICE_MODES, MODE_AUTO, MODE_MANUAL, MODE_OBSERVE, MODE_OFF
 from ..helpers import BinarySpec, ButtonSpec, ParamSpec, SensorSpec, power_w
+from ..reasons import localize_reason
+from ..status import STATUS_CODES
 
 if TYPE_CHECKING:
     from ..manager import EnergyManager
 
 _LOGGER = logging.getLogger(__name__)
+ACTOR_FIELDS = {
+    "load": ("switch",), "dryer": ("switch",), "pool": ("switch",), "heater": ("switch",),
+    "ev": ("control_entity", "current_entity", "phase_entity"), "heatpump": ("boost_entity",),
+}
+ENTITY_FIELDS = {
+    "load": ("switch", "power_sensor"), "dryer": ("switch", "power_sensor"),
+    "pool": ("switch", "power_sensor"), "heater": ("switch", "power_sensor", "temperature_sensor"),
+    "ev": ("control_entity", "current_entity", "phase_entity", "connected_entity", "soc_sensor",
+           "days_entity", "power_sensor"),
+    "heatpump": ("boost_entity", "power_sensor", "temperature_sensor", "ww_active_entity",
+                 "ww_boost_temp_entity", "sun_angle_entity", "cloud_now_entity", "cloud_next_entity"),
+}
 
 
 @dataclass
@@ -80,10 +95,40 @@ class BaseDevice:
         self.params["priority"] = 5
         self.state: dict[str, Any] = {}
         self.status = "init"
+        self._actuator_retry_at = 0.0
         self.reason = ""
         self.would = ""            # Empfehlung im Beobachten-Modus
         self.last_decision: Decision | None = None
         self.plan: dict[str, Any] = {}
+
+    @property
+    def status(self) -> str:
+        return self._status
+
+    @status.setter
+    def status(self, value: str) -> None:
+        self._status = STATUS_CODES.get(value, value)
+
+    def observed_entities(self) -> set[str]:
+        return {self.cfg[field] for field in ENTITY_FIELDS.get(self.TYPE, ())
+                if isinstance(self.cfg.get(field), str) and self.cfg[field]}
+
+    def _actor_unavailable(self, entity_id: str) -> bool:
+        state = self.hass.states.get(entity_id)
+        # A never-pressed HA button legitimately has the state 'unknown'.
+        return state is None or state.state == "unavailable" or (
+            state.state in ("unknown", "") and entity_id.split(".")[0] not in ("button", "input_button"))
+
+    def _unavailable_actor(self) -> str | None:
+        return next((self.cfg[key] for key in ACTOR_FIELDS.get(self.TYPE, ())
+                     if self.cfg.get(key) and self._actor_unavailable(self.cfg[key])), None)
+
+    async def _call_actor(self, domain: str, service: str, data: dict, **kwargs) -> None:
+        entity_id = data["entity_id"]
+        if self._actor_unavailable(entity_id):
+            raise RuntimeError("Actuator unavailable")
+        async with asyncio.timeout(10):
+            await self.hass.services.async_call(domain, service, data, **kwargs)
 
     # ── Parameter ────────────────────────────────────────────────────────────
     def base_param_specs(self) -> list[ParamSpec]:
@@ -136,6 +181,9 @@ class BaseDevice:
             "modus": self.mode,
             "prioritaet": self.priority,
             "grund": self.reason,
+            "reason": localize_reason(self.reason, getattr(getattr(self.hass, "config", None), "language", "de")),
+            "status_code": self.status,
+            "legacy_status": next((key for key, value in STATUS_CODES.items() if value == self.status), self.status),
             "empfehlung": self.would,
             "reserviert_w": round(d.power) if d and d.on else 0,
             "pflicht": bool(d and d.forced),
@@ -205,10 +253,23 @@ class BaseDevice:
 
     async def async_run(self, ctx: Context, budget_left: float) -> Decision:
         mode = self.mode
+        unavailable = self._unavailable_actor()
+        if unavailable:
+            self.status, self.reason, self.would = "actuator_unavailable", "Aktor nicht verfügbar", ""
+            self.last_decision = Decision(False, reason=self.reason)
+            return self.last_decision
+        if ctx.now.timestamp() < self._actuator_retry_at:
+            self.status = "actuator_error"
+            return self.last_decision or Decision(False, reason="Aktor-Wiederholpause")
         if mode == MODE_OFF:
             self.status, self.reason, self.would = "aus", "Modus: Aus", ""
             self.last_decision = Decision(False, reason="Modus: Aus")
-            await self.async_disabled(ctx)
+            try:
+                await self.async_disabled(ctx)
+            except Exception:
+                self.status = "actuator_error"
+                self._actuator_retry_at = ctx.now.timestamp() + 30
+                raise
             return self.last_decision
         if mode == MODE_MANUAL:
             self.status, self.reason, self.would = "manuell", "Modus: Manuell – keine Steuerung", ""
@@ -219,7 +280,12 @@ class BaseDevice:
         self.reason = decision.reason
         if mode == MODE_AUTO:
             self.would = ""
-            await self.async_apply(decision, ctx)
+            try:
+                await self.async_apply(decision, ctx)
+            except Exception:
+                self.status = "actuator_error"
+                self._actuator_retry_at = ctx.now.timestamp() + 30
+                raise
         else:
             self.would = ("EIN" if decision.on else "AUS") + (f" – {decision.reason}" if decision.reason else "")
             self.status = "beobachten"
@@ -256,7 +322,7 @@ class BaseDevice:
         domain = entity_id.split(".")[0]
         if domain not in ("switch", "input_boolean", "light", "fan"):
             domain = "homeassistant"
-        await self.hass.services.async_call(
+        await self._call_actor(
             domain, "turn_on" if on else "turn_off", {"entity_id": entity_id}, blocking=True
         )
         _LOGGER.info("[%s] %s → %s (%s)", self.name, entity_id, "EIN" if on else "AUS", self.reason)

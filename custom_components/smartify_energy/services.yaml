@@ -1,0 +1,6 @@
+set_priority_order:
+  fields:
+    device_ids:
+      required: true
+      selector:
+        object:

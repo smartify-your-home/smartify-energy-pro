@@ -10,10 +10,15 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_send
-from homeassistant.helpers.event import async_call_later, async_track_time_interval, async_track_state_change_event
+from homeassistant.helpers.event import (
+    async_call_later,
+    async_track_state_change_event,
+    async_track_time_interval,
+)
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
+from .budget import additional_reservation, battery_priority_credit, control_budget
 from .const import (
     BAT_SIGN_DISCHARGE_POSITIVE,
     BAT_STRATEGIES,
@@ -38,7 +43,6 @@ from .const import (
     SIGNAL_UPDATE,
     STORAGE_VERSION,
 )
-from .budget import additional_reservation, battery_priority_credit, control_budget
 from .devices import DEVICE_CLASSES, BaseDevice, Context
 from .forecast import ForecastProvider
 from .helpers import ParamSpec, SensorSpec, in_window, power_w, state_float, time_from_str
@@ -46,6 +50,8 @@ from .helpers import ParamSpec, SensorSpec, in_window, power_w, state_float, tim
 _LOGGER = logging.getLogger(__name__)
 SHORT_WINDOW = timedelta(minutes=2)
 PLAN_INTERVAL = timedelta(minutes=15)
+HUB_ENTITY_FIELDS = (CONF_GRID_SENSOR, CONF_GRID_EXPORT_SENSOR, CONF_BAT_POWER,
+                     CONF_BAT_SOC, CONF_SINK_SENSORS, CONF_FORECAST_SENSORS)
 
 
 class EnergyManager:
@@ -72,6 +78,9 @@ class EnergyManager:
         self.battery_avg_w = 0.0
         self.battery_short_w = 0.0
         self._lock = asyncio.Lock()
+        self._rerun = False
+        self._stopping = False
+        self._fast_inputs: frozenset[str] = frozenset()
         self._unsubs: list = []
         self._pending_run = None
         self._last_run: datetime | None = None
@@ -233,14 +242,16 @@ class EnergyManager:
             if sub_id in (data.get("devices") or {}):
                 dev.load(data["devices"][sub_id])
         entities = set()
-        for cfg in [self.cfg, *(d.cfg for d in self.devices.values())]:
-            for value in cfg.values():
-                for item in value if isinstance(value, list) else [value]:
-                    if isinstance(item, str) and item.split(".")[0] in {
-                        "sensor", "binary_sensor", "switch", "input_boolean", "number",
-                        "input_number", "select", "input_select", "input_text", "light", "fan",
-                    } and "." in item:
-                        entities.add(item)
+        for field in HUB_ENTITY_FIELDS:
+            value = self.cfg.get(field)
+            entities.update(value if isinstance(value, list) else [value] if value else [])
+        fast_inputs = {self.cfg.get(CONF_GRID_SENSOR), self.cfg.get(CONF_GRID_EXPORT_SENSOR),
+                       self.cfg.get(CONF_BAT_POWER)}
+        for dev in self.devices.values():
+            entities.update(dev.observed_entities())
+            if dev.TYPE == "ev":
+                fast_inputs.update(dev.cfg.get(key) for key in ("power_sensor", "current_entity"))
+        self._fast_inputs = frozenset(item for item in fast_inputs if item)
         if entities:
             self._unsubs.append(async_track_state_change_event(self.hass, entities, self._input_changed))
         for dev in self.devices.values():
@@ -258,20 +269,14 @@ class EnergyManager:
         # Grid / battery metering changes need a shorter control loop than
         # forecast or miscellaneous device state changes.
         entity_id = event.data.get("entity_id")
-        fast_inputs = {self.cfg.get(CONF_GRID_SENSOR), self.cfg.get(CONF_GRID_EXPORT_SENSOR),
-                       self.cfg.get(CONF_BAT_POWER)}
-        for dev in self.devices.values():
-            if dev.TYPE == "ev":
-                fast_inputs.add(dev.cfg.get("power_sensor"))
-                fast_inputs.add(dev.cfg.get("current_entity"))
-        self._schedule_run(0.5 if entity_id in fast_inputs else 2.0)
+        self._schedule_run(0.5 if entity_id in self._fast_inputs else 2.0)
 
     def _weighted_average(self, now: datetime, window: timedelta, fallback: float,
                           history: deque[tuple[datetime, float]] | None = None) -> float:
         points = list(self._history if history is None else history)
         start = now - window
         total = duration = 0.0
-        for (t, value), (end, _) in zip(points, points[1:]):
+        for (t, value), (end, _) in zip(points, points[1:], strict=False):
             seconds = max(0.0, (end - max(t, start)).total_seconds())
             total += value * seconds
             duration += seconds
@@ -282,13 +287,16 @@ class EnergyManager:
         await self.async_run()
 
     async def async_stop(self) -> None:
+        self._stopping = True
+        self._rerun = False
         for unsub in self._unsubs:
             unsub()
         self._unsubs.clear()
         if self._pending_run:
             self._pending_run()
             self._pending_run = None
-        await self._store.async_save(self._dump())
+        async with self._lock:
+            await self._store.async_save(self._dump())
 
     def _dump(self) -> dict:
         return {"hub": self.params, "devices": {sid: d.dump() for sid, d in self.devices.items()}}
@@ -311,6 +319,11 @@ class EnergyManager:
 
     @callback
     def _schedule_run(self, delay: float = 2.0) -> None:
+        if self._stopping:
+            return
+        if self._lock.locked():
+            self._rerun = True
+            return
         if self._pending_run:
             return
 
@@ -393,7 +406,9 @@ class EnergyManager:
             self.battery_reason = "keine Prognose/Kapazität – Speicher zuerst"
             return
         need = max(0.0, (float(self.p("battery_target_soc")) - soc) / 100 * cap)
-        end = now.replace(hour=21, minute=0, second=0, microsecond=0)
+        end = max((stamp + timedelta(hours=1) for stamp, wh in self.forecast.hours.items()
+                   if stamp.date() == now.date() and wh > 0), default=now)
+        end = max(end, now)
         rest_pv = self.forecast.energy_between(now, end)
         rest_base = float(self.p("base_load")) * max(0.0, (end - now).total_seconds() / 3600)
         free = rest_pv - rest_base
@@ -405,14 +420,29 @@ class EnergyManager:
         )
 
     async def async_run(self) -> None:
+        if self._stopping:
+            return
         if self._lock.locked():
+            self._rerun = True
             return
         async with self._lock:
-            try:
-                await self._async_run()
-            except Exception:  # noqa: BLE001
-                _LOGGER.exception("Fehler im Regelzyklus")
-            async_dispatcher_send(self.hass, SIGNAL_UPDATE.format(self.entry.entry_id))
+            while not self._stopping:
+                self._rerun = False
+                try:
+                    await self._async_run()
+                except Exception:  # noqa: BLE001
+                    _LOGGER.exception("Fehler im Regelzyklus")
+                async_dispatcher_send(self.hass, SIGNAL_UPDATE.format(self.entry.entry_id))
+                if not self._rerun:
+                    break
+                await asyncio.sleep(0)
+
+    def _battery_budget(self, ctx: Context, left: float, battery_w: float) -> dict:
+        upstream = max(0.0, ctx.alloc_base - left)
+        return {"aktuell_w": round(ctx.budget_now + battery_w - upstream),
+                "mittel_w": round(ctx.budget_avg - upstream),
+                "vorreservierung_w": round(upstream), "benoetigt_w": 0,
+                "zusaetzlich_reserviert_w": round(battery_w)}
 
     async def _async_run(self) -> None:
         now = dt_util.now()
@@ -464,7 +494,8 @@ class EnergyManager:
         ctx.alloc_base = self.budget_avg if ready else budget
 
         for dev in self.devices.values():
-            dev.pre_update(ctx)
+            if not dev._unavailable_actor():
+                dev.pre_update(ctx)
         ctx.loads_heating = [d.name for d in self.devices.values()
                              if d.TYPE == "load" and d.state.get("hp_active") and d.participates]
 
@@ -476,13 +507,7 @@ class EnergyManager:
         for dev in self._sorted_devices(ctx):
             if self.has_battery and not battery_passed and dev.priority >= battery_rank:
                 battery_passed = True
-                self.device_budgets["__battery__"] = {
-                    "aktuell_w": round(ctx.budget_now + battery_w - max(0.0, ctx.alloc_base - left)),
-                    "mittel_w": round(ctx.budget_avg - max(0.0, ctx.alloc_base - left)),
-                    "vorreservierung_w": round(max(0.0, ctx.alloc_base - left)),
-                    "benoetigt_w": 0,
-                    "zusaetzlich_reserviert_w": round(battery_w),
-                }
+                self.device_budgets["__battery__"] = self._battery_budget(ctx, left, battery_w)
             # Measured battery charging has reduced the physical grid export.
             # Credit it ONLY ahead of battery rank, assuming its external
             # regulator yields automatically to a higher priority consumer.
@@ -527,7 +552,10 @@ class EnergyManager:
                     decision = await dev.async_run(ctx, effective_left + own_budget)
                 except Exception:  # noqa: BLE001
                     _LOGGER.exception("[%s] Fehler", dev.name)
-                    continue
+                    # A timed-out command may have reached the actor: keep its reservation.
+                    decision = dev.last_decision
+                    if decision is None:
+                        continue
                 # Observe/manual modes do not actually actuate the load.
                 if decision.on and dev.mode == MODE_AUTO:
                     extra = additional_reservation(decision.power, current, reclaimed)
@@ -538,13 +566,7 @@ class EnergyManager:
                     original_now, original_avg, original_short, original_base)
             left = effective_left - avg_credit
         if self.has_battery and not battery_passed:
-            self.device_budgets["__battery__"] = {
-                "aktuell_w": round(ctx.budget_now + battery_w - max(0.0, ctx.alloc_base - left)),
-                "mittel_w": round(ctx.budget_avg - max(0.0, ctx.alloc_base - left)),
-                "vorreservierung_w": round(max(0.0, ctx.alloc_base - left)),
-                "benoetigt_w": 0,
-                "zusaetzlich_reserviert_w": round(battery_w),
-            }
+            self.device_budgets["__battery__"] = self._battery_budget(ctx, left, battery_w)
         self.allocated = ctx.alloc_base - left
 
         if plan_due:

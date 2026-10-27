@@ -4,7 +4,6 @@ from __future__ import annotations
 from typing import Any
 
 import voluptuous as vol
-
 from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
@@ -28,8 +27,6 @@ from .const import (
     CONF_BAT_SOC,
     CONF_BOOST_ENTITY,
     CONF_BOOST_TYPE,
-    CONF_WW_ACTIVE_ENTITY,
-    CONF_WW_BOOST_TEMP_ENTITY,
     CONF_CAPACITY,
     CONF_CONNECTED_ENTITY,
     CONF_CONNECTED_STATES,
@@ -61,15 +58,17 @@ from .const import (
     CONF_SWITCH,
     CONF_TEMP_SENSOR,
     CONF_VOLTAGE,
+    CONF_WW_ACTIVE_ENTITY,
+    CONF_WW_BOOST_TEMP_ENTITY,
     DOMAIN,
     GRID_SIGN_EXPORT_POSITIVE,
     GRID_SIGN_IMPORT_POSITIVE,
     NAME,
-    TYPE_EV,
-    TYPE_HEATPUMP,
-    TYPE_HEATER,
-    TYPE_LOAD,
     TYPE_DRYER,
+    TYPE_EV,
+    TYPE_HEATER,
+    TYPE_HEATPUMP,
+    TYPE_LOAD,
     TYPE_POOL,
 )
 from .forecast import async_default_forecast_entries, async_forecast_entry_options

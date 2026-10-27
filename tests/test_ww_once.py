@@ -137,6 +137,7 @@ class WarmWaterOnceTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_button_sends_only_press(self):
         self.cfg.update(boost_type="button", boost_entity="button.trigger")
+        self.values["button.trigger"] = "unknown"
         self.dev = self.device()
         await self.run_cycle()
         self.assertEqual(len(self.calls), 1)

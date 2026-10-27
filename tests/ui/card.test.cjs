@@ -1,0 +1,31 @@
+const {test} = require('node:test');
+const assert = require('node:assert/strict');
+const {JSDOM} = require('jsdom');
+const fs = require('node:fs');
+const source=fs.readFileSync('custom_components/smartify_energy/www/smartify-energy-plan-card.js','utf8');
+test('live patch preserves DOM nodes and handlers while updating numbers',()=>{
+  const dom=new JSDOM('<div id="root"></div>',{runScripts:'outside-only'});
+  dom.window.eval(source+'\nwindow.patchChildren=patchChildren;');
+  const {document}=dom.window;
+  const root=document.querySelector('#root');
+  root.innerHTML='<div><span>100 W</span><select data-select="select.mode"><option value="auto">Auto</option></select></div>';
+  const span=root.querySelector('span'), select=root.querySelector('select');
+  let count=0;select.addEventListener('change',()=>count++);
+  const tpl=document.createElement('template');
+  tpl.innerHTML='<div><span>250 W</span><select data-select="select.mode"><option value="auto">Auto</option><option value="off" selected>Off</option></select></div>';
+  dom.window.patchChildren(root,tpl.content);
+  assert.equal(root.querySelector('span'),span);
+  assert.equal(span.textContent,'250 W');
+  assert.equal(root.querySelector('select'),select);
+  assert.equal(select.value,'off');
+  select.dispatchEvent(new dom.window.Event('change'));
+  assert.equal(count,1);
+});
+test('patch removes stale nodes after structural changes',()=>{
+  const dom=new JSDOM('<div id="root"><div>old</div><span>stale</span></div>',{runScripts:'outside-only'});
+  dom.window.eval(source+'\nwindow.patchChildren=patchChildren;');
+  const root=dom.window.document.querySelector('#root'),tpl=dom.window.document.createElement('template');
+  tpl.innerHTML='<section>new</section>';
+  dom.window.patchChildren(root,tpl.content);
+  assert.equal(root.innerHTML,'<section>new</section>');
+});

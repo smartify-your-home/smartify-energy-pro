@@ -1,0 +1,50 @@
+name: SEP validation
+on:
+  workflow_call:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  tests:
+    strategy:
+      matrix:
+        include:
+          - ha: '2025.7.0'
+            plugin: '0.13.260'
+            extras: 'pycares==4.11.0'
+          - ha: '2026.2.3'
+            plugin: '0.13.316'
+            extras: ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install homeassistant==${{ matrix.ha }} pytest-homeassistant-custom-component==${{ matrix.plugin }} ruff==0.17.3 ${{ matrix.extras }}
+      - run: ruff check custom_components
+      - run: python -m compileall -q custom_components tests
+      - run: python scripts/validate_translations.py
+      - run: python -m unittest discover -s tests -v
+      - run: python -m pytest tests/ha -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm test
+  hassfest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: home-assistant/actions/hassfest@master
+  hacs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hacs/action@main
+        with:
+          category: integration
+          ignore: brands

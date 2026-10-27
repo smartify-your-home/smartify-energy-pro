@@ -5,14 +5,15 @@ import logging
 from pathlib import Path
 
 import voluptuous as vol
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.loader import async_get_integration
 
-from .const import DOMAIN, PLATFORMS, VERSION
+from .const import DOMAIN, PLATFORMS
 from .manager import EnergyManager
 
 _LOGGER = logging.getLogger(__name__)
@@ -30,16 +31,16 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         device_ids = call.data["device_ids"]
         registry = dr.async_get(hass)
         if len(set(device_ids)) != len(device_ids):
-            raise vol.Invalid("Duplicate SEP device in priority order")
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="duplicate_device")
         # The battery is a virtual, drag-sortable item (no HA device).
         # Its rank is persisted in the hub; all other IDs remain HA devices.
         battery_token = "__battery__"
         has_battery_item = battery_token in device_ids
         devices = [registry.async_get(device_id) if device_id != battery_token else None
                    for device_id in device_ids]
-        if any(device is None for token, device in zip(device_ids, devices)
+        if any(device is None for token, device in zip(device_ids, devices, strict=True)
                if token != battery_token):
-            raise vol.Invalid("Unknown SEP device")
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="unknown_device")
         for entry in hass.config_entries.async_entries(DOMAIN):
             manager = getattr(entry, "runtime_data", None)
             if manager is None:
@@ -57,14 +58,14 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             if (len(non_battery) != len(by_identifier)
                     or len(set(dev.id for dev in non_battery)) != len(by_identifier)
                     or (has_battery_item != manager.has_battery)):
-                raise vol.Invalid("Priority order must include all devices and the configured battery")
-            for rank, (token, dev) in enumerate(zip(device_ids, matches), start=1):
+                raise ServiceValidationError(translation_domain=DOMAIN, translation_key="incomplete_order")
+            for rank, (token, dev) in enumerate(zip(device_ids, matches, strict=True), start=1):
                 if token == battery_token:
                     manager.set_param("battery_rank", rank)
                 else:
                     dev.set_param("priority", rank)
             return
-        raise vol.Invalid("SEP device priority order not found")
+        raise ServiceValidationError(translation_domain=DOMAIN, translation_key="order_not_found")
 
     if not hass.services.has_service(DOMAIN, SERVICE_PRIORITY_ORDER):
         hass.services.async_register(
@@ -81,7 +82,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
         path = Path(__file__).parent / "www" / CARD_FILE
         await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL, str(path), False)])
-        add_extra_js_url(hass, f"{CARD_URL}?v={VERSION}")
+        add_extra_js_url(hass, f"{CARD_URL}?v={(await async_get_integration(hass, DOMAIN)).version}")
     except Exception:  # noqa: BLE001
         _LOGGER.warning("Dashboard-Card konnte nicht registriert werden", exc_info=True)
     return True
@@ -89,6 +90,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: SmartifyEnergyConfigEntry) -> bool:
     manager = EnergyManager(hass, entry)
+    manager.integration_version = str((await async_get_integration(hass, DOMAIN)).version)
     entry.runtime_data = manager
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     _link_devices(hass, entry)

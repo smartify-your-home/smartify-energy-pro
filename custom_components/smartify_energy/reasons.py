@@ -1,0 +1,60 @@
+"""Localize diagnostic reasons while retaining legacy German attributes."""
+# Dynamic numbers/times remain unchanged. Longest phrases are replaced first.
+ENGLISH = {
+    "Modus: Aus": "Mode: Off", "Modus: Manuell – keine Steuerung": "Mode: Manual – no control",
+    "Aktor nicht verfügbar": "Actuator unavailable", "Aktor-Wiederholpause": "Actuator retry cooldown",
+    "Auto nicht angesteckt": "Car not connected", "Max-SoC erreicht": "Maximum charge level reached",
+    "Warte auf Überschuss": "Waiting for surplus", "Überschuss fehlt": "Insufficient surplus",
+    "WW-Budget zu gering": "Hot-water budget too low", "Überschuss zu niedrig": "Surplus too low",
+    "Warmwasser-aktiv-Signal nicht verfügbar": "Hot-water active signal unavailable",
+    "WW-Aktiv-Mindestdauer ungültig": "Invalid hot-water active duration",
+    "WW läuft – Sonderfreigabe deaktiviert (0 Minuten)": "Hot water running – special permission disabled (0 minutes)",
+    "WW läuft – Boost frühestens nach": "Hot water running – boost allowed after",
+    "WW-Zyklus bereits geboostet": "Hot-water cycle already boosted",
+    "WW-Auslöser ist noch EIN – auf AUS warten": "Hot-water trigger still ON – waiting for OFF",
+    "WW-Boost-Startsperre: noch": "Hot-water boost cooldown remaining:",
+    "WW-Boost-Solltemperatur fehlt oder ist ungültig": "Hot-water boost target missing or invalid",
+    "Warmwassertemperatur fehlt oder ist ungültig": "Hot-water temperature missing or invalid",
+    "Warmwasserspeicher warm": "Hot-water tank warm", "Wärmepumpe noch nicht lange genug in Ruhe": "Heat pump idle period not yet complete",
+    "WW aktiv, Steuerbudget": "Hot water active, control budget",
+    "PV-Budget ausreichend – WW-Boost einmalig auslösen": "Sufficient PV budget – trigger hot-water boost once",
+    "Tageslimit erreicht": "Daily limit reached", "Temperatursensor fehlt oder ungültig": "Temperature sensor missing or invalid",
+    "Speicher warm": "Tank warm", "Minuten WP-Leistung unter Ruheschwelle": "minutes with heat-pump power below idle threshold",
+    "Warte auf": "Waiting for", "Mindestpause läuft": "Minimum pause active", "PV-Überschuss – Boost": "PV surplus – boost",
+    "WW seit": "Hot water active for", "min aktiv; Steuerbudget": "min; control budget", "Boost auslösen": "trigger boost",
+    "Zieltemperatur erreicht": "Target temperature reached", "Mindestlaufzeit läuft": "Minimum run time active",
+    "PV-Restbudget aktuell": "Current remaining PV budget", "Schaltzustand unbekannt – keine Heizfreigabe": "Switch state unknown – heating inhibited",
+    "Temperatursensor ungültig – Heizstab AUS (Sicherheit)": "Invalid temperature sensor – heater OFF (safety)",
+    "Maximaltemperatur erreicht": "Maximum temperature reached", "PV-Restverbrauch aktuell": "Current remaining PV consumption",
+    "Temperatur": "Temperature", "Frühester Start erst ab": "Earliest start at", "Frühester Start": "Earliest start",
+    "Neustart erst unter": "Restart only below", "Mindestpause noch": "Minimum pause remaining",
+    "Budget aktuell": "Current budget", "Mindestlaufzeit noch": "Minimum run time remaining",
+    "Saison inaktiv (Winter/zu kalt)": "Season inactive (winter/too cold)", "Sperrzeit": "Lockout period",
+    "Max-Laufzeit erreicht": "Maximum run time reached", "Mittelwert zu niedrig": "Average too low",
+    "Tagesziel erreicht": "Daily target reached", "seit 15 min": "for 15 min", "VM-Ziel erreicht, kein Überschuss": "Morning target reached, no surplus",
+    "PV-Überschuss": "PV surplus", "Unbekannter Zustand": "Unknown state",
+    "Fertig – Reset zum Neustart": "Finished – reset to start again", "Programm läuft – bereits freigegeben (kein erneuter PV-Check)": "Program running – already approved (no repeated PV check)",
+    "Warte auf PV-Budget: aktuell": "Waiting for PV budget: current", "benötigt": "required", "andere Vorreservierungen": "other reservations",
+    "Bereit – Gerät am Gerät starten": "Ready – start the program on the appliance", "Programmerkennung: 5 Sekunden prüfen": "Program detection: checking for 5 seconds",
+    "Programm gewählt – warte auf Start": "Program selected – waiting for start", "Nachladen – Steckdose kurz an": "Reload – plug temporarily on",
+    "Mittelwert noch nicht verfügbar": "Average not yet available", "Nicht unterbrechbarer Trockner läuft – Steckdose bleibt unangetastet": "Non-interruptible dryer running – plug remains untouched",
+    "Fertig – Reset erforderlich": "Finished – reset required", "Manuell am Trockner starten; Steckdose bleibt eingeschaltet": "Start manually on the dryer; plug remains on",
+    "Keine PV-Prognosequelle konfiguriert": "No PV forecast source configured", "PV-Prognose meldet einen Fehler": "PV forecast reports an error",
+    "PV-Prognose noch nicht verfügbar": "PV forecast not yet available", "PV-Prognose veraltet (älter als 60 Minuten)": "PV forecast stale (older than 60 minutes)",
+    "PV-Prognose enthält ungültige Stundenwerte": "PV forecast contains invalid hourly values",
+    "PV-Prognose deckt das Zeitfenster nicht vollständig ab": "PV forecast does not cover the complete time window",
+    "PV-Forecast-Einstellung ungültig": "Invalid PV forecast setting", "WW-Boost-Startfilter ungültig": "Invalid hot-water boost start filter",
+    "PV-Forecast nächste": "PV forecast for next", "Sonnenwinkel": "Sun elevation", "Bewölkung aktuelle Stunde": "Current-hour cloud cover",
+    "Bewölkung kommende Stunde": "Next-hour cloud cover", "Messwert oder Grenzwert ungültig": "Reading or threshold invalid",
+    "mindestens": "at least", "unter": "below", "Minuten": "minutes", "PV-Laden": "PV charging",
+    "Sofort laden": "Charge now", "Pflichtladen": "Required charging", "Netzladung ab": "Grid charging from",
+    "EIN": "ON", "AUS": "OFF",
+}
+
+
+def localize_reason(reason: str, language: str) -> str:
+    if language.startswith("de"):
+        return reason
+    for original in sorted(ENGLISH, key=len, reverse=True):
+        reason = reason.replace(original, ENGLISH[original])
+    return reason

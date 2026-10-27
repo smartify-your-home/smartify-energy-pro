@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.2.32** · Integrationsdomain: `smartify_energy`
+Version: **0.3.0** · Integrationsdomain: `smartify_energy`
 
 ## Dokumentation und Updates
 
@@ -137,3 +137,9 @@ Im Forecast-Modus verhindern fehlende Quellen, Fehler, ungültige/fehlende Stund
 **Sonderfreigabe während laufender WW-Bereitung:** weder Bewölkung noch PV-Forecast. Wartezeit (0 deaktiviert), Temperatur unter Ziel minus Hysterese, aktuelles prioritätsbereinigtes Budget ≥ 0 W, Startsperre, optionaler Sonnenwinkelfilter und höchstens ein Boost je WW-Zyklus bleiben wirksam. Normale Number-Boost-Starts verwenden ebenfalls den ausgewählten Startfilter.
 
 **Update:** Ein bisher aktivierter Bewölkungsschalter wird automatisch zu „Bewölkung“, sonst zu „Kein Filter“. Die bisherigen Bewölkungsgrenzen bleiben gespeichert. Die zwei Forecast-Parameter wirken ausschließlich bei Auswahl „PV-Forecast“. Nach dem HACS-Update Home Assistant neu starten. Kein bestätigter Test an realer HA-Hardware.
+
+## Update 0.3.0
+
+Recorder-Entlastung, zuverlässige Neubewertung, Aktor-Timeouts und Verfügbarkeitsschutz, übersetzte ENUM-Statuscodes, Diagnose-Download sowie neue CI/Release-Pipeline. **Rohzustände ändern sich:** etwa `wartet` → `waiting`, `laeuft` → `running`. Bestehende IDs und deutsche Attribute bleiben erhalten. Vor dem Update Statusvergleiche in eigenen Templates/Automationen anpassen oder das Attribut `legacy_status` nutzen.
+
+[Alle Änderungen und Migration](docs/REVIEW_0.3.0.md). Nach dem Update Home Assistant neu starten. Mindestversion: **2025.7.0**.
