@@ -42,7 +42,7 @@ const FORCED_GRADIENT = ["#FFB74D", "#E65100"];
 const BATTERY_GRADIENT = ["#9FA8DA", "#3949AB"];
 
 const OPTION_LABELS = {
-  auto: "Automatik", observe: "Beobachten", manual: "Manuell", off: "Aus",
+  auto: "Automatik", observe: "Beobachten", manual: "Manuell", off: "Aus", disabled: "Deaktiviert",
   forecast: "Prognose", battery_first: "Speicher zuerst", devices_first: "Geräte zuerst",
   summer: "Sommer", winter: "Winter",
   none: "Kein Filter", cloud: "Bewölkung", pv_forecast: "PV-Forecast",
@@ -50,8 +50,8 @@ const OPTION_LABELS = {
   pv_only: "Nur PV", km_until: "km bis Uhrzeit", days: "Tage-Konfigurator", now: "Sofort laden",
   one: "1-phasig", three: "3-phasig",
 };
-const MODE_LABELS = { auto: "Automatik", observe: "Beobachten", manual: "Manuell", off: "Aus" };
-const MODE_HELP = { auto: "SEP steuert", observe: "nur Empfehlung", manual: "Sie steuern", off: "ausgesetzt" };
+const MODE_LABELS = { auto: "Automatik", observe: "Beobachten", manual: "Manuell", off: "Aus", disabled: "Deaktiviert" };
+const MODE_HELP = { auto: "SEP steuert", observe: "nur Empfehlung", manual: "Sie steuern", off: "ausgesetzt", disabled: "kein neuer WW-Boost" };
 const TYPE_ICONS = { load: "mdi:washing-machine", pool: "mdi:pool", ev: "mdi:ev-station", heatpump: "mdi:heat-pump", heater: "mdi:water-boiler" };
 const STATUS_LABELS = {"initializing": "Initialisierung", "ready": "Bereit", "detected": "Erkannt", "waiting": "Wartet", "running": "Läuft", "finished": "Fertig", "off": "Aus", "manual": "Manuell", "observing": "Beobachten", "inactive": "Inaktiv", "locked": "Sperrzeit", "limit_reached": "Grenze erreicht", "disconnected": "Nicht verbunden", "full": "Voll", "charging_now": "Lädt sofort", "charging_required": "Pflichtladen", "charging_pv": "PV-Laden", "boost": "Boost", "actuator_unavailable": "Aktor nicht verfügbar", "actuator_error": "Aktorfehler",
   laeuft: "läuft", wartet: "wartet", bereit: "bereit", erkannt: "erkannt", fertig: "fertig",
@@ -571,7 +571,9 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const rows = list => list.map(i => `
       <label title="${esc(this._label(i.id, prefix))}">${esc(this._label(i.id, prefix))}</label>
       <div class="ctl">${this._control(i)}</div>
-      <div class="setting-help">${esc(SETTING_HELP[i.key] || "")}</div>`).join("");
+      <div class="setting-help">${esc((i.key === "mode" && this._st(i.id)?.attributes?.options?.includes("disabled")
+        ? "Automatik: SEP löst den WW-Boost nach den eingestellten Bedingungen aus. Beobachten: nur Empfehlungen, kein Auslösen. Deaktiviert: kein neuer WW-Boost durch SEP. Eine bereits gestartete Warmwasserladung läuft unter Kontrolle der Wärmepumpe weiter."
+        : SETTING_HELP[i.key]) || "")}</div>`).join("");
     return `<div class="settings ${cls}">
       ${main.length ? `<div class="grp">Bedienung</div>${rows(main)}` : ""}
       ${cfg.length ? `<div class="grp">Einstellungen</div>${rows(cfg)}` : ""}

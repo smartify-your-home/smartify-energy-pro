@@ -64,6 +64,34 @@ class WarmWaterOnceTests(unittest.IsolatedAsyncioTestCase):
     async def run_cycle(self, now=None, budget=3000):
         return await self.dev.async_run(self.ctx(now, budget), budget)
 
+    async def test_disabled_options_and_legacy_migration(self):
+        self.assertEqual(self.dev.base_param_specs()[0].options,
+                         ["auto", "observe", "disabled"])
+        for old in ("manual", "off", "disabled"):
+            self.dev.load({"params": {"mode": old}})
+            self.assertEqual(self.dev.p("mode"), "disabled")
+            self.assertEqual(self.dev.mode, "off")
+            self.assertFalse((await self.run_cycle()).on)
+        self.assertEqual(self.calls, [])
+
+    async def test_disabling_keeps_trigger_and_running_ww_untouched(self):
+        await self.run_cycle()
+        self.values["binary_sensor.ww"] = "on"
+        self.dev.set_param("mode", "disabled")
+        await self.run_cycle()
+        self.assertEqual(len(self.calls), 1)
+        self.assertEqual(self.values["input_boolean.trigger"], "on")
+        self.dev.set_param("mode", "manual")
+        self.assertEqual(self.dev.p("mode"), "disabled")
+
+    def test_number_boost_keeps_original_modes(self):
+        self.cfg["boost_type"] = "number"
+        dev = self.device()
+        self.assertEqual(dev.base_param_specs()[0].options,
+                         ["auto", "observe", "manual", "off"])
+        dev.load({"params": {"mode": "manual"}})
+        self.assertEqual(dev.mode, "manual")
+
     async def test_persist_before_start_and_never_send_off(self):
         decision = await self.run_cycle()
         self.assertTrue(decision.on)
@@ -212,3 +240,4 @@ class WarmWaterOnceTests(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

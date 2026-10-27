@@ -1,3 +1,9 @@
+## 0.3.7 – Deaktiviert für WP-WW-Einmalladung
+- Nur bei der WP-WW-Einmalladung werden Manuell und Aus zu Deaktiviert zusammengeführt. Auswahl: Automatik, Beobachten, Deaktiviert.
+- Bestehende manuelle/ausgeschaltete Einmalladungen bleiben deaktiviert; laufende WW-Ladungen und Auslöser werden nicht zurückgesetzt.
+- Heizstab und alle anderen Gerätetypen einschließlich WP-Zahlensollwert behalten ihre bisherigen Modi.
+- Dashboard-Hilfe, HA-Übersetzungen, README, Funktions- und Update-Dokumentation angepasst. Regressionstests für Migration, laufende Ladung und unveränderte Zahlensollwert-Modi.
+
 ## 0.3.6 – Heizstab mit temperaturgeregeltem Handbetrieb
 - Manuell regelt den Heizstab auf die eingestellte Solltemperatur, unabhängig vom PV-Budget, frühester Startzeit und Prioritätspause. Netzbezug ist ausdrücklich erlaubt.
 - Wiederanlauf unter Soll minus Hysterese; wiederholtes Heizen, solange Manuell gewählt bleibt. Mindestpause, Temperaturabschaltung, ungültiger Temperatursensor und Geräte-/Hub-Aus bleiben wirksam.

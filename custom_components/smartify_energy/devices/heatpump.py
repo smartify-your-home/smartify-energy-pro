@@ -42,6 +42,18 @@ class HeatPumpDevice(BaseDevice):
         self._deficit_since: datetime | None = None
         self._idle_since: datetime | None = None
 
+    def base_param_specs(self) -> list[ParamSpec]:
+        if self.one_shot:
+            return [ParamSpec("mode", "select", "observe", "mdi:cog-transfer",
+                              options=["auto", "observe", "disabled"], config=False)]
+        return super().base_param_specs()
+
+    @property
+    def mode(self) -> str:
+        # Keep the shared OFF lifecycle and forecast exclusion unchanged.
+        mode = super().mode
+        return "off" if self.one_shot and mode in ("manual", "disabled") else mode
+
     def param_specs(self) -> list[ParamSpec]:
         specs = [
             ParamSpec("nominal_power", "number", float(self.cfg.get("nominal_power", 2000)),
@@ -89,6 +101,7 @@ class HeatPumpDevice(BaseDevice):
         if "boost_start_filter" not in data["params"]:
             data["params"]["boost_start_filter"] = "cloud" if data["params"].get("cloud_filter_active") else "none"
         super().load(data)
+        self.on_param_changed("mode")
         # Migration from earlier SEP releases: their 'started' timestamp
         # is the safest available approximation of the last WW command.
         if self.state.get("last_trigger") is None and self.state.get("started") is not None:
@@ -168,6 +181,7 @@ class HeatPumpDevice(BaseDevice):
     def status_attrs(self) -> dict:
         return {
             **super().status_attrs(),
+            "modus": "disabled" if self.one_shot and self.mode == "off" else self.mode,
             "boost_startbedingungen": self._weather_checks(),
             "boost_startfilter": self.p("boost_start_filter"),
             "pv_forecast_startbedingung": self._forecast_check(datetime.now().astimezone()),
@@ -247,6 +261,8 @@ class HeatPumpDevice(BaseDevice):
         return state_float(self.hass, self.cfg.get(CONF_TEMP_SENSOR))
 
     def on_param_changed(self, key: str) -> None:
+        if self.one_shot and key == "mode" and self.p("mode") in ("manual", "off"):
+            self.params["mode"] = "disabled"
         if key == "idle_power_threshold":
             self._idle_since = None
 
@@ -477,3 +493,4 @@ class HeatPumpDevice(BaseDevice):
             return None
         return PlanDemand(self.nominal, self.nominal * min(rest, float(self.p("min_on"))) / 60,
                           now.replace(hour=18, minute=0), interruptible=False)
+

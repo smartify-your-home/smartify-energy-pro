@@ -841,7 +841,8 @@
           "auto": "Automatik",
           "observe": "Beobachten",
           "manual": "Manuell",
-          "off": "Aus"
+          "off": "Aus",
+          "disabled": "Deaktiviert"
         }
       },
       "battery_strategy": {
