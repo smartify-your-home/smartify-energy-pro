@@ -233,3 +233,23 @@ async def test_hub_config_flow_wizard(hass):
         result=await hass.config_entries.flow.async_configure(result['flow_id'],{'battery_sign':'charge_positive'})
         assert result['type']=='create_entry'
         assert result['data']['grid_sensor']=='sensor.grid'
+
+async def test_failed_off_does_not_free_power(hass):
+    m=manager(hass)
+    hass.states.async_set('sensor.grid','0',{'unit_of_measurement':'W'})
+    class Consumer(BaseDevice):
+        def is_on(self): return self.id=='first'
+        def reclaimable_power(self): return 2000 if self.is_on() else 0
+        def decide(self,ctx,left):
+            return Decision(False,0) if self.is_on() else Decision(left>=2000,2000)
+        async def async_apply(self,d,ctx):
+            if self.is_on(): raise TimeoutError
+    for rank,key in enumerate(('first','second')):
+        d=Consumer(m,key,key,{'nominal_power':2000})
+        d.params.update(mode='auto',priority=rank+1)
+        m.devices[key]=d
+    await m.async_run()
+    assert not m.devices['second'].last_decision.on
+    m._read_inputs()
+    assert m.managed==0  # cannot reclaim power during retry cooldown
+    await m.async_stop()

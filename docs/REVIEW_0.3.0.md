@@ -46,8 +46,12 @@ Additional states: `actuator_unavailable`, `actuator_error`. New `status_code` i
 - Config-entry diagnostics include parameters, last decisions, per-device budget, up to 240 recent budget samples and forecast health. Device names/IDs, configured entity IDs, raw config, error text and free-form reason text are omitted.
 - One idempotent release workflow reacts to manifest changes, `v*` tags or manual dispatch. It verifies tag/version consistency and changelog coverage and publishes only after all checks pass. Old per-version workflows removed; the separate existing release-note synchronization job is retained.
 - Manifest is the only version source; HA's integration loader supplies runtime/device/card versions.
-- Required checks: hassfest, HACS metadata validation (external brands-catalog listing is excluded), Ruff, isolated regression tests, actual HA manager/config-flow/platform/service tests, translation parity and DOM-update tests. Local tests do not exercise real hardware/cloud devices.
-- Minimum HA: 2025.7.0; this version and HA 2026.2.3 are exercised separately (20 actual HA tests per version, 96 isolated regression tests and 2 DOM tests).
+- Required checks: hassfest, HACS metadata validation (catalog-only brands, repository description/topics and license checks are excluded: these are currently absent and no license was chosen on behalf of the owner), Ruff, isolated regression tests, actual HA manager/config-flow/platform/service tests, translation parity and DOM-update tests. Local tests do not exercise real hardware/cloud devices.
+- Minimum HA: 2025.7.0; this version and HA 2026.2.3 are exercised separately (21 actual HA tests per version, 96 isolated regression tests and 2 DOM tests).
 - Duplicate battery-budget calculation consolidated. Ruff imports/zip checks addressed.
 
 Update through HACS and restart Home Assistant. Reload dashboard browser cache if necessary. Review raw status comparisons before enabling automations using those states.
+
+## Outstanding catalog metadata
+
+HACS technical validation is enabled, but default-catalog admission is not claimed. The repository currently lacks a license, description and topics, as well as external brands listing. These checks are explicitly excluded from the workflow; all integration structure and manifest checks run. Choosing a license requires the owner’s decision.

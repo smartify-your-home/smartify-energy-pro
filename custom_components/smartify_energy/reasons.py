@@ -48,6 +48,10 @@ ENGLISH = {
     "Bewölkung kommende Stunde": "Next-hour cloud cover", "Messwert oder Grenzwert ungültig": "Reading or threshold invalid",
     "mindestens": "at least", "unter": "below", "Minuten": "minutes", "PV-Laden": "PV charging",
     "Sofort laden": "Charge now", "Pflichtladen": "Required charging", "Netzladung ab": "Grid charging from",
+    "Aktorfehler – Leistung vorsorglich reserviert": "Actuator error – power reserved conservatively",
+    "PV-Freigabe: aktuell": "PV release: current", "Sofortfenster": "Immediate-start window",
+    "Spätstart": "Latest-start deadline", "Manueller Sofortstart": "Manual immediate start",
+    "Nachladen": "Reload", "Netzladung für Ziel": "Grid charging for target",
     "EIN": "ON", "AUS": "OFF",
 }
 

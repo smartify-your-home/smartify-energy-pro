@@ -47,4 +47,7 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
-          ignore: brands
+          # Catalog listing requirements are outside this technical validation.
+          # No license is granted without the repository owner choosing one.
+          ignore: brands description topics license
+          comment: false

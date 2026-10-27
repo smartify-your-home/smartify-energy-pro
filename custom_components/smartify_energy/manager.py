@@ -44,6 +44,7 @@ from .const import (
     STORAGE_VERSION,
 )
 from .devices import DEVICE_CLASSES, BaseDevice, Context
+from .devices.base import Decision
 from .forecast import ForecastProvider
 from .helpers import ParamSpec, SensorSpec, in_window, power_w, state_float, time_from_str
 
@@ -377,7 +378,8 @@ class EnergyManager:
         }
         self._reclaimable_power = {
             key: min(self._measured_power[key], max(0.0, dev.reclaimable_power()))
-            if dev.mode == MODE_AUTO else 0.0
+            if dev.mode == MODE_AUTO and not dev._unavailable_actor()
+            and dt_util.now().timestamp() >= dev._actuator_retry_at else 0.0
             for key, dev in self.devices.items()
         }
         self.managed = sum(self._reclaimable_power.values())
@@ -553,9 +555,9 @@ class EnergyManager:
                 except Exception:  # noqa: BLE001
                     _LOGGER.exception("[%s] Fehler", dev.name)
                     # A timed-out command may have reached the actor: keep its reservation.
-                    decision = dev.last_decision
-                    if decision is None:
-                        continue
+                    previous = dev.last_decision
+                    power = max(current, previous.power if previous and previous.on else 0.0)
+                    decision = Decision(power > 0, power, "Aktorfehler – Leistung vorsorglich reserviert")
                 # Observe/manual modes do not actually actuate the load.
                 if decision.on and dev.mode == MODE_AUTO:
                     extra = additional_reservation(decision.power, current, reclaimed)
