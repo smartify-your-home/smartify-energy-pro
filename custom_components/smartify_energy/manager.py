@@ -486,9 +486,18 @@ class EnergyManager:
             need = target.pv_start_need
             # The grid reading already contains downstream physical loads.
             # The device's own load is not yet running while it waits.
-            deficit = max(need - ctx.budget_now, need - ctx.budget_avg)
+            # Battery charging is already handled by its priority credit.
+            # Do not shed an EV or heater when the upstream device can start
+            # from the credit of a lower-ranked, self-yielding PV battery.
+            battery_now = (self.battery_charging_w if self.has_battery
+                           and target.priority < int(self.p("battery_rank")) else 0.0)
+            battery_avg = (self.battery_avg_w if self.has_battery
+                           and target.priority < int(self.p("battery_rank")) else 0.0)
+            deficit = max(need - ctx.budget_now - battery_now,
+                          need - ctx.budget_avg - battery_avg)
             if deficit <= 0:
                 continue
+            candidates = []
             for lower in reversed(devices):
                 if lower.priority <= target.priority or lower.TYPE not in ("heater", "ev"):
                     continue
@@ -496,8 +505,13 @@ class EnergyManager:
                 if not can or not can(ctx.now):
                     continue
                 measured = self._measured_power.get(lower.id, 0.0)
-                if measured <= 0:
-                    continue
+                if measured > 0:
+                    candidates.append((lower, measured))
+            # Do not interrupt downstream charging/heating for a start which
+            # cannot become possible even after all eligible loads yield.
+            if sum(watts for _device, watts in candidates) < deficit:
+                continue
+            for lower, measured in candidates:
                 try:
                     await lower.async_preempt(ctx)
                 except Exception:  # noqa: BLE001
