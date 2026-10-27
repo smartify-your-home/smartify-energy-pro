@@ -1,3 +1,16 @@
+## 0.3.3 – Überschuss-Senken (Ohmpilot/Heizstab) im Budget
+- Selbstregelnde Überschuss-Senken wie Ohmpilot oder Heizstab zählen jetzt zum Steuerbudget: Ihre Leistung steht den SEP-Geräten zur Verfügung, die Senke regelt selbst zurück und nimmt nur den restlichen Überschuss.
+- Neuer Hub-Schalter **Überschuss-Senken weichen aus** (Standard ein, nur bei konfigurierten Senken). Aus = bisheriges Verhalten, Senken werden nur angezeigt.
+- **Breaking Change für Templates:** Attribut `senken_nur_information_w` heißt jetzt `senken_w`; neu `senken_im_budget` (true/false).
+- Voraussetzung: Die Senke regelt schnell zurück. Bis dahin kann kurz Netzbezug entstehen. Keine bestätigte Prüfung an realen Geräten.
+
+## 0.3.2 – Automatischer Reset nach „Fertig“ und kompaktere Gerätezeilen
+- Haushaltsgeräte (Waschmaschine, Geschirrspüler, Trockner): Ein neuer Programmstart nach „Fertig“ wird automatisch erkannt (5 s stabil über 9 W) und setzt die Erkennung zurück. Der Reset-Button ist nur noch optional.
+- Ohne Leistungssensor: Die Steckdose muss nach „Fertig“ einmal aus- und wieder eingeschaltet werden, damit ein neuer Lauf erkannt wird.
+- Nicht unterbrechbare Trockner wechseln beim neuen Programmstart direkt auf „läuft“; die Steckdose bleibt unangetastet.
+- Card: Modus-Hilfetext im Auswahlfeld (z. B. „Automatik · SEP steuert“), Auswahlfeld neben dem Zahnrad, niedrigere Zeilen.
+- Regressionstests für automatischen Reset ergänzt. Keine bestätigte Prüfung an realen Geräten.
+
 ## 0.3.1 – Mittelungszeit und PV-Trend separat einstellbar
 - SEP-Hub: Mittelungszeit 1–60 Minuten (Standard 20) und Trendzeitraum 1–30 Minuten (Standard 10) unabhängig einstellbar; bestehende gespeicherte Mittelungswerte bleiben erhalten.
 - Automatischer PV-Start von Waschmaschine, Geschirrspüler und wiederanlauffähigem Trockner benötigt zusätzlich zu aktuellem und durchschnittlichem Gerätebudget einen stabilen Trend: Mittelwert des jüngsten Trendfensters minus vorheriges Trendfenster mindestens minus Trendtoleranz (0–500 W, Standard 100 W).
