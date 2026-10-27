@@ -44,9 +44,9 @@ class Context:
     history_ready: bool        # Mittelungsfenster voll
     night_window: bool         # globales Sofortfenster aktiv
     alloc_base: float = 0.0    # Basis der Verteilung (Mittelwert, sonst Momentanwert)
+    loads_heating: list[str] = field(default_factory=list)
     trend_delta: float = 0.0
-    trend_ready: bool = False
-    loads_heating: list[str] = field(default_factory=list)  # Verbraucher in Heizphase
+    trend_ready: bool = True  # Verbraucher in Heizphase
 
     def now_left(self, budget_left: float) -> float:
         """Restbudget bezogen auf den Momentanwert statt den Mittelwert."""
