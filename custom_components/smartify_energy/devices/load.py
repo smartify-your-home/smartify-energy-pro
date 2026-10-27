@@ -137,6 +137,16 @@ class LoadDevice(BaseDevice):
             budget_left, own_metered_w=own_measured,
         )
 
+    def _trend_allows_start(self, ctx: Context) -> bool:
+        """Only automatic PV starts need a stable or rising trend."""
+        return ctx.trend_ready and ctx.trend_delta >= -float(self.manager.p("trend_tolerance"))
+
+    def _trend_wait_reason(self, ctx: Context) -> str:
+        if not ctx.trend_ready:
+            return "PV-Trend: Messhistorie noch nicht vollständig"
+        return (f"PV-Trend fällt um {-ctx.trend_delta:.0f} W "
+                f"(Toleranz {float(self.manager.p('trend_tolerance')):.0f} W)")
+
     def _reset(self) -> None:
         self.state.update(sm=IDLE, approved=False, forced_start=False, hp_active=False, hp_done=False, since=None)
         self._detected_since = None
@@ -259,12 +269,14 @@ class LoadDevice(BaseDevice):
             )
             if not ctx.history_ready:
                 return self._wait("Mittelwert noch nicht verfügbar")
-            if free_now >= need and free_avg >= need:
+            if free_now >= need and free_avg >= need and self._trend_allows_start(ctx):
                 return self._approve(
                     f"PV-Freigabe: aktuell {free_now:.0f} W, "
                     f"Ø {free_avg:.0f} W ≥ {need:.0f} W "
                     f"(andere Vorreservierungen {reserved:.0f} W)"
                 )
+            if free_now >= need and free_avg >= need:
+                return self._wait(self._trend_wait_reason(ctx))
             return self._wait(
                 f"PV-Budget zu gering: aktuell {free_now:.0f} W, "
                 f"Ø {free_avg:.0f} W, benötigt {need:.0f} W "
@@ -288,12 +300,14 @@ class LoadDevice(BaseDevice):
             free_now, free_avg, reserved = self._pv_start_headroom(
                 ctx, budget_left, sw_on,
             )
-            if free_now >= need and free_avg >= need:
+            if free_now >= need and free_avg >= need and self._trend_allows_start(ctx):
                 return self._approve(
                     f"PV-Freigabe: aktuell {free_now:.0f} W, "
                     f"Ø {free_avg:.0f} W ≥ {need:.0f} W "
                     f"(andere Vorreservierungen {reserved:.0f} W)"
                 )
+            if free_now >= need and free_avg >= need:
+                return Decision(False, 0, self._trend_wait_reason(ctx))
             return Decision(
                 False, 0,
                 f"Warte auf PV-Budget: aktuell {free_now:.0f} W, "
