@@ -544,7 +544,7 @@
         "name": "Priority"
       },
       "avg_window": {
-        "name": "Averaging window"
+        "name": "Averaging duration"
       },
       "grid_reserve": {
         "name": "Grid reserve"
@@ -677,6 +677,12 @@
       },
       "boost_forecast_min_kwh": {
         "name": "PV forecast minimum energy"
+      },
+      "trend_window": {
+        "name": "Trend period"
+      },
+      "trend_tolerance": {
+        "name": "Trend tolerance"
       }
     },
     "time": {
