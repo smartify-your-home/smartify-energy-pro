@@ -21,6 +21,9 @@ Version: **0.3.1** · Integrationsdomain: `smartify_energy`
 - **Startregeln:** Das aktuelle und das gemittelte Gerätebudget müssen weiterhin den Bedarf decken. Fehlt die vollständige Trendhistorie, erfolgt kein automatischer PV-Start. Sofort- und Spätstarts sowie bereits freigegebene Programme bleiben davon ausgenommen. Für Trockner gilt die Prüfung nur, wenn automatische Wiederaufnahme erlaubt wurde.
 - Nach einer Änderung der Mittelungs- oder Trendzeit beginnt die betreffende Messhistorie neu. Die neuen Einstellungen sind als Zahlen-Entitäten des SEP-Hubs verfügbar.
 
+## Prioritätsabhängige Lastverdrängung (0.3.4)
+Ein wartendes, höher priorisiertes Haushaltsgerät kann steuerbare **nachrangige Heizstäbe** (nach Ablauf ihrer Mindestlaufzeit) und eine **freiwillige PV-Wallboxladung** verdrängen. SEP berücksichtigt nur verfügbare Aktoren mit zuverlässigen Leistungsmesswerten und vermeidet Unterbrechungen, wenn die zusammen rücknehmbare Leistung nicht zur Freigabe reicht. Nach dem Abschaltbefehl erfolgt **keine virtuelle sofortige Budgetgutschrift**: erst Netz-/Leistungsmessung und die vorhandenen Mittelungs-/Trendbedingungen können den Start freigeben. Freiwillige Ladevorgänge werden pausiert, Pflicht-/Sofortladung sowie laufende Haushaltsprogramme nicht. Eine vorübergehende Sperrzeit verhindert direktes Wiederzuschalten. Die PV-Batterie bleibt nach bestehender Prioritätsregelung berücksichtigt; sie wird nicht aktiv von SEP geschaltet. Externe Überschusssenken/Ohmpilot bleiben unverändert und erhalten keine eigene Priorität.
+
 ## Funktionen
 
 - Konfiguration über die Home-Assistant-Oberfläche
