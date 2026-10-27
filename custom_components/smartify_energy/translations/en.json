@@ -14,7 +14,7 @@
         },
         "data_description": {
           "grid_sensor": "Power at the grid connection point.",
-          "sink_sensors": "Power of external surplus sinks is shown for information but not credited to SEP's control budget without direct curtailment.",
+          "sink_sensors": "External surplus diverters such as an Ohmpilot or heating rod that regulate themselves to the export point. By default their power counts towards the budget of SEP devices (switch \"Surplus sinks yield\"); the diverter only takes the rest. Do not enter normal loads or duplicate sensors.",
           "grid_export_sensor": "Optional. If set: grid sensor = import, this sensor = export (both positive); sign is ignored.",
           "name": "Choose a distinct display name so you can identify this device easily.",
           "grid_sign": "Select which sign your grid sensor shows while exporting. A wrong choice reverses import and export.",
@@ -64,7 +64,7 @@
         },
         "data_description": {
           "grid_sensor": "Power at the grid connection point.",
-          "sink_sensors": "Power of external surplus sinks is shown for information but not credited to SEP's control budget without direct curtailment.",
+          "sink_sensors": "External surplus diverters such as an Ohmpilot or heating rod that regulate themselves to the export point. By default their power counts towards the budget of SEP devices (switch \"Surplus sinks yield\"); the diverter only takes the rest. Do not enter normal loads or duplicate sensors.",
           "grid_export_sensor": "Optional. If set: grid sensor = import, this sensor = export (both positive); sign is ignored.",
           "name": "Choose a distinct display name so you can identify this device easily.",
           "grid_sign": "Select which sign your grid sensor shows while exporting. A wrong choice reverses import and export.",
@@ -726,6 +726,9 @@
       },
       "cloud_filter_active": {
         "name": "Cloud cover check active"
+      },
+      "sinks_yield": {
+        "name": "Surplus sinks yield"
       }
     },
     "sensor": {

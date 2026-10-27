@@ -29,7 +29,7 @@ class SmartifySensor(SmartifyEntity, SensorEntity):
         "aktuell_w", "mittel_w", "vorreservierung_w", "benoetigt_w", "zusaetzlich_reserviert_w",
         "geraete", "stunden", "grund", "reason", "empfehlung", "boost_startbedingungen",
         "pv_forecast_startbedingung", "ww_aktiv_seit_min", "startsperre_rest_min",
-        "netzsaldo_w", "ruecknehmbar_w", "senken_nur_information_w", "speicher_w",
+        "netzsaldo_w", "ruecknehmbar_w", "senken_w", "senken_im_budget", "speicher_w",
     })
 
     def __init__(self, manager, owner, spec: SensorSpec) -> None:

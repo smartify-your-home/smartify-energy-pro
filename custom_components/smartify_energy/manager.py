@@ -122,6 +122,8 @@ class EnergyManager:
             ParamSpec("night_start", "time", "00:00", "mdi:weather-night"),
             ParamSpec("night_end", "time", "00:00", "mdi:weather-sunset-up"),
         ]
+        if self.cfg.get(CONF_SINK_SENSORS):
+            specs.append(ParamSpec("sinks_yield", "switch", True, "mdi:water-boiler-auto"))
         if self.has_battery:
             specs += [
                 ParamSpec("battery_strategy", "select", BAT_STRATEGY_FORECAST, "mdi:home-battery",
@@ -167,7 +169,8 @@ class EnergyManager:
                        attrs=lambda: {
                            "netzsaldo_w": round(self.grid_export),
                            "ruecknehmbar_w": round(self.managed),
-                           "senken_nur_information_w": round(self.sinks),
+                           "senken_w": round(self.sinks),
+                           "senken_im_budget": bool(self.cfg.get(CONF_SINK_SENSORS) and self.p("sinks_yield")),
                            "speicher_w": round(self.battery_power),
                            "hinweis": "Nur durch SEP wirklich reduzierbare Lasten werden gutgeschrieben.",
                        }),
@@ -475,11 +478,13 @@ class EnergyManager:
         self._read_inputs()
         self._battery_strategy(now)
         bat_discharge = max(-self.battery_power, 0.0)
-        # Neither an external surplus diverter nor a battery that SEP cannot
-        # command is reliably reclaimable. Keep their measurements for status,
-        # but do not offer their power to other devices as fictional PV.
+        # A battery that SEP cannot command is not reclaimable. External
+        # surplus diverters (Ohmpilot, heating rod) regulate themselves to the
+        # export point and yield automatically when another load starts, so
+        # their draw counts as available unless the user switches this off.
+        sinks_credit = self.sinks if self.cfg.get(CONF_SINK_SENSORS) and self.p("sinks_yield") else 0.0
         budget = control_budget(
-            self.grid_export, self.managed, bat_discharge,
+            self.grid_export + sinks_credit, self.managed, bat_discharge,
             float(self.p("grid_reserve"))
         )
         self.budget_now = budget
