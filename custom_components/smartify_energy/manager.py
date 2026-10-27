@@ -113,7 +113,9 @@ class EnergyManager:
     def param_specs(self) -> list[ParamSpec]:
         specs = [
             ParamSpec("mode", "select", MODE_AUTO, "mdi:home-lightning-bolt", options=HUB_MODES, config=False),
-            ParamSpec("avg_window", "number", 10, "mdi:chart-bell-curve", 1, 30, 1, "min"),
+            ParamSpec("avg_window", "number", 20, "mdi:chart-bell-curve", 1, 60, 1, "min"),
+            ParamSpec("trend_window", "number", 10, "mdi:trending-up", 1, 30, 1, "min"),
+            ParamSpec("trend_tolerance", "number", 100, "mdi:chart-line-variant", 0, 500, 25, "W"),
             ParamSpec("battery_rank", "number", 99, "mdi:home-battery", 1, 101, 1),
             ParamSpec("grid_reserve", "number", 0, "mdi:transmission-tower-export", 0, 5000, 50, "W"),
             ParamSpec("base_load", "number", 400, "mdi:home-import-outline", 0, 5000, 50, "W"),
@@ -139,7 +141,7 @@ class EnergyManager:
                 if dev.TYPE == "load":
                     dev._hub_released = False
         self.params[key] = value
-        if key == "avg_window":
+        if key in ("avg_window", "trend_window"):
             self._history.clear()
             self._grid_history.clear()
             self._battery_history.clear()
@@ -282,6 +284,17 @@ class EnergyManager:
             total += value * seconds
             duration += seconds
         return total / duration if duration else fallback
+
+    def _window_average(self, now: datetime, start: datetime, end: datetime) -> float:
+        """Time-weighted mean of recorded budgets inside a complete interval."""
+        points = list(self._history)
+        total = 0.0
+        for index, (timestamp, value) in enumerate(points):
+            segment_end = points[index + 1][0] if index + 1 < len(points) else now
+            duration = max(0.0, (min(segment_end, end) - max(timestamp, start)).total_seconds())
+            total += value * duration
+        seconds = max(0.0, (end - start).total_seconds())
+        return total / seconds if seconds else 0.0
 
     async def _async_first_run(self, _now=None) -> None:
         await self.forecast.async_refresh()
@@ -475,7 +488,8 @@ class EnergyManager:
         self._history.append((now, budget))
         self._grid_history.append((now, self.grid_export))
         self._battery_history.append((now, self.battery_charging_w))
-        retention = max(window, SHORT_WINDOW)
+        trend_window = timedelta(minutes=float(self.p("trend_window")))
+        retention = max(window, SHORT_WINDOW, trend_window * 2)
         for history in (self._history, self._grid_history, self._battery_history):
             while len(history) > 1 and now - history[1][0] >= retention:
                 history.popleft()
@@ -488,11 +502,18 @@ class EnergyManager:
         self.battery_short_w = self._weighted_average(
             now, SHORT_WINDOW, self.battery_charging_w, self._battery_history)
         ready = now - self._history[0][0] >= window * 0.9
+        trend_ready = now - self._history[0][0] >= trend_window * 2
+        trend_delta = 0.0
+        if trend_ready:
+            previous_avg = self._window_average(now, now - trend_window * 2, now - trend_window)
+            recent_avg = self._window_average(now, now - trend_window, now)
+            trend_delta = recent_avg - previous_avg
 
         night = in_window(now, time_from_str(self.p("night_start"), time(0)),
                           time_from_str(self.p("night_end"), time(0)))
         ctx = Context(now=now, dt=dt, budget_now=budget, budget_avg=self.budget_avg,
-                      budget_short=short_avg, history_ready=ready, night_window=night)
+                      budget_short=short_avg, history_ready=ready, night_window=night,
+                      trend_delta=trend_delta, trend_ready=trend_ready)
         ctx.alloc_base = self.budget_avg if ready else budget
 
         for dev in self.devices.values():
