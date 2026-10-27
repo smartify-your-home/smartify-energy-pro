@@ -1,3 +1,10 @@
+## 0.3.4 – Sichere prioritätsabhängige Lastverdrängung
+- Nachrangige, gemessene Heizstäbe und freiwillige PV-Wallboxladung können vor dem Start einer höher priorisierten Waschmaschine oder eines Geschirrspülers zurückgenommen werden; Mindestlaufzeit, Modus und Aktorverfügbarkeit gelten weiter.
+- Neue Absicherung: keine unnötige Unterbrechung, wenn die Summe der rücknehmbaren Leistung das Leistungsdefizit nicht deckt; bereits an vorrangige Geräte anrechenbare, nachrangige Akku-Ladung fließt in diese Vorprüfung ein.
+- Abschaltbefehle zählen nie sofort als tatsächlich verfügbare Leistung: Freigabe erst nach Messwertänderung und normalen Momentan-/Mittelwert-/Trendprüfungen. Kurzfristige Wiedereinschaltung nach Rücknahme wird verhindert.
+- Externe Überschusssenken und Ohmpilot unverändert; keine eigene Priorisierung. PV-Akku weiterhin nur durch bestehende externe Nachregelannahme berücksichtigt, nicht aktiv gesteuert.
+- Regressionstests für Prioritäten, Mindestlaufzeit und unzureichende rücknehmbare Leistung. Kein End-to-End-Test an realer Wallbox/Heizstab-Hardware.
+
 ## 0.3.3 – Überschuss-Senken (Ohmpilot/Heizstab) im Budget
 - Selbstregelnde Überschuss-Senken wie Ohmpilot oder Heizstab zählen jetzt zum Steuerbudget: Ihre Leistung steht den SEP-Geräten zur Verfügung, die Senke regelt selbst zurück und nimmt nur den restlichen Überschuss.
 - Neuer Hub-Schalter **Überschuss-Senken weichen aus** (Standard ein, nur bei konfigurierten Senken). Aus = bisheriges Verhalten, Senken werden nur angezeigt.
