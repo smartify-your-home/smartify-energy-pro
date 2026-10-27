@@ -139,7 +139,7 @@ class LoadDevice(BaseDevice):
 
     def _trend_allows_start(self, ctx: Context) -> bool:
         """Only automatic PV starts need a stable or rising trend."""
-        return ctx.trend_ready and ctx.trend_delta >= -float(self.manager.p("trend_tolerance"))
+        return ctx.trend_ready and ctx.trend_delta >= -float(getattr(self.manager, "p", lambda _key: 100)("trend_tolerance"))
 
     def _trend_wait_reason(self, ctx: Context) -> str:
         if not ctx.trend_ready:
