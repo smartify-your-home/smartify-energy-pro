@@ -1,4 +1,4 @@
-## 0.3.4 – Phasenumschaltung einstellbar
+## 0.3.5 – Phasenumschaltung einstellbar
 - Wallbox mit 1/3-Phasen-Umschaltung: neuer Mindestabstand zwischen zwei Umschaltungen (5–60 min, Standard 20 min; bisher fest 10 min) und neue Hysterese um die Dreiphasen-Mindestleistung (0–1500 W, Standard 500 W; bisher fest 300 W).
 - Beispiel 6 A Mindeststrom: dreiphasig ab ca. 4,6 kW, zurück auf einphasig unter ca. 3,6 kW.
 - Hilfetexte in der Card, deutsche/englische Bezeichnungen, Regressionstests. Keine bestätigte Prüfung an realen Geräten.
