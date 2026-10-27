@@ -83,6 +83,7 @@ const SETTING_HELP = {
   "finish_threshold": "Unter dieser Leistung kann das Programm als fertig gelten, sobald die Fertigerkennung freigegeben ist. Beispiel: 5 W. Eine zu hohe Schwelle kann längere Programmpausen mit dem Programmende verwechseln.",
   "finish_minutes": "So lange muss die Leistung unter der Fertig-Schwelle bleiben. Erst dann erscheint „Fertig“. Ein längerer Wert vermeidet Fehlmeldungen bei Pausen, meldet das Ende aber später.",
   "duration": "Geschätzte Programmdauer in Stunden für die Startempfehlung. Beispiel: 2,5 für zweieinhalb Stunden. Das Gerät wird nach dieser Zeit nicht automatisch abgeschaltet.",
+  "sinks_yield": "Ein: Die Leistung von Ohmpilot/Heizstab steht den SEP-Geräten zur Verfügung, die Senke nimmt nur den restlichen Überschuss. Voraussetzung: Die Senke regelt sich selbst schnell zurück, sobald Netzbezug droht. Aus: Senken werden nur angezeigt.",
   "nachladen": "Gibt bei einem wartenden Haushaltsgerät die Steckdose frei, damit Sie zum Beispiel Wäsche nachlegen können. Nach dem Ausschalten entscheidet SEP wieder nach Überschuss und Uhrzeit; das Programm kann dann auch sofort freigegeben werden.",
   "latest_start": "Ab dieser Uhrzeit wird ein wartendes Programm auch ohne genügend Solarstrom freigegeben. Es kann dann Netzstrom verbrauchen. Das ist eine Startzeit, keine Fertigzeit.",
   "night_start": "Beginn des Sofortfensters für Haushaltsgeräte. In diesem Fenster dürfen Programme ohne genügend Solarstrom starten. Beispiel: 22:00 bis 05:00 geht über Mitternacht.",
