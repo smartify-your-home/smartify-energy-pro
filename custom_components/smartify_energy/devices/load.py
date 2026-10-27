@@ -145,7 +145,7 @@ class LoadDevice(BaseDevice):
         if not ctx.trend_ready:
             return "PV-Trend: Messhistorie noch nicht vollständig"
         return (f"PV-Trend fällt um {-ctx.trend_delta:.0f} W "
-                f"(Toleranz {float(self.manager.p('trend_tolerance')):.0f} W)")
+                f"(Toleranz {float(getattr(self.manager, 'p', lambda _key: 100)('trend_tolerance')):.0f} W)")
 
     def _reset(self) -> None:
         self.state.update(sm=IDLE, approved=False, forced_start=False, hp_active=False, hp_done=False, since=None)
