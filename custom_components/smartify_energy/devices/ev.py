@@ -194,6 +194,24 @@ class EvDevice(BaseDevice):
         minimum = self.min_a * self.voltage * (self.current_phases or self.max_phases)
         return max(0.0, measured - minimum)
 
+    def can_preempt(self, now: datetime) -> bool:
+        """Only voluntary PV charging with a real OFF actuator can yield."""
+        control = self.cfg.get(CONF_CONTROL_ENTITY)
+        if not (self._can_reclaim_pv_power() and control and not self._unavailable_actor()
+                and now.timestamp() >= self._actuator_retry_at):
+            return False
+        domain = control.split(".")[0]
+        return domain in ("switch", "input_boolean", "light", "fan") or (
+            domain in ("select", "input_select") and bool(self.cfg.get(CONF_CONTROL_OFF)))
+
+    async def async_preempt(self, ctx: Context) -> None:
+        await self._set_control(False)
+        self.state["preempt_until"] = (ctx.now + timedelta(
+            minutes=max(2, float(self.manager.p("avg_window") or 20)
+                        + 2 * float(self.manager.p("trend_window") or 10)))).timestamp()
+        self._deficit_since = None
+        await self.manager.async_save_now()
+
     def own_budget_power(self, measured_w: float, reclaimed_w: float) -> float:
         # The wallbox may account for its already-running minimum when
         # modulating itself, but may not offer that minimum to other loads.
@@ -296,6 +314,9 @@ class EvDevice(BaseDevice):
 
         on = self.is_on()
         goal = self.p("goal")
+        if goal == EV_GOAL_PV and ctx.now.timestamp() < float(self.state.get("preempt_until") or 0):
+            self.status = "wartet"
+            return Decision(False, 0, "Vorrangiger Verbraucher – PV-Ladung pausiert")
         max_ph = 3 if self.cfg.get(CONF_PHASE_ENTITY) else self.max_phases
 
         if goal == EV_GOAL_NOW:
