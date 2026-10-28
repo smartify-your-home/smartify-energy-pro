@@ -1,3 +1,8 @@
+## 0.3.20 – Größeres Logo und vollständiger Kartenname
+- SEP-Kartenlogo oben links von 30 × 30 px auf 40 × 40 px vergrößert.
+- Die Kartenüberschrift neben dem Logo zeigt „Smart Energy Pro“ statt der Abkürzung SEP beziehungsweise eines individuellen Titels.
+- Unveränderte Geräte-, Budget- und Prioritätenregelung.
+
 ## 0.3.19 – Nutzerlogo übernommen
 - Die vom Nutzer hochgeladene quadratische SEP-Grafik ersetzt die bisherige Bildquelle.
 - Das Symbol in der SEP-Karte bleibt 30 × 30 Pixel; weitere Icongrößen werden daraus generiert.
