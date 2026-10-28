@@ -61,8 +61,10 @@ test('short-window arrow follows the three-gate threshold and neutral rule',()=>
   const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
   dom.window.eval(source+'\nwindow.deviceTrendTest=deviceTrend;');
   const trend=dom.window.deviceTrendTest;
-  assert.equal(trend(2200,2000,-500,100,true).direction,'up',
-    'short average above required watts is sufficient despite falling direction');
+  assert.equal(trend(2200,2000,-500,100,true).direction,'down',
+    'falling below threshold blocks despite enough current short average');
+  assert.equal(trend(2400,2000,-300,100,true).allowed,true,
+    'falling but projected above requirement remains allowed');
   assert.equal(trend(1900,2000,0,100,true).direction,'neutral');
   assert.equal(trend(1900,2000,-50,100,true).allowed,true);
   assert.equal(trend(1900,2000,-250,100,true).direction,'down');
