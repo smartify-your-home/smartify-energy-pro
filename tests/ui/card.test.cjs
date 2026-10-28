@@ -72,3 +72,10 @@ test('short-window arrow follows the three-gate threshold and neutral rule',()=>
   assert.equal(trend(1900,2000,250,100,false).direction,'pending');
   assert.equal(trend(null,2000,300,100,true).direction,'pending');
 });
+
+test('trend row labels average, trend window and stored data age separately',()=>{
+  assert.match(source,/const avgWindow = num\(this\._st\(d\.ents\["number:avg_window"\]\)\?\.state\)/);
+  assert.match(source,/Ø \$\{avgWindow/);
+  assert.match(source,/Trend \$\{trendWindow/);
+  assert.match(source,/Daten \$\{trendAge/);
+});
