@@ -18,7 +18,7 @@ PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrüc
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.3.13** · Integrationsdomain: `smartify_energy`
+Version: **0.3.14** · Integrationsdomain: `smartify_energy`
 
 ## Trendanzeige und Historie (0.3.10)
 Haushaltsgeräte (WM/GS/Trockner) und WP-Warmwasser-Boost zeigen auf der SEP-Karte einen **grünen ↗** bei steigendem und einen **roten ↘** bei fallendem Steuerbudgettrend. Bei 0 W Trend erscheint →; solange die Zeitreihe nicht ausreicht, erscheint ein Uhrsymbol. Dazu stehen tatsächlich vorhandene **History-Minuten** und die konfigurierte **Trendzeit**. Die Trendberechnung vergleicht zwei unmittelbar aufeinanderfolgende Zeitfenster: 10 Minuten Trendzeit benötigen 20 Minuten Messhistorie. SEP behält bei Änderungen von Trendzeit und Mittelungszeit vorhandene Daten im Arbeitsspeicher und hält bis zu 60 Minuten vor; ein HA-Neustart setzt diese Historie zurück. Wallbox, Heizstab, Pool und PV-Akku zeigen keine Trendzeile.
@@ -31,6 +31,9 @@ Für Haushaltsgeräte und den WP-Boost wird der Trendpfeil gegen die benötigte 
 
 ## Drei PV-Startbedingungen (0.3.13)
 Für automatische Starts von Haushaltsgeräten und regulären PV-WW-Boosts gelten drei getrennte Prüfungen: **langes Budgetmittel** (frei einstellbar, z. B. 15 min) ≥ Gerätebedarf; **kurzes Trendfenster** (z. B. 2 min), dessen individuelles Budgetmittel ≥ Gerätebedarf oder dessen Verlauf gegenüber dem vorherigen Trendfenster mindestens neutral (nicht stärker fallend als die einstellbare W-Toleranz) ist; **aktuelles Gerätebudget** ≥ Gerätebedarf. Für die vollständige Richtungsauswertung sind zwei Trendfenster notwendig (bei 2 min Trenddauer insgesamt 4 min Messhistorie). Die Trendanzeige in der Karte entspricht nun dieser Prüfregel. Sofort-/Spätstarts und WW-Boost-Sonderauslösung während aktiver WW-Bereitung behalten ihre separaten Regeln.
+
+## Fallender Kurztrend (0.3.14)
+Bei deutlich fallendem Trend darf ein automatischer PV-Start nur erfolgen, wenn **Kurzzeit-Ø plus Trendänderung** weiterhin mindestens die benötigte Geräteleistung ergibt. Ein momentan noch ausreichend hohes Kurzmittel reicht nicht, wenn der Trendwert am Ende des nächsten Fensters unter die Startschwelle fällt. Bei neutralem/steigendem Trend ist diese dritte Prüfung erfüllt; der lange Mittelwert und das Momentanbudget müssen weiterhin jeweils den Gerätebedarf decken. Gleiche Regel für Haushaltsgeräte und regulären WP-Boost. Die Karte zeigt den Kurzmittelwert und die Fortschreibung. Die Fortschreibung ist keine sichere Wolkenprognose.
 
 ## Dokumentation und Updates
 
