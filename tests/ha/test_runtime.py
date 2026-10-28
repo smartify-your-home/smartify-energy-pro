@@ -413,7 +413,8 @@ async def test_appliance_pv_start_requires_three_independent_gates(hass):
         return Context(now=now, dt=0, budget_now=2300, budget_avg=2100,
                        budget_short=short, history_ready=True, night_window=False,
                        trend_delta=delta, trend_ready=ready, trend_recent_left=short)
-    assert dev._trend_allows_start(context(2100, -500)), "short average covers required power"
+    assert not dev._trend_allows_start(context(2100, -500)), "falling projection below required power must block"
+    assert dev._trend_allows_start(context(2400, -300)), "projected power still covers need"
     assert dev._trend_allows_start(context(1900, -50)), "neutral trend accepted with long and now gates"
     assert not dev._trend_allows_start(context(1900, -500)), "falling below requirement blocks"
     assert not dev._trend_allows_start(context(2300, 0, ready=False))
