@@ -46,7 +46,8 @@ class Context:
     alloc_base: float = 0.0    # Basis der Verteilung (Mittelwert, sonst Momentanwert)
     loads_heating: list[str] = field(default_factory=list)
     trend_delta: float = 0.0
-    trend_ready: bool = True  # Verbraucher in Heizphase
+    trend_ready: bool = True
+    trend_recent_left: float = 0.0  # Verbraucher in Heizphase
 
     def now_left(self, budget_left: float) -> float:
         """Restbudget bezogen auf den Momentanwert statt den Mittelwert."""
