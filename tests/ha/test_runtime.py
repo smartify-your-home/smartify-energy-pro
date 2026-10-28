@@ -355,3 +355,22 @@ async def test_manual_heater_reserves_before_higher_priority_pv_consumer(hass):
     assert seen == [1000]  # 3000 W export minus 2000 W pending manual heating.
     assert m.device_budgets['heater']['zusaetzlich_reserviert_w'] == 2000
     assert m._reclaimable_power['heater'] == 0
+
+
+async def test_trend_window_changes_preserve_measured_history(hass):
+    m = manager(hass)
+    from datetime import datetime, timezone
+    base = datetime(2026, 10, 28, 9, 0, tzinfo=timezone.utc)
+    for minute in range(45):
+        m._history.append((base + timedelta(minutes=minute), 1000 + minute))
+        m._grid_history.append((base + timedelta(minutes=minute), minute))
+        m._battery_history.append((base + timedelta(minutes=minute), 0))
+    m.set_param("trend_window", 20)
+    m.set_param("avg_window", 40)
+    assert len(m._history) == 45
+    assert len(m._grid_history) == 45
+    assert len(m._battery_history) == 45
+    assert m._window_average(base + timedelta(minutes=45),
+                             base + timedelta(minutes=5),
+                             base + timedelta(minutes=15)) > 0
+    await m.async_stop()
