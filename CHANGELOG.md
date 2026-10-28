@@ -1,3 +1,11 @@
+## 0.3.16 – Kompakte Prioritätenzeilen
+- Gerätezeilen zeigen bei Haushaltsgeräten und WP-Boost das konfigurierte Langzeitfenster als „16 min History voll/wartet“ samt Mittelwert (bei unvollständiger History die fehlende Zeit), danach den Kurztrend mit Mittelwert und den erforderlichen Sollwert.
+- Doppelte Statusmeldung nach „Fertig“ entfernt: Beschreibung „Neues Programm wird autom. erkannt“.
+- Rechts entfällt die zweite Zeile mit erneutem Durchschnitt und Vorreservierung; beide Werte bleiben technisch als Statusattribute verfügbar.
+- Kleine Displays dürfen die neue Informationszeile umbrechen; Priorität, Symbol, Leistung, aktuelles Budget, Modus und Einstellungen bleiben vorhanden.
+- Historien-Status verwendet die tatsächliche bisherige SEP-Freigabeschwelle (90 % des eingestellten Fensters). Regelberechnung und Startbedingungen bleiben unverändert.
+- UI-Test aktualisiert; keine bestätigten Realgeräte-Tests.
+
 ## 0.3.15 – Verständlichere Mittelwert-, Trend- und Datenanzeige
 - Bei Haushaltsgeräten und WP-Boost zeigt die SEP-Karte drei Zeitangaben getrennt: **Ø [Mittelungszeit] min · Trend [Trendzeit] min · Daten [verfügbare Historie] min**.
 - Die vorhandene Historie kann länger als die eingestellte Mittelungszeit sein (maximal ca. 60 Minuten), ohne dass der eingestellte Mittelwert über diesen gesamten Zeitraum berechnet wird.
