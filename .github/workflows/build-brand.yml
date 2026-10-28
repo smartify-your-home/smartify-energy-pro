@@ -1,0 +1,45 @@
+name: Build SEP brand PNGs
+on:
+  push:
+    paths:
+      - "custom_components/smartify_energy/brand/icon.svg"
+      - ".github/workflows/build-brand.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  brand:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Render local integration branding
+        run: |
+          python -m pip install --quiet cairosvg pillow
+          python - <<'PY'
+          from pathlib import Path
+          import cairosvg
+          root = Path("custom_components/smartify_energy/brand")
+          source = root / "icon.svg"
+          for name, size in (
+              ("icon.png", 256),
+              ("icon@2x.png", 512),
+              ("logo.png", 256),
+              ("logo@2x.png", 512),
+          ):
+              cairosvg.svg2png(url=str(source), write_to=str(root / name),
+                              output_width=size, output_height=size)
+          PY
+      - name: Commit generated brand images
+        run: |
+          git add custom_components/smartify_energy/brand/*.png
+          if ! git diff --staged --quiet; then
+            git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "brand: render Home Assistant integration icon and logo PNGs"
+            git push
+          fi
