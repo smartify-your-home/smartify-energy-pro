@@ -18,7 +18,7 @@ PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrüc
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.3.14** · Integrationsdomain: `smartify_energy`
+Version: **0.3.15** · Integrationsdomain: `smartify_energy`
 
 ## Trendanzeige und Historie (0.3.10)
 Haushaltsgeräte (WM/GS/Trockner) und WP-Warmwasser-Boost zeigen auf der SEP-Karte einen **grünen ↗** bei steigendem und einen **roten ↘** bei fallendem Steuerbudgettrend. Bei 0 W Trend erscheint →; solange die Zeitreihe nicht ausreicht, erscheint ein Uhrsymbol. Dazu stehen tatsächlich vorhandene **History-Minuten** und die konfigurierte **Trendzeit**. Die Trendberechnung vergleicht zwei unmittelbar aufeinanderfolgende Zeitfenster: 10 Minuten Trendzeit benötigen 20 Minuten Messhistorie. SEP behält bei Änderungen von Trendzeit und Mittelungszeit vorhandene Daten im Arbeitsspeicher und hält bis zu 60 Minuten vor; ein HA-Neustart setzt diese Historie zurück. Wallbox, Heizstab, Pool und PV-Akku zeigen keine Trendzeile.
@@ -34,6 +34,9 @@ Für automatische Starts von Haushaltsgeräten und regulären PV-WW-Boosts gelte
 
 ## Fallender Kurztrend (0.3.14)
 Bei deutlich fallendem Trend darf ein automatischer PV-Start nur erfolgen, wenn **Kurzzeit-Ø plus Trendänderung** weiterhin mindestens die benötigte Geräteleistung ergibt. Ein momentan noch ausreichend hohes Kurzmittel reicht nicht, wenn der Trendwert am Ende des nächsten Fensters unter die Startschwelle fällt. Bei neutralem/steigendem Trend ist diese dritte Prüfung erfüllt; der lange Mittelwert und das Momentanbudget müssen weiterhin jeweils den Gerätebedarf decken. Gleiche Regel für Haushaltsgeräte und regulären WP-Boost. Die Karte zeigt den Kurzmittelwert und die Fortschreibung. Die Fortschreibung ist keine sichere Wolkenprognose.
+
+## Zeitangaben der Trendanzeige (0.3.15)
+In der Gerätezeile für Haushaltsgeräte und WP-WW-Boost stehen die drei Zeitangaben getrennt: **Ø 16 min · Trend 2 min · Daten 38 min** (Beispiel). Ø bezeichnet das konfigurierte Mittelungsfenster, Trend das kurze Trendfenster und Daten die insgesamt vorhandene Messhistorie (bis ungefähr 60 Minuten). Eine längere gespeicherte Datenhistorie verändert die eingestellte Mittelungsdauer nicht. Reine Anzeigeänderung ohne Änderung an der Leistungsregelung.
 
 ## Dokumentation und Updates
 
