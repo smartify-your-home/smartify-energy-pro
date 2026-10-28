@@ -138,6 +138,19 @@ const SETTING_DOMAINS = ["select", "switch", "time", "number", "button"];
 const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const grad = g => `linear-gradient(to right,${g.join(",")})`;
 const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
+// Direction is evaluated against the particular device's PV requirement.
+// A rising global trend is NOT a positive device signal if its projected
+// priority-adjusted budget stays below that requirement.
+function deviceTrend(budget, needed, change, tolerance, ready) {
+  if (!ready || ![budget, needed, change, tolerance].every(Number.isFinite)) {
+    return {direction: "pending", projected: null};
+  }
+  const projected = budget + change;
+  if (change > tolerance && projected >= needed) return {direction: "up", projected};
+  if (change < -tolerance && projected < needed) return {direction: "down", projected};
+  return {direction: "neutral", projected};
+}
+
 const fmtW = w => (w == null ? "–" : Math.abs(w) >= 10000 ? `${(w / 1000).toFixed(1)} kW` : `${Math.round(w)} W`);
 const fmtTime = iso => {
   const d = new Date(iso);
@@ -637,15 +650,13 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       // The difference between two complete trend windows estimates movement
       // across the next window. Compare that projected budget with THIS device's
       // PV start requirement, not merely with zero or the previous measurement.
-      const projected = budgetNow == null || trendDelta == null ? null : budgetNow + trendDelta;
-      const upward = trendReady && projected != null && needed != null &&
-        trendDelta > trendTolerance && projected >= needed;
-      const downward = trendReady && projected != null && needed != null &&
-        trendDelta < -trendTolerance && projected < needed;
-      const trendIcon = !trendReady ? "mdi:clock-outline" : upward ? "mdi:arrow-top-right" :
-        downward ? "mdi:arrow-bottom-right" : "mdi:arrow-right";
-      const trendColor = upward ? "var(--success-color, #43a047)" :
-        downward ? "var(--error-color, #e53935)" : "var(--secondary-text-color)";
+      const direction = deviceTrend(budgetNow, needed, trendDelta, trendTolerance, trendReady);
+      const projected = direction.projected;
+      const trendIcon = direction.direction === "pending" ? "mdi:clock-outline" :
+        direction.direction === "up" ? "mdi:arrow-top-right" :
+        direction.direction === "down" ? "mdi:arrow-bottom-right" : "mdi:arrow-right";
+      const trendColor = direction.direction === "up" ? "var(--success-color, #43a047)" :
+        direction.direction === "down" ? "var(--error-color, #e53935)" : "var(--secondary-text-color)";
       const trendText = trendRelevant ? `<span title="${esc(!trendReady ? "Trendhistorie noch nicht vollständig" : `Gerät: ${dev.name}; Budget aktuell ${fmtW(budgetNow)}; benötigtes Budget ${fmtW(needed)}; geschätztes Budget nach ${trendWindow ?? "–"} min ${fmtW(projected)}; Änderung ${fmtW(trendDelta)} (Toleranz ${fmtW(trendTolerance)}). Nur Trendindikation, keine PV-Vorhersage oder Startfreigabe.`)}"><ha-icon icon="${trendIcon}" style="--mdc-icon-size:17px;color:${trendColor};vertical-align:middle"></ha-icon> ${trendAge == null ? "–" : trendAge.toFixed(1)} min History · ${trendWindow ?? "–"} min Trend · ${fmtW(projected)} / ${fmtW(needed)}</span>` : "";
       const planTxt = pt ? `Empf. Start ${pt}${planned.attributes.pv_anteil_prozent != null ? ` · ${planned.attributes.pv_anteil_prozent} % PV` : ""}` : "";
       const chip = forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`
