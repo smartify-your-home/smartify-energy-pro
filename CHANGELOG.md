@@ -1,3 +1,10 @@
+## 0.3.10 – Trendpfeil und Messhistorie
+- Bei Haushaltsgeräten und WP-Warmwasser-Boost zeigt die SEP-Prioritätenkarte den Trend des Steuerbudgets: grüner Pfeil nach rechts oben bei positivem, roter Pfeil nach rechts unten bei negativem Trend. Bei neutralem Trend waagerecht, bei noch unzureichender Messhistorie ein Uhrsymbol.
+- Anzeige der verfügbaren Messhistorie in Minuten und der eingestellten Trendzeit; vollständige Trendberechnung erfordert zwei Trendfenster, z. B. 20 Minuten Messhistorie bei 10 Minuten Trendzeit.
+- Beim Ändern der Mittelungszeit oder Trendzeit werden bestehende Messwerte nicht mehr gelöscht. SEP bewahrt bis zu 60 Minuten historische Messwerte im Arbeitsspeicher, solange die Integration läuft. Nach HA-Neustart beginnt die in-memory-Historie weiterhin neu.
+- Trend und Historienanzeige nur bei Haushaltsgeräten sowie Wärmepumpen-Boost; Wallbox, Heizstab, Pool und Akku erhalten keine solche Anzeige.
+- Tests für die Historienerhaltung und die Geräteeinschränkung ergänzt. Kein Realgerätetest.
+
 ## 0.3.9 – SEP-Karten-Einstellungen und sofortiges Aktualisieren
 - Akku-Prioritätszahl nicht mehr als unbeschriftetes Feld in den allgemeinen Hub-Einstellungen; der PV-Akku bleibt in der Prioritätenliste samt Rang-Entität erhalten.
 - Einstellungsmenüs aktualisieren beim Öffnen und Schließen mit den neuesten Home-Assistant-Zuständen, auch wenn ein fokussiertes Auswahlfeld Live-Aktualisierungen zuvor zurückgestellt hat.
