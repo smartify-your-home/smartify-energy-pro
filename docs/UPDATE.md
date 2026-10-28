@@ -16,7 +16,7 @@ PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrüc
 Nach dem Update Home Assistant neu starten und die Dashboard-Seite neu laden. **Achtung beim bisherigen Modus Manuell:** Dieser regelt den Heizstab ab jetzt aktiv; vor dem Update bei unerwünschter Nachheizung auf Aus stellen.
 
 
-Aktuelle Version: **0.3.11**. Integrationsdomain: `smartify_energy`.
+Aktuelle Version: **0.3.12**. Integrationsdomain: `smartify_energy`.
 
 ## Neu in 0.3.1
 - Der SEP-Hub bietet zwei getrennte Einstellungen: **Mittelungszeit** (1–60 Minuten, Standard 20) und **Trendzeitraum** (1–30 Minuten, Standard 10). Zusätzlich ist die Trendtoleranz (Standard 100 W) einstellbar.
@@ -40,6 +40,9 @@ Haushaltsgeräte und WP-Boost zeigen unter ihrer Gerätebeschreibung einen Trend
 
 ## SEP 0.3.11 – Neustart und persistente History
 SEP schreibt die Messhistorie dauerhaft in seinen bestehenden HA-Speicher und kann sie nach einem kurzen Neustart wieder einlesen. Bei mehr als 2 Minuten Messunterbrechung wird der Trend aus Sicherheitsgründen neu aufgebaut. **Das erstmalige Update erfordert einen vollständigen Home-Assistant-Neustart**, weil HACS Python-Module im laufenden Prozess nicht zuverlässig austauschen kann. Für Änderungen nur an der JavaScript-Karte reicht normalerweise ein Neuladen des Dashboards.
+
+## Neu in 0.3.12 – Trend nach Geräteleistung
+Die Trendanzeige der Haushaltsgeräte und des WP-Boosts bewertet nun die erwartete Veränderung der jeweils verfügbaren Leistung gegenüber dem Leistungsbedarf des Geräts. Ein positives Vorzeichen alleine färbt den Pfeil nicht mehr grün; ein negativer Trend bei weiterhin ausreichendem Budget wird nicht rot dargestellt. Im Tooltip sind Referenzwert, Trendänderung und Schätzwert nach einem Trendfenster sichtbar. Dieser Schätzwert ist keine Wettervorhersage. Die eigentlichen Startbedingungen bleiben unverändert.
 
 ## Update über HACS
 1. Vor dem Update Home-Assistant-Backup erstellen und die bestehenden SEP-Geräteeinstellungen dokumentieren.
