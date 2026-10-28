@@ -1,3 +1,9 @@
+## 0.3.11 – Persistente 60-Minuten-Messhistorie
+- Netzsaldo, Steuerbudget und Akkuladeleistung werden platzsparend im bestehenden HA-Integrationsspeicher gesichert und nach einem Neustart wiederhergestellt.
+- Höchstens eine Probe je 15 Sekunden; Zeitstempel werden beim Laden geprüft. Messreihen mit mehr als 2 Minuten Unterbrechung oder veralteten Werten werden nicht für den Trend verwendet.
+- Änderungen an Mittelungs- und Trendzeit behalten weiterhin vorhandene Messpunkte. Ein HA-Neustart ist zur erstmaligen Aktivierung dieser Python-Änderung nötig; die reine Dashboard-Oberfläche benötigt bei JavaScript-Anpassungen nur ein Neuladen.
+- Vollständig neustartfreie Python-Integrationsupdates sind über HACS nicht zuverlässig möglich.
+
 ## 0.3.10 – Trendpfeil und Messhistorie
 - Bei Haushaltsgeräten und WP-Warmwasser-Boost zeigt die SEP-Prioritätenkarte den Trend des Steuerbudgets: grüner Pfeil nach rechts oben bei positivem, roter Pfeil nach rechts unten bei negativem Trend. Bei neutralem Trend waagerecht, bei noch unzureichender Messhistorie ein Uhrsymbol.
 - Anzeige der verfügbaren Messhistorie in Minuten und der eingestellten Trendzeit; vollständige Trendberechnung erfordert zwei Trendfenster, z. B. 20 Minuten Messhistorie bei 10 Minuten Trendzeit.
