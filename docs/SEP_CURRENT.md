@@ -1,4 +1,4 @@
-# Smartify Energy Pro – aktueller Funktionsstand 0.3.14
+# Smartify Energy Pro – aktueller Funktionsstand 0.3.15
 
 ## WP-WW-Einmalladung: vereinfachte Modi (0.3.7)
 
@@ -30,6 +30,9 @@ Das automatische Einschalten wartender Haushaltsgeräte sowie der reguläre PV-S
 
 ## Projektionsprüfung bei fallendem Kurztrend (0.3.14)
 Bei negativem Trend jenseits der einstellbaren Toleranz reicht der aktuelle Kurzzeit-Mittelwert allein nicht. SEP erwartet, dass Kurzzeit-Ø plus Differenz aus den beiden vollständigen Trendfenstern mindestens die erforderliche Geräteleistung ergeben. Bei neutral/steigend ist die Trendbedingung erfüllt. Langer Geräte-Mittelwert und aktueller Gerätewert bleiben unabhängig ≥ Bedarf. Betrifft reguläre PV-Starts der Haushaltsgeräte und WW-Boost. Die Fortschreibung bietet keine garantierte Wolkenerkennung.
+
+## Trendanzeige-Zeitangaben (0.3.15)
+Die SEP-Gerätekarte zeigt „Ø 16 min · Trend 2 min · Daten 38 min“ (Beispiel). Die 16 Minuten bestimmen das Langzeit-Mittelungsfenster, die 2 Minuten das Kurztrendfenster und 38 Minuten die gesamte vorhandene Messhistorie. Unterschiedliche Werte sind beabsichtigt; nur die Beschriftung wurde angepasst.
 
 ## 1. Zentrale Berechnungen
 
