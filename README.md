@@ -18,7 +18,7 @@ PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrüc
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.3.19** · Integrationsdomain: `smartify_energy`
+Version: **0.3.20** · Integrationsdomain: `smartify_energy`
 
 ## Trendanzeige und Historie (0.3.10)
 Haushaltsgeräte (WM/GS/Trockner) und WP-Warmwasser-Boost zeigen auf der SEP-Karte einen **grünen ↗** bei steigendem und einen **roten ↘** bei fallendem Steuerbudgettrend. Bei 0 W Trend erscheint →; solange die Zeitreihe nicht ausreicht, erscheint ein Uhrsymbol. Dazu stehen tatsächlich vorhandene **History-Minuten** und die konfigurierte **Trendzeit**. Die Trendberechnung vergleicht zwei unmittelbar aufeinanderfolgende Zeitfenster: 10 Minuten Trendzeit benötigen 20 Minuten Messhistorie. SEP behält bei Änderungen von Trendzeit und Mittelungszeit vorhandene Daten im Arbeitsspeicher und hält bis zu 60 Minuten vor; ein HA-Neustart setzt diese Historie zurück. Wallbox, Heizstab, Pool und PV-Akku zeigen keine Trendzeile.
@@ -195,3 +195,6 @@ Recorder-Entlastung, zuverlässige Neubewertung, Aktor-Timeouts und Verfügbarke
 
 [Alle Änderungen und Migration](docs/REVIEW_0.3.0.md). Nach dem Update Home Assistant neu starten. Mindestversion: **2025.7.0**.
 
+
+## Kartenlogo (0.3.20)
+Das SEP-Kartenlogo wird oben links in 40 × 40 px angezeigt; daneben steht fest „Smart Energy Pro“. Die bisherigen Steuerungsfunktionen bleiben unverändert.
