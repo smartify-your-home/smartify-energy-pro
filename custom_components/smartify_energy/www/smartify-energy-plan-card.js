@@ -147,10 +147,11 @@ function deviceTrend(recentAverage, needed, change, tolerance, ready) {
   }
   // Same two-way third gate as the appliance controller: short mean meets
   // the required watts, OR the short change is neutral/nonfalling.
-  const enough = recentAverage >= needed;
+  const projected = recentAverage + change;
   const stable = change >= -tolerance;
-  return {direction: enough ? "up" : stable ? "neutral" : "down",
-          allowed: enough || stable};
+  const allowed = stable || projected >= needed;
+  return {direction: change > tolerance && projected >= needed ? "up" :
+          !allowed ? "down" : "neutral", allowed, projected};
 }
 
 const fmtW = w => (w == null ? "–" : Math.abs(w) >= 10000 ? `${(w / 1000).toFixed(1)} kW` : `${Math.round(w)} W`);
@@ -656,7 +657,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         direction.direction === "down" ? "mdi:arrow-bottom-right" : "mdi:arrow-right";
       const trendColor = direction.direction === "up" ? "var(--success-color, #43a047)" :
         direction.direction === "down" ? "var(--error-color, #e53935)" : "var(--secondary-text-color)";
-      const trendText = trendRelevant ? `<span title="${esc(!trendReady ? "Trendhistorie noch nicht vollständig" : `Kurzzeit-Ø ${fmtW(trendRecent)}; benötigt ${fmtW(needed)}; Trendänderung ${fmtW(trendDelta)}, Toleranz ${fmtW(trendTolerance)}. Automatischer Haushaltsgerätestart nur wenn auch langer Ø und Momentanbudget mindestens den Bedarf decken.`)}"><ha-icon icon="${trendIcon}" style="--mdc-icon-size:17px;color:${trendColor};vertical-align:middle"></ha-icon> ${trendAge == null ? "–" : trendAge.toFixed(1)} min History · ${trendWindow ?? "–"} min Trend · Ø ${fmtW(trendRecent)} / ${fmtW(needed)}</span>` : "";
+      const trendText = trendRelevant ? `<span title="${esc(!trendReady ? "Trendhistorie noch nicht vollständig" : `Kurzzeit-Ø ${fmtW(trendRecent)}; Trendfortschreibung ${fmtW(direction.projected)}; benötigt ${fmtW(needed)}; Änderung ${fmtW(trendDelta)}, Toleranz ${fmtW(trendTolerance)}. Automatischer Haushaltsgerätestart nur wenn auch langer Ø und Momentanbudget mindestens den Bedarf decken.`)}"><ha-icon icon="${trendIcon}" style="--mdc-icon-size:17px;color:${trendColor};vertical-align:middle"></ha-icon> ${trendAge == null ? "–" : trendAge.toFixed(1)} min History · ${trendWindow ?? "–"} min Trend · Ø ${fmtW(trendRecent)} → ${fmtW(direction.projected)} / ${fmtW(needed)}</span>` : "";
       const planTxt = pt ? `Empf. Start ${pt}${planned.attributes.pv_anteil_prozent != null ? ` · ${planned.attributes.pv_anteil_prozent} % PV` : ""}` : "";
       const chip = forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`
                  : on ? `<span class="chip" style="background:${grad(dev.color)}">${esc(statusTxt || "ein")}</span>`
