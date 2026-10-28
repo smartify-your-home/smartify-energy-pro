@@ -195,6 +195,7 @@ class BaseDevice:
                 "trend_delta_w": round(getattr(self.manager, "trend_delta", 0.0)),
                 "trend_ready": getattr(self.manager, "trend_ready", False),
                 "trend_history_min": round(getattr(self.manager, "trend_history_minutes", 0.0), 1),
+                "history_avg_ready": bool(getattr(self.manager, "avg_history_ready", False)),
                 "trend_window_min": float(self.manager.p("trend_window")),
             } if self.TYPE in ("load", "heatpump") else {}),
             # Snapshot of the budget available at this device's priority
