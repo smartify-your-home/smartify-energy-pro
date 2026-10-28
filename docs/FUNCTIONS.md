@@ -14,7 +14,13 @@ Heizstab, andere Verbraucher und der WP-Boost über einen dauerhaften Zahlensoll
 PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrücknahme gelten nur in Automatik. Im Handbetrieb bleiben Mindestpause, Temperaturüberwachung und sofortige Abschaltung bei ungültiger Temperatur oder Geräte-/Hub-Aus aktiv. Die Mindestlaufzeit kann die Temperaturabschaltung nicht verzögern. Manuelle Heizleistung ist nicht für andere Geräte rücknehmbar; noch nicht gemessene Heizleistung wird vor PV-Freigaben reserviert. Andere Gerätetypen behalten ihr bisheriges manuelles Verhalten.
 
 
-Stand: **0.3.8**, 27.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
+Stand: **0.3.10**, 27.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
+
+## Trendanzeige und Verlauf (ab 0.3.10)
+- In der Gerätezeile von Haushaltsgeräten und WP-WW-Boost zeigt ↗ grün einen positiven und ↘ rot einen negativen Trend des gemessenen Steuerbudgets; → zeigt einen Trend von 0 W, eine Uhr unzureichende Messhistorie.
+- Die zusätzliche Minutenangabe nennt das tatsächlich vorhandene Alter der History; daneben steht die konfigurierte Trendzeit. Zur korrekten Trendberechnung müssen zwei vollständige aufeinanderfolgende Trendfenster aufgezeichnet sein.
+- Änderung an Mittelungs- oder Trendzeit verwirft die bisherigen Messpunkte nicht mehr. In der laufenden Sitzung werden bis zu 60 Minuten gehalten; HA-Neustart leert weiterhin die rein im RAM gespeicherte Historie.
+- Diese Trendanzeige betrifft keine Wallbox, keinen Heizstab, keinen Pool und keine Akku-Zeile; die bestehenden Freigabe- und Trendregeln bleiben erhalten.
 
 ## Regelung
 - Der Sensor `surplus` ist der **reale Netzsaldo** (+ Einspeisung, − Netzbezug), `surplus_avg` dessen zeitlicher Mittelwert. `budget` und `budget_avg` zeigen dagegen das intern verwendete Steuerbudget.
