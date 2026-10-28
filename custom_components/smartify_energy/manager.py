@@ -74,6 +74,9 @@ class EnergyManager:
         )
         self._store = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}")
         self._history: deque[tuple[datetime, float]] = deque()
+        self.trend_delta = 0.0
+        self.trend_ready = False
+        self.trend_history_minutes = 0.0
         self._grid_history: deque[tuple[datetime, float]] = deque()
         self._battery_history: deque[tuple[datetime, float]] = deque()
         self.battery_avg_w = 0.0
@@ -143,10 +146,9 @@ class EnergyManager:
                 if dev.TYPE == "load":
                     dev._hub_released = False
         self.params[key] = value
-        if key in ("avg_window", "trend_window"):
-            self._history.clear()
-            self._grid_history.clear()
-            self._battery_history.clear()
+        # Keep measured history when windows change. New windows are
+        # evaluated against existing observations; unavailable coverage
+        # remains explicitly marked as not ready.
         self.async_param_changed()
 
     @property
@@ -560,7 +562,9 @@ class EnergyManager:
         self._grid_history.append((now, self.grid_export))
         self._battery_history.append((now, self.battery_charging_w))
         trend_window = timedelta(minutes=float(self.p("trend_window")))
-        retention = max(window, SHORT_WINDOW, trend_window * 2)
+        # Retain enough observations for ANY configurable averaging/trend
+        # window, even if the user changes those parameters while running.
+        retention = max(timedelta(minutes=60), window, SHORT_WINDOW, trend_window * 2)
         for history in (self._history, self._grid_history, self._battery_history):
             while len(history) > 1 and now - history[1][0] >= retention:
                 history.popleft()
@@ -579,6 +583,9 @@ class EnergyManager:
             previous_avg = self._window_average(now, now - trend_window * 2, now - trend_window)
             recent_avg = self._window_average(now, now - trend_window, now)
             trend_delta = recent_avg - previous_avg
+        self.trend_delta = trend_delta
+        self.trend_ready = trend_ready
+        self.trend_history_minutes = max(0.0, (now - self._history[0][0]).total_seconds() / 60)
 
         night = in_window(now, time_from_str(self.p("night_start"), time(0)),
                           time_from_str(self.p("night_end"), time(0)))
