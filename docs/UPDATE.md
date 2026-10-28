@@ -16,7 +16,7 @@ PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrüc
 Nach dem Update Home Assistant neu starten und die Dashboard-Seite neu laden. **Achtung beim bisherigen Modus Manuell:** Dieser regelt den Heizstab ab jetzt aktiv; vor dem Update bei unerwünschter Nachheizung auf Aus stellen.
 
 
-Aktuelle Version: **0.3.17**. Integrationsdomain: `smartify_energy`.
+Aktuelle Version: **0.3.18**. Integrationsdomain: `smartify_energy`.
 
 ## Neu in 0.3.1
 - Der SEP-Hub bietet zwei getrennte Einstellungen: **Mittelungszeit** (1–60 Minuten, Standard 20) und **Trendzeitraum** (1–30 Minuten, Standard 10). Zusätzlich ist die Trendtoleranz (Standard 100 W) einstellbar.
@@ -58,6 +58,9 @@ In der SEP-Prioritätenkarte stehen Mittelungsfenster, dessen Füllstand („vol
 
 ## 0.3.17 – Logo in Dashboard und Integration
 Das kompakte SEP-Markenzeichen wird oben links mit 30 × 30 Pixeln in der SEP-Karte eingeblendet. Zusätzlich stellt die Integration ein Quadrat-Icon und Logo in `brand/` bereit, das in aktuellen HA-Versionen lokal verwendet wird. HACS kann trotzdem seinen bisherigen Platzhalter zeigen – eine bekannte HACS-Anzeigeeinschränkung. Nach Update neu starten und Browser-Cache aktualisieren.
+
+## 0.3.18 – Korrektur des SEP-Logos
+Das zuvor neu gezeichnete, vom Original abweichende Symbol wurde ersetzt. Die SEP-Karte zeigt jetzt den ausgewählten quadratischen Logoentwurf, als 30 × 30 px großes Bild links im Titel. Auch die nativen Home-Assistant-Branding-PNGs werden daraus erstellt. Vorhandener Browser-Cache sollte nach dem Update neu geladen werden.
 
 ## Update über HACS
 1. Vor dem Update Home-Assistant-Backup erstellen und die bestehenden SEP-Geräteeinstellungen dokumentieren.
