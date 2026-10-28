@@ -406,7 +406,7 @@ async def test_history_survives_manager_recreation(hass):
 async def test_appliance_pv_start_requires_three_independent_gates(hass):
     from custom_components.smartify_energy.devices.load import LoadDevice
     m = manager(hass)
-    dev = LoadDevice(m, "washer", "Waschmaschine", {"nominal_power": 2000, "switch_entity": "switch.washer"})
+    dev = LoadDevice(m, "washer", "Waschmaschine", {"nominal_power": 2000, "switch": "switch.washer"})
     dev.params["min_surplus"] = 1500
     now = dt_util.now()
     def context(short, delta, ready=True):
