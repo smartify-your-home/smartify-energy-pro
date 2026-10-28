@@ -139,13 +139,21 @@ class LoadDevice(BaseDevice):
         )
 
     def _trend_allows_start(self, ctx: Context) -> bool:
-        """Only automatic PV starts need a stable or rising trend."""
-        return ctx.trend_ready and ctx.trend_delta >= -float(getattr(self.manager, "p", lambda _key: 100)("trend_tolerance"))
+        """Use the short-window device budget, or a neutral/nonfalling trend.
+
+        Momentary and long-window needs are checked independently by caller.
+        A short-window average above need is valid; otherwise its change must
+        be at least neutral within the configured W tolerance.
+        """
+        tolerance = float(getattr(self.manager, "p", lambda _key: 100)("trend_tolerance"))
+        return ctx.trend_ready and (ctx.trend_recent_left >= self.pv_start_need
+                                    or ctx.trend_delta >= -tolerance)
 
     def _trend_wait_reason(self, ctx: Context) -> str:
         if not ctx.trend_ready:
             return "PV-Trend: Messhistorie noch nicht vollständig"
-        return (f"PV-Trend fällt um {-ctx.trend_delta:.0f} W "
+        return (f"PV-Trend: kurz Ø {ctx.trend_recent_left:.0f} W < "
+                f"{self.pv_start_need:.0f} W und fallend um {-ctx.trend_delta:.0f} W "
                 f"(Toleranz {float(getattr(self.manager, 'p', lambda _key: 100)('trend_tolerance')):.0f} W)")
 
     def _reset(self) -> None:
