@@ -358,15 +358,12 @@ const CARD_CSS = `
   .pb-budget { font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; }
   .pb-budget.negative { color:var(--error-color, #d45b48); }
   .pb-budget.positive { color:var(--success-color, #2e7d32); }
-  .pb-extra { font-size:10px; color:var(--secondary-text-color); white-space:nowrap; }
-  .pb-extra span { display:inline-block; padding-left:7px; }
   @media (max-width:560px) {
     .dev { grid-template-columns:18px 24px 24px minmax(0,1fr); gap:5px; }
     .right { grid-column:4; grid-row:2; align-items:flex-start; width:100%; }
     .power-budget { justify-content:flex-start; gap:12px; }
     .pb-item { align-items:flex-start; }
-    .pb-extra span:first-child { padding-left:0; }
-  }
+    }
   .chip { font-size:10px; padding:1px 6px; border-radius:8px; color:#000; font-weight:600; }
 
   .timeline { background:var(--row-bg); border-radius:var(--radius); padding:8px 6px 4px; box-sizing:border-box; }
@@ -694,10 +691,6 @@ class SmartifyEnergyPlanCard extends HTMLElement {
               </div>
               ${this._config.show_mode ? this._modeSelect(dev.mode, "", a.geraetetyp === "heater") : ""}
               ${this._config.show_settings !== false && dev.settings.length ? `<button class="gear ${open ? "open" : ""}" data-gear="${dev.id}" title="Einstellungen"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}
-            </div>
-            <div class="pb-extra">
-              <span>Ø ${fmtW(budgetAverage)}</span>
-              <span>Vorreserviert ${fmtW(upstream)}</span>
             </div>
           </div>
         </div>
