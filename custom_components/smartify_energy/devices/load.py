@@ -146,15 +146,14 @@ class LoadDevice(BaseDevice):
         be at least neutral within the configured W tolerance.
         """
         tolerance = float(getattr(self.manager, "p", lambda _key: 100)("trend_tolerance"))
-        return ctx.trend_ready and (ctx.trend_recent_left >= self.pv_start_need
-                                    or ctx.trend_delta >= -tolerance)
+        return ctx.trend_ready and (ctx.trend_delta >= -tolerance
+                                    or ctx.trend_recent_left + ctx.trend_delta >= self.pv_start_need)
 
     def _trend_wait_reason(self, ctx: Context) -> str:
         if not ctx.trend_ready:
             return "PV-Trend: Messhistorie noch nicht vollständig"
-        return (f"PV-Trend: kurz Ø {ctx.trend_recent_left:.0f} W < "
-                f"{self.pv_start_need:.0f} W und fallend um {-ctx.trend_delta:.0f} W "
-                f"(Toleranz {float(getattr(self.manager, 'p', lambda _key: 100)('trend_tolerance')):.0f} W)")
+        return (f"PV-Trend: prognostiziert {ctx.trend_recent_left + ctx.trend_delta:.0f} W "
+                f"< benötigt {self.pv_start_need:.0f} W; Änderung {ctx.trend_delta:.0f} W")
 
     def _reset(self) -> None:
         self.state.update(sm=IDLE, approved=False, forced_start=False, hp_active=False, hp_done=False, since=None)
