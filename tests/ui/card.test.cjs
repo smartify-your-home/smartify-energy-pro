@@ -57,18 +57,16 @@ test('trend arrow display is limited to load and heat pump with coverage indicat
   assert.match(source,/trend_ready/);
 });
 
-test('device trend uses required budget rather than raw trend sign',()=>{
+test('short-window arrow follows the three-gate threshold and neutral rule',()=>{
   const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
   dom.window.eval(source+'\nwindow.deviceTrendTest=deviceTrend;');
   const trend=dom.window.deviceTrendTest;
-  assert.equal(trend(900,2000,150,100,true).direction,'neutral',
-    'rising toward target but not enough must not be green');
-  assert.equal(trend(1900,2000,200,100,true).direction,'up');
-  assert.equal(trend(2200,2000,-300,100,true).direction,'down');
-  assert.equal(trend(2800,2000,-200,100,true).direction,'neutral',
-    'falling but still above requirement must not be red');
+  assert.equal(trend(2200,2000,-500,100,true).direction,'up',
+    'short average above required watts is sufficient despite falling direction');
+  assert.equal(trend(1900,2000,0,100,true).direction,'neutral');
+  assert.equal(trend(1900,2000,-50,100,true).allowed,true);
   assert.equal(trend(1900,2000,-250,100,true).direction,'down');
+  assert.equal(trend(1900,2000,-250,100,true).allowed,false);
   assert.equal(trend(1900,2000,250,100,false).direction,'pending');
-  assert.equal(trend(1900,2000,50,100,true).direction,'neutral');
   assert.equal(trend(null,2000,300,100,true).direction,'pending');
 });
