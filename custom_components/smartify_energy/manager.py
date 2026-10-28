@@ -297,7 +297,12 @@ class EnergyManager:
 
     def _window_average(self, now: datetime, start: datetime, end: datetime) -> float:
         """Time-weighted mean of recorded budgets inside a complete interval."""
-        points = list(self._history)
+        return self._window_average_from_history(now, start, end, self._history)
+
+    @staticmethod
+    def _window_average_from_history(now: datetime, start: datetime, end: datetime,
+                                     history: deque[tuple[datetime, float]]) -> float:
+        points = list(history)
         total = 0.0
         for index, (timestamp, value) in enumerate(points):
             segment_end = points[index + 1][0] if index + 1 < len(points) else now
@@ -641,6 +646,9 @@ class EnergyManager:
         ready = now - self._history[0][0] >= window * 0.9
         trend_ready = now - self._history[0][0] >= trend_window * 2
         trend_delta = 0.0
+        trend_recent = self._window_average(now, now - trend_window, now) if trend_ready else 0.0
+        battery_recent = self._window_average_from_history(
+            now, now - trend_window, now, self._battery_history) if trend_ready else 0.0
         if trend_ready:
             previous_avg = self._window_average(now, now - trend_window * 2, now - trend_window)
             recent_avg = self._window_average(now, now - trend_window, now)
@@ -699,6 +707,8 @@ class EnergyManager:
                 upstream = max(0.0, ctx.alloc_base - effective_left)
                 available_now = ctx.budget_now - upstream + own_budget
                 available_avg = ctx.budget_avg - upstream + own_budget
+                trend_credit = battery_priority_credit(battery_recent, battery_rank, dev.priority)
+                ctx.trend_recent_left = trend_recent + trend_credit - upstream + own_budget
                 if (dev.TYPE == "load" and dev.mode == MODE_AUTO
                         and dev.state.get("sm") in ("erkannt", "wartet")
                         and dev.is_on()):
@@ -709,6 +719,7 @@ class EnergyManager:
                 self.device_budgets[dev.id] = {
                     "aktuell_w": round(available_now),
                     "mittel_w": round(available_avg),
+                    "trend_mittel_w": round(ctx.trend_recent_left) if ctx.trend_ready else None,
                     "vorreservierung_w": round(upstream),
                     "benoetigt_w": round(dev.pv_start_need) if dev.TYPE == "load" else round(dev.nominal),
                     "zusaetzlich_reserviert_w": 0,
