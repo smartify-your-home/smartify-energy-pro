@@ -1,4 +1,4 @@
-# Smartify Energy Pro – aktueller Funktionsstand 0.3.12
+# Smartify Energy Pro – aktueller Funktionsstand 0.3.13
 
 ## WP-WW-Einmalladung: vereinfachte Modi (0.3.7)
 
@@ -24,6 +24,9 @@ Neu wird die aus zwei vollständigen Trendzeitfenstern gewonnene Budgetänderung
 
 ## Trendanzeige (0.3.10)
 Bei Haushaltsgeräten und dem WP-Warmwasser-Boost zeigt die SEP-Karte den Trend des Steuerbudgets: grüner ↗ bei positivem Trend, roter ↘ bei negativem Trend, → bei 0 W und Uhr bei noch nicht auswertbarer Zeitreihe. Zusätzlich werden tatsächliches Alter der Messhistorie und konfigurierte Trendzeit in Minuten angezeigt. Die Berechnung benötigt zwei vollständige Trendfenster. Das Ändern von Trend- oder Mittelungszeit erhält vorhandene RAM-Messwerte; bis zu 60 Minuten bleiben zur nachträglichen Auswertung erhalten. Bei Neustart von Home Assistant beginnt die rein im Arbeitsspeicher gehaltene Historie neu.
+
+## Drei PV-Startbedingungen (0.3.13)
+Das automatische Einschalten wartender Haushaltsgeräte sowie der reguläre PV-Start des WP-Boosts erfordern gleichzeitig: (1) konfigurierter Langzeit-Mittelwert des gerätebezogenen Budgets ≥ Gerätebedarf; (2) kurzer Trendzeitraum, dessen Mittelwert den Bedarf erreicht **oder** dessen Trendänderung innerhalb der Toleranz nicht fallend ist; (3) aktuelles gerätebezogenes Restbudget ≥ Gerätebedarf. Beispiel: 15 Minuten Langzeitfenster, 2 Minuten Trendfenster (erfordert 4 Minuten Historie), aktuelle Messung. Die Anzeige gibt Kurzmittel und Bedarf wieder, nicht eine Hochrechnung. Die Ausnahmen für erzwungene Starts und die aktive WW-Sonderfreigabe sind unverändert.
 
 ## 1. Zentrale Berechnungen
 
