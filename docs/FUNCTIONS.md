@@ -14,7 +14,7 @@ Heizstab, andere Verbraucher und der WP-Boost über einen dauerhaften Zahlensoll
 PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrücknahme gelten nur in Automatik. Im Handbetrieb bleiben Mindestpause, Temperaturüberwachung und sofortige Abschaltung bei ungültiger Temperatur oder Geräte-/Hub-Aus aktiv. Die Mindestlaufzeit kann die Temperaturabschaltung nicht verzögern. Manuelle Heizleistung ist nicht für andere Geräte rücknehmbar; noch nicht gemessene Heizleistung wird vor PV-Freigaben reserviert. Andere Gerätetypen behalten ihr bisheriges manuelles Verhalten.
 
 
-Stand: **0.3.14**, 27.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
+Stand: **0.3.15**, 27.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
 
 ## Gerätebezogene Budget-Trendbewertung (0.3.12)
 Für Haushaltsgeräte und den WP-Boost wird die positive/negative Differenz zweier vollständiger Trendfenster auf das aktuelle individuell verfügbare Budget fortgeschrieben. Nur ein ansteigender Trend, der damit die jeweilige erforderliche Leistung erreicht, erhält einen grünen ↗; ein fallender Trend, der die Anforderung unterschreitet, einen roten ↘. Andere Fälle bleiben neutral →, unvollständige Zeitreihen zeigen eine Uhr. Diese Anzeige ist keine Wetterprognose und ändert die Startfreigaben nicht.
@@ -33,6 +33,9 @@ Für Haushaltsgeräte und den WP-Boost wird die positive/negative Differenz zwei
 
 ## Fallender Kurztrend: projizierter Bedarf (0.3.14)
 Ist die Änderung zwischen den beiden Kurztrendfenstern stärker negativ als die einstellbare W-Toleranz, verlangt SEP für automatische Haushaltsgeräte und regulären WP-Boost: **letzter Trendfenster-Mittelwert + Trendfenster-Differenz ≥ Gerätebedarf**. Die beiden anderen Anforderungen (langer Mittelwert und Momentanbudget jeweils ≥ Gerätebedarf) bleiben verpflichtend. Bei neutraler oder positiver Entwicklung ist die Kurztrendprüfung erfüllt. Eine Fortschreibung ist keine meteorologische Vorhersage.
+
+## Zeitangaben in der Gerätekarte (0.3.15)
+Die Ansicht für Haushaltsgeräte und WP-Boost zeigt getrennt die eingestellte Mittelungszeit (Ø), Trendzeit (Trend) und tatsächlich vorhandene Aufzeichnungsdauer (Daten). Die Aufzeichnungsdauer kann bis rund 60 Minuten reichen und ist unabhängig von der für Freigaben konfigurierten Mittelungszeit. Nur die Darstellung wurde verändert.
 
 ## Regelung
 - Der Sensor `surplus` ist der **reale Netzsaldo** (+ Einspeisung, − Netzbezug), `surplus_avg` dessen zeitlicher Mittelwert. `budget` und `budget_avg` zeigen dagegen das intern verwendete Steuerbudget.
