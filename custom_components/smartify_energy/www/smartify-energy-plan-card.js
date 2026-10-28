@@ -628,6 +628,14 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const sub = mode === "observe" && a.empfehlung ? `Empfehlung: ${a.empfehlung}` : (a.reason || a.grund || statusTxt);
       const planned = this._st(dev.planned);
       const pt = planned && planned.state && !["unknown", "unavailable"].includes(planned.state) ? fmtTime(planned.state) : null;
+      const trendRelevant = ["load", "heatpump"].includes(a.geraetetyp);
+      const trendAge = num(a.trend_history_min);
+      const trendWindow = num(a.trend_window_min);
+      const trendDelta = num(a.trend_delta_w);
+      const trendReady = a.trend_ready === true;
+      const trendIcon = !trendReady ? "mdi:clock-outline" : trendDelta > 0 ? "mdi:arrow-top-right" : trendDelta < 0 ? "mdi:arrow-bottom-right" : "mdi:arrow-right";
+      const trendColor = !trendReady ? "var(--secondary-text-color)" : trendDelta > 0 ? "var(--success-color, #43a047)" : trendDelta < 0 ? "var(--error-color, #e53935)" : "var(--secondary-text-color)";
+      const trendText = trendRelevant ? `<span title="Trend: ${trendReady ? `${Math.round(trendDelta)} W` : "noch nicht berechenbar"}; Messhistorie ${trendAge == null ? "–" : trendAge.toFixed(1)} min; Trendfenster ${trendWindow ?? "–"} min, benötigt zwei Fenster"><ha-icon icon="${trendIcon}" style="--mdc-icon-size:17px;color:${trendColor};vertical-align:middle"></ha-icon> ${trendAge == null ? "–" : trendAge.toFixed(1)} min History · ${trendWindow ?? "–"} min Trend</span>` : "";
       const planTxt = pt ? `Empf. Start ${pt}${planned.attributes.pv_anteil_prozent != null ? ` · ${planned.attributes.pv_anteil_prozent} % PV` : ""}` : "";
       const chip = forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`
                  : on ? `<span class="chip" style="background:${grad(dev.color)}">${esc(statusTxt || "ein")}</span>`
@@ -643,6 +651,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
             <div class="name"><span class="t">${esc(dev.name)}</span>${chip}</div>
             <div class="sub" title="${esc(sub)}">${esc(sub)}</div>
             ${planTxt ? `<div class="plan">${esc(planTxt)}</div>` : ""}
+            ${trendText ? `<div class="plan">${trendText}</div>` : ""}
           </div>
           <div class="right" title="${esc(budgetTitle)}">
             <div class="power-budget">
