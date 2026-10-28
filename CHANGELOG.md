@@ -1,3 +1,9 @@
+## 0.3.12 – Trend gegen benötigtes Gerätebudget bewerten
+- Trendpfeile für Haushaltsgeräte und WP-Boost vergleichen jetzt das geschätzte zukünftige **gerätespezifische Restbudget** mit der jeweils benötigten Leistung. Die Richtung allein bestimmt die Pfeilfarbe nicht mehr.
+- Grün ↗ nur bei einem ausreichend positiven Trend, dessen aus zwei vollständigen Trendzeitfenstern geschätzter nächster Budgetwert die Startschwelle erreicht. Rot ↘ bei einem ausreichend negativen Trend, dessen geschätzter Budgetwert unter die Startschwelle fällt. Bei uneindeutigen oder schwachen Änderungen → grau; bei unvollständiger Historie eine Uhr.
+- Der Tooltip zeigt aktuelles, benötigtes und geschätztes Budget, die Änderung und Trendtoleranz. Der Zukunftswert ist **nur eine lineare Trendfortschreibung**, keine Wolken- oder PV-Erzeugungsprognose und keine Startgarantie.
+- Die operative Freigabelogik bleibt unverändert. UI-Regressionstests decken unter anderem zu geringe positive Trends und noch ausreichend hohe fallende Budgets ab.
+
 ## 0.3.11 – Persistente 60-Minuten-Messhistorie
 - Netzsaldo, Steuerbudget und Akkuladeleistung werden platzsparend im bestehenden HA-Integrationsspeicher gesichert und nach einem Neustart wiederhergestellt.
 - Höchstens eine Probe je 15 Sekunden; Zeitstempel werden beim Laden geprüft. Messreihen mit mehr als 2 Minuten Unterbrechung oder veralteten Werten werden nicht für den Trend verwendet.
