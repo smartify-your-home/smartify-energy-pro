@@ -86,5 +86,5 @@ test('compact priority rows expose history readiness and trend instead of redund
   assert.match(source,/min Trend/);
   assert.match(source,/Sollwert/);
   assert.match(source,/Neues Programm wird autom\. erkannt/);
-  assert.doesNotMatch(source,/<div class="pb-extra">/);
+  assert.doesNotMatch(source,/<div class="pb-extra">\s*<span>Ø/);
 });
