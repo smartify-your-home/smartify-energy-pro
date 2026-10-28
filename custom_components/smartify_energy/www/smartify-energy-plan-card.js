@@ -641,7 +641,9 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const icon = a.icon || TYPE_ICONS[a.geraetetyp] || "mdi:flash";
       const border = forced ? FORCED_GRADIENT : on ? dev.color : null;
       const statusTxt = STATUS_LABELS[st?.state] || st?.state || "";
-      const sub = mode === "observe" && a.empfehlung ? `Empfehlung: ${a.empfehlung}` : (a.reason || a.grund || statusTxt);
+      const rawSub = mode === "observe" && a.empfehlung ? `Empfehlung: ${a.empfehlung}` : (a.reason || a.grund || statusTxt);
+      const sub = st?.state === "finished" || a.status_code === "finished"
+        ? "Neues Programm wird autom. erkannt" : rawSub;
       const planned = this._st(dev.planned);
       const pt = planned && planned.state && !["unknown", "unavailable"].includes(planned.state) ? fmtTime(planned.state) : null;
       const trendRelevant = ["load", "heatpump"].includes(a.geraetetyp);
@@ -653,12 +655,14 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const trendTolerance = num(this._st(d.ents["number:trend_tolerance"])?.state) ?? 100;
       const trendRecent = num(a.trend_mittel_w);
       const direction = deviceTrend(trendRecent, needed, trendDelta, trendTolerance, trendReady);
+      const avgReady = a.history_avg_ready === true;
+      const avgMissing = avgWindow == null || trendAge == null ? null : Math.max(0, avgWindow * 0.9 - trendAge);
       const trendIcon = direction.direction === "pending" ? "mdi:clock-outline" :
         direction.direction === "up" ? "mdi:arrow-top-right" :
         direction.direction === "down" ? "mdi:arrow-bottom-right" : "mdi:arrow-right";
       const trendColor = direction.direction === "up" ? "var(--success-color, #43a047)" :
         direction.direction === "down" ? "var(--error-color, #e53935)" : "var(--secondary-text-color)";
-      const trendText = trendRelevant ? `<span title="${esc(!trendReady ? "Trendhistorie noch nicht vollständig" : `Kurzzeit-Ø ${fmtW(trendRecent)}; Trendfortschreibung ${fmtW(direction.projected)}; benötigt ${fmtW(needed)}; Änderung ${fmtW(trendDelta)}, Toleranz ${fmtW(trendTolerance)}. Automatischer Haushaltsgerätestart nur wenn auch langer Ø und Momentanbudget mindestens den Bedarf decken.`)}"><ha-icon icon="${trendIcon}" style="--mdc-icon-size:17px;color:${trendColor};vertical-align:middle"></ha-icon> Ø ${avgWindow ?? "–"} min · Trend ${trendWindow ?? "–"} min · Daten ${trendAge == null ? "–" : trendAge.toFixed(1)} min · Ø ${fmtW(trendRecent)} → ${fmtW(direction.projected)} / ${fmtW(needed)}</span>` : "";
+      const trendText = trendRelevant ? `<span title="${esc(`History: ${trendAge ?? "–"} min Daten, Mittelungszeit ${avgWindow ?? "–"} min, langes Ø ${fmtW(budgetAverage)}. Trend: ${trendWindow ?? "–"} min, Kurzzeit-Ø ${fmtW(trendRecent)}, Trendfortschreibung ${fmtW(direction.projected)}, Sollwert ${fmtW(needed)}.`)}"><ha-icon icon="${avgReady ? "mdi:check-circle" : "mdi:clock-outline"}" style="--mdc-icon-size:16px;color:${avgReady ? "var(--success-color, #43a047)" : "var(--warning-color, #fb8c00)"};vertical-align:middle"></ha-icon> ${avgWindow ?? "–"} min History <b style="color:${avgReady ? "var(--success-color, #43a047)" : "var(--warning-color, #fb8c00)"}">${avgReady ? "voll" : "wartet"}</b> (${avgReady ? fmtW(budgetAverage) : (avgMissing == null ? "–" : `noch ${avgMissing.toFixed(1)} min`)}) · <ha-icon icon="${trendIcon}" style="--mdc-icon-size:16px;color:${trendColor};vertical-align:middle"></ha-icon> ${trendWindow ?? "–"} min Trend (${fmtW(trendRecent)}) / Sollwert ${fmtW(needed)}</span>` : "";
       const planTxt = pt ? `Empf. Start ${pt}${planned.attributes.pv_anteil_prozent != null ? ` · ${planned.attributes.pv_anteil_prozent} % PV` : ""}` : "";
       const chip = forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`
                  : on ? `<span class="chip" style="background:${grad(dev.color)}">${esc(statusTxt || "ein")}</span>`
