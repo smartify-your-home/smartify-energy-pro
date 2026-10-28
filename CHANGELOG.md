@@ -1,3 +1,9 @@
+## 0.3.18 – Freigegebenes SEP-Logo statt Neuzeichnung
+- Das zuvor gezeichnete Haus-SVG und die daraus generierten abweichenden HACS-Icons entfernt.
+- Das vom Nutzer freigegebene quadratische smartify Energy Pro-Bild dient jetzt als Logo-Quelle, aus der die Home-Assistant-Branding-PNGs erzeugt werden.
+- Die SEP-Karte lädt das korrekte Bild unter /smartify_energy/sep-logo.png in 30 × 30 px.
+- Korrigierter UI-Test und Branding-Build. Keine Änderungen an Energieregelung und Prioritäten.
+
 ## 0.3.17 – SEP-Logo und HACS-/HA-Branding
 - Quadratisches smartify Energy Pro Markenzeichen ergänzt: Haus, Solar, Verbrauchsbalken und Batterie in Türkis/Dunkelblau, mit Schriftzug.
 - Oben links in der SEP-Dashboard-Karte wird das Logo dezent in 30 × 30 px vor dem Titel angezeigt.
