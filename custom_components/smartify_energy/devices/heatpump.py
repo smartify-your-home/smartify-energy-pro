@@ -305,8 +305,8 @@ class HeatPumpDevice(BaseDevice):
     def _short_trend_start_ok(self, ctx: Context, need: float) -> bool:
         """Third PV start gate: short-window budget meets load, or trend is neutral."""
         tolerance = float(getattr(self.manager, "p", lambda _key: 100)("trend_tolerance"))
-        return ctx.trend_ready and (ctx.trend_recent_left >= need
-                                    or ctx.trend_delta >= -tolerance)
+        return ctx.trend_ready and (ctx.trend_delta >= -tolerance
+                                    or ctx.trend_recent_left + ctx.trend_delta >= need)
 
     def _decide_ww_once(self, ctx: Context, budget_left: float) -> Decision:
         """Determine whether to send a single WW-start command."""
