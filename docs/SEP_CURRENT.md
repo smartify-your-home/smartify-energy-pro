@@ -1,4 +1,4 @@
-# Smartify Energy Pro – aktueller Funktionsstand 0.3.13
+# Smartify Energy Pro – aktueller Funktionsstand 0.3.14
 
 ## WP-WW-Einmalladung: vereinfachte Modi (0.3.7)
 
@@ -27,6 +27,9 @@ Bei Haushaltsgeräten und dem WP-Warmwasser-Boost zeigt die SEP-Karte den Trend 
 
 ## Drei PV-Startbedingungen (0.3.13)
 Das automatische Einschalten wartender Haushaltsgeräte sowie der reguläre PV-Start des WP-Boosts erfordern gleichzeitig: (1) konfigurierter Langzeit-Mittelwert des gerätebezogenen Budgets ≥ Gerätebedarf; (2) kurzer Trendzeitraum, dessen Mittelwert den Bedarf erreicht **oder** dessen Trendänderung innerhalb der Toleranz nicht fallend ist; (3) aktuelles gerätebezogenes Restbudget ≥ Gerätebedarf. Beispiel: 15 Minuten Langzeitfenster, 2 Minuten Trendfenster (erfordert 4 Minuten Historie), aktuelle Messung. Die Anzeige gibt Kurzmittel und Bedarf wieder, nicht eine Hochrechnung. Die Ausnahmen für erzwungene Starts und die aktive WW-Sonderfreigabe sind unverändert.
+
+## Projektionsprüfung bei fallendem Kurztrend (0.3.14)
+Bei negativem Trend jenseits der einstellbaren Toleranz reicht der aktuelle Kurzzeit-Mittelwert allein nicht. SEP erwartet, dass Kurzzeit-Ø plus Differenz aus den beiden vollständigen Trendfenstern mindestens die erforderliche Geräteleistung ergeben. Bei neutral/steigend ist die Trendbedingung erfüllt. Langer Geräte-Mittelwert und aktueller Gerätewert bleiben unabhängig ≥ Bedarf. Betrifft reguläre PV-Starts der Haushaltsgeräte und WW-Boost. Die Fortschreibung bietet keine garantierte Wolkenerkennung.
 
 ## 1. Zentrale Berechnungen
 
