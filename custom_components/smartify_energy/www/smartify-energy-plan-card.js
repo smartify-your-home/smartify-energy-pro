@@ -633,9 +633,20 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const trendWindow = num(a.trend_window_min);
       const trendDelta = num(a.trend_delta_w);
       const trendReady = a.trend_ready === true;
-      const trendIcon = !trendReady ? "mdi:clock-outline" : trendDelta > 0 ? "mdi:arrow-top-right" : trendDelta < 0 ? "mdi:arrow-bottom-right" : "mdi:arrow-right";
-      const trendColor = !trendReady ? "var(--secondary-text-color)" : trendDelta > 0 ? "var(--success-color, #43a047)" : trendDelta < 0 ? "var(--error-color, #e53935)" : "var(--secondary-text-color)";
-      const trendText = trendRelevant ? `<span title="Trend: ${trendReady ? `${Math.round(trendDelta)} W` : "noch nicht berechenbar"}; Messhistorie ${trendAge == null ? "–" : trendAge.toFixed(1)} min; Trendfenster ${trendWindow ?? "–"} min, benötigt zwei Fenster"><ha-icon icon="${trendIcon}" style="--mdc-icon-size:17px;color:${trendColor};vertical-align:middle"></ha-icon> ${trendAge == null ? "–" : trendAge.toFixed(1)} min History · ${trendWindow ?? "–"} min Trend</span>` : "";
+      const trendTolerance = num(this._st(d.ents["number:trend_tolerance"])?.state) ?? 100;
+      // The difference between two complete trend windows estimates movement
+      // across the next window. Compare that projected budget with THIS device's
+      // PV start requirement, not merely with zero or the previous measurement.
+      const projected = budgetNow == null || trendDelta == null ? null : budgetNow + trendDelta;
+      const upward = trendReady && projected != null && needed != null &&
+        trendDelta > trendTolerance && projected >= needed;
+      const downward = trendReady && projected != null && needed != null &&
+        trendDelta < -trendTolerance && projected < needed;
+      const trendIcon = !trendReady ? "mdi:clock-outline" : upward ? "mdi:arrow-top-right" :
+        downward ? "mdi:arrow-bottom-right" : "mdi:arrow-right";
+      const trendColor = upward ? "var(--success-color, #43a047)" :
+        downward ? "var(--error-color, #e53935)" : "var(--secondary-text-color)";
+      const trendText = trendRelevant ? `<span title="${esc(!trendReady ? "Trendhistorie noch nicht vollständig" : `Gerät: ${dev.name}; Budget aktuell ${fmtW(budgetNow)}; benötigtes Budget ${fmtW(needed)}; geschätztes Budget nach ${trendWindow ?? "–"} min ${fmtW(projected)}; Änderung ${fmtW(trendDelta)} (Toleranz ${fmtW(trendTolerance)}). Nur Trendindikation, keine PV-Vorhersage oder Startfreigabe.`)}"><ha-icon icon="${trendIcon}" style="--mdc-icon-size:17px;color:${trendColor};vertical-align:middle"></ha-icon> ${trendAge == null ? "–" : trendAge.toFixed(1)} min History · ${trendWindow ?? "–"} min Trend · ${fmtW(projected)} / ${fmtW(needed)}</span>` : "";
       const planTxt = pt ? `Empf. Start ${pt}${planned.attributes.pv_anteil_prozent != null ? ` · ${planned.attributes.pv_anteil_prozent} % PV` : ""}` : "";
       const chip = forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`
                  : on ? `<span class="chip" style="background:${grad(dev.color)}">${esc(statusTxt || "ein")}</span>`
