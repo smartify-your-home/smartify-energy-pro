@@ -14,7 +14,7 @@ Heizstab, andere Verbraucher und der WP-Boost über einen dauerhaften Zahlensoll
 PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrücknahme gelten nur in Automatik. Im Handbetrieb bleiben Mindestpause, Temperaturüberwachung und sofortige Abschaltung bei ungültiger Temperatur oder Geräte-/Hub-Aus aktiv. Die Mindestlaufzeit kann die Temperaturabschaltung nicht verzögern. Manuelle Heizleistung ist nicht für andere Geräte rücknehmbar; noch nicht gemessene Heizleistung wird vor PV-Freigaben reserviert. Andere Gerätetypen behalten ihr bisheriges manuelles Verhalten.
 
 
-Stand: **0.3.12**, 27.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
+Stand: **0.3.13**, 27.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
 
 ## Gerätebezogene Budget-Trendbewertung (0.3.12)
 Für Haushaltsgeräte und den WP-Boost wird die positive/negative Differenz zweier vollständiger Trendfenster auf das aktuelle individuell verfügbare Budget fortgeschrieben. Nur ein ansteigender Trend, der damit die jeweilige erforderliche Leistung erreicht, erhält einen grünen ↗; ein fallender Trend, der die Anforderung unterschreitet, einen roten ↘. Andere Fälle bleiben neutral →, unvollständige Zeitreihen zeigen eine Uhr. Diese Anzeige ist keine Wetterprognose und ändert die Startfreigaben nicht.
@@ -24,6 +24,12 @@ Für Haushaltsgeräte und den WP-Boost wird die positive/negative Differenz zwei
 - Die zusätzliche Minutenangabe nennt das tatsächlich vorhandene Alter der History; daneben steht die konfigurierte Trendzeit. Zur korrekten Trendberechnung müssen zwei vollständige aufeinanderfolgende Trendfenster aufgezeichnet sein.
 - Änderung an Mittelungs- oder Trendzeit verwirft die bisherigen Messpunkte nicht mehr. In der laufenden Sitzung werden bis zu 60 Minuten gehalten; HA-Neustart leert weiterhin die rein im RAM gespeicherte Historie.
 - Diese Trendanzeige betrifft keine Wallbox, keinen Heizstab, keinen Pool und keine Akku-Zeile; die bestehenden Freigabe- und Trendregeln bleiben erhalten.
+
+## PV-Startfreigabe mit drei Prüfungen (0.3.13)
+- Für automatische Starts von Haushaltsgeräten und reguläre PV-WW-Boosts sind **langes Durchschnittsbudget ≥ benötigte Leistung**, **kurzer Trend erfüllt** und **aktuelles Budget ≥ benötigte Leistung** nötig.
+- „Kurzer Trend erfüllt“ bedeutet: der gerätebezogene Durchschnitt im letzten konfigurierten Trendfenster erreicht den Gerätebedarf **oder** die Differenz zum vorherigen gleichlangen Trendfenster ist mindestens neutral (≥ minus einstellbare Trendtoleranz).
+- Die Kurztrendbewertung respektiert die Akkukreditierung nach Priorität und die aktuellen vorgelagerten Gerätevorreservierungen. Die gesamte benötigte Trendhistorie beträgt zweimal die Trendzeit.
+- Ausnahmen: erzwungene Haushaltsstarts (Sofort/Spätstart) und WP-Sonderauslösung bei bereits laufender Warmwasserbereitung haben weiterhin ihre eigene Freigabelogik.
 
 ## Regelung
 - Der Sensor `surplus` ist der **reale Netzsaldo** (+ Einspeisung, − Netzbezug), `surplus_avg` dessen zeitlicher Mittelwert. `budget` und `budget_avg` zeigen dagegen das intern verwendete Steuerbudget.
