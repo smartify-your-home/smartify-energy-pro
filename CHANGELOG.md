@@ -1,3 +1,7 @@
+## 0.3.21 – Korrekte Beschriftung des Kartenlogos
+- Neben dem 40 × 40 px großen SEP-Logo steht jetzt vollständig **Smartify Energy Pro**.
+- Nur Textänderung, keine Änderung der Steuerung.
+
 ## 0.3.20 – Größeres Logo und vollständiger Kartenname
 - SEP-Kartenlogo oben links von 30 × 30 px auf 40 × 40 px vergrößert.
 - Die Kartenüberschrift neben dem Logo zeigt „Smart Energy Pro“ statt der Abkürzung SEP beziehungsweise eines individuellen Titels.
