@@ -1,3 +1,11 @@
+## 0.3.17 – SEP-Logo und HACS-/HA-Branding
+- Quadratisches smartify Energy Pro Markenzeichen ergänzt: Haus, Solar, Verbrauchsbalken und Batterie in Türkis/Dunkelblau, mit Schriftzug.
+- Oben links in der SEP-Dashboard-Karte wird das Logo dezent in 30 × 30 px vor dem Titel angezeigt.
+- Das Logo wird über `/smartify_energy/sep-logo.svg` vom Integrationsserver bereitgestellt.
+- Unter `custom_components/smartify_energy/brand/` werden native PNG-Icons und -Logos für Home Assistant 2026.3+ bereitgestellt (256 und 512 px); Generator-Workflow nimmt die SVG-Quelle als Grundlage.
+- Aufgrund einer bekannten HACS-Anzeigeeinschränkung bei neueren lokalen Custom-Integration-Brandings kann HACS selbst vorübergehend einen Platzhalter zeigen, obwohl die Home-Assistant-Integration ihr Icon korrekt anzeigt.
+- Kein Eingriff in Steuerlogik. Nach Update HA neu starten und Dashboard-Cache aktualisieren.
+
 ## 0.3.16 – Kompakte Prioritätenzeilen
 - Gerätezeilen zeigen bei Haushaltsgeräten und WP-Boost das konfigurierte Langzeitfenster als „16 min History voll/wartet“ samt Mittelwert (bei unvollständiger History die fehlende Zeit), danach den Kurztrend mit Mittelwert und den erforderlichen Sollwert.
 - Doppelte Statusmeldung nach „Fertig“ entfernt: Beschreibung „Neues Programm wird autom. erkannt“.
