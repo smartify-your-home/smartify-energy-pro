@@ -21,7 +21,7 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 SERVICE_PRIORITY_ORDER = "set_priority_order"
 CARD_FILE = "smartify-energy-plan-card.js"
 CARD_URL = f"/{DOMAIN}/{CARD_FILE}"
-LOGO_URL = f"/{DOMAIN}/sep-logo.svg"
+LOGO_URL = f"/{DOMAIN}/sep-logo.png"
 
 type SmartifyEnergyConfigEntry = ConfigEntry[EnergyManager]
 
@@ -84,7 +84,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         path = Path(__file__).parent / "www" / CARD_FILE
         await hass.http.async_register_static_paths([
             StaticPathConfig(CARD_URL, str(path), False),
-            StaticPathConfig(LOGO_URL, str(path.parent / "sep-logo.svg"), False),
+            StaticPathConfig(LOGO_URL, str(path.parent / "sep-logo.png"), False),
         ])
         add_extra_js_url(hass, f"{CARD_URL}?v={(await async_get_integration(hass, DOMAIN)).version}")
     except Exception:  # noqa: BLE001
