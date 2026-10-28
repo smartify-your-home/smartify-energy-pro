@@ -374,3 +374,30 @@ async def test_trend_window_changes_preserve_measured_history(hass):
                              base + timedelta(minutes=5),
                              base + timedelta(minutes=15)) > 0
     await m.async_stop()
+
+
+async def test_history_survives_manager_recreation(hass):
+    source = manager(hass)
+    now = dt_util.now()
+    for seconds in range(0, 600, 30):
+        stamp = now - timedelta(seconds=600 - seconds)
+        source._history.append((stamp, 1500.0))
+        source._grid_history.append((stamp, 1200.0))
+        source._battery_history.append((stamp, 300.0))
+    saved = source._dump()
+    assert len(saved["history"]["budget"]) >= 15
+    target = manager(hass)
+    target._restore_history(saved["history"])
+    assert len(target._history) >= 15
+    assert len(target._history) == len(target._grid_history) == len(target._battery_history)
+    assert target._history[-1][1] == 1500.0
+    assert target._grid_history[-1][1] == 1200.0
+
+    stale = {key: [[stamp - 7200, value] for stamp, value in values]
+             for key, values in saved["history"].items()}
+    empty = manager(hass)
+    empty._restore_history(stale)
+    assert not empty._history
+    await source.async_stop()
+    await target.async_stop()
+    await empty.async_stop()
