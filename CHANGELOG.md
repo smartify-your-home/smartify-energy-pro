@@ -1,3 +1,11 @@
+## 0.3.14 – Fallender Kurztrend prüft zukünftigen Gerätebedarf
+- Die drei PV-Startprüfungen bleiben getrennt: langer Geräte-Mittelwert ≥ Bedarf, aktuelles Gerätebudget ≥ Bedarf und Kurztrendprüfung.
+- Bei deutlich fallendem Kurztrend (unter negativer Toleranz) darf ein automatischer Start nur noch erfolgen, wenn die lineare Fortschreibung aus dem letzten Kurzmittel plus der Änderung zwischen den beiden Trendfenstern weiterhin mindestens den Gerätebedarf deckt.
+- Bei neutralem oder steigendem Trend bleibt die Kurztrendprüfung erfüllt. Die beiden anderen Budgetgrenzen sind weiterhin zwingend.
+- Gleiche Regel für Haushaltsgeräte und regulären WP-WW-Boost; Sonderfreigaben (z. B. Spätstart) bleiben unverändert.
+- Die Gerätekarte zeigt Kurzmittel, fortgeschriebenes Budget und erforderliche Leistung. Regressionstests für fallenden Trend knapp über und unter der Leistungsschwelle ergänzt.
+- Es handelt sich um eine Trendfortschreibung, nicht um eine sichere Wolkenvorhersage.
+
 ## 0.3.13 – Drei unabhängige PV-Startbedingungen
 - Haushaltsgeräte prüfen weiterhin **(1) den frei einstellbaren langen Mittelwert** und **(3) das aktuelle gerätebezogene Budget**, jeweils mindestens in Höhe der benötigten Startleistung.
 - **(2) Kurzer Trend**: Das Mittel der letzten konfigurierten Trend-Minuten muss die benötigte Leistung erreichen **oder** die Veränderung zwischen dem letzten und vorherigen Trendfenster darf nicht stärker fallen als die eingestellte Trendtoleranz. Ein unter der Schwelle liegender deutlich fallender Trend sperrt den Start. Erst wenn alle drei Bedingungen erfüllt sind, ist ein automatischer PV-Start möglich.
