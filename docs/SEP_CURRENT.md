@@ -1,4 +1,4 @@
-# Smartify Energy Pro – aktueller Funktionsstand 0.3.11
+# Smartify Energy Pro – aktueller Funktionsstand 0.3.12
 
 ## WP-WW-Einmalladung: vereinfachte Modi (0.3.7)
 
@@ -18,6 +18,9 @@ PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrüc
 
 ## Persistente Historie und Updates (0.3.11)
 Die bis zu 60-minütige Historie des Steuerbudgets, Netzsaldos und der Akkuladung wird im SEP-HA-Speicher gesichert. Nach einem kurzen Neustart kann die vorhandene Messabdeckung wiederverwendet werden, sofern der letzte Datenpunkt nicht mehr als 2 Minuten zurückliegt und keine größere Zeitlücke vorliegt. Die erste Installation dieser Python-Änderung benötigt einen vollständigen HA-Neustart; reine Dashboard-Änderungen benötigen meist nur einen Frontend-Reload. Ein HACS-Update ersetzt Python-Dateien, lädt sie aber im laufenden HA-Prozess nicht zuverlässig neu.
+
+## Gerätebezogene Trendrichtung (0.3.12)
+Neu wird die aus zwei vollständigen Trendzeitfenstern gewonnene Budgetänderung auf das aktuelle gerätespezifische Budget angewendet und mit der jeweils benötigten Startleistung verglichen. ↗ grün bedeutet: deutlicher Anstieg und geschätztes Budget erreicht den Gerätebedarf. ↘ rot bedeutet: deutlicher Rückgang und geschätztes Budget liegt unter dem Gerätebedarf. Grauer → bedeutet keine eindeutige Warn- oder Freigabetendenz. Ein geschätztes Budget ist keine PV-/Wolkenvorhersage, und der Trendpfeil entscheidet nicht allein über einen Gerätestart. Die bestehende Startfreigabelogik ist unverändert.
 
 ## Trendanzeige (0.3.10)
 Bei Haushaltsgeräten und dem WP-Warmwasser-Boost zeigt die SEP-Karte den Trend des Steuerbudgets: grüner ↗ bei positivem Trend, roter ↘ bei negativem Trend, → bei 0 W und Uhr bei noch nicht auswertbarer Zeitreihe. Zusätzlich werden tatsächliches Alter der Messhistorie und konfigurierte Trendzeit in Minuten angezeigt. Die Berechnung benötigt zwei vollständige Trendfenster. Das Ändern von Trend- oder Mittelungszeit erhält vorhandene RAM-Messwerte; bis zu 60 Minuten bleiben zur nachträglichen Auswertung erhalten. Bei Neustart von Home Assistant beginnt die rein im Arbeitsspeicher gehaltene Historie neu.
