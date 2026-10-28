@@ -75,9 +75,9 @@ test('short-window arrow follows the three-gate threshold and neutral rule',()=>
 
 test('trend row labels average, trend window and stored data age separately',()=>{
   assert.match(source,/const avgWindow = num\(this\._st\(d\.ents\["number:avg_window"\]\)\?\.state\)/);
-  assert.match(source,/Ø \$\{avgWindow/);
-  assert.match(source,/Trend \$\{trendWindow/);
-  assert.match(source,/Daten \$\{trendAge/);
+  assert.match(source,/\$\{avgWindow \?\? "–"\} min History/);
+  assert.match(source,/\$\{trendWindow \?\? "–"\} min Trend/);
+  assert.match(source,/trendAge/);
 });
 
 test('compact priority rows expose history readiness and trend instead of redundant average',()=>{
