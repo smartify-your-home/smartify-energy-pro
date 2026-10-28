@@ -16,7 +16,7 @@ PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrüc
 Nach dem Update Home Assistant neu starten und die Dashboard-Seite neu laden. **Achtung beim bisherigen Modus Manuell:** Dieser regelt den Heizstab ab jetzt aktiv; vor dem Update bei unerwünschter Nachheizung auf Aus stellen.
 
 
-Aktuelle Version: **0.3.20**. Integrationsdomain: `smartify_energy`.
+Aktuelle Version: **0.3.21**. Integrationsdomain: `smartify_energy`.
 
 ## Neu in 0.3.1
 - Der SEP-Hub bietet zwei getrennte Einstellungen: **Mittelungszeit** (1–60 Minuten, Standard 20) und **Trendzeitraum** (1–30 Minuten, Standard 10). Zusätzlich ist die Trendtoleranz (Standard 100 W) einstellbar.
@@ -166,5 +166,5 @@ Recorder-Entlastung, zuverlässige Neubewertung, Aktor-Timeouts und Verfügbarke
 [Alle Änderungen und Migration](REVIEW_0.3.0.md). Nach dem Update Home Assistant neu starten. Mindestversion: **2025.7.0**.
 
 
-## SEP 0.3.20
-Logo in der SEP-Karte auf 40 × 40 Pixel vergrößert, Schriftzug daneben „Smart Energy Pro“. Reines Dashboard-Update; Dashboard aktualisieren.
+## SEP 0.3.21
+Logo in der SEP-Karte auf 40 × 40 Pixel vergrößert, Schriftzug daneben „Smartify Energy Pro“. Reines Dashboard-Update; Dashboard aktualisieren.
