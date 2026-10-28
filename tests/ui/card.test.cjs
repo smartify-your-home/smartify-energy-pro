@@ -79,3 +79,12 @@ test('trend row labels average, trend window and stored data age separately',()=
   assert.match(source,/Trend \$\{trendWindow/);
   assert.match(source,/Daten \$\{trendAge/);
 });
+
+test('compact priority rows expose history readiness and trend instead of redundant average',()=>{
+  assert.match(source,/history_avg_ready/);
+  assert.match(source,/min History/);
+  assert.match(source,/min Trend/);
+  assert.match(source,/Sollwert/);
+  assert.match(source,/Neues Programm wird autom\. erkannt/);
+  assert.doesNotMatch(source,/<div class="pb-extra">/);
+});
