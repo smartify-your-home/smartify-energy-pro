@@ -1,3 +1,11 @@
+## 0.3.13 – Drei unabhängige PV-Startbedingungen
+- Haushaltsgeräte prüfen weiterhin **(1) den frei einstellbaren langen Mittelwert** und **(3) das aktuelle gerätebezogene Budget**, jeweils mindestens in Höhe der benötigten Startleistung.
+- **(2) Kurzer Trend**: Das Mittel der letzten konfigurierten Trend-Minuten muss die benötigte Leistung erreichen **oder** die Veränderung zwischen dem letzten und vorherigen Trendfenster darf nicht stärker fallen als die eingestellte Trendtoleranz. Ein unter der Schwelle liegender deutlich fallender Trend sperrt den Start. Erst wenn alle drei Bedingungen erfüllt sind, ist ein automatischer PV-Start möglich.
+- Der kurze Trend verwendet historische gerätespezifische Budgetanpassungen für Prioritäten, Akkuladung und höher priorisierte Vorreservierungen; beide Trendabschnitte erfordern insgesamt das Doppelte der eingestellten Trenddauer an Historie.
+- Die gleiche Kurztrendprüfung gilt beim regulären PV-Start des WP-Warmwasser-Boosts. Bestehende Sonderauslösung bei bereits laufender WW-Bereitung nach Mindestdauer bleibt unverändert.
+- Die Trendanzeige zeigt das tatsächlich gemittelte kurze Gerätebudget und die benötigte Leistung statt einer unsicheren Extrapolation; grün bei erfülltem Kurzmittel, grau bei neutral/nicht fallend, rot bei deutlich fallendem und nicht ausreichendem Kurzmittel.
+- Sicherheits-/Sofort-/Spätstarts der Haushaltsgeräte behalten ihre bestehenden Ausnahmen. Regressionstests der Kurztrendentscheidung ergänzt.
+
 ## 0.3.12 – Trend gegen benötigtes Gerätebudget bewerten
 - Trendpfeile für Haushaltsgeräte und WP-Boost vergleichen jetzt das geschätzte zukünftige **gerätespezifische Restbudget** mit der jeweils benötigten Leistung. Die Richtung allein bestimmt die Pfeilfarbe nicht mehr.
 - Grün ↗ nur bei einem ausreichend positiven Trend, dessen aus zwei vollständigen Trendzeitfenstern geschätzter nächster Budgetwert die Startschwelle erreicht. Rot ↘ bei einem ausreichend negativen Trend, dessen geschätzter Budgetwert unter die Startschwelle fällt. Bei uneindeutigen oder schwachen Änderungen → grau; bei unvollständiger Historie eine Uhr.
