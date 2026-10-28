@@ -302,6 +302,12 @@ class HeatPumpDevice(BaseDevice):
         return bool(state and state.state == "on" and ts is not None
                     and float(ts) >= state.last_changed.timestamp())
 
+    def _short_trend_start_ok(self, ctx: Context, need: float) -> bool:
+        """Third PV start gate: short-window budget meets load, or trend is neutral."""
+        tolerance = float(self.manager.p("trend_tolerance"))
+        return ctx.trend_ready and (ctx.trend_recent_left >= need
+                                    or ctx.trend_delta >= -tolerance)
+
     def _decide_ww_once(self, ctx: Context, budget_left: float) -> Decision:
         """Determine whether to send a single WW-start command."""
         active = self.ww_active
@@ -370,6 +376,9 @@ class HeatPumpDevice(BaseDevice):
             return Decision(False, 0,
                             f"WW aktiv, Steuerbudget {left_now:.0f} W < 0 W")
         if left_now >= need and left_avg >= need:
+            if not self._short_trend_start_ok(ctx, need):
+                self.status = "wartet"
+                return Decision(False, 0, "Kurztrend: unter benötigter Leistung und fallend / Historie fehlt")
             self.status = "bereit"
             return Decision(True, need, "PV-Budget ausreichend – WW-Boost einmalig auslösen")
         self.status = "wartet"
@@ -424,6 +433,8 @@ class HeatPumpDevice(BaseDevice):
         if error := self._start_filter_error(ctx.now):
             return Decision(False, 0, error)
         if left_now >= need and left_avg >= need:
+            if not self._short_trend_start_ok(ctx, need):
+                return Decision(False, 0, "Kurztrend: unter benötigter Leistung und fallend / Historie fehlt")
             return Decision(True, need, "PV-Überschuss – Boost")
         return Decision(False, 0, f"Überschuss zu niedrig ({min(left_now, left_avg):.0f} W < {need:.0f} W)")
 
