@@ -1,3 +1,8 @@
+## 0.3.15 – Verständlichere Mittelwert-, Trend- und Datenanzeige
+- Bei Haushaltsgeräten und WP-Boost zeigt die SEP-Karte drei Zeitangaben getrennt: **Ø [Mittelungszeit] min · Trend [Trendzeit] min · Daten [verfügbare Historie] min**.
+- Die vorhandene Historie kann länger als die eingestellte Mittelungszeit sein (maximal ca. 60 Minuten), ohne dass der eingestellte Mittelwert über diesen gesamten Zeitraum berechnet wird.
+- Ausschließlich Anzeigeänderung; die Freigabe-, Trend- und Speicherlogik bleibt unverändert. UI-Regressionstest ergänzt.
+
 ## 0.3.14 – Fallender Kurztrend prüft zukünftigen Gerätebedarf
 - Die drei PV-Startprüfungen bleiben getrennt: langer Geräte-Mittelwert ≥ Bedarf, aktuelles Gerätebudget ≥ Bedarf und Kurztrendprüfung.
 - Bei deutlich fallendem Kurztrend (unter negativer Toleranz) darf ein automatischer Start nur noch erfolgen, wenn die lineare Fortschreibung aus dem letzten Kurzmittel plus der Änderung zwischen den beiden Trendfenstern weiterhin mindestens den Gerätebedarf deckt.
