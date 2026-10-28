@@ -643,7 +643,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const border = forced ? FORCED_GRADIENT : on ? dev.color : null;
       const statusTxt = STATUS_LABELS[st?.state] || st?.state || "";
       const rawSub = mode === "observe" && a.empfehlung ? `Empfehlung: ${a.empfehlung}` : (a.reason || a.grund || statusTxt);
-      const sub = st?.state === "finished" || a.status_code === "finished"
+      const sub = ["finished", "fertig"].includes(st?.state) || ["finished", "fertig"].includes(a.status_code)
         ? "Neues Programm wird autom. erkannt" : rawSub;
       const planned = this._st(dev.planned);
       const pt = planned && planned.state && !["unknown", "unavailable"].includes(planned.state) ? fmtTime(planned.state) : null;
