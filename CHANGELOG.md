@@ -1,3 +1,8 @@
+## 0.3.19 – Nutzerlogo übernommen
+- Die vom Nutzer hochgeladene quadratische SEP-Grafik ersetzt die bisherige Bildquelle.
+- Das Symbol in der SEP-Karte bleibt 30 × 30 Pixel; weitere Icongrößen werden daraus generiert.
+- Keine Änderungen an der Energieregelung.
+
 ## 0.3.18 – Freigegebenes SEP-Logo statt Neuzeichnung
 - Das zuvor gezeichnete Haus-SVG und die daraus generierten abweichenden HACS-Icons entfernt.
 - Das vom Nutzer freigegebene quadratische smartify Energy Pro-Bild dient jetzt als Logo-Quelle, aus der die Home-Assistant-Branding-PNGs erzeugt werden.
