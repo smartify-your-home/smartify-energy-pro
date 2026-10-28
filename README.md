@@ -18,13 +18,16 @@ PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrüc
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.3.11** · Integrationsdomain: `smartify_energy`
+Version: **0.3.12** · Integrationsdomain: `smartify_energy`
 
 ## Trendanzeige und Historie (0.3.10)
 Haushaltsgeräte (WM/GS/Trockner) und WP-Warmwasser-Boost zeigen auf der SEP-Karte einen **grünen ↗** bei steigendem und einen **roten ↘** bei fallendem Steuerbudgettrend. Bei 0 W Trend erscheint →; solange die Zeitreihe nicht ausreicht, erscheint ein Uhrsymbol. Dazu stehen tatsächlich vorhandene **History-Minuten** und die konfigurierte **Trendzeit**. Die Trendberechnung vergleicht zwei unmittelbar aufeinanderfolgende Zeitfenster: 10 Minuten Trendzeit benötigen 20 Minuten Messhistorie. SEP behält bei Änderungen von Trendzeit und Mittelungszeit vorhandene Daten im Arbeitsspeicher und hält bis zu 60 Minuten vor; ein HA-Neustart setzt diese Historie zurück. Wallbox, Heizstab, Pool und PV-Akku zeigen keine Trendzeile.
 
 ## Persistente Messhistorie (0.3.11)
 SEP speichert die letzten bis zu 60 Minuten Steuerbudget-, Netzsaldo- und Akkuladedaten platzsparend im Home-Assistant-Integrationsspeicher. Nach einem kurzen Neustart wird die Historie mit plausiblen Zeitstempeln wiederhergestellt. Längere Lücken über 2 Minuten werden nicht zu einem kontinuierlichen Trend verbunden. Für die erstmalige Aktivierung des neuen Python-Codes ist ein Home-Assistant-Neustart erforderlich. HACS kann Python-Code-Updates im laufenden Prozess nicht zuverlässig aktivieren.
+
+## Gerätebezogene Trendbewertung (0.3.12)
+Für Haushaltsgeräte und den WP-Boost wird der Trendpfeil gegen die benötigte Leistung des jeweiligen Geräts bewertet: Das jetzige individuelle Restbudget wird anhand der Änderung zwischen zwei vollständigen Trendzeitfenstern in das nächste Zeitfenster fortgeschrieben. Nur wenn diese Abschätzung die benötigte Leistung erreicht und der Trend stärker als die einstellbare Toleranz steigt, wird ↗ grün angezeigt; fällt die Abschätzung unter den Bedarf und der Trend ist ausreichend negativ, erscheint ↘ rot. Sonst steht → grau, bei fehlenden Daten eine Uhr. Die Berechnung ist eine indikative Fortschreibung, keine zuverlässige Wolkenprognose. Die Freigabelogik wird nicht verändert.
 
 ## Dokumentation und Updates
 
