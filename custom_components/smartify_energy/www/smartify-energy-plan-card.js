@@ -767,7 +767,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const markup = `
       <style>${CARD_CSS}</style>
       <ha-card>
-        ${title || d.ents["select:mode"] ? `<div class="title"><img class="sep-brand-icon" src="/smartify_energy/sep-logo.png" alt="SEP Logo"><span>Smart Energy Pro</span><span class="sp"></span>${this._modeSelect(d.ents["select:mode"])}
+        ${title || d.ents["select:mode"] ? `<div class="title"><img class="sep-brand-icon" src="/smartify_energy/sep-logo.png" alt="Smartify Energy Pro Logo"><span>Smartify Energy Pro</span><span class="sp"></span>${this._modeSelect(d.ents["select:mode"])}
           ${c.show_settings !== false && d.hubSettings.length ? `<button class="gear ${this._open.has("hub") ? "open" : ""}" data-gear="hub" title="Einstellungen Energiemanager"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}</div>` : ""}
         ${this._open.has("hub") ? this._settings(d.hubSettings, d.name, "hub") : ""}
         ${c.show_header ? this._header(d) : ""}
