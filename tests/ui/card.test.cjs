@@ -48,3 +48,11 @@ test('battery rank stays in priority model but not hub configuration rows',()=>{
 test('gear transition invalidates stale data and signature before rendering',()=>{
   assert.match(source,/this\._open\.has\(id\) \? this\._open\.delete\(id\) : this\._open\.add\(id\);[\s\S]*?this\._sig = "";[\s\S]*?this\._data = collect\(this\._hass, this\._config\.hub\);[\s\S]*?this\._render\(\)/);
 });
+
+test('trend arrow display is limited to load and heat pump with coverage indicator',()=>{
+  assert.match(source,/\["load", "heatpump"\]\.includes\(a\.geraetetyp\)/);
+  assert.match(source,/mdi:arrow-top-right/);
+  assert.match(source,/mdi:arrow-bottom-right/);
+  assert.match(source,/trend_history_min/);
+  assert.match(source,/trend_ready/);
+});
