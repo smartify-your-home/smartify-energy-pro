@@ -401,3 +401,21 @@ async def test_history_survives_manager_recreation(hass):
     await source.async_stop()
     await target.async_stop()
     await empty.async_stop()
+
+
+async def test_appliance_pv_start_requires_three_independent_gates(hass):
+    from custom_components.smartify_energy.devices.load import LoadDevice
+    m = manager(hass)
+    dev = LoadDevice(m, "washer", "Waschmaschine", {"nominal_power": 2000, "switch_entity": "switch.washer"})
+    dev.params["min_surplus"] = 1500
+    now = dt_util.now()
+    def context(short, delta, ready=True):
+        return Context(now=now, dt=0, budget_now=2300, budget_avg=2100,
+                       budget_short=short, history_ready=True, night_window=False,
+                       trend_delta=delta, trend_ready=ready, trend_recent_left=short)
+    assert dev._trend_allows_start(context(2100, -500)), "short average covers required power"
+    assert dev._trend_allows_start(context(1900, -50)), "neutral trend accepted with long and now gates"
+    assert not dev._trend_allows_start(context(1900, -500)), "falling below requirement blocks"
+    assert not dev._trend_allows_start(context(2300, 0, ready=False))
+    assert dev.pv_start_need == 2000
+    await m.async_stop()
