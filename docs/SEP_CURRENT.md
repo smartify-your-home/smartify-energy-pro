@@ -1,4 +1,4 @@
-# Smartify Energy Pro – aktueller Funktionsstand 0.3.15
+# Smartify Energy Pro – aktueller Funktionsstand 0.3.16
 
 ## WP-WW-Einmalladung: vereinfachte Modi (0.3.7)
 
@@ -33,6 +33,9 @@ Bei negativem Trend jenseits der einstellbaren Toleranz reicht der aktuelle Kurz
 
 ## Trendanzeige-Zeitangaben (0.3.15)
 Die SEP-Gerätekarte zeigt „Ø 16 min · Trend 2 min · Daten 38 min“ (Beispiel). Die 16 Minuten bestimmen das Langzeit-Mittelungsfenster, die 2 Minuten das Kurztrendfenster und 38 Minuten die gesamte vorhandene Messhistorie. Unterschiedliche Werte sind beabsichtigt; nur die Beschriftung wurde angepasst.
+
+## Prioritätenzeilen (0.3.16)
+Die kompakte Zeile zeigt z. B. „16 min History voll (2.080 W) · 2 min Trend (−320 W) / Sollwert 2.000 W“. Noch nicht bereite Mittelung erscheint als „wartet“ mit Restzeit. Die bisherige 90-%-Schwelle für die Gültigkeit des langen Mittelwerts bleibt erhalten. Doppelte Fertigbeschreibung und redundanter rechter Ø-/Vorreserviert-Block wurden entfernt; Leistung, aktuelles Budget, Betriebsmodus und Einstellungen bleiben sichtbar. Die Freigabelogik ändert sich nicht.
 
 ## 1. Zentrale Berechnungen
 
