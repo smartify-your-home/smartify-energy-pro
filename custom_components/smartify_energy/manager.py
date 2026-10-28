@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 from collections import deque
 from datetime import datetime, time, timedelta
 from typing import Any
@@ -51,6 +52,9 @@ from .helpers import ParamSpec, SensorSpec, in_window, power_w, state_float, tim
 _LOGGER = logging.getLogger(__name__)
 SHORT_WINDOW = timedelta(minutes=2)
 PLAN_INTERVAL = timedelta(minutes=15)
+HISTORY_RETENTION = timedelta(minutes=60)
+HISTORY_SAMPLE_SECONDS = 15
+HISTORY_MAX_GAP = timedelta(seconds=120)
 HUB_ENTITY_FIELDS = (CONF_GRID_SENSOR, CONF_GRID_EXPORT_SENSOR, CONF_BAT_POWER,
                      CONF_BAT_SOC, CONF_SINK_SENSORS, CONF_FORECAST_SENSORS)
 
@@ -243,6 +247,7 @@ class EnergyManager:
     # ── Lebenszyklus ─────────────────────────────────────────────────────────
     async def async_start(self) -> None:
         data = await self._store.async_load() or {}
+        self._restore_history(data.get("history"))
         for k, v in (data.get("hub") or {}).items():
             if k in self.params:
                 self.params[k] = v
@@ -317,8 +322,65 @@ class EnergyManager:
         async with self._lock:
             await self._store.async_save(self._dump())
 
+    @staticmethod
+    def _compact_history(history: deque[tuple[datetime, float]]) -> list[list]:
+        """Store at most one observation per 15 seconds, including the newest."""
+        points = []
+        for stamp, value in history:
+            if not math.isfinite(value):
+                continue
+            if not points or (stamp.timestamp() - points[-1][0]) >= HISTORY_SAMPLE_SECONDS:
+                points.append([stamp.timestamp(), round(value, 2)])
+        if history and points:
+            stamp, value = history[-1]
+            if math.isfinite(value) and points[-1][0] != stamp.timestamp():
+                points.append([stamp.timestamp(), round(value, 2)])
+        cutoff = dt_util.now().timestamp() - HISTORY_RETENTION.total_seconds()
+        return [point for point in points if point[0] >= cutoff]
+
+    def _restore_history(self, data: Any) -> None:
+        """Reject stale, malformed or discontinuous series after restart."""
+        if not isinstance(data, dict):
+            return
+        now = dt_util.now()
+        parsed = []
+        for key in ("budget", "grid", "battery"):
+            raw = data.get(key)
+            if not isinstance(raw, list) or len(raw) < 2:
+                return
+            points = []
+            try:
+                for item in raw:
+                    stamp, value = item
+                    stamp, value = float(stamp), float(value)
+                    if not (math.isfinite(stamp) and math.isfinite(value)):
+                        return
+                    timestamp = datetime.fromtimestamp(stamp, tz=now.tzinfo)
+                    if timestamp > now or now - timestamp > HISTORY_RETENTION:
+                        continue
+                    if points and (timestamp <= points[-1][0] or
+                                   timestamp - points[-1][0] > HISTORY_MAX_GAP):
+                        return
+                    points.append((timestamp, value))
+            except (TypeError, ValueError, OverflowError, OSError):
+                return
+            if len(points) < 2 or now - points[-1][0] > HISTORY_MAX_GAP:
+                return
+            parsed.append(points)
+        self._history.extend(parsed[0])
+        self._grid_history.extend(parsed[1])
+        self._battery_history.extend(parsed[2])
+
     def _dump(self) -> dict:
-        return {"hub": self.params, "devices": {sid: d.dump() for sid, d in self.devices.items()}}
+        return {
+            "hub": self.params,
+            "devices": {sid: d.dump() for sid, d in self.devices.items()},
+            "history": {
+                "budget": self._compact_history(self._history),
+                "grid": self._compact_history(self._grid_history),
+                "battery": self._compact_history(self._battery_history),
+            },
+        }
 
     async def async_save_now(self) -> None:
         """Persist a pending one-shot WW trigger before the external command.
