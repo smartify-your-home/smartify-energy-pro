@@ -81,6 +81,7 @@ class EnergyManager:
         self.trend_delta = 0.0
         self.trend_ready = False
         self.trend_history_minutes = 0.0
+        self.avg_history_ready = False
         self._grid_history: deque[tuple[datetime, float]] = deque()
         self._battery_history: deque[tuple[datetime, float]] = deque()
         self.battery_avg_w = 0.0
@@ -644,6 +645,7 @@ class EnergyManager:
         self.battery_short_w = self._weighted_average(
             now, SHORT_WINDOW, self.battery_charging_w, self._battery_history)
         ready = now - self._history[0][0] >= window * 0.9
+        self.avg_history_ready = ready
         trend_ready = now - self._history[0][0] >= trend_window * 2
         trend_delta = 0.0
         trend_recent = self._window_average(now, now - trend_window, now) if trend_ready else 0.0
