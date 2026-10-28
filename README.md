@@ -18,7 +18,7 @@ PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrüc
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.3.15** · Integrationsdomain: `smartify_energy`
+Version: **0.3.16** · Integrationsdomain: `smartify_energy`
 
 ## Trendanzeige und Historie (0.3.10)
 Haushaltsgeräte (WM/GS/Trockner) und WP-Warmwasser-Boost zeigen auf der SEP-Karte einen **grünen ↗** bei steigendem und einen **roten ↘** bei fallendem Steuerbudgettrend. Bei 0 W Trend erscheint →; solange die Zeitreihe nicht ausreicht, erscheint ein Uhrsymbol. Dazu stehen tatsächlich vorhandene **History-Minuten** und die konfigurierte **Trendzeit**. Die Trendberechnung vergleicht zwei unmittelbar aufeinanderfolgende Zeitfenster: 10 Minuten Trendzeit benötigen 20 Minuten Messhistorie. SEP behält bei Änderungen von Trendzeit und Mittelungszeit vorhandene Daten im Arbeitsspeicher und hält bis zu 60 Minuten vor; ein HA-Neustart setzt diese Historie zurück. Wallbox, Heizstab, Pool und PV-Akku zeigen keine Trendzeile.
@@ -37,6 +37,9 @@ Bei deutlich fallendem Trend darf ein automatischer PV-Start nur erfolgen, wenn 
 
 ## Zeitangaben der Trendanzeige (0.3.15)
 In der Gerätezeile für Haushaltsgeräte und WP-WW-Boost stehen die drei Zeitangaben getrennt: **Ø 16 min · Trend 2 min · Daten 38 min** (Beispiel). Ø bezeichnet das konfigurierte Mittelungsfenster, Trend das kurze Trendfenster und Daten die insgesamt vorhandene Messhistorie (bis ungefähr 60 Minuten). Eine längere gespeicherte Datenhistorie verändert die eingestellte Mittelungsdauer nicht. Reine Anzeigeänderung ohne Änderung an der Leistungsregelung.
+
+## Kompakte Prioritätenzeilen (0.3.16)
+Die Prioritätenkarte zeigt bei Haushaltsgeräten und WP-Boost z. B. **16 min History voll (2.080 W) · 2 min Trend (−320 W) / Sollwert 2.000 W**. Wenn die Mittelungs-Historie noch nicht bereit ist, wird „wartet“ sowie die fehlende Zeit angezeigt. „Voll“ bedeutet, dass die bestehende SEP-Freigabeschwelle von 90 % der Mittelungsdauer erreicht wurde. Der Gerätestatus „Fertig“ wird nicht mehr doppelt wiederholt, stattdessen steht „Neues Programm wird autom. erkannt“. Rechts entfällt die redundante Zeile mit Mittelwert und Vorreservierung; die technischen Statusattribute bleiben vorhanden. Die Leistungsregelung bleibt unverändert.
 
 ## Dokumentation und Updates
 
