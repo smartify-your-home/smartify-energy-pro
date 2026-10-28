@@ -346,7 +346,8 @@ const CARD_CSS = `
   .main .name { font-size:14px; font-weight:500; display:flex; flex-wrap:wrap; align-items:center; gap:2px 6px; }
   .main .name span.t { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
   .main .sub { font-size:11px; color:var(--secondary-text-color); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .main .plan { font-size:11px; color:var(--secondary-text-color); }
+  .main .plan { font-size:11px; color:var(--secondary-text-color); line-height:1.5; overflow-wrap:anywhere; }
+  .main .plan ha-icon { display:inline-flex; vertical-align:middle; }
   .title { flex-wrap:wrap; }
   .right { display:flex; flex-direction:column; align-items:flex-end; gap:2px; min-width:0; }
   .power-budget { display:flex; gap:10px; justify-content:flex-end; align-items:center; flex-wrap:wrap; }
