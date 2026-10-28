@@ -16,7 +16,7 @@ PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrüc
 Nach dem Update Home Assistant neu starten und die Dashboard-Seite neu laden. **Achtung beim bisherigen Modus Manuell:** Dieser regelt den Heizstab ab jetzt aktiv; vor dem Update bei unerwünschter Nachheizung auf Aus stellen.
 
 
-Aktuelle Version: **0.3.13**. Integrationsdomain: `smartify_energy`.
+Aktuelle Version: **0.3.14**. Integrationsdomain: `smartify_energy`.
 
 ## Neu in 0.3.1
 - Der SEP-Hub bietet zwei getrennte Einstellungen: **Mittelungszeit** (1–60 Minuten, Standard 20) und **Trendzeitraum** (1–30 Minuten, Standard 10). Zusätzlich ist die Trendtoleranz (Standard 100 W) einstellbar.
@@ -46,6 +46,9 @@ Die Trendanzeige der Haushaltsgeräte und des WP-Boosts bewertet nun die erwarte
 
 ## SEP 0.3.13 – Drei getrennte Startprüfungen
 Automatische PV-Freigabe bei WM/GS/Trockner und normalem WP-WW-Boost: (1) konfigurierter langer Mittelwert ≥ Gerätelast, (2) kurzer Trendmittelwert ≥ Gerätelast **oder** Verlauf nicht relevant fallend (Trendtoleranz), (3) aktuelles Gerätebudget ≥ Gerätelast. Alle drei müssen gültig sein. Für den Trend werden zwei vollständige Trendfenster benötigt. Die Anzeige zeigt den kurzen Mittelwert gegen Gerätebedarf. Sofort-/Spätstarts und die Sonderauslösung bei laufender WW-Bereitung bleiben unverändert.
+
+## 0.3.14 – Fallender Trend verlangt Reserve
+Im Kurztrend werden zwei unmittelbar aufeinanderfolgende Zeitfenster verglichen. Bei deutlich fallender Entwicklung wird für die Startfreigabe verlangt: Kurzmittel + Veränderung ≥ Gerätebedarf. Auch ein bereits ausreichend hoher Kurzmittelwert allein genügt dann nicht mehr. Bei neutralem oder steigendem Verlauf bleibt die Kurztrendbedingung erfüllt. Der längere Mittelwert und das Momentanbudget müssen unabhängig davon jeweils mindestens dem Gerätebedarf entsprechen. Diese Änderung betrifft automatische Haushaltsstarts und reguläre PV-WW-Boost-Starts.
 
 ## Update über HACS
 1. Vor dem Update Home-Assistant-Backup erstellen und die bestehenden SEP-Geräteeinstellungen dokumentieren.
