@@ -190,6 +190,12 @@ class BaseDevice:
             "empfehlung": self.would,
             "reserviert_w": round(d.power) if d and d.on else 0,
             "pflicht": bool(d and d.forced),
+            **({
+                "trend_delta_w": round(self.manager.trend_delta),
+                "trend_ready": self.manager.trend_ready,
+                "trend_history_min": round(self.manager.trend_history_minutes, 1),
+                "trend_window_min": float(self.manager.p("trend_window")),
+            } if self.TYPE in ("load", "heatpump") else {}),
             # Snapshot of the budget available at this device's priority
             # position (before its own start). Used by SEP's priority card.
             **self.manager.device_budgets.get(self.id, {}),
