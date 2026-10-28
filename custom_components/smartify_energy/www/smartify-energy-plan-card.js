@@ -300,7 +300,7 @@ const CARD_CSS = `
           --radius:var(--smartify-plan-border-radius, 6px); --txt:var(--smartify-plan-text-color, var(--primary-text-color)); }
   ha-card { padding:12px; color:var(--txt); }
   .title { font-size:16px; font-weight:600; margin:0 0 10px 2px; display:flex; align-items:center; gap:8px; }
-  .sep-brand-icon { width:30px; height:30px; flex:0 0 30px; object-fit:contain; border-radius:7px; }
+  .sep-brand-icon { width:40px; height:40px; flex:0 0 40px; object-fit:contain; border-radius:7px; }
   .title .sp { flex:1; }
   .section { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
              color:var(--secondary-text-color); margin:14px 2px 6px; display:flex; justify-content:space-between; }
@@ -767,7 +767,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const markup = `
       <style>${CARD_CSS}</style>
       <ha-card>
-        ${title || d.ents["select:mode"] ? `<div class="title"><img class="sep-brand-icon" src="/smartify_energy/sep-logo.png" alt="SEP Logo"><span>${esc(title || "")}</span><span class="sp"></span>${this._modeSelect(d.ents["select:mode"])}
+        ${title || d.ents["select:mode"] ? `<div class="title"><img class="sep-brand-icon" src="/smartify_energy/sep-logo.png" alt="SEP Logo"><span>Smart Energy Pro</span><span class="sp"></span>${this._modeSelect(d.ents["select:mode"])}
           ${c.show_settings !== false && d.hubSettings.length ? `<button class="gear ${this._open.has("hub") ? "open" : ""}" data-gear="hub" title="Einstellungen Energiemanager"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}</div>` : ""}
         ${this._open.has("hub") ? this._settings(d.hubSettings, d.name, "hub") : ""}
         ${c.show_header ? this._header(d) : ""}
