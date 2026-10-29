@@ -1,5 +1,8 @@
 # Funktionsstand und Grenzen
 
+## Heizpausen-Reservierung (0.3.26)
+Waschmaschine und Geschirrspüler erhalten den Geräteparameter `pause_reservation_pct` (0–100 %, 10-%-Schritte, Standard 100 %). Vor dem Ende der ersten erkannten Heizphase gilt 100 % Nennleistung. Danach wird während der Heizpausen der eingestellte Anteil der Nennleistung reserviert, mindestens jedoch der gemessene Verbrauch. Bei erneutem Heizen wird die tatsächlich gemessene Leistung berücksichtigt; die physische Netzbilanz enthält diese bereits. Fehlt der Leistungssensor oder liefert er keine gültigen Werte, bleibt die volle Nennleistung reserviert. Die Reservierung reduziert im selben Regelzyklus das verfügbare Budget nachrangiger Geräte; sie ist keine harte Grenze für Netzbezug. Trockner sind ausgenommen. Bereits freigegebene Programme werden nicht unterbrochen. Die H/T/B-Freigabelogik wird dadurch nicht verändert.
+
 ## WP-WW-Einmalladung: vereinfachte Modi (0.3.7)
 
 Nur bei der WP-WW-Einmalladung heißen die Modi jetzt **Automatik**, **Beobachten** und **Deaktiviert**. Automatik löst den Boost nach den eingestellten Bedingungen aus; Beobachten zeigt nur Empfehlungen. Deaktiviert löst keinen neuen Boost aus und verändert weder den Auslöser noch eine bereits laufende WW-Ladung. Diese wird von der Wärmepumpe beendet. Bisher gespeicherte Werte Manuell und Aus werden beim Laden zu Deaktiviert zusammengeführt; auch alte interne Moduswerte bleiben ohne Startfreigabe.
@@ -14,7 +17,7 @@ Heizstab, andere Verbraucher und der WP-Boost über einen dauerhaften Zahlensoll
 PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrücknahme gelten nur in Automatik. Im Handbetrieb bleiben Mindestpause, Temperaturüberwachung und sofortige Abschaltung bei ungültiger Temperatur oder Geräte-/Hub-Aus aktiv. Die Mindestlaufzeit kann die Temperaturabschaltung nicht verzögern. Manuelle Heizleistung ist nicht für andere Geräte rücknehmbar; noch nicht gemessene Heizleistung wird vor PV-Freigaben reserviert. Andere Gerätetypen behalten ihr bisheriges manuelles Verhalten.
 
 
-Stand: **0.3.16**, 27.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
+Stand: **0.3.26**, 27.10.2026. Diese Seite beschreibt implementiertes Verhalten im Repository, keine bestätigte Funktionstüchtigkeit auf einer bestimmten Home-Assistant-Installation.
 
 ## Gerätebezogene Budget-Trendbewertung (0.3.12)
 Für Haushaltsgeräte und den WP-Boost wird die positive/negative Differenz zweier vollständiger Trendfenster auf das aktuelle individuell verfügbare Budget fortgeschrieben. Nur ein ansteigender Trend, der damit die jeweilige erforderliche Leistung erreicht, erhält einen grünen ↗; ein fallender Trend, der die Anforderung unterschreitet, einen roten ↘. Andere Fälle bleiben neutral →, unvollständige Zeitreihen zeigen eine Uhr. Diese Anzeige ist keine Wetterprognose und ändert die Startfreigaben nicht.
