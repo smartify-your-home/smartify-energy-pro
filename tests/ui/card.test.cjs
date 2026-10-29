@@ -49,12 +49,14 @@ test('gear transition invalidates stale data and signature before rendering',()=
   assert.match(source,/this\._open\.has\(id\) \? this\._open\.delete\(id\) : this\._open\.add\(id\);[\s\S]*?this\._sig = "";[\s\S]*?this\._data = collect\(this\._hass, this\._config\.hub\);[\s\S]*?this\._render\(\)/);
 });
 
-test('trend arrow display is limited to load and heat pump with coverage indicator',()=>{
+test('H/T/B display is limited to load and heat pump',()=>{
   assert.match(source,/\["load", "heatpump"\]\.includes\(a\.geraetetyp\)/);
-  assert.match(source,/mdi:arrow-top-right/);
-  assert.match(source,/mdi:arrow-bottom-right/);
-  assert.match(source,/trend_history_min/);
+  assert.match(source,/history_avg_ready/);
   assert.match(source,/trend_ready/);
+  assert.match(source,/gate\("H", avgReady, historyInfo\)/);
+  assert.match(source,/gate\("T", trendOk, trendInfo\)/);
+  assert.match(source,/gate\("B", budgetOk, budgetInfo\)/);
+  assert.match(source,/avgReady && trendOk && budgetOk/);
 });
 
 test('short-window arrow follows the three-gate threshold and neutral rule',()=>{
@@ -73,18 +75,16 @@ test('short-window arrow follows the three-gate threshold and neutral rule',()=>
   assert.equal(trend(null,2000,300,100,true).direction,'pending');
 });
 
-test('trend row labels average, trend window and stored data age separately',()=>{
+test('expandable H/T/B log exposes live actual and target values',()=>{
   assert.match(source,/const avgWindow = num\(this\._st\(d\.ents\["number:avg_window"\]\)\?\.state\)/);
-  assert.match(source,/\$\{avgWindow \?\? "–"\} min History/);
-  assert.match(source,/\$\{trendWindow \?\? "–"\} min Trend/);
-  assert.match(source,/trendAge/);
-});
-
-test('compact priority rows expose history readiness and trend instead of redundant average',()=>{
-  assert.match(source,/history_avg_ready/);
-  assert.match(source,/min History/);
-  assert.match(source,/min Trend/);
-  assert.match(source,/Sollwert/);
+  assert.match(source,/const historyNeed = avgWindow == null \? null : avgWindow \* 0\.9/);
+  assert.match(source,/const trendHistoryNeed = trendWindow == null \? null : trendWindow \* 2/);
+  assert.match(source,/logRow\("H", avgReady/);
+  assert.match(source,/logRow\("T", trendOk/);
+  assert.match(source,/logRow\("B", budgetOk/);
+  assert.match(source,/data-log-panel/);
+  assert.match(source,/data-log=/);
+  assert.match(source,/this\._logOpen\.has\(id\) \? this\._logOpen\.delete\(id\) : this\._logOpen\.add\(id\)/);
   assert.match(source,/Neues Programm wird autom\. erkannt/);
   assert.doesNotMatch(source,/<div class="pb-extra">\s*<span>Ø/);
 });
