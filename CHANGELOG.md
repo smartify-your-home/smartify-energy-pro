@@ -1,3 +1,12 @@
+## 0.3.26 – Einstellbare Restreservierung in Heizpausen
+- Neue Geräteeinstellung `pause_reservation_pct` (0–100 %, Schrittweite 10 %, Standard 100 %) für Waschmaschine und Geschirrspüler.
+- Vor Ende der ersten erkannten Heizphase bleibt die volle Nennleistung reserviert. Danach wird in Heizpausen mindestens der eingestellte Anteil reserviert; bei tatsächlichem Heizbetrieb gilt mindestens die gemessene Leistung.
+- Fehlender/ungültiger Leistungssensor führt zur vollen Nennleistungsreservierung, damit kein fiktives Budget freigegeben wird.
+- Nachrangige Geräte erhalten das freigewordene Budget sofort im Prioritätslauf; tatsächliche Messleistung wird nicht doppelt abgezogen.
+- Trockner unverändert (volle Dauerlastreservierung). Laufende Haushaltsprogramme werden nicht unterbrochen; reduzierter Puffer kann zu Netzbezug führen.
+- Dashboard-Hilfe für die neue Einstellung und Regressionstests ergänzt; Kartenversion 1.3.5.
+- H/T/B-Startbedingungen und PV-Startschwellen bleiben unverändert.
+
 ## 0.3.25 – H/T/B-Diagnoselog und korrigierte UI-Tests
 - Pro Gerät ausklappbares Diagnosefenster mit Ist-/Sollwerten für Historie (H), Trend (T) und Budget (B).
 - H/T/B zeigen ihren Status einzeln in Rot oder Grün; der grüne Haken erscheint nur, wenn alle drei Bedingungen erfüllt sind.
