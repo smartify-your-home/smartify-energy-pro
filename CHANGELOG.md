@@ -1,3 +1,9 @@
+## 0.3.27 – HACS-Infoseite vollständig aktualisiert
+- README als von HACS gerenderte App-Infoseite neu strukturiert: aktuelle Funktionsübersicht, Geräteprofile, H/T/B, Heizpausen-Reservierung, Installation und Dashboard.
+- Historische Updatehinweise und alte Versionsabschnitte aus der HACS-Startseite entfernt; vollständige Versionshistorie bleibt im Changelog und in den technischen Dokumenten erhalten.
+- Deutliche Hinweise zu Wiederanlauf nach Stromunterbrechung, Netzbezugsrisiko bei reduzierter Restreservierung und erzwungenen Starts ergänzt.
+- Keine Änderung an Steuerung, Geräteeinstellungen oder Dashboard-Code gegenüber 0.3.26.
+
 ## 0.3.26 – Einstellbare Restreservierung in Heizpausen
 - Neue Geräteeinstellung `pause_reservation_pct` (0–100 %, Schrittweite 10 %, Standard 100 %) für Waschmaschine und Geschirrspüler.
 - Vor Ende der ersten erkannten Heizphase bleibt die volle Nennleistung reserviert. Danach wird in Heizpausen mindestens der eingestellte Anteil reserviert; bei tatsächlichem Heizbetrieb gilt mindestens die gemessene Leistung.
