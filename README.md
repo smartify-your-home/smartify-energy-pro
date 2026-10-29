@@ -18,7 +18,7 @@ PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrüc
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.3.21** · Integrationsdomain: `smartify_energy`
+Version: **0.3.22** · Integrationsdomain: `smartify_energy`
 
 ## Trendanzeige und Historie (0.3.10)
 Haushaltsgeräte (WM/GS/Trockner) und WP-Warmwasser-Boost zeigen auf der SEP-Karte einen **grünen ↗** bei steigendem und einen **roten ↘** bei fallendem Steuerbudgettrend. Bei 0 W Trend erscheint →; solange die Zeitreihe nicht ausreicht, erscheint ein Uhrsymbol. Dazu stehen tatsächlich vorhandene **History-Minuten** und die konfigurierte **Trendzeit**. Die Trendberechnung vergleicht zwei unmittelbar aufeinanderfolgende Zeitfenster: 10 Minuten Trendzeit benötigen 20 Minuten Messhistorie. SEP behält bei Änderungen von Trendzeit und Mittelungszeit vorhandene Daten im Arbeitsspeicher und hält bis zu 60 Minuten vor; ein HA-Neustart setzt diese Historie zurück. Wallbox, Heizstab, Pool und PV-Akku zeigen keine Trendzeile.
@@ -198,3 +198,16 @@ Recorder-Entlastung, zuverlässige Neubewertung, Aktor-Timeouts und Verfügbarke
 
 ## Kartenlogo (0.3.21)
 Das SEP-Kartenlogo wird oben links in 40 × 40 px angezeigt; daneben steht fest „Smartify Energy Pro“. Die bisherigen Steuerungsfunktionen bleiben unverändert.
+
+
+## Kompakte H/T/B-Statusanzeige (0.3.22)
+
+Bei Haushaltsgeräten und dem Wärmepumpen-Boost ersetzt eine kurze Statuszeile die bisherige ausführliche History-/Trendanzeige. Ein **grüner Haken** signalisiert eine vollständig gefüllte Mittelwert-Historie; solange Daten fehlen, erscheint ein **oranges X im Kreis**. Daneben stehen die Buchstaben **H** (Historie), **T** (Trend) und **B** (Budget), jeweils **grün**, wenn die Bedingung erfüllt ist, andernfalls **rot**.
+
+- **H:** Der Mittelungszeitraum hat ausreichend Messhistorie (unveränderte Regel: mindestens 90 % der konfigurierten Mittelungszeit).
+- **T:** Die Trendhistorie umfasst zwei Trendfenster und der gerätebezogene Trend erlaubt einen normalen PV-Start (Änderung mindestens minus Toleranz oder prognostiziertes Budget mindestens Bedarf).
+- **B:** Sowohl das aktuelle als auch das gemittelte gerätebezogene Budget decken die benötigte Leistung.
+
+Die Detailwerte (Zeitfenster, Mittelwerte, Trendänderung, Prognose und Bedarf) sind weiterhin über Tooltips zugänglich. **H/T/B bilden die drei normalen PV-Startbedingungen ab, nicht alle übrigen Freigaben** wie Modus, Gerätestatus, Sonnenwinkel oder Sonderfreigaben für bereits laufendes Warmwasser. Eine grüne Dreierkombination bedeutet daher nicht automatisch, dass ein Aktor eingeschaltet wird. Die Regelungslogik bleibt unverändert.
+
+**Update:** Über HACS aktualisieren, Home Assistant neu starten und das Dashboard neu laden, falls die alte Darstellung im Browsercache liegt.
