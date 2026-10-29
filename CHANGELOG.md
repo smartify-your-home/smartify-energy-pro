@@ -1,3 +1,9 @@
+## 0.3.24 – Aufklappbares Ist-/Soll-Log für H/T/B
+- Kleiner Log-Schalter direkt neben H/T/B für Haushaltsgeräte und WP-Boost.
+- Drei kompakte Zeilen zeigen jeweils Ist-/Sollwerte für Historie, Trend und Budget; live aktualisiert.
+- Aufklappzustand bleibt bei Sensoraktualisierungen erhalten; keine Änderung der Regelungslogik.
+- Karten-Version 1.3.4.
+
 ## 0.3.23 – Statusanzeige H/T/B
 - Der grüne Haken erscheint nur rechts nach B, wenn H, T und B erfüllt sind.
 - Das bisherige separate Symbol vor H entfällt.
