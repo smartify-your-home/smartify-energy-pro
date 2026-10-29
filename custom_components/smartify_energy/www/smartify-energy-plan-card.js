@@ -2,7 +2,7 @@
  * smartify-energy-plan-card
  * Lovelace Custom Card für den smartify Energiemanager (Integration smartify_energy).
  * Zeigt Überschuss, Prioritäten (Drag & Drop) und den PV-Plan der nächsten Stunden.
- * Version: 1.1.0
+ * Version: 1.3.5
  *
  * Installation: /config/www/smartify-energy-plan-card.js
  * Resource:     /local/smartify-energy-plan-card.js  (type: module)
@@ -24,7 +24,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.3.4";
+const CARD_VERSION = "1.3.5";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -78,7 +78,8 @@ const SETTING_HELP = {
   "battery_target_soc": "Gewünschter Akkustand für die Speicherplanung. Beispiel: 90 %. Bei „Speicher zuerst“ erhalten Verbraucher erst ab diesem Stand Zugriff auf die Ladeleistung des Speichers.",
   "battery_safety": "Zusätzlicher Puffer bei der Prognose: 1,5 verlangt das 1,5-Fache der noch benötigten Speicherenergie. Höhere Werte bevorzugen den Speicher vorsichtiger.",
   "battery_strategy": "SEP berechnet weiter eine Prognose-Priorität für den Hausspeicher. Ohne direkte Stellmöglichkeit am Speicher wird dessen Ladeleistung jedoch aus Sicherheitsgründen nicht als sofort verfügbares Steuerbudget freigegeben. Die Auswahl steuert den Wechselrichter nicht.",
-  "nominal_power": "Erwartete Heizleistung dieses Haushaltsgeräts in Watt (W), z. B. 2000 W. Vor Ende der Heizphase reserviert SEP diese Leistung; bereits tatsächlich gemessene Watt werden dabei nicht doppelt belastet. Nach Ende der Heizphase entfällt die zusätzliche Heizreservierung.",
+  "nominal_power": "Erwartete maximale Heizleistung dieses Haushaltsgeräts in Watt (W), z. B. 2000 W. Vor dem Ende der ersten Heizphase wird sie vollständig abgesichert. In späteren Heizpausen gilt die einstellbare Restreservierung. Bereits gemessener Verbrauch wird nicht doppelt abgezogen.",
+  "pause_reservation_pct": "Restreservierung in Heizpausen nach der ersten erkannten Heizphase. 100 % (Standard) sichert die volle Nennleistung ab; 50 % reserviert bei 2000 W Nennleistung nur 1000 W, sodass nachrangige Geräte früher starten können. Während tatsächlicher Heizphasen zählt mindestens der gemessene Verbrauch. Ohne gültigen Leistungssensor bleibt die volle Nennleistung reserviert. Niedrigere Werte können bei gleichzeitigem Heizen Netzbezug verursachen; bereits gestartete Programme werden nicht unterbrochen.",
   "min_surplus": "Zusätzliche einstellbare PV-Startschwelle in Watt (W). Für einen automatischen PV-Start zählt der höhere Wert aus Nennleistung und Mindest-Überschuss: z. B. bei 2000 W Heizleistung und 1500 W Schwelle müssen mindestens 2000 W frei sein. Auch der Mittelwert muss reichen. Negative Werte senken diese Heizlast-Absicherung nicht ab; Netzbezug kann aber durch Spätstart, Sofortfenster oder Sofort starten ausdrücklich erlaubt werden.",
   "finish_threshold": "Unter dieser Leistung kann das Programm als fertig gelten, sobald die Fertigerkennung freigegeben ist. Beispiel: 5 W. Eine zu hohe Schwelle kann längere Programmpausen mit dem Programmende verwechseln.",
   "finish_minutes": "So lange muss die Leistung unter der Fertig-Schwelle bleiben. Erst dann erscheint „Fertig“. Ein längerer Wert vermeidet Fehlmeldungen bei Pausen, meldet das Ende aber später.",
