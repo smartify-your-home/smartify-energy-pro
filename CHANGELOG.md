@@ -3,6 +3,7 @@
 - Drei kompakte Zeilen zeigen jeweils Ist-/Sollwerte für Historie, Trend und Budget; live aktualisiert.
 - Aufklappzustand bleibt bei Sensoraktualisierungen erhalten; keine Änderung der Regelungslogik.
 - Karten-Version 1.3.4.
+- npm-UI-Tests an H/T/B-Status und aufklappbares Log angepasst; veraltete Assertions für die entfernten Trendpfeile und Langtexte ersetzt.
 
 ## 0.3.23 – Statusanzeige H/T/B
 - Der grüne Haken erscheint nur rechts nach B, wenn H, T und B erfüllt sind.
