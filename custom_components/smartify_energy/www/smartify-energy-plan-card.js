@@ -349,6 +349,10 @@ const CARD_CSS = `
   .main .sub { font-size:11px; color:var(--secondary-text-color); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .main .plan { font-size:11px; color:var(--secondary-text-color); line-height:1.5; overflow-wrap:anywhere; }
   .main .plan ha-icon { display:inline-flex; vertical-align:middle; }
+  .sep-gates { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; vertical-align:middle; }
+  .sep-history-icon { --mdc-icon-size:17px; display:inline-flex; vertical-align:middle; }
+  .sep-gate { font-size:12px; font-weight:800; line-height:1.2; min-width:12px; text-align:center; }
+
   .title { flex-wrap:wrap; }
   .right { display:flex; flex-direction:column; align-items:flex-end; gap:2px; min-width:0; }
   .power-budget { display:flex; gap:10px; justify-content:flex-end; align-items:center; flex-wrap:wrap; }
@@ -656,12 +660,19 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const direction = deviceTrend(trendRecent, needed, trendDelta, trendTolerance, trendReady);
       const avgReady = a.history_avg_ready === true;
       const avgMissing = avgWindow == null || trendAge == null ? null : Math.max(0, avgWindow * 0.9 - trendAge);
-      const trendIcon = direction.direction === "pending" ? "mdi:clock-outline" :
-        direction.direction === "up" ? "mdi:arrow-top-right" :
-        direction.direction === "down" ? "mdi:arrow-bottom-right" : "mdi:arrow-right";
-      const trendColor = direction.direction === "up" ? "var(--success-color, #43a047)" :
-        direction.direction === "down" ? "var(--error-color, #e53935)" : "var(--secondary-text-color)";
-      const trendText = trendRelevant ? `<span title="${esc(`History: ${trendAge ?? "–"} min Daten, Mittelungszeit ${avgWindow ?? "–"} min, langes Ø ${fmtW(budgetAverage)}. Trend: ${trendWindow ?? "–"} min, Kurzzeit-Ø ${fmtW(trendRecent)}, Trendfortschreibung ${fmtW(direction.projected)}, Sollwert ${fmtW(needed)}.`)}"><ha-icon icon="${avgReady ? "mdi:check-circle" : "mdi:clock-outline"}" style="--mdc-icon-size:16px;color:${avgReady ? "var(--success-color, #43a047)" : "var(--warning-color, #fb8c00)"};vertical-align:middle"></ha-icon> ${avgWindow ?? "–"} min History <b style="color:${avgReady ? "var(--success-color, #43a047)" : "var(--warning-color, #fb8c00)"}">${avgReady ? "voll" : "wartet"}</b> (${avgReady ? fmtW(budgetAverage) : (avgMissing == null ? "–" : `noch ${avgMissing.toFixed(1)} min`)}) · <ha-icon icon="${trendIcon}" style="--mdc-icon-size:16px;color:${trendColor};vertical-align:middle"></ha-icon> ${trendWindow ?? "–"} min Trend (${fmtW(trendRecent)}) / Sollwert ${fmtW(needed)}</span>` : "";
+      // Drei unabhängige Startbedingungen: Historie (H), Trend (T), Budget (B).
+      // Die Anzeige spiegelt die normale PV-Startfreigabe wider; Sonderfreigaben
+      // (z. B. WW bereits aktiv) haben eigene Regeln.
+      const trendOk = trendReady && direction.allowed;
+      const gateColor = ok => ok ? "var(--success-color, #43a047)" : "var(--error-color, #e53935)";
+      const gate = (letter, ok, explanation) =>
+        `<span class="sep-gate" style="color:${gateColor(ok)}" title="${esc(explanation)}" aria-label="${esc(letter + ": " + explanation)}">${letter}</span>`;
+      const historyInfo = `Historie: ${trendAge ?? "–"} min vorhanden, benötigt ${avgWindow ?? "–"} min; Ø ${fmtW(budgetAverage)}`;
+      const trendInfo = `Trend: ${trendReady ? (trendOk ? "Bedingung erfüllt" : "Bedingung nicht erfüllt") : "Messhistorie noch nicht vollständig"}; Fenster ${trendWindow ?? "–"} min, Kurzzeit-Ø ${fmtW(trendRecent)}, Änderung ${fmtW(trendDelta)}, Fortschreibung ${fmtW(direction.projected)}, benötigt ${fmtW(needed)}`;
+      const budgetInfo = `Budget: ${budgetOk ? "Bedingung erfüllt" : "Bedingung nicht erfüllt"}; aktuell ${fmtW(budgetNow)}, Ø ${fmtW(budgetAverage)}, benötigt ${fmtW(needed)}`;
+      const trendText = trendRelevant
+        ? `<span class="sep-gates" title="${esc(historyInfo + " | " + trendInfo + " | " + budgetInfo)}"><ha-icon icon="mdi:${avgReady ? "check-circle" : "close-circle"}" class="sep-history-icon" style="color:${avgReady ? "var(--success-color, #43a047)" : "var(--warning-color, #fb8c00)"}" title="${esc(historyInfo)}"></ha-icon>${gate("H", avgReady, historyInfo)}${gate("T", trendOk, trendInfo)}${gate("B", budgetOk, budgetInfo)}</span>`
+        : "";
       const planTxt = pt ? `Empf. Start ${pt}${planned.attributes.pv_anteil_prozent != null ? ` · ${planned.attributes.pv_anteil_prozent} % PV` : ""}` : "";
       const chip = forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`
                  : on ? `<span class="chip" style="background:${grad(dev.color)}">${esc(statusTxt || "ein")}</span>`
