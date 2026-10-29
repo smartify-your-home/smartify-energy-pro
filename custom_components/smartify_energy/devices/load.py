@@ -41,7 +41,9 @@ class LoadDevice(BaseDevice):
 
     def status_attrs(self) -> dict:
         return {**super().status_attrs(), "icon": self.appliance_icon,
-                "haushaltsgeraet_typ": self.cfg.get("appliance_type", "washing_machine")}
+                "haushaltsgeraet_typ": self.cfg.get("appliance_type", "washing_machine"),
+                "heizpause_reservierung_prozent": self.p("pause_reservation_pct"),
+                "reservierte_leistung_w": round(self.reserved_power)}
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -61,6 +63,7 @@ class LoadDevice(BaseDevice):
             ParamSpec("nominal_power", "number", float(self.cfg.get("nominal_power", 2200)),
                       "mdi:flash", 100, 4000, 50, "W"),
             ParamSpec("min_surplus", "number", 1500, "mdi:solar-power", -3000, 4000, 50, "W"),
+            ParamSpec("pause_reservation_pct", "number", 100, "mdi:percent-outline", 0, 100, 10, "%"),
             ParamSpec("earliest_start", "time", "00:00", "mdi:clock-start"),
             ParamSpec("latest_start", "time", "16:00", "mdi:clock-alert-outline"),
             ParamSpec("finish_threshold", "number", 5, "mdi:power-plug-off", 0, 50, 0.5, "W"),
@@ -230,11 +233,21 @@ class LoadDevice(BaseDevice):
 
     @property
     def reserved_power(self) -> float:
-        """Laufendes Gerät: Nennleistung bis zum Ende der Heizphase reservieren."""
+        """Reserve full heating load until first heat ends; then a configurable floor.
+
+        During subsequent heating, actual metered power takes precedence. If
+        the power sensor is missing/unavailable, retain the full nominal
+        reservation rather than granting phantom surplus to lower priorities.
+        """
         p = self._p()
-        if self.state["sm"] == RUNNING and not self.state["hp_done"]:
+        if self.state["sm"] != RUNNING:
+            return p
+        if not self.cfg.get(CONF_POWER_SENSOR) or power_w(self.hass, self.cfg[CONF_POWER_SENSOR]) is None:
             return max(p, self.nominal)
-        return p
+        if not self.state["hp_done"]:
+            return max(p, self.nominal)
+        floor = self.nominal * float(self.p("pause_reservation_pct")) / 100.0
+        return max(p, floor)
 
     # ── Entscheidung ─────────────────────────────────────────────────────────
     def decide(self, ctx: Context, budget_left: float) -> Decision:
