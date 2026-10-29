@@ -1,7 +1,5 @@
 # Smartify Energy Pro
 
-**Update auf 0.3.8:** Heizstab im Modus Manuell heizt jetzt aktiv mit erlaubtem Netzbezug. Vor dem Update bei unerwünschter Nachheizung auf Aus stellen. Danach Home Assistant neu starten und das Dashboard neu laden. WP-WW-Einmalladung: Manuell/Aus werden zu Deaktiviert zusammengeführt; laufende Ladungen bleiben unberührt.
-
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
 Version: **0.3.25** · Integrationsdomain: `smartify_energy`
@@ -39,6 +37,8 @@ Die Prioritätenkarte zeigt bei Haushaltsgeräten und WP-Boost z. B. **16 min Hi
 Das quadratische **smartify Energy Pro**-Logo befindet sich als Bilddatei unter `custom_components/smartify_energy/www/sep-logo.png` und wird **30 × 30 Pixel links vor dem Titel** in der SEP-Dashboard-Karte angezeigt. Für das Integrationssymbol stehen lokale Brand-Dateien unter `custom_components/smartify_energy/brand/` zur Verfügung. Ab Home Assistant 2026.3 werden diese lokal ausgeliefert. **Hinweis:** HACS kann bei Custom-Repositories trotz korrekter Brand-Dateien weiterhin „Icon not available“ anzeigen; dieser HACS-Frontend-Befund ist unabhängig davon, ob das HA-Integrationssymbol erscheint. Nach der Aktualisierung Home Assistant neu starten und Dashboard hart neu laden.
 
 ## Historische Hinweise (Version 0.3.6–0.3.8)
+
+**Update auf 0.3.8:** Heizstab im Modus Manuell heizt jetzt aktiv mit erlaubtem Netzbezug. Vor dem Update bei unerwünschter Nachheizung auf Aus stellen. Danach Home Assistant neu starten und das Dashboard neu laden. WP-WW-Einmalladung: Manuell/Aus werden zu Deaktiviert zusammengeführt; laufende Ladungen bleiben unberührt.
 
 Die folgenden Hinweise betreffen frühere Änderungen und dienen nur der Dokumentation:
 
