@@ -2,23 +2,17 @@
 
 **Update auf 0.3.8:** Heizstab im Modus Manuell heizt jetzt aktiv mit erlaubtem Netzbezug. Vor dem Update bei unerwünschter Nachheizung auf Aus stellen. Danach Home Assistant neu starten und das Dashboard neu laden. WP-WW-Einmalladung: Manuell/Aus werden zu Deaktiviert zusammengeführt; laufende Ladungen bleiben unberührt.
 
-## WP-WW-Einmalladung: vereinfachte Modi (0.3.7)
-
-Nur bei der WP-WW-Einmalladung heißen die Modi jetzt **Automatik**, **Beobachten** und **Deaktiviert**. Automatik löst den Boost nach den eingestellten Bedingungen aus; Beobachten zeigt nur Empfehlungen. Deaktiviert löst keinen neuen Boost aus und verändert weder den Auslöser noch eine bereits laufende WW-Ladung. Diese wird von der Wärmepumpe beendet. Bisher gespeicherte Werte Manuell und Aus werden beim Laden zu Deaktiviert zusammengeführt; auch alte interne Moduswerte bleiben ohne Startfreigabe.
-
-Heizstab, andere Verbraucher und der WP-Boost über einen dauerhaften Zahlensollwert behalten ihre bisherigen Modi. Nach dem Update Home Assistant neu starten und das Dashboard neu laden.
-
-
-## Heizstab: temperaturgeregelter Handbetrieb (0.3.6)
-
-**Manuell** schaltet den Heizstab temperaturabhängig, auch mit Netzstrom. Bei 50 °C Soll und 1 K Hysterese startet er unter 49 °C, läuft bis 50 °C und schaltet dann ab. Solange Manuell gewählt bleibt, wird nach Abkühlung erneut geheizt; dies ist keine einmalige Nachladung. Zum Beenden **Aus**, für PV-Betrieb **Automatik** wählen.
-
-PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrücknahme gelten nur in Automatik. Im Handbetrieb bleiben Mindestpause, Temperaturüberwachung und sofortige Abschaltung bei ungültiger Temperatur oder Geräte-/Hub-Aus aktiv. Die Mindestlaufzeit kann die Temperaturabschaltung nicht verzögern. Manuelle Heizleistung ist nicht für andere Geräte rücknehmbar; noch nicht gemessene Heizleistung wird vor PV-Freigaben reserviert. Andere Gerätetypen behalten ihr bisheriges manuelles Verhalten.
-
-
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
 Version: **0.3.25** · Integrationsdomain: `smartify_energy`
+
+## Aktuelle Version: 0.3.25
+
+**Neu:** Die Gerätezeilen zeigen die drei farbigen Startbedingungen **H** (Historie), **T** (Trend) und **B** (Budget). Nur wenn alle drei erfüllt sind, erscheint rechts nach B ein grüner Haken. Über **Log ▾** lassen sich die jeweiligen Ist-/Sollwerte je Gerät aufklappen. Die Anzeige aktualisiert sich bei neuen Sensordaten.
+
+**Update:** Nach Installation über HACS Home Assistant neu starten und die Dashboard-Seite neu laden. Die technische Veröffentlichung und der zugehörige GitHub-Release-Tag müssen erfolgreich sein, damit HACS die Version als Update anbieten kann.
+
+**Änderungen je Version:** Im [Changelog](CHANGELOG.md) stehen die Release Notes in absteigender Versionsreihenfolge. Ältere Versionsnummern in den folgenden Abschnitten kennzeichnen den Zeitpunkt der Einführung einer Funktion und sind keine aktuellen Release Notes.
 
 ## Trendanzeige und Historie (0.3.10)
 Haushaltsgeräte (WM/GS/Trockner) und WP-Warmwasser-Boost zeigen auf der SEP-Karte einen **grünen ↗** bei steigendem und einen **roten ↘** bei fallendem Steuerbudgettrend. Bei 0 W Trend erscheint →; solange die Zeitreihe nicht ausreicht, erscheint ein Uhrsymbol. Dazu stehen tatsächlich vorhandene **History-Minuten** und die konfigurierte **Trendzeit**. Die Trendberechnung vergleicht zwei unmittelbar aufeinanderfolgende Zeitfenster: 10 Minuten Trendzeit benötigen 20 Minuten Messhistorie. SEP behält bei Änderungen von Trendzeit und Mittelungszeit vorhandene Daten im Arbeitsspeicher und hält bis zu 60 Minuten vor; ein HA-Neustart setzt diese Historie zurück. Wallbox, Heizstab, Pool und PV-Akku zeigen keine Trendzeile.
@@ -43,6 +37,23 @@ Die Prioritätenkarte zeigt bei Haushaltsgeräten und WP-Boost z. B. **16 min Hi
 
 ## Logo und HACS-/Home-Assistant-Branding (0.3.17)
 Das quadratische **smartify Energy Pro**-Logo befindet sich als Bilddatei unter `custom_components/smartify_energy/www/sep-logo.png` und wird **30 × 30 Pixel links vor dem Titel** in der SEP-Dashboard-Karte angezeigt. Für das Integrationssymbol stehen lokale Brand-Dateien unter `custom_components/smartify_energy/brand/` zur Verfügung. Ab Home Assistant 2026.3 werden diese lokal ausgeliefert. **Hinweis:** HACS kann bei Custom-Repositories trotz korrekter Brand-Dateien weiterhin „Icon not available“ anzeigen; dieser HACS-Frontend-Befund ist unabhängig davon, ob das HA-Integrationssymbol erscheint. Nach der Aktualisierung Home Assistant neu starten und Dashboard hart neu laden.
+
+## Historische Hinweise (Version 0.3.6–0.3.8)
+
+Die folgenden Hinweise betreffen frühere Änderungen und dienen nur der Dokumentation:
+
+## WP-WW-Einmalladung: vereinfachte Modi (0.3.7)
+
+Nur bei der WP-WW-Einmalladung heißen die Modi jetzt **Automatik**, **Beobachten** und **Deaktiviert**. Automatik löst den Boost nach den eingestellten Bedingungen aus; Beobachten zeigt nur Empfehlungen. Deaktiviert löst keinen neuen Boost aus und verändert weder den Auslöser noch eine bereits laufende WW-Ladung. Diese wird von der Wärmepumpe beendet. Bisher gespeicherte Werte Manuell und Aus werden beim Laden zu Deaktiviert zusammengeführt; auch alte interne Moduswerte bleiben ohne Startfreigabe.
+
+Heizstab, andere Verbraucher und der WP-Boost über einen dauerhaften Zahlensollwert behalten ihre bisherigen Modi. Nach dem Update Home Assistant neu starten und das Dashboard neu laden.
+
+
+## Heizstab: temperaturgeregelter Handbetrieb (0.3.6)
+
+**Manuell** schaltet den Heizstab temperaturabhängig, auch mit Netzstrom. Bei 50 °C Soll und 1 K Hysterese startet er unter 49 °C, läuft bis 50 °C und schaltet dann ab. Solange Manuell gewählt bleibt, wird nach Abkühlung erneut geheizt; dies ist keine einmalige Nachladung. Zum Beenden **Aus**, für PV-Betrieb **Automatik** wählen.
+
+PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrücknahme gelten nur in Automatik. Im Handbetrieb bleiben Mindestpause, Temperaturüberwachung und sofortige Abschaltung bei ungültiger Temperatur oder Geräte-/Hub-Aus aktiv. Die Mindestlaufzeit kann die Temperaturabschaltung nicht verzögern. Manuelle Heizleistung ist nicht für andere Geräte rücknehmbar; noch nicht gemessene Heizleistung wird vor PV-Freigaben reserviert. Andere Gerätetypen behalten ihr bisheriges manuelles Verhalten.
 
 ## Dokumentation und Updates
 
