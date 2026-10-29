@@ -1,4 +1,7 @@
-# Smartify Energy Pro – aktueller Funktionsstand 0.3.16
+# Smartify Energy Pro – aktueller Funktionsstand 0.3.26
+
+## Heizpausen-Reservierung (0.3.26)
+Waschmaschine und Geschirrspüler erhalten den Geräteparameter `pause_reservation_pct` (0–100 %, 10-%-Schritte, Standard 100 %). Vor dem Ende der ersten erkannten Heizphase gilt 100 % Nennleistung. Danach wird während der Heizpausen der eingestellte Anteil der Nennleistung reserviert, mindestens jedoch der gemessene Verbrauch. Bei erneutem Heizen wird die tatsächlich gemessene Leistung berücksichtigt; die physische Netzbilanz enthält diese bereits. Fehlt der Leistungssensor oder liefert er keine gültigen Werte, bleibt die volle Nennleistung reserviert. Die Reservierung reduziert im selben Regelzyklus das verfügbare Budget nachrangiger Geräte; sie ist keine harte Grenze für Netzbezug. Trockner sind ausgenommen. Bereits freigegebene Programme werden nicht unterbrochen. Die H/T/B-Freigabelogik wird dadurch nicht verändert.
 
 ## WP-WW-Einmalladung: vereinfachte Modi (0.3.7)
 
