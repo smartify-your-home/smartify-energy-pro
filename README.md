@@ -18,7 +18,7 @@ PV-Start-/Stop-Schwellen, früheste Startzeit und die Pause nach Prioritätsrüc
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.3.24** · Integrationsdomain: `smartify_energy`
+Version: **0.3.25** · Integrationsdomain: `smartify_energy`
 
 ## Trendanzeige und Historie (0.3.10)
 Haushaltsgeräte (WM/GS/Trockner) und WP-Warmwasser-Boost zeigen auf der SEP-Karte einen **grünen ↗** bei steigendem und einen **roten ↘** bei fallendem Steuerbudgettrend. Bei 0 W Trend erscheint →; solange die Zeitreihe nicht ausreicht, erscheint ein Uhrsymbol. Dazu stehen tatsächlich vorhandene **History-Minuten** und die konfigurierte **Trendzeit**. Die Trendberechnung vergleicht zwei unmittelbar aufeinanderfolgende Zeitfenster: 10 Minuten Trendzeit benötigen 20 Minuten Messhistorie. SEP behält bei Änderungen von Trendzeit und Mittelungszeit vorhandene Daten im Arbeitsspeicher und hält bis zu 60 Minuten vor; ein HA-Neustart setzt diese Historie zurück. Wallbox, Heizstab, Pool und PV-Akku zeigen keine Trendzeile.
@@ -213,5 +213,9 @@ Die Detailwerte (Zeitfenster, Mittelwerte, Trendänderung, Prognose und Bedarf) 
 Die Anzeige zeigt H, T und B in Rot oder Grün. Nur wenn alle drei Bedingungen erfüllt sind, erscheint rechts nach B ein grüner Haken. Es gibt kein separates Symbol vor H und kein oranges X mehr.
 
 
-### Aufklappbares H/T/B-Log (0.3.24)
+### Aufklappbares H/T/B-Log (0.3.25)
 Neben den farbigen H/T/B-Buchstaben gibt es pro Haushaltsgerät und WP-Boost den kleinen Schalter **Log ▾**. Er öffnet eine kompakte Ist-/Soll-Tabelle mit drei Zeilen: H zeigt verfügbare Messhistorie und die 90-%-Schwelle der eingestellten Mittelungszeit; T zeigt Historie für zwei Trendfenster sowie die alternative Freigabebedingung (Trendänderung oder fortgeschriebenes Budget); B zeigt aktuelles und gemitteltes Budget im Vergleich zum Leistungsbedarf. Die Werte aktualisieren sich mit den Sensoren. Das Fenster bleibt bis zum manuellen Schließen geöffnet, auch bei Sensoraktualisierungen. Der Schalter ändert keine Regelparameter.
+
+
+### Release 0.3.25
+Die neue Version enthält das aufklappbare H/T/B-Ist-/Soll-Diagnoselog, den bedingten grünen Haken nach B und aktualisierte npm-UI-Tests. Bei einem fehlenden HACS-Update zuerst den Status des GitHub-Release-Workflows prüfen; eine geänderte Manifestversion allein bestätigt noch keine erfolgreiche Veröffentlichung.
