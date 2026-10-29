@@ -2,15 +2,21 @@
 
 Home-Assistant-Integration **Smartify Energy Pro** zur Steuerung von PV-Überschuss mit Prioritäten, Prognosen und Batteriespeicherlogik.
 
-Version: **0.3.25** · Integrationsdomain: `smartify_energy`
+Version: **0.3.26** · Integrationsdomain: `smartify_energy`
 
-## Aktuelle Version: 0.3.25
+## Aktuelle Version: 0.3.26
 
-**Neu:** Die Gerätezeilen zeigen die drei farbigen Startbedingungen **H** (Historie), **T** (Trend) und **B** (Budget). Nur wenn alle drei erfüllt sind, erscheint rechts nach B ein grüner Haken. Über **Log ▾** lassen sich die jeweiligen Ist-/Sollwerte je Gerät aufklappen. Die Anzeige aktualisiert sich bei neuen Sensordaten.
+**Weiterhin verfügbar:** Die Gerätezeilen zeigen die drei farbigen Startbedingungen **H** (Historie), **T** (Trend) und **B** (Budget). Nur wenn alle drei erfüllt sind, erscheint rechts nach B ein grüner Haken. Über **Log ▾** lassen sich die jeweiligen Ist-/Sollwerte je Gerät aufklappen. Die Anzeige aktualisiert sich bei neuen Sensordaten.
 
 **Update:** Nach Installation über HACS Home Assistant neu starten und die Dashboard-Seite neu laden. Die technische Veröffentlichung und der zugehörige GitHub-Release-Tag müssen erfolgreich sein, damit HACS die Version als Update anbieten kann.
 
 **Änderungen je Version:** Im [Changelog](CHANGELOG.md) stehen die Release Notes in absteigender Versionsreihenfolge. Ältere Versionsnummern in den folgenden Abschnitten kennzeichnen den Zeitpunkt der Einführung einer Funktion und sind keine aktuellen Release Notes.
+
+## Heizpausen-Reservierung für Haushaltsgeräte (0.3.26)
+
+**Neu:** Waschmaschine und Geschirrspüler können nach der **ersten erkannten Heizphase** einen einstellbaren Anteil ihrer Nennleistung für spätere Heizphasen reservieren. Unter den Geräteeinstellungen heißt der Regler **Restreservierung in Heizpausen** (`pause_reservation_pct`, 0–100 % in 10-%-Schritten, Standard 100 %). Beispiel: Bei 2.000 W Nennleistung und 50 % Einstellung bleiben während einer Heizpause 1.000 W für dieses Gerät reserviert; das übrige Budget steht nachrangigen Geräten zur Verfügung. **Vor der ersten abgeschlossenen Heizphase** wird weiterhin die volle Nennleistung reserviert. Während tatsächlicher Heizphasen zählt mindestens die gemessene Leistung. Bei fehlendem oder ungültigem Leistungssensor gilt sicherheitshalber wieder die volle Nennleistung. **Trockner bleiben ausgenommen** und reservieren weiterhin ihre erwartete Dauerlast.
+
+Die Reservierung wird **sofort** bei jedem Regelzyklus für die nachrangigen Geräte berücksichtigt; die tatsächlich gemessene Leistung ist bereits im Netzsaldo enthalten und wird nicht doppelt abgezogen. Bereits freigegebene Haushaltsprogramme werden bei späteren Heizphasen nicht unterbrochen. 50 % ist eine bewusste Optimierung, keine Netzbezugsbegrenzung: Bei gleichzeitigem Heizen oder sinkender PV-Leistung kann Netzstrom bezogen werden. Die Einstellung beeinflusst die Freigabe nachrangiger Geräte, **nicht** die PV-Startschwelle des jeweiligen Geräts. Die allgemeine H/T/B-Trendlogik bleibt unverändert.
 
 ## Trendanzeige und Historie (0.3.10)
 Haushaltsgeräte (WM/GS/Trockner) und WP-Warmwasser-Boost zeigen auf der SEP-Karte einen **grünen ↗** bei steigendem und einen **roten ↘** bei fallendem Steuerbudgettrend. Bei 0 W Trend erscheint →; solange die Zeitreihe nicht ausreicht, erscheint ein Uhrsymbol. Dazu stehen tatsächlich vorhandene **History-Minuten** und die konfigurierte **Trendzeit**. Die Trendberechnung vergleicht zwei unmittelbar aufeinanderfolgende Zeitfenster: 10 Minuten Trendzeit benötigen 20 Minuten Messhistorie. SEP behält bei Änderungen von Trendzeit und Mittelungszeit vorhandene Daten im Arbeitsspeicher und hält bis zu 60 Minuten vor; ein HA-Neustart setzt diese Historie zurück. Wallbox, Heizstab, Pool und PV-Akku zeigen keine Trendzeile.
