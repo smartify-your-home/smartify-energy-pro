@@ -1,3 +1,8 @@
+## 0.3.23 – Statusanzeige H/T/B
+- Der grüne Haken erscheint nur rechts nach B, wenn H, T und B erfüllt sind.
+- Das bisherige separate Symbol vor H entfällt.
+- Unveränderte PV-Regelung; Karten-Version 1.3.3.
+
 ## 0.3.22 – Kompakte History-, Trend- und Budgetanzeige
 - Lange History-/Trendzeile in den Prioritätenkarten von Haushaltsgeräten und WP-Boost durch ein grünes Haken- bzw. oranges X-Symbol und die farbigen H/T/B-Buchstaben ersetzt.
 - H = Mittelungs-Historie bereit; T = Trendbedingung erfüllt; B = aktuelles und gemitteltes Budget ausreichend. Grün = erfüllt, Rot = nicht erfüllt.
