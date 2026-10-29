@@ -24,7 +24,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.3.3";
+const CARD_VERSION = "1.3.4";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -352,6 +352,14 @@ const CARD_CSS = `
   .sep-gates { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; vertical-align:middle; }
   .sep-history-icon { --mdc-icon-size:17px; display:inline-flex; vertical-align:middle; }
   .sep-gate { font-size:12px; font-weight:800; line-height:1.2; min-width:12px; text-align:center; }
+  .sep-log-toggle { border:1px solid var(--divider-color); border-radius:6px; padding:1px 6px; background:transparent; color:var(--secondary-text-color); font:inherit; font-size:10px; cursor:pointer; }
+  .sep-log-toggle:hover { color:var(--primary-text-color); }
+  .sep-log { margin-top:5px; padding:7px 9px; border:1px solid var(--divider-color); border-radius:7px; background:var(--secondary-background-color); font-size:11px; line-height:1.55; max-width:480px; }
+  .sep-log-row { display:grid; grid-template-columns:18px minmax(0,1fr); gap:6px; padding:2px 0; }
+  .sep-log-row + .sep-log-row { border-top:1px solid var(--divider-color); }
+  .sep-log-code { font-weight:800; }
+  .sep-log-detail { overflow-wrap:anywhere; color:var(--primary-text-color); }
+
 
   .title { flex-wrap:wrap; }
   .right { display:flex; flex-direction:column; align-items:flex-end; gap:2px; min-width:0; }
@@ -448,6 +456,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._sig = "";
     this._drag = null;
     this._open = new Set();
+    this._logOpen = new Set();
   }
 
   static getConfigElement() { return document.createElement("smartify-energy-plan-card-editor"); }
@@ -673,6 +682,17 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const trendText = trendRelevant
         ? `<span class="sep-gates" title="${esc(historyInfo + " | " + trendInfo + " | " + budgetInfo)}">${gate("H", avgReady, historyInfo)}${gate("T", trendOk, trendInfo)}${gate("B", budgetOk, budgetInfo)}${avgReady && trendOk && budgetOk ? '<ha-icon icon="mdi:check-circle" class="sep-history-icon" style="color:var(--success-color, #43a047)"></ha-icon>' : ""}</span>`
         : "";
+      const logOpen = this._logOpen.has(dev.id);
+      const logRow = (letter, ok, detail) =>
+        `<div class="sep-log-row"><span class="sep-log-code" style="color:${gateColor(ok)}">${letter}</span><span class="sep-log-detail">${esc(detail)}</span></div>`;
+      const historyNeed = avgWindow == null ? null : avgWindow * 0.9;
+      const trendHistoryNeed = trendWindow == null ? null : trendWindow * 2;
+      const logText = trendRelevant ? `<div class="sep-log" data-log-panel="${esc(dev.id)}" id="sep-log-${esc(dev.id)}">
+        ${logRow("H", avgReady, `Ist ${trendAge == null ? "–" : trendAge.toFixed(1)} min / Soll ${historyNeed == null ? "–" : historyNeed.toFixed(1)} min (90 % von ${avgWindow ?? "–"} min)`)}
+        ${logRow("T", trendOk, `Historie Ist ${trendAge == null ? "–" : trendAge.toFixed(1)} / Soll ${trendHistoryNeed == null ? "–" : trendHistoryNeed.toFixed(1)} min; Änderung Ist ${fmtW(trendDelta)} / Soll ≥ ${fmtW(-trendTolerance)} ODER Prognose Ist ${fmtW(direction.projected)} / Soll ≥ ${fmtW(needed)}`)}
+        ${logRow("B", budgetOk, `Aktuell Ist ${fmtW(budgetNow)} / Soll ≥ ${fmtW(needed)}; Ø Ist ${fmtW(budgetAverage)} / Soll ≥ ${fmtW(needed)}`)}
+      </div>` : "";
+      const logToggle = trendRelevant ? `<button type="button" class="sep-log-toggle" data-log="${esc(dev.id)}" aria-expanded="${logOpen}" aria-controls="sep-log-${esc(dev.id)}" title="Ist- und Sollwerte für H, T und B anzeigen">${logOpen ? "Log ▴" : "Log ▾"}</button>` : "";
       const planTxt = pt ? `Empf. Start ${pt}${planned.attributes.pv_anteil_prozent != null ? ` · ${planned.attributes.pv_anteil_prozent} % PV` : ""}` : "";
       const chip = forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`
                  : on ? `<span class="chip" style="background:${grad(dev.color)}">${esc(statusTxt || "ein")}</span>`
@@ -688,7 +708,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
             <div class="name"><span class="t">${esc(dev.name)}</span>${chip}</div>
             <div class="sub" title="${esc(sub)}">${esc(sub)}</div>
             ${planTxt ? `<div class="plan">${esc(planTxt)}</div>` : ""}
-            ${trendText ? `<div class="plan">${trendText}</div>` : ""}
+            ${trendText ? `<div class="plan">${trendText} ${logToggle}</div>${logOpen ? logText : ""}` : ""}
           </div>
           <div class="right" title="${esc(budgetTitle)}">
             <div class="power-budget">
@@ -797,10 +817,15 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._eventsBound = true;
     const root = this.shadowRoot;
     root.addEventListener("click", e => {
-      const el = e.target.closest?.("[data-gear], [data-more], [data-press], select");
+      const el = e.target.closest?.("[data-log], [data-gear], [data-more], [data-press], select");
       if (!el) return;
       if (el.matches("select")) { e.stopPropagation(); return; }
-      if (el.dataset.gear) {
+      if (el.hasAttribute("data-log")) {
+        e.stopPropagation();
+        const id = el.dataset.log;
+        this._logOpen.has(id) ? this._logOpen.delete(id) : this._logOpen.add(id);
+        this._render();
+      } else if (el.dataset.gear) {
         e.stopPropagation();
         const id = el.dataset.gear;
         this._open.has(id) ? this._open.delete(id) : this._open.add(id);
