@@ -211,3 +211,7 @@ Bei Haushaltsgeräten und dem Wärmepumpen-Boost ersetzt eine kurze Statuszeile 
 Die Detailwerte (Zeitfenster, Mittelwerte, Trendänderung, Prognose und Bedarf) sind weiterhin über Tooltips zugänglich. **H/T/B bilden die drei normalen PV-Startbedingungen ab, nicht alle übrigen Freigaben** wie Modus, Gerätestatus, Sonnenwinkel oder Sonderfreigaben für bereits laufendes Warmwasser. Eine grüne Dreierkombination bedeutet daher nicht automatisch, dass ein Aktor eingeschaltet wird. Die Regelungslogik bleibt unverändert.
 
 **Update:** Über HACS aktualisieren, Home Assistant neu starten und das Dashboard neu laden, falls die alte Darstellung im Browsercache liegt.
+
+
+### Anzeige ab 0.3.23
+Die Anzeige zeigt H, T und B in Rot oder Grün. Nur wenn alle drei Bedingungen erfüllt sind, erscheint rechts nach B ein grüner Haken. Es gibt kein separates Symbol vor H und kein oranges X mehr.
