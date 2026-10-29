@@ -1,3 +1,10 @@
+## 0.3.25 – H/T/B-Diagnoselog und korrigierte UI-Tests
+- Pro Gerät ausklappbares Diagnosefenster mit Ist-/Sollwerten für Historie (H), Trend (T) und Budget (B).
+- H/T/B zeigen ihren Status einzeln in Rot oder Grün; der grüne Haken erscheint nur, wenn alle drei Bedingungen erfüllt sind.
+- Aufklappzustand bleibt bei Sensoraktualisierungen erhalten.
+- Veraltete npm-Tests für entfernte Trendpfeile und History-Langtexte durch Tests für die aktuelle H/T/B-Anzeige und das Log ersetzt.
+- Keine Änderung an der eigentlichen PV-Regelung; Frontend-Kartenversion 1.3.4.
+
 ## 0.3.24 – Aufklappbares Ist-/Soll-Log für H/T/B
 - Kleiner Log-Schalter direkt neben H/T/B für Haushaltsgeräte und WP-Boost.
 - Drei kompakte Zeilen zeigen jeweils Ist-/Sollwerte für Historie, Trend und Budget; live aktualisiert.
