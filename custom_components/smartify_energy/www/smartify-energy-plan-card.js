@@ -24,7 +24,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.3.2";
+const CARD_VERSION = "1.3.3";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -671,7 +671,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const trendInfo = `Trend: ${trendReady ? (trendOk ? "Bedingung erfüllt" : "Bedingung nicht erfüllt") : "Messhistorie noch nicht vollständig"}; Fenster ${trendWindow ?? "–"} min, Kurzzeit-Ø ${fmtW(trendRecent)}, Änderung ${fmtW(trendDelta)}, Fortschreibung ${fmtW(direction.projected)}, benötigt ${fmtW(needed)}`;
       const budgetInfo = `Budget: ${budgetOk ? "Bedingung erfüllt" : "Bedingung nicht erfüllt"}; aktuell ${fmtW(budgetNow)}, Ø ${fmtW(budgetAverage)}, benötigt ${fmtW(needed)}`;
       const trendText = trendRelevant
-        ? `<span class="sep-gates" title="${esc(historyInfo + " | " + trendInfo + " | " + budgetInfo)}"><ha-icon icon="mdi:${avgReady ? "check-circle" : "close-circle"}" class="sep-history-icon" style="color:${avgReady ? "var(--success-color, #43a047)" : "var(--warning-color, #fb8c00)"}" title="${esc(historyInfo)}"></ha-icon>${gate("H", avgReady, historyInfo)}${gate("T", trendOk, trendInfo)}${gate("B", budgetOk, budgetInfo)}</span>`
+        ? `<span class="sep-gates" title="${esc(historyInfo + " | " + trendInfo + " | " + budgetInfo)}">${gate("H", avgReady, historyInfo)}${gate("T", trendOk, trendInfo)}${gate("B", budgetOk, budgetInfo)}${avgReady && trendOk && budgetOk ? '<ha-icon icon="mdi:check-circle" class="sep-history-icon" style="color:var(--success-color, #43a047)"></ha-icon>' : ""}</span>`
         : "";
       const planTxt = pt ? `Empf. Start ${pt}${planned.attributes.pv_anteil_prozent != null ? ` · ${planned.attributes.pv_anteil_prozent} % PV` : ""}` : "";
       const chip = forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`
