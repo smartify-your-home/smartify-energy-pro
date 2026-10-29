@@ -202,11 +202,7 @@ Das SEP-Kartenlogo wird oben links in 40 × 40 px angezeigt; daneben steht fest 
 
 ## Kompakte H/T/B-Statusanzeige (0.3.22)
 
-Bei Haushaltsgeräten und dem Wärmepumpen-Boost ersetzt eine kurze Statuszeile die bisherige ausführliche History-/Trendanzeige. Ein **grüner Haken** signalisiert eine vollständig gefüllte Mittelwert-Historie; solange Daten fehlen, erscheint ein **oranges X im Kreis**. Daneben stehen die Buchstaben **H** (Historie), **T** (Trend) und **B** (Budget), jeweils **grün**, wenn die Bedingung erfüllt ist, andernfalls **rot**.
-
-- **H:** Der Mittelungszeitraum hat ausreichend Messhistorie (unveränderte Regel: mindestens 90 % der konfigurierten Mittelungszeit).
-- **T:** Die Trendhistorie umfasst zwei Trendfenster und der gerätebezogene Trend erlaubt einen normalen PV-Start (Änderung mindestens minus Toleranz oder prognostiziertes Budget mindestens Bedarf).
-- **B:** Sowohl das aktuelle als auch das gemittelte gerätebezogene Budget decken die benötigte Leistung.
+Bei Haushaltsgeräten und dem Wärmepumpen-Boost ersetzt eine kurze Statuszeile die bisherige ausführliche History-/Trendanzeige. Die drei Buchstaben H, T und B zeigen die einzelnen Bedingungen rot oder grün. Nur wenn alle drei grün sind, erscheint rechts nach B ein grüner Haken.
 
 Die Detailwerte (Zeitfenster, Mittelwerte, Trendänderung, Prognose und Bedarf) sind weiterhin über Tooltips zugänglich. **H/T/B bilden die drei normalen PV-Startbedingungen ab, nicht alle übrigen Freigaben** wie Modus, Gerätestatus, Sonnenwinkel oder Sonderfreigaben für bereits laufendes Warmwasser. Eine grüne Dreierkombination bedeutet daher nicht automatisch, dass ein Aktor eingeschaltet wird. Die Regelungslogik bleibt unverändert.
 
