@@ -2,7 +2,7 @@
  * smartify-energy-plan-card
  * Lovelace Custom Card für den smartify Energiemanager (Integration smartify_energy).
  * Zeigt Überschuss, Prioritäten (Drag & Drop) und den PV-Plan der nächsten Stunden.
- * Version: 1.3.5
+ * Version: 1.3.6
  *
  * Installation: /config/www/smartify-energy-plan-card.js
  * Resource:     /local/smartify-energy-plan-card.js  (type: module)
