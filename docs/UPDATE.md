@@ -1,4 +1,7 @@
-## 0.3.28 – Testkorrektur für Heizpausen
+## 0.3.29 – Strenger Trend-Check
+T wird nur grün, wenn der Mittelwert der gewählten Trendzeit ≥ benötigtem Budget ist. Bei stark fallendem Trend muss auch die Fortschreibung ≥ Bedarf bleiben. Die ODER-Freigabe für steigende/neutral verlaufende, aber zu niedrige Kurzmittel entfällt. Betrifft automatische Haushaltsstarts und regulären WW-Boost. Nach dem HACS-Update Home Assistant neu starten.
+
+## 0.3.29 – Testkorrektur für Heizpausen
 Die Tests für Heizpausen prüfen jetzt die ab 0.3.26 einstellbare Restreservierung mit 0, 50 und 100 %. Die Energie- und Gerätesteuerung ist gegenüber 0.3.27 unverändert. Der bisherige automatisierte Release-Blocker durch alte Testannahmen wurde korrigiert.
 
 # Installation und Updates
