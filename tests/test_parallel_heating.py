@@ -98,14 +98,17 @@ class ParallelHeatingTests(unittest.TestCase):
     def test_completed_heater_releases_only_unmet_reservation(self):
         first = self.appliance("first", "laeuft", 50, heater_done=True)
         second = self.appliance("second", "wartet", 0)
-        # Default full reserve blocks a later 2 kW device.\n        decisions, reservations, _ = self.dispatch([first, second], 2500, 2500)
+        # Default full reserve blocks a later 2 kW device.
+        decisions, reservations, _ = self.dispatch([first, second], 2500, 2500)
         self.assertEqual(reservations[0], 1950)
         self.assertFalse(decisions[1].on)
-        # Explicit 0 % restores the previous release-on-heating-pause behavior.\n        first.params["pause_reservation_pct"] = 0
+        # Explicit 0 % restores the previous release-on-heating-pause behavior.
+        first.params["pause_reservation_pct"] = 0
         decisions, reservations, _ = self.dispatch([first, second], 2500, 2500)
         self.assertEqual(reservations[0], 0)
         self.assertTrue(decisions[1].on)
-        # 50 % retains 1 kW, of which the 50 W meter already accounts for.\n        first.params["pause_reservation_pct"] = 50
+        # 50 % retains 1 kW, of which the 50 W meter already accounts for.
+        first.params["pause_reservation_pct"] = 50
         decisions, reservations, _ = self.dispatch([first, second], 2500, 2500)
         self.assertEqual(reservations[0], 950)
         self.assertFalse(decisions[1].on)
