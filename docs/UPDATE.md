@@ -1,3 +1,6 @@
+## 0.3.28 – Testkorrektur für Heizpausen
+Die Tests für Heizpausen prüfen jetzt die ab 0.3.26 einstellbare Restreservierung mit 0, 50 und 100 %. Die Energie- und Gerätesteuerung ist gegenüber 0.3.27 unverändert. Der bisherige automatisierte Release-Blocker durch alte Testannahmen wurde korrigiert.
+
 # Installation und Updates
 
 ## WP-WW-Einmalladung: vereinfachte Modi (0.3.7)
