@@ -1,3 +1,9 @@
+## 0.3.29 – Strikte Kurztrend-Mittelwertprüfung
+- Grün/Startfreigabe nur wenn der prioritätsbereinigte Kurztrend-Mittelwert **mindestens den Geräte-Sollwert** erreicht. Ein neutraler oder steigender Trend darf einen zu niedrigen Kurzzeitdurchschnitt nicht mehr kompensieren.
+- Bei stärker fallendem Trend (jenseits der Toleranz) muss außerdem der fortgeschriebene Kurzzeitwert mindestens den Sollwert decken.
+- Haushaltsgeräte, regulärer WP-WW-Boost und H/T/B-Status verwenden dieselbe Bedingung; History- und Momentanbudget-Prüfungen bleiben separat zwingend.
+- Regressionstests für steigenden Trend bei Unterdeckung und fallende Prognose ergänzt. Sonderstarts unverändert.
+
 ## 0.3.28 – Tests zur Heizpausen-Reservierung korrigiert
 - Zwei ältere Tests erwarteten nach der ersten Heizphase immer 0 W Restreservierung und widersprachen damit dem seit 0.3.26 gültigen Standardwert von 100 %.
 - Testfälle prüfen jetzt ausdrücklich 0 %, 50 % und 100 % Restreservierung und die Auswirkungen auf den Start nachrangiger Geräte.
