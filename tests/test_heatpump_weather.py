@@ -38,7 +38,14 @@ def load_device():
             loaded[name] = module
         return loaded['devices.heatpump'].HeatPumpDevice, loaded['devices.base'].Context
 
-HeatPumpDevice, Context = load_device()
+HeatPumpDevice, _BaseContext = load_device()
+
+def Context(*args, **kwargs):
+    """Test contexts expose the priority-adjusted short-window budget."""
+    ctx = _BaseContext(*args, **kwargs)
+    if "trend_recent_left" not in kwargs:
+        ctx.trend_recent_left = ctx.budget_short
+    return ctx
 
 class WeatherStartTests(unittest.TestCase):
     def setUp(self):
