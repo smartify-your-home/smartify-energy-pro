@@ -2,7 +2,7 @@
 
 **PV-Überschuss intelligent verteilen – mit Prioritäten, Geräteprogrammen, Batteriespeicher und Home-Assistant-Dashboard.**
 
-**Aktueller Quellcode-Stand: 0.3.28** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
+**Aktueller Quellcode-Stand: 0.3.29** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
 
 > **Versionshinweis:** Die Versionsnummer beschreibt den Repository-Stand. In HACS erscheint eine neue Version erst, wenn der zugehörige GitHub-Release-Tag erfolgreich veröffentlicht und von HACS erkannt wurde. [Veröffentlichte Versionen ansehen](https://github.com/smartify-your-home/smartify-energy-pro/releases).
 
@@ -105,3 +105,6 @@ Die Karte bietet die Prioritätenliste, Geräteeinstellungen mit Hilfetexten, St
 - [Fehler melden oder Funktionen vorschlagen](https://github.com/smartify-your-home/smartify-energy-pro/issues)
 
 **Projekt:** [smartify-your-home/smartify-energy-pro](https://github.com/smartify-your-home/smartify-energy-pro)
+
+## Kurztrend-Startbedingung (0.3.29)
+Für den automatischen PV-Start muss der gerätespezifische Kurztrend-Mittelwert **immer mindestens den Sollwert** erreichen. Bei stärker fallendem Trend muss außerdem die Fortschreibung (Kurzzeit-Ø plus Änderung zwischen den Trendfenstern) mindestens den Sollwert erreichen. Ein steigender oder neutraler Trend ersetzt keinen ausreichenden Kurzzeit-Mittelwert. In der SEP-Karte zeigt T diese strengere Prüfung. History (H) und aktuelles Budget (B) sind weiterhin zusätzlich erforderlich.
