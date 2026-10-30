@@ -213,7 +213,10 @@ class HouseholdBudgetStartTests(unittest.TestCase):
         # Once the first heating phase ends, no future heater capacity
         # remains reserved. Its small measured running draw still stays
         # included in the real grid balance.
-        # Legacy zero-reserve behavior is now opt-in; default 100 % retains the heater.\n        first.params["pause_reservation_pct"] = 0\n        first.state["hp_active"] = True\n        first._check_heating(50, self.now)
+        # Legacy zero-reserve behavior is now opt-in; default 100 % retains the heater.
+        first.params["pause_reservation_pct"] = 0
+        first.state["hp_active"] = True
+        first._check_heating(50, self.now)
         self.assertTrue(first.state["hp_done"])
         current = first.power_accounted_in_grid()
         reserved = math.additional_reservation(first.reserved_power, current, 0)
