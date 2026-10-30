@@ -421,3 +421,60 @@ async def test_appliance_pv_start_requires_three_independent_gates(hass):
     assert not dev._trend_allows_start(context(2300, 0, ready=False))
     assert dev.pv_start_need == 2000
     await m.async_stop()
+
+
+
+@pytest.mark.parametrize("bad", [None, "unknown", "unavailable", "invalid", "nan", "inf", "-inf"])
+@pytest.mark.parametrize("separate", [False, True])
+async def test_invalid_grid_stops_heater_with_battery_credit(hass, bad, separate):
+    from custom_components.smartify_energy.devices.heater import HeaterDevice
+    m = manager(hass)
+    m.params.update(mode="auto", battery_rank=99)
+    from custom_components.smartify_energy.const import CONF_BAT_POWER
+    m.cfg[CONF_BAT_POWER] = "sensor.battery"
+    hass.states.async_set("sensor.battery", "4000", {"unit_of_measurement": "W"})
+    m.has_battery = True
+    hass.states.async_set("sensor.grid", "0", {"unit_of_measurement": "W"})
+    invalid_entity = "sensor.grid"
+    if separate:
+        m.cfg["grid_export_sensor"] = "sensor.export"
+        invalid_entity = "sensor.export"
+    if bad is None:
+        hass.states.async_remove(invalid_entity)
+    else:
+        hass.states.async_set(invalid_entity, bad)
+    hass.states.async_set("switch.heater", "on")
+    hass.states.async_set("sensor.temp", "45")
+    heater = HeaterDevice(m, "heater", "Heater", {
+        "switch": "switch.heater", "temperature_sensor": "sensor.temp"})
+    heater.params.update(mode="auto", priority=1, heater_min_on=120)
+    heater.state["last_switch"] = dt_util.now().timestamp()
+    heater._switch = AsyncMock()
+    m.async_save_now = AsyncMock()
+    m.devices = {"heater": heater}
+    await m.async_run()
+    assert not m.grid_valid
+    assert not heater.last_decision.on
+    heater._switch.assert_awaited_once_with("switch.heater", False)
+
+
+@pytest.mark.parametrize("rank,expected", [(4, True), (5, False), (6, False)])
+async def test_heater_battery_credit_only_above_battery(hass, rank, expected):
+    from custom_components.smartify_energy.devices.heater import HeaterDevice
+    from custom_components.smartify_energy.const import CONF_BAT_POWER
+    m = manager(hass)
+    m.params.update(mode="auto", battery_rank=5, grid_reserve=0)
+    m.cfg[CONF_BAT_POWER] = "sensor.battery"
+    m.has_battery = True
+    hass.states.async_set("sensor.grid", "-3000", {"unit_of_measurement": "W"})
+    hass.states.async_set("sensor.battery", "4000", {"unit_of_measurement": "W"})
+    hass.states.async_set("switch.heater", "on")
+    hass.states.async_set("sensor.temp", "45")
+    heater = HeaterDevice(m, "heater", "Heater", {
+        "switch": "switch.heater", "temperature_sensor": "sensor.temp"})
+    heater.params.update(mode="auto", priority=rank)
+    heater.async_apply = AsyncMock()
+    m.devices = {"heater": heater}
+    await m.async_run()
+    assert m.grid_valid
+    assert heater.last_decision.on is expected

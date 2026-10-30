@@ -96,3 +96,8 @@ Die Versionsnummer steht in `custom_components/smartify_energy/manifest.json` un
 
 SEP ist keine Schutz- oder Notabschaltvorrichtung. Netzsensor-Vorzeichen, gemessene Speicherleistungsrichtung, Temperatur-Sensorausfall, Mindestladeleistung und Konkurrenz durch andere Automationen müssen vor Echtbetrieb geprüft werden. Ein aktiver Speicher muss seine Ladung selbstständig reduzieren können, um Geräten *vor* dem Speicher real Energie freizugeben. Die KI-basierte Tagessteuerung ist derzeit ein Konzept, **nicht implementiert**.
 
+
+
+### Heizstab: Ausfall des Netzsensors (ab 0.3.31)
+Im Automatikmodus braucht der Heizstab einen gültigen Netz-Messwert. Fehlt er oder meldet der Sensor einen ungültigen Wert, schaltet SEP den Heizstab aus – auch wenn die Mindestlaufzeit noch läuft. Ein neuer Start bleibt gesperrt. Bei getrennten Sensoren für Bezug und Einspeisung müssen beide gültig sein. Sobald gültige Werte zurückkehren, gelten wieder die normalen Startbedingungen einschließlich Mindestpause. Im Status steht bei der Sperre „Netzsensor ungültig“.
+Der temperaturgeregelte Modus **Manuell** erlaubt weiterhin Netzstrom; **Beobachten** schaltet grundsätzlich nicht. Ein numerisch plausibler, aber eingefrorener Messwert wird durch diese Prüfung nicht erkannt.

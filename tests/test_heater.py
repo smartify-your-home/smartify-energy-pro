@@ -90,6 +90,32 @@ class HeaterTests(unittest.IsolatedAsyncioTestCase):
         # Pass allocation base minus upstream extra heater reservations.
         return self.heater.decide(ctx, ctx.alloc_base - upstream)
 
+    async def test_invalid_grid_stops_despite_minimum_on_and_positive_credit(self):
+        self.states["switch.heater"] = "on"
+        self.heater.params["heater_min_on"] = 120
+        self.heater.state["last_switch"] = self.now.timestamp()
+        ctx = self.context(5000)
+        ctx.grid_valid = False
+        decision = await self.heater.async_run(ctx, ctx.alloc_base)
+        self.assertFalse(decision.on)
+        self.assertFalse(self.heater.is_on())
+        self.assertIn("Netzsensor", decision.reason)
+        self.assertEqual(self.calls[-1][:2], ("switch", "turn_off"))
+
+    async def test_invalid_grid_blocks_start_then_recovers(self):
+        ctx = self.context(5000)
+        ctx.grid_valid = False
+        self.assertFalse((await self.heater.async_run(ctx, ctx.alloc_base)).on)
+        self.assertEqual(self.calls, [])
+        ctx.grid_valid = True
+        self.assertTrue((await self.heater.async_run(ctx, ctx.alloc_base)).on)
+
+    async def test_manual_thermostat_does_not_require_grid_sensor(self):
+        self.heater.params["mode"] = "manual"
+        ctx = self.context(0)
+        ctx.grid_valid = False
+        self.assertTrue((await self.heater.async_run(ctx, ctx.alloc_base)).on)
+
     async def test_manual_thermostat_with_grid_import_and_hysteresis(self):
         self.heater.params.update(mode="manual", heater_max_temp=50, heater_hysteresis=1)
         self.now = self.now.replace(hour=8)
@@ -235,4 +261,5 @@ class HeaterTests(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 

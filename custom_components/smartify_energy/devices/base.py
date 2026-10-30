@@ -49,6 +49,8 @@ class Context:
     trend_ready: bool = True
     trend_recent_left: float = 0.0  # Verbraucher in Heizphase
 
+    grid_valid: bool = True    # Both grid meters must be finite when separate meters are used.
+
     def now_left(self, budget_left: float) -> float:
         """Restbudget bezogen auf den Momentanwert statt den Mittelwert."""
         return budget_left + (self.budget_now - self.alloc_base)
@@ -337,4 +339,5 @@ class BaseDevice:
             domain, "turn_on" if on else "turn_off", {"entity_id": entity_id}, blocking=True
         )
         _LOGGER.info("[%s] %s → %s (%s)", self.name, entity_id, "EIN" if on else "AUS", self.reason)
+
 

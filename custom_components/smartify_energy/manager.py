@@ -447,7 +447,16 @@ class EnergyManager:
             grid = abs(export) - abs(grid)
         elif self.cfg.get(CONF_GRID_SIGN) == GRID_SIGN_IMPORT_POSITIVE:
             grid = -grid
-        self.grid_export = grid
+        self.grid_valid = all(
+            (value := power_w(self.hass, entity_id)) is not None and math.isfinite(value)
+            for entity_id in (
+                [self.cfg.get(CONF_GRID_SENSOR), self.cfg[CONF_GRID_EXPORT_SENSOR]]
+                if self.cfg.get(CONF_GRID_EXPORT_SENSOR) else [self.cfg.get(CONF_GRID_SENSOR)]
+            )
+        )
+        # Keep invalid numbers out of budget/history arithmetic. The validity
+        # flag, not this placeholder, controls the heater safety stop.
+        self.grid_export = grid if self.grid_valid else 0.0
         self.sinks = sum(max(power_w(self.hass, s, 0.0) or 0.0, 0.0)
                          for s in self.cfg.get(CONF_SINK_SENSORS) or [])
         bat = power_w(self.hass, self.cfg.get(CONF_BAT_POWER), 0.0) or 0.0
@@ -663,7 +672,7 @@ class EnergyManager:
                           time_from_str(self.p("night_end"), time(0)))
         ctx = Context(now=now, dt=dt, budget_now=budget, budget_avg=self.budget_avg,
                       budget_short=short_avg, history_ready=ready, night_window=night,
-                      trend_delta=trend_delta, trend_ready=trend_ready)
+                      trend_delta=trend_delta, trend_ready=trend_ready, grid_valid=self.grid_valid)
         ctx.alloc_base = self.budget_avg if ready else budget
         if await self._preempt_lower_priority(ctx):
             return
@@ -845,4 +854,5 @@ class EnergyManager:
         ]
         actions.sort()
         self.next_action = " · ".join(a for _, a in actions[:3])
+
 

@@ -161,6 +161,12 @@ class HeaterDevice(BaseDevice):
                             f"Manuell: Heizen bis {high:.1f} °C – Netzbezug erlaubt",
                             forced=True)
 
+        # PV operation requires a trustworthy meter, even during minimum-on.
+        # Manual thermostat operation intentionally permits grid consumption.
+        if not ctx.grid_valid:
+            self.status = "aus"
+            return Decision(False, 0, "Netzsensor ungültig – Heizstab AUS; PV-Freigabe gesperrt")
+
         if on:
             self.status = "laeuft"
             stop_at = float(self.p("heater_stop_surplus"))
@@ -210,4 +216,5 @@ class HeaterDevice(BaseDevice):
             self.state["last_switch"] = ctx.now.timestamp()
             self.state["last_switch_state"] = False
             await self.manager.async_save_now()
+
 

@@ -108,3 +108,8 @@ Die Karte bietet die Prioritätenliste, Geräteeinstellungen mit Hilfetexten, St
 
 ## Kurztrend-Startbedingung (0.3.29)
 Für den automatischen PV-Start muss der gerätespezifische Kurztrend-Mittelwert **immer mindestens den Sollwert** erreichen. Bei stärker fallendem Trend muss außerdem die Fortschreibung (Kurzzeit-Ø plus Änderung zwischen den Trendfenstern) mindestens den Sollwert erreichen. Ein steigender oder neutraler Trend ersetzt keinen ausreichenden Kurzzeit-Mittelwert. In der SEP-Karte zeigt T diese strengere Prüfung. History (H) und aktuelles Budget (B) sind weiterhin zusätzlich erforderlich.
+
+
+### Heizstab: Ausfall des Netzsensors (ab 0.3.31)
+Im Automatikmodus braucht der Heizstab einen gültigen Netz-Messwert. Fehlt er oder meldet der Sensor einen ungültigen Wert, schaltet SEP den Heizstab aus – auch wenn die Mindestlaufzeit noch läuft. Ein neuer Start bleibt gesperrt. Bei getrennten Sensoren für Bezug und Einspeisung müssen beide gültig sein. Sobald gültige Werte zurückkehren, gelten wieder die normalen Startbedingungen einschließlich Mindestpause. Im Status steht bei der Sperre „Netzsensor ungültig“.
+Der temperaturgeregelte Modus **Manuell** erlaubt weiterhin Netzstrom; **Beobachten** schaltet grundsätzlich nicht. Ein numerisch plausibler, aber eingefrorener Messwert wird durch diese Prüfung nicht erkannt.

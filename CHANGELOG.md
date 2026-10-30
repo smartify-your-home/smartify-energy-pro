@@ -1,6 +1,13 @@
 ## Unreleased
 - Dashboard-Card wird mit Inhalts-Hash der JS-Datei eingebunden (`?v=<version>-<hash>`). Kiosk-Tablets/WebViews (z. B. Dashie, Fully Kiosk) laden eine geänderte Card damit sicher neu, auch ohne Versionssprung.
 
+## 0.3.31 – Heizstab bei Netzsensor-Ausfall abschalten
+- Im Automatikmodus schaltet der Heizstab bei fehlendem, nicht verfügbarem, nicht numerischem oder nicht endlichem Netz-Messwert ab, auch während einer Mindestlaufzeit und trotz positiver Budgetgutschriften.
+- Ohne gültige Netz-Messung ist kein automatischer Heizstabstart möglich. Bei getrennten Bezugs-/Einspeisesensoren müssen beide gültig sein. Nach Rückkehr gültiger Werte gelten wieder die normalen Startbedingungen und Mindestpausen.
+- Der temperaturgeregelte Handbetrieb erlaubt weiterhin bewusst Netzstrom. Beobachten führt weiterhin keine Schaltbefehle aus.
+- Akku-Ladeleistung wird weiterhin ausschließlich oberhalb der Akku-Priorität angerechnet; Regressionstests sichern auch gleiche und niedrigere Priorität ab.
+- Tests für Sensorausfall, ungültige Zahlen, Mindestlaufzeit und Wiederanlauf ergänzt.
+
 ## 0.3.30 – Korrigierte H/T/B-Diagnoseanzeige
 - T-Log zeigt nun den zwingenden prioritätsbereinigten Kurzzeit-Mittelwert (Ist/Soll), zusätzlich Trendänderung und Prognose für stärker fallende Trends.
 - Doppelte Historienzeit aus T entfernt; Historienprüfung bleibt unter H.
@@ -404,4 +411,5 @@ Die Versionsnummer bezeichnet die Home-Assistant-Integration. Angaben zur Reakti
 - Schnellere interne Berechnung garantiert keine Antwortzeit der Wallbox oder des Akkus.
 - 6-A-Mindeststrom (oder abweichend konfigurierter Mindestwert), Abschaltverzögerung und Phasenwechsel-Sperre können kurzfristigen Netzbezug verursachen.
 - Die Akku-Priorität ist eine Budgetentscheidung, keine Schreibschnittstelle zum Batterie-Wechselrichter.
+
 
