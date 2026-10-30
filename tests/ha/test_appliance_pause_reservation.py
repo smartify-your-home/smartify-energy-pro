@@ -4,6 +4,7 @@ from types import SimpleNamespace
 import pytest
 
 from custom_components.smartify_energy.budget import additional_reservation
+from custom_components.smartify_energy.devices import base as base_module
 from custom_components.smartify_energy.devices import load as load_module
 from custom_components.smartify_energy.devices.dryer import DryerDevice
 from custom_components.smartify_energy.devices.load import LoadDevice, RUNNING
@@ -11,7 +12,10 @@ from custom_components.smartify_energy.devices.load import LoadDevice, RUNNING
 
 @pytest.fixture
 def appliance(monkeypatch):
-    manager = SimpleNamespace(hass=SimpleNamespace(), hub_mode="auto")
+    manager = SimpleNamespace(
+        hass=SimpleNamespace(states=SimpleNamespace(get=lambda _entity: SimpleNamespace(state="on"))),
+        hub_mode="auto",
+    )
     dev = LoadDevice(
         manager, "gs", "Geschirrspüler",
         {"switch": "switch.gs", "power_sensor": "sensor.gs", "nominal_power": 2000},
@@ -19,6 +23,7 @@ def appliance(monkeypatch):
     dev.state.update(sm=RUNNING, approved=True)
     measured = {"value": 100.0}
     monkeypatch.setattr(load_module, "power_w", lambda _hass, _entity: measured["value"])
+    monkeypatch.setattr(base_module, "power_w", lambda _hass, _entity: measured["value"])
     return dev, measured
 
 
@@ -61,4 +66,5 @@ def test_dryer_keeps_full_reservation(monkeypatch):
     )
     dev.state.update(sm=RUNNING, approved=True, hp_done=True)
     monkeypatch.setattr(load_module, "power_w", lambda _hass, _entity: 100.0)
+    monkeypatch.setattr(base_module, "power_w", lambda _hass, _entity: 100.0)
     assert dev.reserved_power == 2000
