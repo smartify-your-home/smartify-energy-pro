@@ -690,7 +690,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const trendHistoryNeed = trendWindow == null ? null : trendWindow * 2;
       const logText = trendRelevant ? `<div class="sep-log" data-log-panel="${esc(dev.id)}" id="sep-log-${esc(dev.id)}">
         ${logRow("H", avgReady, `Ist ${trendAge == null ? "–" : trendAge.toFixed(1)} min / Soll ${historyNeed == null ? "–" : historyNeed.toFixed(1)} min (90 % von ${avgWindow ?? "–"} min)`)}
-        ${logRow("T", trendOk, `Historie Ist ${trendAge == null ? "–" : trendAge.toFixed(1)} / Soll ${trendHistoryNeed == null ? "–" : trendHistoryNeed.toFixed(1)} min; Änderung Ist ${fmtW(trendDelta)} / Soll ≥ ${fmtW(-trendTolerance)} ODER Prognose Ist ${fmtW(direction.projected)} / Soll ≥ ${fmtW(needed)}`)}
+        ${logRow("T", trendOk, `Kurzzeit-Ø Ist ${fmtW(trendRecent)} / Soll ≥ ${fmtW(needed)} (Pflicht); Änderung Ist ${fmtW(trendDelta)} / Soll ≥ ${fmtW(-trendTolerance)} ODER bei stärkerem Abfall Prognose Ist ${fmtW(direction.projected)} / Soll ≥ ${fmtW(needed)}`)}
         ${logRow("B", budgetOk, `Aktuell Ist ${fmtW(budgetNow)} / Soll ≥ ${fmtW(needed)}; Ø Ist ${fmtW(budgetAverage)} / Soll ≥ ${fmtW(needed)}`)}
       </div>` : "";
       const logToggle = trendRelevant ? `<button type="button" class="sep-log-toggle" data-log="${esc(dev.id)}" aria-expanded="${logOpen}" aria-controls="sep-log-${esc(dev.id)}" title="Ist- und Sollwerte für H, T und B anzeigen">${logOpen ? "Log ▴" : "Log ▾"}</button>` : "";
