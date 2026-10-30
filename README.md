@@ -2,7 +2,7 @@
 
 **PV-Überschuss intelligent verteilen – mit Prioritäten, Geräteprogrammen, Batteriespeicher und Home-Assistant-Dashboard.**
 
-**Aktueller Quellcode-Stand: 0.3.27** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
+**Aktueller Quellcode-Stand: 0.3.28** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
 
 > **Versionshinweis:** Die Versionsnummer beschreibt den Repository-Stand. In HACS erscheint eine neue Version erst, wenn der zugehörige GitHub-Release-Tag erfolgreich veröffentlicht und von HACS erkannt wurde. [Veröffentlichte Versionen ansehen](https://github.com/smartify-your-home/smartify-energy-pro/releases).
 
@@ -24,7 +24,7 @@ SEP verteilt den verfügbaren PV-Überschuss nach einstellbarer Priorität. Das 
 
 ## Neueste Änderungen
 
-### 0.3.27 – HACS-Infoseite überarbeitet
+### 0.3.28 – HACS-Infoseite überarbeitet
 
 Die bisherige Sammlung historischer Versionshinweise wurde durch eine aktuelle, kompakte Funktionsübersicht ersetzt. Technische Details und frühere Änderungen stehen weiterhin in den verlinkten Dokumentationen und im Changelog. **Keine Änderung der Regelungslogik gegenüber 0.3.26.**
 
