@@ -1,3 +1,9 @@
+## 0.3.30 – Korrigierte H/T/B-Diagnoseanzeige
+- T-Log zeigt nun den zwingenden prioritätsbereinigten Kurzzeit-Mittelwert (Ist/Soll), zusätzlich Trendänderung und Prognose für stärker fallende Trends.
+- Doppelte Historienzeit aus T entfernt; Historienprüfung bleibt unter H.
+- Testkorrekturen für Kurztrend-Grenze und Heizpausen-Reservierung übernommen; keine Änderung an der PV-Steuerungslogik.
+- Frontend-Kartenversion 1.3.6.
+
 ## 0.3.29 – Strikte Kurztrend-Mittelwertprüfung
 - Grün/Startfreigabe nur wenn der prioritätsbereinigte Kurztrend-Mittelwert **mindestens den Geräte-Sollwert** erreicht. Ein neutraler oder steigender Trend darf einen zu niedrigen Kurzzeitdurchschnitt nicht mehr kompensieren.
 - Bei stärker fallendem Trend (jenseits der Toleranz) muss außerdem der fortgeschriebene Kurzzeitwert mindestens den Sollwert decken.
