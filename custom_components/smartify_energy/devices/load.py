@@ -142,21 +142,22 @@ class LoadDevice(BaseDevice):
         )
 
     def _trend_allows_start(self, ctx: Context) -> bool:
-        """Use the short-window device budget, or a neutral/nonfalling trend.
-
-        Momentary and long-window needs are checked independently by caller.
-        A short-window average above need is valid; otherwise its change must
-        be at least neutral within the configured W tolerance.
-        """
+        """Require a sufficient short average and, when falling, projected headroom."""
         tolerance = float(getattr(self.manager, "p", lambda _key: 100)("trend_tolerance"))
-        return ctx.trend_ready and (ctx.trend_delta >= -tolerance
-                                    or ctx.trend_recent_left + ctx.trend_delta >= self.pv_start_need)
+        return (ctx.trend_ready
+                and ctx.trend_recent_left >= self.pv_start_need
+                and (ctx.trend_delta >= -tolerance
+                     or ctx.trend_recent_left + ctx.trend_delta >= self.pv_start_need))
 
     def _trend_wait_reason(self, ctx: Context) -> str:
         if not ctx.trend_ready:
             return "PV-Trend: Messhistorie noch nicht vollständig"
-        return (f"PV-Trend: prognostiziert {ctx.trend_recent_left + ctx.trend_delta:.0f} W "
-                f"< benötigt {self.pv_start_need:.0f} W; Änderung {ctx.trend_delta:.0f} W")
+        if ctx.trend_recent_left < self.pv_start_need:
+            return (f"PV-Trend: Kurzzeit-Ø {ctx.trend_recent_left:.0f} W "
+                    f"< benötigt {self.pv_start_need:.0f} W")
+        return (f"PV-Trend: fallende Fortschreibung "
+                f"{ctx.trend_recent_left + ctx.trend_delta:.0f} W "
+                f"< benötigt {self.pv_start_need:.0f} W")
 
     def _reset(self) -> None:
         self.state.update(sm=IDLE, approved=False, forced_start=False, hp_active=False, hp_done=False, since=None)
