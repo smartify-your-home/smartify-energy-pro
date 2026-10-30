@@ -104,11 +104,14 @@ class ParallelHeatingTests(unittest.TestCase):
         self.assertFalse(decisions[1].on)
         # Explicit 0 % restores the previous release-on-heating-pause behavior.
         first.params["pause_reservation_pct"] = 0
+        second = self.appliance("second", "wartet", 0)
         decisions, reservations, _ = self.dispatch([first, second], 2500, 2500)
         self.assertEqual(reservations[0], 0)
         self.assertTrue(decisions[1].on)
         # 50 % retains 1 kW, of which the 50 W meter already accounts for.
         first.params["pause_reservation_pct"] = 50
+        # A fresh waiting device: the 0 % run above already approved "second".
+        second = self.appliance("second", "wartet", 0)
         decisions, reservations, _ = self.dispatch([first, second], 2500, 2500)
         self.assertEqual(reservations[0], 950)
         self.assertFalse(decisions[1].on)
