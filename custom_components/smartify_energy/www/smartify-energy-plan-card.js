@@ -146,11 +146,11 @@ function deviceTrend(recentAverage, needed, change, tolerance, ready) {
   if (!ready || ![recentAverage, needed, change, tolerance].every(Number.isFinite)) {
     return {direction: "pending", allowed: false};
   }
-  // Same two-way third gate as the appliance controller: short mean meets
-  // the required watts, OR the short change is neutral/nonfalling.
+  // Short mean must always cover the requirement. A sharp drop additionally
+  // requires the projected headroom to remain sufficient.
   const projected = recentAverage + change;
   const stable = change >= -tolerance;
-  const allowed = stable || projected >= needed;
+  const allowed = recentAverage >= needed && (stable || projected >= needed);
   return {direction: change > tolerance && projected >= needed ? "up" :
           !allowed ? "down" : "neutral", allowed, projected};
 }
