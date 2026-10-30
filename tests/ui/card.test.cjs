@@ -67,8 +67,10 @@ test('short-window arrow follows the three-gate threshold and neutral rule',()=>
     'falling below threshold blocks despite enough current short average');
   assert.equal(trend(2400,2000,-300,100,true).allowed,true,
     'falling but projected above requirement remains allowed');
-  assert.equal(trend(1900,2000,0,100,true).direction,'neutral');
-  assert.equal(trend(1900,2000,-50,100,true).allowed,true);
+  assert.equal(trend(1900,2000,0,100,true).direction,'down');
+  assert.equal(trend(1900,2000,-50,100,true).allowed,false);
+  assert.equal(trend(1400,2000,50,100,true).allowed,false);
+  assert.equal(trend(2200,2000,50,100,true).allowed,true);
   assert.equal(trend(1900,2000,-250,100,true).direction,'down');
   assert.equal(trend(1900,2000,-250,100,true).allowed,false);
   assert.equal(trend(1900,2000,250,100,false).direction,'pending');
