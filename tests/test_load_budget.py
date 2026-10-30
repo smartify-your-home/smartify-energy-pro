@@ -52,6 +52,16 @@ def load_device():
 
 LoadDevice, Context, DryerDevice = load_device()
 
+# Simulated contexts have a real short-window budget, just like manager.py.
+_BaseContext = Context
+
+def Context(*args, **kwargs):
+    ctx = _BaseContext(*args, **kwargs)
+    if "trend_recent_left" not in kwargs:
+        ctx.trend_recent_left = ctx.budget_short
+    return ctx
+
+
 
 class HouseholdBudgetStartTests(unittest.TestCase):
     def setUp(self):
@@ -80,10 +90,22 @@ class HouseholdBudgetStartTests(unittest.TestCase):
 
     def test_falling_trend_blocks_automatic_pv_start(self):
         ctx = Context(self.now, 30, 2900, 2900, 2900, True, False, 2900,
-                      trend_delta=-600, trend_ready=True)
+                      trend_delta=-900, trend_ready=True)
         decision = self.load.decide(ctx, 2900)
         self.assertFalse(decision.on)
         self.assertIn("PV-Trend", decision.reason)
+
+    def test_short_mean_below_required_blocks_even_with_rising_trend(self):
+        ctx = Context(self.now, 30, 2900, 2900, 1400, True, False, 2900,
+                      trend_delta=50, trend_ready=True, trend_recent_left=1400)
+        decision = self.load.decide(ctx, 2900)
+        self.assertFalse(decision.on)
+        self.assertIn("Kurzzeit-Ø", decision.reason)
+
+    def test_falling_trend_allowed_if_short_mean_and_projection_suffice(self):
+        ctx = Context(self.now, 30, 2900, 2900, 2900, True, False, 2900,
+                      trend_delta=-300, trend_ready=True)
+        self.assertTrue(self.load.decide(ctx, 2900).on)
 
     def test_stable_trend_allows_automatic_pv_start(self):
         ctx = Context(self.now, 30, 2900, 2900, 2900, True, False, 2900,
