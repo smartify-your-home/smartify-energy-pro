@@ -1,6 +1,7 @@
 """smartify Energiemanager – PV-Überschuss mit Prioritäten, Prognose und Speicherlogik."""
 from __future__ import annotations
 
+import hashlib
 import logging
 from pathlib import Path
 
@@ -86,10 +87,17 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             StaticPathConfig(CARD_URL, str(path), False),
             StaticPathConfig(LOGO_URL, str(path.parent / "sep-logo.png"), False),
         ])
-        add_extra_js_url(hass, f"{CARD_URL}?v={(await async_get_integration(hass, DOMAIN)).version}")
+        version = (await async_get_integration(hass, DOMAIN)).version
+        card_hash = await hass.async_add_executor_job(_file_hash, path)
+        add_extra_js_url(hass, f"{CARD_URL}?v={version}-{card_hash}")
     except Exception:  # noqa: BLE001
         _LOGGER.warning("Dashboard-Card konnte nicht registriert werden", exc_info=True)
     return True
+
+
+def _file_hash(path: Path) -> str:
+    """Kurzer Inhalts-Hash als Cache-Buster: neue Card-Datei → neue URL, auch ohne Versionssprung."""
+    return hashlib.sha256(path.read_bytes()).hexdigest()[:10]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: SmartifyEnergyConfigEntry) -> bool:

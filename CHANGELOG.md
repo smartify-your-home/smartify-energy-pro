@@ -1,3 +1,6 @@
+## Unreleased
+- Dashboard-Card wird mit Inhalts-Hash der JS-Datei eingebunden (`?v=<version>-<hash>`). Kiosk-Tablets/WebViews (z. B. Dashie, Fully Kiosk) laden eine geänderte Card damit sicher neu, auch ohne Versionssprung.
+
 ## 0.3.30 – Korrigierte H/T/B-Diagnoseanzeige
 - T-Log zeigt nun den zwingenden prioritätsbereinigten Kurzzeit-Mittelwert (Ist/Soll), zusätzlich Trendänderung und Prognose für stärker fallende Trends.
 - Doppelte Historienzeit aus T entfernt; Historienprüfung bleibt unter H.
