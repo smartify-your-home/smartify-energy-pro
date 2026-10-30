@@ -1,3 +1,9 @@
+## 0.3.28 – Tests zur Heizpausen-Reservierung korrigiert
+- Zwei ältere Tests erwarteten nach der ersten Heizphase immer 0 W Restreservierung und widersprachen damit dem seit 0.3.26 gültigen Standardwert von 100 %.
+- Testfälle prüfen jetzt ausdrücklich 0 %, 50 % und 100 % Restreservierung und die Auswirkungen auf den Start nachrangiger Geräte.
+- Die laufende Steuer- und Budgetberechnung bleibt unverändert; kein erzwungenes Freigeben von Heizleistung.
+- Release-Prüfung und Veröffentlichung erneut angestoßen.
+
 ## 0.3.27 – HACS-Infoseite vollständig aktualisiert
 - README als von HACS gerenderte App-Infoseite neu strukturiert: aktuelle Funktionsübersicht, Geräteprofile, H/T/B, Heizpausen-Reservierung, Installation und Dashboard.
 - Historische Updatehinweise und alte Versionsabschnitte aus der HACS-Startseite entfernt; vollständige Versionshistorie bleibt im Changelog und in den technischen Dokumenten erhalten.
