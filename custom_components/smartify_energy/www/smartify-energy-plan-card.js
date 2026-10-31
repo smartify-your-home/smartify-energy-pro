@@ -66,7 +66,7 @@ const SETTING_HELP = {
   "heater_start_surplus": "Minimaler sofort verfügbarer PV-Überschuss für EIN. Für den Start wird mindestens die Nennleistung benötigt. Standard 2200 W bei 2000 W Heizleistung. Der 10-Minuten-Mittelwert wird NICHT verwendet.",
   "heater_stop_surplus": "Ab diesem verbleibenden Momentanbudget wird bei Unterschreitung ausgeschaltet. 0 W bedeutet bei Netzbezug AUS. Der Heizstab ist bereits im gemessenen Netzsaldo enthalten und wird nicht doppelt abgezogen.",
   "heater_earliest_start": "Vor dieser Uhrzeit startet der Heizstab nicht neu. Standard 10:00. Ein bereits laufender Heizstab wird dadurch nicht allein ausgeschaltet.",
-  "heater_min_on": "Optionale Mindestlaufzeit gegen Flattern (0 = sofortige Abschaltung bei PV-Mangel). Temperaturfehler oder maximale Temperatur schalten dennoch sofort AUS.",
+  "heater_min_on": "Optionale Mindestlaufzeit gegen vorzeitige Rücknahme für andere Verbraucher. Die vorrangige Abschaltung bei PV-Mangel, ungültigem Netzsensor oder Temperaturgrenze wartet nicht auf diese Zeit.",
   "heater_min_off": "Optionale Mindestpause zwischen AUS und erneutem EIN (0 = keine Pause). Schaltzeitpunkt bleibt auch nach einem Home-Assistant-Neustart gespeichert.",
 
   "mode": "Automatik: SEP steuert dieses Gerät. Beobachten: SEP zeigt Empfehlungen, schaltet aber nicht. Manuell: Sie übernehmen die Bedienung. Ausnahme Heizstab: SEP regelt weiter auf die eingestellte Solltemperatur, auch mit Netzstrom. Start unter Soll minus Hysterese, Abschaltung bei Soll; erneutes Heizen bleibt aktiv, bis Sie Automatik oder Aus wählen. PV-Schwellen, früheste Startzeit und Prioritätspause werden ignoriert; Mindestpause und Temperaturüberwachung bleiben aktiv. Aus: Die automatische Regelung ist ausgesetzt. Das Verhalten beim Ausschalten hängt vom Gerätetyp ab. Zentral gilt die Auswahl für den Manager. Aus ist kein Not-Aus: Beim zentralen Ausschalten werden Haushaltsgeräte-Steckdosen einmal eingeschaltet und die Programmerkennung zurückgesetzt. Anschließend können Sie die Steckdosen manuell bedienen; Pool und Wallbox stoppen derzeit nur bei ihrem eigenen Modus Aus. Der WP-Boost wird beendet, eine Button-Ladung kann aber weiterlaufen.",
@@ -921,4 +921,5 @@ window.customCards.push({
   preview: false,
 });
 console.info(`%c SMARTIFY-ENERGY-PLAN-CARD %c v${CARD_VERSION} `, "background:#00ACC1;color:#fff", "background:#333;color:#fff");
+
 

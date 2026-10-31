@@ -439,7 +439,7 @@ class EnergyManager:
 
         return sorted(self.devices.values(), key=key)
 
-    def _read_inputs(self) -> None:
+    def _read_grid(self) -> None:
         grid = power_w(self.hass, self.cfg.get(CONF_GRID_SENSOR), 0.0) or 0.0
         if self.cfg.get(CONF_GRID_EXPORT_SENSOR):
             # Getrennte Sensoren: Netzsensor = Bezug, zweiter Sensor = Einspeisung (beide ≥ 0)
@@ -457,6 +457,8 @@ class EnergyManager:
         # Keep invalid numbers out of budget/history arithmetic. The validity
         # flag, not this placeholder, controls the heater safety stop.
         self.grid_export = grid if self.grid_valid else 0.0
+    def _read_inputs(self) -> None:
+        self._read_grid()
         self.sinks = sum(max(power_w(self.hass, s, 0.0) or 0.0, 0.0)
                          for s in self.cfg.get(CONF_SINK_SENSORS) or [])
         bat = power_w(self.hass, self.cfg.get(CONF_BAT_POWER), 0.0) or 0.0
@@ -607,11 +609,43 @@ class EnergyManager:
                 return True
         return False
 
+    async def _priority_heater_stops(self, now: datetime) -> set[str]:
+        """Stop heaters before forecasts or any other device can block the cycle.
+
+        Use physical grid power and the permitted battery credit only. Power
+        another actuator might release is not yet physically available.
+        """
+        self._read_grid()
+        bat = power_w(self.hass, self.cfg.get(CONF_BAT_POWER), 0.0) or 0.0
+        if not math.isfinite(bat):
+            bat = 0.0
+        if self.cfg.get(CONF_BAT_SIGN) == BAT_SIGN_DISCHARGE_POSITIVE:
+            bat = -bat
+        stopped = set()
+        for dev in self.devices.values():
+            if dev.TYPE != "heater":
+                continue
+            try:
+                credit = battery_priority_credit(
+                    max(0.0, bat), int(self.p("battery_rank")), dev.priority)
+                budget = control_budget(self.grid_export, 0.0, max(-bat, 0.0),
+                                        float(self.p("grid_reserve"))) + credit
+                ctx = Context(now, 0, budget, budget, budget, False, False,
+                              alloc_base=budget, grid_valid=self.grid_valid)
+                if await dev.async_priority_stop(ctx):
+                    stopped.add(dev.id)
+            except Exception:  # noqa: BLE001
+                # One broken heater must not prevent the remaining stops.
+                stopped.add(dev.id)
+                _LOGGER.exception("[%s] Vorrangige Heizstab-Abschaltung fehlgeschlagen", dev.name)
+        return stopped
+
     async def _async_run(self) -> None:
         now = dt_util.now()
         dt = (now - self._last_run).total_seconds() if self._last_run else 0.0
         dt = min(max(dt, 0.0), 300.0)
         self._last_run = now
+        stopped_heaters = await self._priority_heater_stops(now)
 
         forecast_due = self._last_plan is None or now - self._last_plan >= PLAN_INTERVAL
         plan_due = forecast_due or self._plan_dirty
@@ -679,7 +713,10 @@ class EnergyManager:
 
         for dev in self.devices.values():
             if not dev._unavailable_actor():
-                dev.pre_update(ctx)
+                try:
+                    dev.pre_update(ctx)
+                except Exception:  # noqa: BLE001
+                    _LOGGER.exception("[%s] Zustandsaktualisierung fehlgeschlagen", dev.name)
         ctx.loads_heating = [d.name for d in self.devices.values()
                              if d.TYPE == "load" and d.state.get("hp_active") and d.participates]
 
@@ -689,6 +726,8 @@ class EnergyManager:
         battery_w = self.battery_charging_w if self.has_battery else 0.0
         battery_passed = False
         for dev in self._sorted_devices(ctx):
+            if dev.id in stopped_heaters:
+                continue  # Never restart from the same, pre-stop grid sample.
             if self.has_battery and not battery_passed and dev.priority >= battery_rank:
                 battery_passed = True
                 self.device_budgets["__battery__"] = self._battery_budget(ctx, left, battery_w)

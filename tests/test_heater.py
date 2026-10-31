@@ -90,6 +90,22 @@ class HeaterTests(unittest.IsolatedAsyncioTestCase):
         # Pass allocation base minus upstream extra heater reservations.
         return self.heater.decide(ctx, ctx.alloc_base - upstream)
 
+    async def test_priority_stop_overrides_minimum_on_and_retry_pause(self):
+        self.states["switch.heater"] = "on"
+        self.heater.params["heater_min_on"] = 120
+        self.heater.state["last_switch"] = self.now.timestamp()
+        self.heater._actuator_retry_at = self.now.timestamp() + 30
+        self.assertTrue(await self.heater.async_priority_stop(self.context(-1200)))
+        self.assertFalse(self.heater.is_on())
+
+    async def test_priority_stop_preserves_manual_observe_and_positive_credit(self):
+        self.states["switch.heater"] = "on"
+        for mode, budget in [("manual", -1200), ("observe", -1200), ("auto", 1000)]:
+            self.heater.params["mode"] = mode
+            self.assertFalse(await self.heater.async_priority_stop(self.context(budget)))
+            self.assertTrue(self.heater.is_on())
+        self.assertEqual(self.calls, [])
+
     async def test_invalid_grid_stops_despite_minimum_on_and_positive_credit(self):
         self.states["switch.heater"] = "on"
         self.heater.params["heater_min_on"] = 120

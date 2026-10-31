@@ -198,6 +198,27 @@ class HeaterDevice(BaseDevice):
         return Decision(True, self.nominal,
                         f"PV-Restbudget aktuell {now_budget:.0f} W ≥ {self.start_need:.0f} W")
 
+    async def async_priority_stop(self, ctx: Context) -> bool:
+        """Only stop: never start, and do not wait behind another consumer."""
+        if self.mode == "observe" or not self.is_on():
+            return False
+        if self.mode == "off":
+            decision = Decision(False, 0, "Modus: Aus")
+        else:
+            decision = self.decide(ctx, ctx.alloc_base)
+            if (self.mode == "auto" and ctx.grid_valid
+                    and ctx.budget_now < float(self.p("heater_stop_surplus"))):
+                decision = Decision(False, 0,
+                                    f"Vorrangige Abschaltung: Budget {ctx.budget_now:.0f} W – AUS")
+        if decision.on:
+            return False
+        self.status = "aus"
+        self.reason = decision.reason
+        self.last_decision = decision
+        # An old actuator retry pause must not suppress an urgent OFF attempt.
+        await self.async_apply(decision, ctx)
+        return True
+
     async def async_apply(self, decision: Decision, ctx: Context) -> None:
         raw = state_str(self.hass, self.switch)
         # Unknown actor: fail closed, never attempt a blind ON command.

@@ -478,3 +478,43 @@ async def test_heater_battery_credit_only_above_battery(hass, rank, expected):
     await m.async_run()
     assert m.grid_valid
     assert heater.last_decision.on is expected
+
+
+@pytest.mark.parametrize("failure", ["forecast", "inputs", "household"])
+async def test_heater_stop_precedes_other_failures(hass, failure):
+    from custom_components.smartify_energy.devices.heater import HeaterDevice
+    from custom_components.smartify_energy.devices.load import LoadDevice
+    m = manager(hass)
+    hass.states.async_set("sensor.grid", "-1200", {"unit_of_measurement": "W"})
+    hass.states.async_set("switch.heater", "on")
+    hass.states.async_set("sensor.temp", "45")
+    hass.states.async_set("switch.washer", "on")
+    heater = HeaterDevice(m, "heater", "Heater", {
+        "switch": "switch.heater", "temperature_sensor": "sensor.temp"})
+    heater.params.update(mode="auto", heater_min_on=120)
+    heater.state["last_switch"] = dt_util.now().timestamp()
+    events = []
+    async def switch(entity, on):
+        assert not on
+        events.append("heater_off")
+    heater._switch = switch
+    m.async_save_now = AsyncMock()
+    washer = LoadDevice(m, "washer", "Washer", {"switch": "switch.washer"})
+    washer.params["mode"] = "auto"
+    washer.state.update(sm="laeuft", approved=True)
+    m.devices = {"washer": washer, "heater": heater}
+    def fail(*args):
+        events.append("failure")
+        raise RuntimeError("Injected household/forecast/input failure")
+    if failure == "household":
+        washer.pre_update = fail
+    elif failure == "inputs":
+        m._read_inputs = fail
+    else:
+        async def refresh():
+            fail()
+        m.forecast = type("Forecast", (), {"configured": True, "async_refresh": staticmethod(refresh)})()
+    await m.async_run()
+    assert events[:2] == ["heater_off", "failure"]
+    assert events.count("heater_off") == 1
+    assert not heater.last_decision.on

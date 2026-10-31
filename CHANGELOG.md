@@ -1,6 +1,14 @@
 ## Unreleased
 - Dashboard-Card wird mit Inhalts-Hash der JS-Datei eingebunden (`?v=<version>-<hash>`). Kiosk-Tablets/WebViews (z. B. Dashie, Fully Kiosk) laden eine geänderte Card damit sicher neu, auch ohne Versionssprung.
 
+## 0.3.32 – Heizstab-Abschaltung vor übriger Gerätesteuerung
+- Laufende Heizstäbe werden vor Prognoseabrufen, Haushaltsgeräte-Messung und Zustandsaktualisierung auf Abschaltung geprüft. Ein Fehler in diesen nachfolgenden Schritten verhindert den Ausschaltversuch nicht mehr.
+- Im Automatikmodus hat das Unterschreiten der Abschaltschwelle Vorrang vor Mindestlaufzeit und einer bestehenden Aktor-Wiederholpause. Ungültige Netzwerte und Temperaturgrenzen bleiben Abschaltgründe.
+- Für diese Vorprüfung zählen der reale Netzsaldo, Netzreserve, Akkuentladung und die zulässige Akku-Ladegutschrift ausschließlich bei höherer Heizstab-Priorität. Noch nicht tatsächlich freigegebene Leistung anderer Verbraucher wird nicht versprochen.
+- Kein Neustart eines so abgeschalteten Heizstabs im selben Regellauf. Fehler der einzelnen Zustandsaktualisierungen werden protokolliert, ohne die gesamte Verarbeitung abzubrechen.
+- Manueller Thermostatbetrieb und Beobachten behalten ihre Bedeutung. Ein nicht erreichbarer Aktor kann weiterhin keine erfolgreiche physische Abschaltung garantieren.
+- Regressionstests für 1.200 W Bezug trotz Mindestlaufzeit/Wiederholpause sowie Fehler in Haushaltsgerät, Eingangsdaten und Prognose ergänzt. Hilfetext und Dokumentation aktualisiert.
+
 ## 0.3.31 – Heizstab bei Netzsensor-Ausfall abschalten
 - Im Automatikmodus schaltet der Heizstab bei fehlendem, nicht verfügbarem, nicht numerischem oder nicht endlichem Netz-Messwert ab, auch während einer Mindestlaufzeit und trotz positiver Budgetgutschriften.
 - Ohne gültige Netz-Messung ist kein automatischer Heizstabstart möglich. Bei getrennten Bezugs-/Einspeisesensoren müssen beide gültig sein. Nach Rückkehr gültiger Werte gelten wieder die normalen Startbedingungen und Mindestpausen.
