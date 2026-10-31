@@ -122,7 +122,6 @@ const SETTING_HELP = {
   "idle_power_threshold": "Unter dieser gemessenen WP-Leistung zählt die Wärmepumpe als ruhend. Beispiel: 5 W. Ab genau 5 W beginnt die Wartezeit später wieder von vorn. Den Wert passend zum tatsächlichen Standby-Verbrauch wählen.",
   "idle_minutes": "So lange muss die WP-Leistung unter der Ruheschwelle liegen, bevor ein neuer WW-Boost gestartet werden darf. Standard: 15 Minuten. Aktivität, ungültige Werte und ein Neustart setzen die Ruheerkennung zurück. Unabhängig davon gilt der dauerhafte WW-Boost-Mindestabstand.",
   "start_now": "Gibt das Haushaltsgerät sofort frei und schaltet bei Bedarf seine Steckdose ein – auch ohne Solarüberschuss. Diese Taste löst direkt eine Aktion aus.",
-  "finish": "Markiert ein laufendes Programm sofort als fertig, falls die automatische Fertigerkennung (Leistung unter Schwelle) nicht greift. Die Steckdose wird nicht geschaltet.",
   "reset": "Optional: Setzt die Erkennung des Haushaltsgeräts sofort auf „Bereit“ zurück. Normalerweise nicht nötig – ein neuer Programmstart nach „Fertig“ wird automatisch erkannt. Das Programm am Gerät wird nicht zurückgesetzt und die Steckdose nicht ausgeschaltet.",
   "sun_angle_min": "Optionaler Mindestwinkel. Beispiel: 12° erlaubt den Boost ab genau 12°. Leer bedeutet: Sonnenwinkel-Prüfung wird ignoriert. Entität in der Gerätekonfiguration auswählen und Prüfung aktivieren.",
   "cloud_now_max": "Boost startet nur bei einem Wert kleiner als diese Grenze. Beispiel: unter 75 %; genau 75 % sperrt den Start. Beide Stunden müssen ihre Grenze einhalten. Bei unvollständigen Angaben wird die gesamte Bewölkungsprüfung ignoriert.",
@@ -208,7 +207,7 @@ function collect(hass, hubId) {
         mode: ents["select:mode"],
         active: ents["binary_sensor:active"],
         startNow: ents["button:start_now"],
-        finish: ents["button:finish"],
+        reset: ents["button:reset"],
         nachladen: ents["switch:nachladen"],
         settings: settings[id] || [],
       };
@@ -356,7 +355,7 @@ const CARD_CSS = `
   .main .plan ha-icon { display:inline-flex; vertical-align:middle; }
   .sep-gates { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; vertical-align:middle; }
   .sep-history-icon { --mdc-icon-size:17px; display:inline-flex; vertical-align:middle; }
-  .sep-gate { font-size:12px; font-weight:800; line-height:1.2; min-width:12px; text-align:center; }
+  .sep-gate { --mdc-icon-size:16px; display:inline-flex; vertical-align:middle; }
   .sep-log-toggle { border:1px solid var(--divider-color); border-radius:6px; padding:1px 6px; background:transparent; color:var(--secondary-text-color); font:inherit; font-size:10px; cursor:pointer; }
   .sep-actions { display:flex; flex-wrap:wrap; gap:4px; margin-top:3px; }
   .sep-act { border:1px solid var(--divider-color); border-radius:12px; padding:2px 10px; background:var(--secondary-background-color);
@@ -685,8 +684,9 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       // (z. B. WW bereits aktiv) haben eigene Regeln.
       const trendOk = trendReady && direction.allowed;
       const gateColor = ok => ok ? "var(--success-color, #43a047)" : "var(--error-color, #e53935)";
+      const GATE_ICONS = { H: "mdi:history", T: direction.direction === "down" ? "mdi:trending-down" : "mdi:trending-up", B: "mdi:scale-balance" };
       const gate = (letter, ok, explanation) =>
-        `<span class="sep-gate" style="color:${gateColor(ok)}" title="${esc(explanation)}" aria-label="${esc(letter + ": " + explanation)}">${letter}</span>`;
+        `<ha-icon class="sep-gate" icon="${GATE_ICONS[letter]}" style="color:${gateColor(ok)}" title="${esc(explanation)}" aria-label="${esc(letter + ": " + explanation)}"></ha-icon>`;
       const historyInfo = `Historie: ${trendAge ?? "–"} min vorhanden, benötigt ${avgWindow ?? "–"} min; Ø ${fmtW(budgetAverage)}`;
       const trendInfo = `Trend: ${trendReady ? (trendOk ? "Bedingung erfüllt" : "Bedingung nicht erfüllt") : "Messhistorie noch nicht vollständig"}; Fenster ${trendWindow ?? "–"} min, Kurzzeit-Ø ${fmtW(trendRecent)}, Änderung ${fmtW(trendDelta)}, Fortschreibung ${fmtW(direction.projected)}, benötigt ${fmtW(needed)}`;
       const budgetInfo = `Budget: ${budgetOk ? "Bedingung erfüllt" : "Bedingung nicht erfüllt"}; aktuell ${fmtW(budgetNow)}, Ø ${fmtW(budgetAverage)}, benötigt ${fmtW(needed)}`;
@@ -695,7 +695,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         : "";
       const logOpen = this._logOpen.has(dev.id);
       const logRow = (letter, ok, detail) =>
-        `<div class="sep-log-row"><span class="sep-log-code" style="color:${gateColor(ok)}">${letter}</span><span class="sep-log-detail">${esc(detail)}</span></div>`;
+        `<div class="sep-log-row"><ha-icon class="sep-gate" icon="${GATE_ICONS[letter]}" style="color:${gateColor(ok)}"></ha-icon><span class="sep-log-detail">${esc(detail)}</span></div>`;
       const historyNeed = avgWindow == null ? null : avgWindow * 0.9;
       const trendHistoryNeed = trendWindow == null ? null : trendWindow * 2;
       const logText = trendRelevant ? `<div class="sep-log" data-log-panel="${esc(dev.id)}" id="sep-log-${esc(dev.id)}">
@@ -703,7 +703,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         ${logRow("T", trendOk, `Kurzzeit-Ø Ist ${fmtW(trendRecent)} / Soll ≥ ${fmtW(needed)} (Pflicht); Änderung Ist ${fmtW(trendDelta)} / Soll ≥ ${fmtW(-trendTolerance)} ODER bei stärkerem Abfall Prognose Ist ${fmtW(direction.projected)} / Soll ≥ ${fmtW(needed)}`)}
         ${logRow("B", budgetOk, `Aktuell Ist ${fmtW(budgetNow)} / Soll ≥ ${fmtW(needed)}; Ø Ist ${fmtW(budgetAverage)} / Soll ≥ ${fmtW(needed)}`)}
       </div>` : "";
-      const logToggle = trendRelevant ? `<button type="button" class="sep-log-toggle" data-log="${esc(dev.id)}" aria-expanded="${logOpen}" aria-controls="sep-log-${esc(dev.id)}" title="Ist- und Sollwerte für H, T und B anzeigen">${logOpen ? "Info ▴" : "Info ▾"}</button>` : "";
+      const logToggle = trendRelevant ? `<button type="button" class="sep-log-toggle" data-log="${esc(dev.id)}" aria-expanded="${logOpen}" aria-controls="sep-log-${esc(dev.id)}" title="Ist- und Sollwerte für Historie, Trend und Budget anzeigen">${logOpen ? "Info ▴" : "Info ▾"}</button>` : "";
       const forcedAt = a.pflicht_start && !forced ? Date.parse(a.pflicht_start) : NaN;
       const forcedTxt = Number.isFinite(forcedAt)
         ? (forcedAt <= Date.now() + 60e3 ? "Pflichtstart fällig" : `Pflichtstart ${fmtTime(a.pflicht_start)}`) : "";
@@ -720,8 +720,8 @@ class SmartifyEnergyPlanCard extends HTMLElement {
           ? act("data-press", dev.startNow, "mdi:play-circle", "Sofortstart") : "",
         dev.nachladen && ["wartet", "waiting"].includes(phase)
           ? act("data-toggle", dev.nachladen, "mdi:washing-machine-alert", nachladenOn ? "Nachladen beenden" : "Nachladen", nachladenOn ? "on" : "") : "",
-        dev.finish && ["laeuft", "running"].includes(phase)
-          ? act("data-press", dev.finish, "mdi:check-circle-outline", "Fertig") : "",
+        dev.reset && ["laeuft", "running"].includes(phase)
+          ? act("data-press", dev.reset, "mdi:check-circle-outline", "Fertig") : "",
       ].join("") : "";
       const evSoc = a.geraetetyp === "ev" ? num(a.soc) : null;
       const chip = forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`

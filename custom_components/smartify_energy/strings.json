@@ -832,9 +832,6 @@
       },
       "reset": {
         "name": "Reset"
-      },
-      "finish": {
-        "name": "Finished"
       }
     },
     "select": {

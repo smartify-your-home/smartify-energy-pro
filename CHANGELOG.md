@@ -3,11 +3,10 @@
 
 ## 0.3.33 – Gerätezeile: Aktionen, Pflichtstart, Auto-SoC
 - Haushaltsgeräte: Statustext im Leerlauf nur noch „Bereit“.
-- Card: Aktions-Buttons direkt in der Gerätezeile, nur wenn wirksam – „Sofortstart“ (erkannt/wartet), „Nachladen“/„Nachladen beenden“ (wartet), „Fertig“ (läuft).
-- Neue Taste „Fertig“ (`button.*_finish`): markiert ein laufendes Programm manuell als fertig; die Steckdose wird nicht geschaltet. Auch beim nicht wiederanlauffähigen Trockner verfügbar.
+- Card: Aktions-Buttons direkt in der Gerätezeile, nur wenn wirksam – „Sofortstart“ (erkannt/wartet), „Nachladen“/„Nachladen beenden“ (wartet), „Fertig“ (läuft, löst den Reset aus).
 - Neues Status-Attribut `pflicht_start` (Haushaltsgeräte: früherer Zeitpunkt aus Spätstart und Sofortfenster; Wallbox: spätester Netzladestart). Card zeigt „Pflichtstart HH:MM“ bzw. „Pflichtstart fällig“.
 - Wallbox: Status-Attribut `soc`, Card zeigt den Fahrzeug-Akkustand in %.
-- Card: H wird ausgeblendet, sobald die Historie vollständig ist; „Log“ heißt jetzt „Info“. Card-Version 1.4.0.
+- Card: Startbedingungen als Icons statt Buchstaben (Historie `mdi:history`, Trend `mdi:trending-up`/`-down`, Budget `mdi:scale-balance`); Historie wird ausgeblendet, sobald sie vollständig ist; „Log“ heißt jetzt „Info“. Card-Version 1.4.0.
 
 ## 0.3.32 – Heizstab-Abschaltung vor übriger Gerätesteuerung
 - Laufende Heizstäbe werden vor Prognoseabrufen, Haushaltsgeräte-Messung und Zustandsaktualisierung auf Abschaltung geprüft. Ein Fehler in diesen nachfolgenden Schritten verhindert den Ausschaltversuch nicht mehr.

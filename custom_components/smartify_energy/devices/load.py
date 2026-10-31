@@ -124,7 +124,6 @@ class LoadDevice(BaseDevice):
         return [
             ButtonSpec("start_now", self.async_start_now, "mdi:play-circle"),
             ButtonSpec("reset", self.async_reset, "mdi:restart"),
-            ButtonSpec("finish", self.async_finish, "mdi:check-circle-outline"),
         ]
 
     # ── Zustand ──────────────────────────────────────────────────────────────
@@ -201,15 +200,6 @@ class LoadDevice(BaseDevice):
     async def async_reset(self) -> None:
         self._reset()
         self.reason = "Reset"
-        await self.manager.async_request_run()
-
-    async def async_finish(self) -> None:
-        """Manually mark a running program as finished (detection fallback)."""
-        if self.state.get("sm") != RUNNING:
-            return
-        self._reset()
-        self.state["sm"] = FINISHED
-        self.reason = "Fertig (manuell)"
         await self.manager.async_request_run()
 
     async def async_start_now(self) -> None:
