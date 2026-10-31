@@ -21,7 +21,7 @@ class DryerDevice(LoadDevice):
 
     def button_specs(self):
         specs = super().button_specs()
-        return specs if self.can_resume else [s for s in specs if s.key == "reset"]
+        return specs if self.can_resume else [s for s in specs if s.key in ("reset", "finish")]
 
     def status_attrs(self):
         return {

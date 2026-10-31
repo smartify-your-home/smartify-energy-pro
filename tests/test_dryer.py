@@ -37,7 +37,7 @@ class DryerChecks(unittest.IsolatedAsyncioTestCase):
 
     def test_nonresumable_hides_start_button_and_deadline(self):
         d = self.dryer("never")
-        self.assertEqual([s.key for s in d.button_specs()], ["reset"])
+        self.assertEqual([s.key for s in d.button_specs()], ["reset", "finish"])
         self.assertNotIn("latest_start", [s.key for s in d.param_specs()])
 
     def test_resumable_has_start_button_and_deadline(self):

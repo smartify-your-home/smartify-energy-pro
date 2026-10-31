@@ -43,7 +43,38 @@ class LoadDevice(BaseDevice):
         return {**super().status_attrs(), "icon": self.appliance_icon,
                 "haushaltsgeraet_typ": self.cfg.get("appliance_type", "washing_machine"),
                 "heizpause_reservierung_prozent": self.p("pause_reservation_pct"),
-                "reservierte_leistung_w": round(self.reserved_power)}
+                "reservierte_leistung_w": round(self.reserved_power),
+                "phase": self.state.get("sm"),
+                "nachladen_aktiv": bool(self.p("nachladen")) if self._has_param("nachladen") else False,
+                "pflicht_start": self._forced_start_at(dt_util.now())}
+
+    def _has_param(self, key: str) -> bool:
+        return any(s.key == key for s in self.param_specs())
+
+    def _forced_start_at(self, now: datetime) -> str | None:
+        """Next time a waiting program is released without PV (Spätstart or
+        Sofortfenster). None when nothing is waiting or no rule applies."""
+        if self.state.get("sm") not in (DETECTED, WAITING):
+            return None
+        candidates: list[datetime] = []
+
+        def at(t: time) -> datetime:
+            dt = now.replace(hour=t.hour, minute=t.minute, second=0, microsecond=0)
+            return dt if dt > now else dt + timedelta(days=1)
+
+        if self._has_param("latest_start"):
+            latest = time_from_str(self.p("latest_start"), time(16, 0))
+            if now.time() >= latest:
+                return now.isoformat()
+            candidates.append(at(latest))
+        try:
+            n_start = time_from_str(self.manager.p("night_start"), time(0))
+            n_end = time_from_str(self.manager.p("night_end"), time(0))
+        except Exception:  # noqa: BLE001 - hub params optional in tests
+            n_start = n_end = None
+        if n_start is not None and n_start != n_end:
+            candidates.append(at(n_start))
+        return min(candidates).isoformat() if candidates else None
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -93,6 +124,7 @@ class LoadDevice(BaseDevice):
         return [
             ButtonSpec("start_now", self.async_start_now, "mdi:play-circle"),
             ButtonSpec("reset", self.async_reset, "mdi:restart"),
+            ButtonSpec("finish", self.async_finish, "mdi:check-circle-outline"),
         ]
 
     # ── Zustand ──────────────────────────────────────────────────────────────
@@ -169,6 +201,15 @@ class LoadDevice(BaseDevice):
     async def async_reset(self) -> None:
         self._reset()
         self.reason = "Reset"
+        await self.manager.async_request_run()
+
+    async def async_finish(self) -> None:
+        """Manually mark a running program as finished (detection fallback)."""
+        if self.state.get("sm") != RUNNING:
+            return
+        self._reset()
+        self.state["sm"] = FINISHED
+        self.reason = "Fertig (manuell)"
         await self.manager.async_request_run()
 
     async def async_start_now(self) -> None:
@@ -270,7 +311,7 @@ class LoadDevice(BaseDevice):
             if not detected:
                 self._detected_since = None
                 self.status = "bereit"
-                return Decision(False, 0, "Bereit – Gerät am Gerät starten")
+                return Decision(False, 0, "Bereit")
             if self._detected_since is None:
                 self._detected_since = ctx.now
                 self.status = "bereit"

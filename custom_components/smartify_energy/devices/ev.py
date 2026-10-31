@@ -140,6 +140,11 @@ class EvDevice(BaseDevice):
                        unit="A", icon="mdi:current-ac"),
         ]
 
+    def status_attrs(self) -> dict:
+        start = self._latest_start if self._need_wh > 0 else None
+        return {**super().status_attrs(), "soc": self.soc,
+                "pflicht_start": start.isoformat() if start else None}
+
     # ── Messwerte ────────────────────────────────────────────────────────────
     @property
     def soc(self) -> float | None:

@@ -2,7 +2,7 @@
  * smartify-energy-plan-card
  * Lovelace Custom Card für den smartify Energiemanager (Integration smartify_energy).
  * Zeigt Überschuss, Prioritäten (Drag & Drop) und den PV-Plan der nächsten Stunden.
- * Version: 1.3.6
+ * Version: 1.4.0
  *
  * Installation: /config/www/smartify-energy-plan-card.js
  * Resource:     /local/smartify-energy-plan-card.js  (type: module)
@@ -24,7 +24,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.3.5";
+const CARD_VERSION = "1.4.0";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -122,6 +122,7 @@ const SETTING_HELP = {
   "idle_power_threshold": "Unter dieser gemessenen WP-Leistung zählt die Wärmepumpe als ruhend. Beispiel: 5 W. Ab genau 5 W beginnt die Wartezeit später wieder von vorn. Den Wert passend zum tatsächlichen Standby-Verbrauch wählen.",
   "idle_minutes": "So lange muss die WP-Leistung unter der Ruheschwelle liegen, bevor ein neuer WW-Boost gestartet werden darf. Standard: 15 Minuten. Aktivität, ungültige Werte und ein Neustart setzen die Ruheerkennung zurück. Unabhängig davon gilt der dauerhafte WW-Boost-Mindestabstand.",
   "start_now": "Gibt das Haushaltsgerät sofort frei und schaltet bei Bedarf seine Steckdose ein – auch ohne Solarüberschuss. Diese Taste löst direkt eine Aktion aus.",
+  "finish": "Markiert ein laufendes Programm sofort als fertig, falls die automatische Fertigerkennung (Leistung unter Schwelle) nicht greift. Die Steckdose wird nicht geschaltet.",
   "reset": "Optional: Setzt die Erkennung des Haushaltsgeräts sofort auf „Bereit“ zurück. Normalerweise nicht nötig – ein neuer Programmstart nach „Fertig“ wird automatisch erkannt. Das Programm am Gerät wird nicht zurückgesetzt und die Steckdose nicht ausgeschaltet.",
   "sun_angle_min": "Optionaler Mindestwinkel. Beispiel: 12° erlaubt den Boost ab genau 12°. Leer bedeutet: Sonnenwinkel-Prüfung wird ignoriert. Entität in der Gerätekonfiguration auswählen und Prüfung aktivieren.",
   "cloud_now_max": "Boost startet nur bei einem Wert kleiner als diese Grenze. Beispiel: unter 75 %; genau 75 % sperrt den Start. Beide Stunden müssen ihre Grenze einhalten. Bei unvollständigen Angaben wird die gesamte Bewölkungsprüfung ignoriert.",
@@ -206,6 +207,9 @@ function collect(hass, hubId) {
         priority: ents["number:priority"],
         mode: ents["select:mode"],
         active: ents["binary_sensor:active"],
+        startNow: ents["button:start_now"],
+        finish: ents["button:finish"],
+        nachladen: ents["switch:nachladen"],
         settings: settings[id] || [],
       };
     })
@@ -354,6 +358,12 @@ const CARD_CSS = `
   .sep-history-icon { --mdc-icon-size:17px; display:inline-flex; vertical-align:middle; }
   .sep-gate { font-size:12px; font-weight:800; line-height:1.2; min-width:12px; text-align:center; }
   .sep-log-toggle { border:1px solid var(--divider-color); border-radius:6px; padding:1px 6px; background:transparent; color:var(--secondary-text-color); font:inherit; font-size:10px; cursor:pointer; }
+  .sep-actions { display:flex; flex-wrap:wrap; gap:4px; margin-top:3px; }
+  .sep-act { border:1px solid var(--divider-color); border-radius:12px; padding:2px 10px; background:var(--secondary-background-color);
+             color:var(--txt); font:inherit; font-size:11px; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+  .sep-act ha-icon { --mdc-icon-size:14px; }
+  .sep-act:hover { border-color:var(--primary-color); }
+  .sep-act.on { border-color:var(--primary-color); color:var(--primary-color); }
   .sep-log-toggle:hover { color:var(--primary-text-color); }
   .sep-log { margin-top:5px; padding:7px 9px; border:1px solid var(--divider-color); border-radius:7px; background:var(--secondary-background-color); font-size:11px; line-height:1.55; max-width:480px; }
   .sep-log-row { display:grid; grid-template-columns:18px minmax(0,1fr); gap:6px; padding:2px 0; }
@@ -474,7 +484,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     if (this._drag) return;
     const data = collect(hass, this._config.hub);
     const ids = data ? [...Object.values(data.ents), ...data.hubSettings.map(x => x.id),
-      ...data.devices.flatMap(d => [d.status, d.power, d.planned, d.mode, d.active, ...d.settings.map(x => x.id)])] : [];
+      ...data.devices.flatMap(d => [d.status, d.power, d.planned, d.mode, d.active, d.nachladen, ...d.settings.map(x => x.id)])] : [];
     const sig = ids.map(id => { const s = hass.states[id]; return s ? `${id}:${s.last_updated}` : id; }).join("|");
     if (sig === this._sig) return;
     this._data = data;
@@ -681,7 +691,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const trendInfo = `Trend: ${trendReady ? (trendOk ? "Bedingung erfüllt" : "Bedingung nicht erfüllt") : "Messhistorie noch nicht vollständig"}; Fenster ${trendWindow ?? "–"} min, Kurzzeit-Ø ${fmtW(trendRecent)}, Änderung ${fmtW(trendDelta)}, Fortschreibung ${fmtW(direction.projected)}, benötigt ${fmtW(needed)}`;
       const budgetInfo = `Budget: ${budgetOk ? "Bedingung erfüllt" : "Bedingung nicht erfüllt"}; aktuell ${fmtW(budgetNow)}, Ø ${fmtW(budgetAverage)}, benötigt ${fmtW(needed)}`;
       const trendText = trendRelevant
-        ? `<span class="sep-gates" title="${esc(historyInfo + " | " + trendInfo + " | " + budgetInfo)}">${gate("H", avgReady, historyInfo)}${gate("T", trendOk, trendInfo)}${gate("B", budgetOk, budgetInfo)}${avgReady && trendOk && budgetOk ? '<ha-icon icon="mdi:check-circle" class="sep-history-icon" style="color:var(--success-color, #43a047)"></ha-icon>' : ""}</span>`
+        ? `<span class="sep-gates" title="${esc(historyInfo + " | " + trendInfo + " | " + budgetInfo)}">${avgReady ? "" : gate("H", avgReady, historyInfo)}${gate("T", trendOk, trendInfo)}${gate("B", budgetOk, budgetInfo)}${avgReady && trendOk && budgetOk ? '<ha-icon icon="mdi:check-circle" class="sep-history-icon" style="color:var(--success-color, #43a047)"></ha-icon>' : ""}</span>`
         : "";
       const logOpen = this._logOpen.has(dev.id);
       const logRow = (letter, ok, detail) =>
@@ -693,8 +703,27 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         ${logRow("T", trendOk, `Kurzzeit-Ø Ist ${fmtW(trendRecent)} / Soll ≥ ${fmtW(needed)} (Pflicht); Änderung Ist ${fmtW(trendDelta)} / Soll ≥ ${fmtW(-trendTolerance)} ODER bei stärkerem Abfall Prognose Ist ${fmtW(direction.projected)} / Soll ≥ ${fmtW(needed)}`)}
         ${logRow("B", budgetOk, `Aktuell Ist ${fmtW(budgetNow)} / Soll ≥ ${fmtW(needed)}; Ø Ist ${fmtW(budgetAverage)} / Soll ≥ ${fmtW(needed)}`)}
       </div>` : "";
-      const logToggle = trendRelevant ? `<button type="button" class="sep-log-toggle" data-log="${esc(dev.id)}" aria-expanded="${logOpen}" aria-controls="sep-log-${esc(dev.id)}" title="Ist- und Sollwerte für H, T und B anzeigen">${logOpen ? "Log ▴" : "Log ▾"}</button>` : "";
-      const planTxt = pt ? `Empf. Start ${pt}${planned.attributes.pv_anteil_prozent != null ? ` · ${planned.attributes.pv_anteil_prozent} % PV` : ""}` : "";
+      const logToggle = trendRelevant ? `<button type="button" class="sep-log-toggle" data-log="${esc(dev.id)}" aria-expanded="${logOpen}" aria-controls="sep-log-${esc(dev.id)}" title="Ist- und Sollwerte für H, T und B anzeigen">${logOpen ? "Info ▴" : "Info ▾"}</button>` : "";
+      const forcedAt = a.pflicht_start && !forced ? Date.parse(a.pflicht_start) : NaN;
+      const forcedTxt = Number.isFinite(forcedAt)
+        ? (forcedAt <= Date.now() + 60e3 ? "Pflichtstart fällig" : `Pflichtstart ${fmtTime(a.pflicht_start)}`) : "";
+      const planTxt = [pt ? `Empf. Start ${pt}${planned.attributes.pv_anteil_prozent != null ? ` · ${planned.attributes.pv_anteil_prozent} % PV` : ""}` : "", forcedTxt]
+        .filter(Boolean).join(" · ");
+      // Aktionen nur anzeigen, wenn sie im aktuellen Zustand wirken.
+      const phase = a.phase || a.status_code || st?.state;
+      const canAct = a.geraetetyp === "load" && mode !== "off";
+      const nachladenOn = this._st(dev.nachladen)?.state === "on";
+      const act = (attr, id, icon, label, cls = "") =>
+        `<button type="button" class="sep-act ${cls}" ${attr}="${esc(id)}"><ha-icon icon="${icon}"></ha-icon>${esc(label)}</button>`;
+      const actions = canAct ? [
+        dev.startNow && ["erkannt", "wartet", "detected", "waiting"].includes(phase)
+          ? act("data-press", dev.startNow, "mdi:play-circle", "Sofortstart") : "",
+        dev.nachladen && ["wartet", "waiting"].includes(phase)
+          ? act("data-toggle", dev.nachladen, "mdi:washing-machine-alert", nachladenOn ? "Nachladen beenden" : "Nachladen", nachladenOn ? "on" : "") : "",
+        dev.finish && ["laeuft", "running"].includes(phase)
+          ? act("data-press", dev.finish, "mdi:check-circle-outline", "Fertig") : "",
+      ].join("") : "";
+      const evSoc = a.geraetetyp === "ev" ? num(a.soc) : null;
       const chip = forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`
                  : on ? `<span class="chip" style="background:${grad(dev.color)}">${esc(statusTxt || "ein")}</span>`
                  : mode === "observe" ? `<span class="chip" style="background:#B3E5FC">beobachten</span>` : "";
@@ -710,6 +739,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
             <div class="sub" title="${esc(sub)}">${esc(sub)}</div>
             ${planTxt ? `<div class="plan">${esc(planTxt)}</div>` : ""}
             ${trendText ? `<div class="plan">${trendText} ${logToggle}</div>${logOpen ? logText : ""}` : ""}
+            ${actions ? `<div class="sep-actions">${actions}</div>` : ""}
           </div>
           <div class="right" title="${esc(budgetTitle)}">
             <div class="power-budget">
@@ -721,6 +751,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
                 <span class="pb-label">Budget aktuell</span>
                 <span class="pb-budget ${budgetNow == null ? "" : budgetNow < 0 ? "negative" : budgetOk ? "positive" : ""}">${fmtW(budgetNow)}</span>
               </div>
+              ${a.geraetetyp === "ev" ? `<div class="pb-item"><span class="pb-label">Akku</span><span class="pw">${evSoc == null ? "–" : evSoc.toFixed(0) + " %"}</span></div>` : ""}
               ${this._config.show_mode ? this._modeSelect(dev.mode, "", a.geraetetyp === "heater") : ""}
               ${this._config.show_settings !== false && dev.settings.length ? `<button class="gear ${open ? "open" : ""}" data-gear="${dev.id}" title="Einstellungen"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}
             </div>
@@ -818,7 +849,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._eventsBound = true;
     const root = this.shadowRoot;
     root.addEventListener("click", e => {
-      const el = e.target.closest?.("[data-log], [data-gear], [data-more], [data-press], select");
+      const el = e.target.closest?.("[data-log], [data-gear], [data-more], [data-press], [data-toggle], select");
       if (!el) return;
       if (el.matches("select")) { e.stopPropagation(); return; }
       if (el.hasAttribute("data-log")) {
@@ -837,6 +868,9 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         this._sig = "";
         this._data = collect(this._hass, this._config.hub);
         this._render();
+      } else if (el.dataset.toggle) {
+        e.stopPropagation();
+        this._hass.callService("switch", "toggle", {entity_id: el.dataset.toggle});
       } else if (el.dataset.press) {
         e.stopPropagation();
         this._hass.callService("button", "press", {entity_id: el.dataset.press});

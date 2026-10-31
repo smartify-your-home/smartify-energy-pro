@@ -1,6 +1,14 @@
 ## Unreleased
 - Dashboard-Card wird mit Inhalts-Hash der JS-Datei eingebunden (`?v=<version>-<hash>`). Kiosk-Tablets/WebViews (z. B. Dashie, Fully Kiosk) laden eine geänderte Card damit sicher neu, auch ohne Versionssprung.
 
+## 0.3.33 – Gerätezeile: Aktionen, Pflichtstart, Auto-SoC
+- Haushaltsgeräte: Statustext im Leerlauf nur noch „Bereit“.
+- Card: Aktions-Buttons direkt in der Gerätezeile, nur wenn wirksam – „Sofortstart“ (erkannt/wartet), „Nachladen“/„Nachladen beenden“ (wartet), „Fertig“ (läuft).
+- Neue Taste „Fertig“ (`button.*_finish`): markiert ein laufendes Programm manuell als fertig; die Steckdose wird nicht geschaltet. Auch beim nicht wiederanlauffähigen Trockner verfügbar.
+- Neues Status-Attribut `pflicht_start` (Haushaltsgeräte: früherer Zeitpunkt aus Spätstart und Sofortfenster; Wallbox: spätester Netzladestart). Card zeigt „Pflichtstart HH:MM“ bzw. „Pflichtstart fällig“.
+- Wallbox: Status-Attribut `soc`, Card zeigt den Fahrzeug-Akkustand in %.
+- Card: H wird ausgeblendet, sobald die Historie vollständig ist; „Log“ heißt jetzt „Info“. Card-Version 1.4.0.
+
 ## 0.3.32 – Heizstab-Abschaltung vor übriger Gerätesteuerung
 - Laufende Heizstäbe werden vor Prognoseabrufen, Haushaltsgeräte-Messung und Zustandsaktualisierung auf Abschaltung geprüft. Ein Fehler in diesen nachfolgenden Schritten verhindert den Ausschaltversuch nicht mehr.
 - Im Automatikmodus hat das Unterschreiten der Abschaltschwelle Vorrang vor Mindestlaufzeit und einer bestehenden Aktor-Wiederholpause. Ungültige Netzwerte und Temperaturgrenzen bleiben Abschaltgründe.
