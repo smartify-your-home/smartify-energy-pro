@@ -340,8 +340,10 @@ class LoadDevice(BaseDevice):
                 return Decision(True, p, "Programm gewählt – warte auf Start")
             if before_earliest:
                 return self._wait(f"Frühester Start erst ab {earliest.strftime('%H:%M')}")
-            if ctx.night_window:
-                return self._approve("Sofortfenster – freigegeben", forced=True)
+            # A due deadline must release an already powered appliance
+            # directly, without first entering WAITING and toggling its plug.
+            if late or ctx.night_window:
+                return self._approve("Spätstart/Sofortfenster erreicht", forced=True)
             # A newly detected appliance is already drawing some power:
             # that *measured* power has reduced the physical grid export.
             # Add it back only for its own start check, not as credit to
@@ -464,3 +466,4 @@ class LoadDevice(BaseDevice):
             earliest_dt = now
         return PlanDemand(self.nominal * 0.6, self.nominal * 0.6 * hours,
                           latest_dt + timedelta(hours=hours), earliest=earliest_dt, interruptible=False)
+

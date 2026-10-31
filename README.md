@@ -2,7 +2,7 @@
 
 **PV-Überschuss intelligent verteilen – mit Prioritäten, Geräteprogrammen, Batteriespeicher und Home-Assistant-Dashboard.**
 
-**Aktueller Quellcode-Stand: 0.3.29** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
+**Aktueller Quellcode-Stand: 0.3.34** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
 
 > **Versionshinweis:** Die Versionsnummer beschreibt den Repository-Stand. In HACS erscheint eine neue Version erst, wenn der zugehörige GitHub-Release-Tag erfolgreich veröffentlicht und von HACS erkannt wurde. [Veröffentlichte Versionen ansehen](https://github.com/smartify-your-home/smartify-energy-pro/releases).
 
@@ -40,9 +40,9 @@ Für Waschmaschine und Geschirrspüler gibt es **Restreservierung in Heizpausen*
 
 **Beispiel:** Geschirrspüler mit 2.000 W Nennleistung und 50 % Restreservierung hält in einer Heizpause 1.000 W für spätere Heizphasen zurück. Das übrige Budget kann die nachrangige Waschmaschine früher freigeben. **Achtung:** Wenn beide gleichzeitig heizen oder die PV-Leistung sinkt, kann zusätzlicher Netzbezug entstehen. Die Einstellung ist keine Netzbezugsbegrenzung.
 
-### 0.3.25 – Diagnose H / T / B
+### Diagnose: Historie, Trend und Budget
 
-Die Prioritätenkarte zeigt drei Startprüfungen mit farbigem Status und einem aufklappbaren **Log ▾** mit Ist-/Sollwerten:
+Die Prioritätenkarte zeigt drei Startprüfungen mit farbigem Status und einem aufklappbaren **Info ▾** mit Ist-/Sollwerten:
 
 | Anzeige | Bedeutung |
 | --- | --- |
@@ -50,7 +50,7 @@ Die Prioritätenkarte zeigt drei Startprüfungen mit farbigem Status und einem a
 | **T – Trend** | Zwei Trendfenster vorhanden und Trendprüfung für die PV-Freigabe bestanden |
 | **B – Budget** | Aktuelles **und** gemitteltes Gerätebudget decken die erforderliche Startleistung |
 
-Ein grüner Haken nach B erscheint nur, wenn alle drei Bedingungen erfüllt sind. **Sofortstart, Sofortfenster und Spätstart** haben eigene Ausnahmeregeln. Die Trendbewertung ist keine garantierte PV-Wetterprognose.
+Ein grüner Freigabehaken erscheint nur, wenn alle drei Bedingungen erfüllt sind. **Sofortstart, Sofortfenster und Spätstart** haben eigene Ausnahmeregeln. Die Trendbewertung ist keine garantierte PV-Wetterprognose.
 
 **Alle Änderungen und technischen Release Notes:** [CHANGELOG.md](CHANGELOG.md).
 
@@ -107,7 +107,7 @@ Die Karte bietet die Prioritätenliste, Geräteeinstellungen mit Hilfetexten, St
 **Projekt:** [smartify-your-home/smartify-energy-pro](https://github.com/smartify-your-home/smartify-energy-pro)
 
 ## Kurztrend-Startbedingung (0.3.29)
-Für den automatischen PV-Start muss der gerätespezifische Kurztrend-Mittelwert **immer mindestens den Sollwert** erreichen. Bei stärker fallendem Trend muss außerdem die Fortschreibung (Kurzzeit-Ø plus Änderung zwischen den Trendfenstern) mindestens den Sollwert erreichen. Ein steigender oder neutraler Trend ersetzt keinen ausreichenden Kurzzeit-Mittelwert. In der SEP-Karte zeigt T diese strengere Prüfung. History (H) und aktuelles Budget (B) sind weiterhin zusätzlich erforderlich.
+Für den automatischen PV-Start muss der gerätespezifische Kurztrend-Mittelwert **immer mindestens den Sollwert** erreichen. Bei stärker fallendem Trend muss außerdem die Fortschreibung (Kurzzeit-Ø plus Änderung zwischen den Trendfenstern) mindestens den Sollwert erreichen. Ein steigender oder neutraler Trend ersetzt keinen ausreichenden Kurzzeit-Mittelwert. In der SEP-Karte zeigt das Trend-Icon diese strengere Prüfung. History (H) und aktuelles Budget (B) sind weiterhin zusätzlich erforderlich.
 
 
 ### Heizstab: Ausfall des Netzsensors (ab 0.3.31)
@@ -116,3 +116,10 @@ Der temperaturgeregelte Modus **Manuell** erlaubt weiterhin Netzstrom; **Beobach
 
 ### Vorrangige Heizstab-Abschaltung (ab 0.3.32)
 SEP prüft laufende Heizstäbe zuerst, bevor Prognosen und andere Geräte verarbeitet werden. Ein Fehler eines Haushaltsgeräts kann diesen Ausschaltversuch deshalb nicht verhindern. Im Automatikmodus schaltet der Heizstab unterhalb seiner Abschaltschwelle auch während einer Mindestlaufzeit ab. Für diese Prüfung zählt die tatsächliche Netzleistung mit Netzreserve und Akkuentladung; Akku-Ladeleistung darf nur ein höher priorisierter Heizstab nutzen. Versprochene Leistungsfreigaben anderer Verbraucher reichen nicht. Ein abgeschalteter Heizstab wird im selben Durchlauf nicht erneut gestartet. Manuell erlaubt weiterhin Netzstrom, Beobachten schaltet nicht. Die Ausführung des Befehls setzt einen erreichbaren Aktor voraus.
+
+## Pflichtstart ohne Aus-/Ein-Impuls (0.3.34)
+Ist die späteste Startzeit erreicht, gibt SEP ein erkanntes Haushaltsprogramm direkt frei. Eine bereits eingeschaltete Steckdose bleibt eingeschaltet – auch ohne ausreichenden PV-Überschuss oder vollständige Messhistorie. Ein zuvor wartendes, ausgeschaltetes Gerät erhält nur den Einschaltbefehl. Dies gilt für Waschmaschine, Geschirrspüler, sonstige Haushaltsgeräte und Trockner mit aktiviertem Wiederanlauf. Die Programmerkennung und die früheste Startzeit bleiben wirksam; noch nicht gestartete Programme im niedrigen Standby werden dadurch nicht automatisch gestartet. Pflichtstarts dürfen Netzstrom nutzen.
+
+## Aktuelle Gerätezeile (seit 0.3.33)
+Wirksame Aktionen stehen direkt beim Gerät: Sofortstart, Nachladen/Nachladen beenden und bei laufendem Programm „Fertig“ (setzt die Programmerkennung zurück). „Pflichtstart“ zeigt die berechnete Startzeit; die Wallbox zeigt zusätzlich den Fahrzeug-SoC. Historie, Trend und Budget werden als Icons dargestellt, Details stehen unter „Info“. Die Historienanzeige wird ausgeblendet, sobald die Historie vollständig ist; die Prüfung bleibt aktiv.
+

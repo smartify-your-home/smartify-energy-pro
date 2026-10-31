@@ -1,3 +1,16 @@
+# Update auf 0.3.34
+
+In HACS auf 0.3.34 aktualisieren, Home Assistant neu starten und das Dashboard neu laden. Es müssen keine Entitäten oder Geräteeinstellungen neu angelegt werden. Der Pflichtstart verhindert jetzt den unnötigen AUS/EIN-Impuls bereits erkannter Programme. Die Heizstab-Abschaltung aus 0.3.32 und die Gerätezeile aus 0.3.33 bleiben enthalten.
+
+## Pflichtstart ohne Aus-/Ein-Impuls (0.3.34)
+Ist die späteste Startzeit erreicht, gibt SEP ein erkanntes Haushaltsprogramm direkt frei. Eine bereits eingeschaltete Steckdose bleibt eingeschaltet – auch ohne ausreichenden PV-Überschuss oder vollständige Messhistorie. Ein zuvor wartendes, ausgeschaltetes Gerät erhält nur den Einschaltbefehl. Dies gilt für Waschmaschine, Geschirrspüler, sonstige Haushaltsgeräte und Trockner mit aktiviertem Wiederanlauf. Die Programmerkennung und die früheste Startzeit bleiben wirksam; noch nicht gestartete Programme im niedrigen Standby werden dadurch nicht automatisch gestartet. Pflichtstarts dürfen Netzstrom nutzen.
+
+## Aktuelle Gerätezeile (seit 0.3.33)
+Wirksame Aktionen stehen direkt beim Gerät: Sofortstart, Nachladen/Nachladen beenden und bei laufendem Programm „Fertig“ (setzt die Programmerkennung zurück). „Pflichtstart“ zeigt die berechnete Startzeit; die Wallbox zeigt zusätzlich den Fahrzeug-SoC. Historie, Trend und Budget werden als Icons dargestellt, Details stehen unter „Info“. Die Historienanzeige wird ausgeblendet, sobald die Historie vollständig ist; die Prüfung bleibt aktiv.
+
+## Historische Updatehinweise
+Die folgenden Abschnitte beschreiben den jeweiligen damaligen Versionsstand. Aktuelles Verhalten: [SEP_CURRENT.md](SEP_CURRENT.md); vollständige Versionshistorie: [CHANGELOG.md](../CHANGELOG.md).
+
 ## 0.3.29 – Strenger Trend-Check
 T wird nur grün, wenn der Mittelwert der gewählten Trendzeit ≥ benötigtem Budget ist. Bei stark fallendem Trend muss auch die Fortschreibung ≥ Bedarf bleiben. Die ODER-Freigabe für steigende/neutral verlaufende, aber zu niedrige Kurzmittel entfällt. Betrifft automatische Haushaltsstarts und regulären WW-Boost. Nach dem HACS-Update Home Assistant neu starten.
 
@@ -174,3 +187,4 @@ Recorder-Entlastung, zuverlässige Neubewertung, Aktor-Timeouts und Verfügbarke
 
 ## SEP 0.3.21
 Logo in der SEP-Karte auf 40 × 40 Pixel vergrößert, Schriftzug daneben „Smartify Energy Pro“. Reines Dashboard-Update; Dashboard aktualisieren.
+

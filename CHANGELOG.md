@@ -1,6 +1,12 @@
 ## Unreleased
 - Dashboard-Card wird mit Inhalts-Hash der JS-Datei eingebunden (`?v=<version>-<hash>`). Kiosk-Tablets/WebViews (z. B. Dashie, Fully Kiosk) laden eine geänderte Card damit sicher neu, auch ohne Versionssprung.
 
+## 0.3.34 – Pflichtstart ohne kurze Stromunterbrechung
+- Fälliger Spätstart wird bereits im Zustand „erkannt“ vor den PV-Prüfungen berücksichtigt. Ein eingeschaltetes Haushaltsgerät wechselt direkt zu „läuft“, statt erst AUS und im nächsten Zyklus wieder EIN zu schalten.
+- Gilt für Waschmaschine, Geschirrspüler, sonstige Haushaltsgeräte und wiederanlauffähige Trockner. Bereits wartende Geräte werden wie bisher eingeschaltet. Programmerkennung und früheste Startzeit bleiben wirksam.
+- Regressionstests prüfen die tatsächlichen Schaltbefehle, die exakte Startzeitgrenze, neue Programmerkennung, Sofortfenster sowie das Warten vor der Frist.
+- AGENTS.md als gemeinsame Arbeitsanweisung und Standübersicht ergänzt; README/HACS-Info, aktuelle Funktionsdokumentation und Updatehinweise abgeglichen, veraltete H/T/B- und History-Aussagen korrigiert.
+
 ## 0.3.33 – Gerätezeile: Aktionen, Pflichtstart, Auto-SoC
 - Haushaltsgeräte: Statustext im Leerlauf nur noch „Bereit“.
 - Card: Aktions-Buttons direkt in der Gerätezeile, nur wenn wirksam – „Sofortstart“ (erkannt/wartet), „Nachladen“/„Nachladen beenden“ (wartet), „Fertig“ (läuft, löst den Reset aus).
