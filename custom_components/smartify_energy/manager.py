@@ -421,8 +421,15 @@ class EnergyManager:
 
         self._pending_run = async_call_later(self.hass, delay, _run)
 
-    async def async_request_run(self) -> None:
-        self._schedule_run()
+    async def async_request_run(self, immediate: bool = False) -> None:
+        """Manual actions bypass sensor debounce; queued runs are coalesced."""
+        if not immediate:
+            self._schedule_run()
+            return
+        if self._pending_run is not None:
+            self._pending_run()
+            self._pending_run = None
+        await self.async_run()
 
     async def _async_tick(self, _now=None) -> None:
         await self.async_run()
