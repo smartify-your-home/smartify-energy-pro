@@ -211,14 +211,14 @@ class LoadDevice(BaseDevice):
     async def async_reset(self) -> None:
         self._reset()
         self.reason = "Reset"
-        await self.manager.async_request_run()
+        await self.manager.async_request_run(immediate=True)
 
     async def async_start_now(self) -> None:
         self.state.update(sm=RUNNING, approved=True, forced_start=True, since=dt_util.now().timestamp())
         self.reason = "Sofort-Start"
         if not self.is_on():
             await self._switch(self.switch, True)
-        await self.manager.async_request_run()
+        await self.manager.async_request_run(immediate=True)
 
     # ── Laufende Messung ─────────────────────────────────────────────────────
     def pre_update(self, ctx: Context) -> None:
