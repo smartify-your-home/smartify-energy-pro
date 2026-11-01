@@ -213,23 +213,56 @@ class HouseholdBudgetStartTests(unittest.TestCase):
         # Once the first heating phase ends, no future heater capacity
         # remains reserved. Its small measured running draw still stays
         # included in the real grid balance.
-        # Legacy zero-reserve behavior is now opt-in; default 100 % retains the heater.
-        first.params["pause_reservation_pct"] = 0
+        # Full release is opt-in; default 0 % release retains the heater.
+        first.params["pause_budget_release_pct"] = 100
         first.state["hp_active"] = True
         first._check_heating(50, self.now)
         self.assertTrue(first.state["hp_done"])
         current = first.power_accounted_in_grid()
         reserved = math.additional_reservation(first.reserved_power, current, 0)
         self.assertEqual(reserved, 0)
-        first.params["pause_reservation_pct"] = 50
+        first.params["pause_budget_release_pct"] = 50
         self.assertEqual(math.additional_reservation(first.reserved_power, current, 0), 1050)
-        first.params["pause_reservation_pct"] = 100
+        first.params["pause_budget_release_pct"] = 0
         self.assertEqual(math.additional_reservation(first.reserved_power, current, 0), 2150)
 
         # Even then the second machine only starts once the mean recovers.
         self.load.state["sm"] = "wartet"
         self.assertFalse(self.run_check(3000, 2100).on)
         self.assertTrue(self.run_check(3000, 2300).on)
+
+    def test_legacy_budget_reservation_migrates_without_changing_effect(self):
+        self.load.load({"params": {"pause_reservation_pct": 75}, "state": {}})
+        self.assertEqual(self.load.p("pause_budget_release_pct"), 25)
+
+    def test_explicit_new_budget_release_wins_over_legacy_value(self):
+        self.load.load({"params": {"pause_reservation_pct": 75,
+                                    "pause_budget_release_pct": 60}, "state": {}})
+        self.assertEqual(self.load.p("pause_budget_release_pct"), 60)
+
+    def test_door_opening_short_pulse_does_not_detect_new_program(self):
+        from datetime import timedelta
+        self.values.update({"switch.washer": "on", "sensor.washer": "10"})
+        self.load.state["sm"] = "fertig"
+        self.load.params.update(detect_threshold=9, detect_seconds=20)
+        ctx = Context(self.now, 30, 3000, 3000, 3000, True, False, 3000)
+        self.assertFalse(self.load._new_program_detected(ctx, True, 10))
+        ctx.now += timedelta(seconds=10)
+        self.assertFalse(self.load._new_program_detected(ctx, True, 10))
+        ctx.now += timedelta(seconds=1)
+        self.assertFalse(self.load._new_program_detected(ctx, True, 0))
+        ctx.now += timedelta(seconds=10)
+        self.assertFalse(self.load._new_program_detected(ctx, True, 10))
+
+    def test_program_detects_after_configured_duration(self):
+        from datetime import timedelta
+        self.values.update({"switch.washer": "on", "sensor.washer": "30"})
+        self.load.params.update(detect_threshold=9, detect_seconds=20)
+        self.load.state["sm"] = "fertig"
+        ctx = Context(self.now, 30, 3000, 3000, 3000, True, False, 3000)
+        self.assertFalse(self.load._new_program_detected(ctx, True, 30))
+        ctx.now += timedelta(seconds=20)
+        self.assertTrue(self.load._new_program_detected(ctx, True, 30))
 
     def test_unmetered_running_load_conservatively_reserves_full_power(self):
         self.load.cfg.pop("power_sensor")
