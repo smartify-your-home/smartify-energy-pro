@@ -1,7 +1,12 @@
+## 0.3.35: Programmerkennung, Fertigerkennung und Freigabe
+Die SEP-Geräteeinstellungen erlauben pro Waschmaschine und Geschirrspüler Start-Erkennung über einer Leistungsschwelle (Standard 9 W) für eine Mindestdauer (Standard 20 s). Die identische Prüfung gilt in Bereit und Fertig. Unterbrechungen setzen den Timer zurück. Die Startfreigabegrenze über 100 W ist davon unabhängig. Ende: standardmäßig unter 5 W für zwei Minuten.
+
+**Budgetfreigabe nach Heizphase** (letzter Geräte-Einstellungspunkt): 0 % = volle Reservierung, 50 % = halbe Reservierung, 100 % = keine zusätzliche Reservierung. Während laufender Heizphasen zählt die gemessene Leistung und ohne gültigen Sensor bleibt die volle Nennleistung reserviert. Altwerte werden beim Laden von der früheren inversen Reservierung auf Freigabe migriert; bisherige reale Budgetwirkung bleibt erhalten.
+
 # Funktionsstand und Grenzen
 
-## Heizpausen-Reservierung (0.3.26)
-Waschmaschine und Geschirrspüler erhalten den Geräteparameter `pause_reservation_pct` (0–100 %, 10-%-Schritte, Standard 100 %). Vor dem Ende der ersten erkannten Heizphase gilt 100 % Nennleistung. Danach wird während der Heizpausen der eingestellte Anteil der Nennleistung reserviert, mindestens jedoch der gemessene Verbrauch. Bei erneutem Heizen wird die tatsächlich gemessene Leistung berücksichtigt; die physische Netzbilanz enthält diese bereits. Fehlt der Leistungssensor oder liefert er keine gültigen Werte, bleibt die volle Nennleistung reserviert. Die Reservierung reduziert im selben Regelzyklus das verfügbare Budget nachrangiger Geräte; sie ist keine harte Grenze für Netzbezug. Trockner sind ausgenommen. Bereits freigegebene Programme werden nicht unterbrochen. Die H/T/B-Freigabelogik wird dadurch nicht verändert.
+## Historie: Heizpausen-Reservierung (0.3.26; durch 0.3.35 abgelöst)
+Waschmaschine und Geschirrspüler erhalten den Geräteparameter `pause_budget_release_pct` (0–100 %, 10-%-Schritte, Standard 0 %). Vor dem Ende der ersten erkannten Heizphase gilt 100 % Nennleistung. Danach wird während der Heizpausen der eingestellte Anteil der Nennleistung reserviert, mindestens jedoch der gemessene Verbrauch. Bei erneutem Heizen wird die tatsächlich gemessene Leistung berücksichtigt; die physische Netzbilanz enthält diese bereits. Fehlt der Leistungssensor oder liefert er keine gültigen Werte, bleibt die volle Nennleistung reserviert. Die Reservierung reduziert im selben Regelzyklus das verfügbare Budget nachrangiger Geräte; sie ist keine harte Grenze für Netzbezug. Trockner sind ausgenommen. Bereits freigegebene Programme werden nicht unterbrochen. Die H/T/B-Freigabelogik wird dadurch nicht verändert.
 
 ## WP-WW-Einmalladung: vereinfachte Modi (0.3.7)
 
