@@ -1,4 +1,11 @@
 ## Unreleased
+
+## 0.3.37 – Prioritätsänderungen ohne Wartezeit
+- Drag & Drop in SEP zeigt die neue Reihenfolge und Prioritätsnummer unmittelbar an.
+- Der Backend-Service speichert alle Prioritäten gesammelt und fordert sofort einen Regelzyklus an (kein 2-Sekunden-Debounce für manuelle Sortierung).
+- Während des Speicherns bleibt die optimistische Ansicht erhalten; fehlgeschlagene Serviceaufrufe lösen Rollback und sichtbaren Fehler aus.
+- Validierung unter beiden unterstützten HA-Testkonfigurationen, HACS und Hassfest erfolgreich.
+
 - Prioritätsreihenfolge in der SEP-Karte erscheint sofort nach Drag & Drop; der Aufruf wird asynchron bestätigt. Fehler führen zum Rollback und einer Meldung. Der Backend-Dienst speichert die komplette Reihenfolge in einem Schritt und löst den Regelzyklus unmittelbar aus, statt pro Gerät die 2-Sekunden-Bündelung anzustoßen.
 
 ## 0.3.36 – Sofortige manuelle Aktionen und bereinigte Geräteeinstellungen
