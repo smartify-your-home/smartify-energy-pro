@@ -266,13 +266,13 @@ class LoadDevice(BaseDevice):
                 self._finished_off_seen = True
                 return False
             return self._finished_off_seen
-        if not (sw_on and p > float(self.p("detect_threshold"))):
+        if not (sw_on and p > float(self.p("detect_threshold") if self.p("detect_threshold") is not None else 9)):
             self._detected_since = None
             return False
         if self._detected_since is None:
             self._detected_since = ctx.now
             return False
-        return ctx.now - self._detected_since >= timedelta(seconds=float(self.p("detect_seconds")))
+        return ctx.now - self._detected_since >= timedelta(seconds=float(self.p("detect_seconds") if self.p("detect_seconds") is not None else 20))
 
     @property
     def reserved_power(self) -> float:
