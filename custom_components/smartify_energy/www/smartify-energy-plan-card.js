@@ -469,6 +469,9 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._config = {};
     this._sig = "";
     this._drag = null;
+    this._priorityOrder = null;
+    this._prioritySaving = false;
+    this._priorityError = "";
     this._open = new Set();
     this._logOpen = new Set();
   }
@@ -491,6 +494,16 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const sig = ids.map(id => { const s = hass.states[id]; return s ? `${id}:${s.last_updated}` : id; }).join("|");
     if (sig === this._sig) return;
     this._data = data;
+    // Retain optimistic order until the server has published all new ranks.
+    if (this._priorityOrder && !this._prioritySaving && data) {
+      const actual = data.devices.map(dev => ({
+        id: dev.id,
+        rank: dev.virtualBattery
+          ? (num(hass.states[dev.rankEntity]?.state) ?? 99)
+          : (num(hass.states[dev.status]?.attributes?.prioritaet) ?? 5),
+      })).sort((a, b) => a.rank - b.rank || a.id.localeCompare(b.id)).map(x => x.id);
+      if (actual.join("|") === this._priorityOrder.join("|")) this._priorityOrder = null;
+    }
     // Do not replace an actively edited input OR native select dropdown.
     const active = this.shadowRoot.activeElement;
     if (active && active.matches?.("input[type=number], input[type=time], select")) {
@@ -636,7 +649,14 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       .map(dev => ({ dev, prio: dev.virtualBattery
         ? (num(this._st(dev.rankEntity)?.state) ?? 99)
         : (num(this._st(dev.status)?.attributes?.prioritaet) ?? 5) }))
-      .sort((a, b) => a.prio - b.prio || a.dev.name.localeCompare(b.dev.name));
+      .sort((a, b) => {
+        if (this._priorityOrder) {
+          const x = this._priorityOrder.indexOf(a.dev.id);
+          const y = this._priorityOrder.indexOf(b.dev.id);
+          if (x >= 0 && y >= 0) return x - y;
+        }
+        return a.prio - b.prio || a.dev.name.localeCompare(b.dev.name);
+      });
     if (!rows.length) return `<div class="empty">Noch keine Geräte – in der Integration „+ Gerät hinzufügen“.</div>`;
     return `<div class="list">${rows.map(({ dev, prio }) => {
       if (dev.virtualBattery) {
@@ -902,7 +922,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
   _dragStart(e, d) {
     const row = e.target.closest(".dev-wrap");
     const list = row?.parentElement;
-    if (!row || !list) return;
+    if (!row || !list || this._prioritySaving) return;
     e.preventDefault();
     const rows = [...list.querySelectorAll(":scope > .dev-wrap")];
     const rects = rows.map(r => r.getBoundingClientRect());
@@ -947,11 +967,27 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     order.splice(g.to, 0, moved);
     g.rows.forEach(r => { r.style.transform = ""; r.classList.remove("dragging"); });
     this._drag = null;
-    if (g.to !== g.from) {
-      await this._hass.callService(DOMAIN, "set_priority_order", { device_ids: order });
-    }
+    if (g.to === g.from) return;
+    this._priorityOrder = order;
+    this._prioritySaving = true;
+    this._priorityError = "";
     this._sig = "";
-    this.hass = this._hass;
+    this.hass = this._hass; // Sort immediately, before the network request.
+    try {
+      await this._hass.callService(DOMAIN, "set_priority_order", { device_ids: order });
+    } catch (err) {
+      this._priorityOrder = null; // Roll back to authoritative HA ordering.
+      this._priorityError = String(err?.message || err || "Unbekannter Fehler");
+      // Show an explicit error; never leave a silently unsaved arrangement.
+      this.dispatchEvent(new CustomEvent("hass-notification", {
+        bubbles: true, composed: true,
+        detail: { message: "SEP: Prioritäten konnten nicht gespeichert werden: " + this._priorityError },
+      }));
+    } finally {
+      this._prioritySaving = false;
+      this._sig = "";
+      this.hass = this._hass;
+    }
   }
 }
 
