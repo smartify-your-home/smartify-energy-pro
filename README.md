@@ -2,7 +2,7 @@
 
 **PV-Überschuss intelligent verteilen – mit Prioritäten, Geräteprogrammen, Batteriespeicher und Home-Assistant-Dashboard.**
 
-**Aktueller Quellcode-Stand: 0.3.34** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
+**Aktueller Quellcode-Stand: 0.3.35** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
 
 > **Versionshinweis:** Die Versionsnummer beschreibt den Repository-Stand. In HACS erscheint eine neue Version erst, wenn der zugehörige GitHub-Release-Tag erfolgreich veröffentlicht und von HACS erkannt wurde. [Veröffentlichte Versionen ansehen](https://github.com/smartify-your-home/smartify-energy-pro/releases).
 
@@ -117,9 +117,14 @@ Der temperaturgeregelte Modus **Manuell** erlaubt weiterhin Netzstrom; **Beobach
 ### Vorrangige Heizstab-Abschaltung (ab 0.3.32)
 SEP prüft laufende Heizstäbe zuerst, bevor Prognosen und andere Geräte verarbeitet werden. Ein Fehler eines Haushaltsgeräts kann diesen Ausschaltversuch deshalb nicht verhindern. Im Automatikmodus schaltet der Heizstab unterhalb seiner Abschaltschwelle auch während einer Mindestlaufzeit ab. Für diese Prüfung zählt die tatsächliche Netzleistung mit Netzreserve und Akkuentladung; Akku-Ladeleistung darf nur ein höher priorisierter Heizstab nutzen. Versprochene Leistungsfreigaben anderer Verbraucher reichen nicht. Ein abgeschalteter Heizstab wird im selben Durchlauf nicht erneut gestartet. Manuell erlaubt weiterhin Netzstrom, Beobachten schaltet nicht. Die Ausführung des Befehls setzt einen erreichbaren Aktor voraus.
 
-## Pflichtstart ohne Aus-/Ein-Impuls (0.3.34)
+## Pflichtstart ohne Aus-/Ein-Impuls (0.3.35)
 Ist die späteste Startzeit erreicht, gibt SEP ein erkanntes Haushaltsprogramm direkt frei. Eine bereits eingeschaltete Steckdose bleibt eingeschaltet – auch ohne ausreichenden PV-Überschuss oder vollständige Messhistorie. Ein zuvor wartendes, ausgeschaltetes Gerät erhält nur den Einschaltbefehl. Dies gilt für Waschmaschine, Geschirrspüler, sonstige Haushaltsgeräte und Trockner mit aktiviertem Wiederanlauf. Die Programmerkennung und die früheste Startzeit bleiben wirksam; noch nicht gestartete Programme im niedrigen Standby werden dadurch nicht automatisch gestartet. Pflichtstarts dürfen Netzstrom nutzen.
 
 ## Aktuelle Gerätezeile (seit 0.3.33)
 Wirksame Aktionen stehen direkt beim Gerät: Sofortstart, Nachladen/Nachladen beenden und bei laufendem Programm „Fertig“ (setzt die Programmerkennung zurück). „Pflichtstart“ zeigt die berechnete Startzeit; die Wallbox zeigt zusätzlich den Fahrzeug-SoC. Historie, Trend und Budget werden als Icons dargestellt, Details stehen unter „Info“. Die Historienanzeige wird ausgeblendet, sobald die Historie vollständig ist; die Prüfung bleibt aktiv.
 
+
+## Neu in 0.3.35: Programmerkennung und Budgetfreigabe
+Bei Waschmaschine und Geschirrspüler sind in der bestehenden SEP-Karte über das Zahnrad die vier Werte für Programm- und Fertigerkennung pro Gerät einstellbar. Standard Programmerkennung: über 9 W für 20 Sekunden (ignoriert z. B. eine kurze Türöffnung mit 10 W für 10 Sekunden). Standard Fertigerkennung: unter 5 W für zwei Minuten. Die Freigabeprüfung über 100 W bleibt unverändert.
+
+Ganz unten befindet sich **Budgetfreigabe nach Heizphase**. 0 % gibt kein zusätzliches Budget frei (100 % Reservierung), 100 % gibt den gesamten ungemessenen Reservierungsanteil frei. Der gemessene Verbrauch zählt weiterhin. Bestehende Reservierungsprozente werden beim Update automatisch umgerechnet; die tatsächliche Budgetwirkung bleibt erhalten.
