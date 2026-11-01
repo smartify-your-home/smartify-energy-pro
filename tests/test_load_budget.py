@@ -273,5 +273,26 @@ class HouseholdBudgetStartTests(unittest.TestCase):
         self.assertEqual(self.load.reserved_power, self.load.nominal)
 
 
+
+class ImmediateManualActionTests(unittest.IsolatedAsyncioTestCase):
+    async def test_reset_requests_immediate_cycle(self):
+        from unittest.mock import AsyncMock
+        manager = NS(hass=NS(states=NS(get=lambda _id: None)), hub_mode="auto",
+                     async_request_run=AsyncMock())
+        dev = LoadDevice(manager, "wash", "Waschmaschine", {"switch": "switch.wash"})
+        dev.state["sm"] = "laeuft"
+        await dev.async_reset()
+        self.assertEqual(dev.state["sm"], "bereit")
+        manager.async_request_run.assert_awaited_once_with(immediate=True)
+
+    async def test_start_now_requests_immediate_cycle(self):
+        from unittest.mock import AsyncMock
+        manager = NS(hass=NS(states=NS(get=lambda _id: NS(state="on", attributes={}))),
+                     hub_mode="auto", async_request_run=AsyncMock())
+        dev = LoadDevice(manager, "wash", "Waschmaschine", {"switch": "switch.wash"})
+        await dev.async_start_now()
+        self.assertEqual(dev.state["sm"], "laeuft")
+        manager.async_request_run.assert_awaited_once_with(immediate=True)
+
 if __name__ == "__main__":
     unittest.main()

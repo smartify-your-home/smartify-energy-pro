@@ -1,4 +1,5 @@
 ## Unreleased
+- Manuelle Haushaltsgeräte-Aktionen Reset/Fertig und Sofortstart umgehen die 2-s-Sensor-Bündelung und aktualisieren den SEP-Zustand direkt. Vorher geplante verzögerte Regelzyklen werden dabei abbestellt.
 - Dashboard-Card wird mit Inhalts-Hash der JS-Datei eingebunden (`?v=<version>-<hash>`). Kiosk-Tablets/WebViews (z. B. Dashie, Fully Kiosk) laden eine geänderte Card damit sicher neu, auch ohne Versionssprung.
 
 ## 0.3.35 – Programm- und Fertigerkennung pro Haushaltsgerät

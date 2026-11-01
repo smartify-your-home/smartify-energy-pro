@@ -21,6 +21,9 @@ Stand dieser Übergabe: Quellcode 0.3.34, 31.10.2026. Ausgangspunkt war main 87f
 - `pause_budget_release_pct` ersetzt `pause_reservation_pct`: 0 % Freigabe = volle Reservierung. Altwerte beim Laden invertieren; gemessene Last bleibt berücksichtigt. Die Einstellung erscheint am Ende des Gerätemenüs.
 - Dokumentation, Test und Releaseversion synchron halten. Diese Zeilen beschreiben 0.3.35 und ersetzen nicht die Verpflichtung zum Remote-Abgleich.
 
+## Manuelle Haushaltsgeräte-Aktionen (nach 0.3.35)
+- Reset/Fertig und Sofortstart lösen einen sofortigen Regelzyklus aus. Reguläre Sensor- und Parameteränderungen behalten ihr Debounce. Ein noch geplanter verzögerter Zyklus wird vor dem manuellen Lauf abbestellt; bei belegtem Lock bewirkt der bestehende Rerun-Mechanismus einen Folgelauf.
+
 ## Dokumentation bei jeder Änderung
 Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verhaltens-/UI-Änderungen README.md (HACS-Infoseite), docs/SEP_CURRENT.md, docs/FUNCTIONS.md, relevante Update-/Konfigurationshinweise und CHANGELOG.md abgleichen. Veraltete widersprüchliche Aussagen ersetzen. Pflicht/optional und Bedeutung von Einstellungen in einfachen Worten erklären; DE/EN-UI und Übersetzungsschlüssel konsistent halten. AGENTS.md bei wichtigen Architektur-/Verhaltensänderungen aktualisieren. Vollständige Chronik im CHANGELOG, keine Zugangsdaten oder privaten Anlagenwerte eintragen.
 
