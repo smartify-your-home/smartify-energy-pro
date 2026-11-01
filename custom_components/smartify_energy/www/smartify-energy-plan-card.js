@@ -299,7 +299,7 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
 
   }
 }
-customElements.define("smartify-energy-plan-card-editor", SmartifyEnergyPlanCardEditor);
+if (!customElements.get("smartify-energy-plan-card-editor")) customElements.define("smartify-energy-plan-card-editor", SmartifyEnergyPlanCardEditor);
 
 // ── Card ────────────────────────────────────────────────────────────────────
 
@@ -993,10 +993,10 @@ class SmartifyEnergyPlanCard extends HTMLElement {
   }
 }
 
-customElements.define("smartify-energy-plan-card", SmartifyEnergyPlanCard);
+if (!customElements.get("smartify-energy-plan-card")) customElements.define("smartify-energy-plan-card", SmartifyEnergyPlanCard);
 
 window.customCards = window.customCards || [];
-window.customCards.push({
+if (!window.customCards.some(c => c.type === "smartify-energy-plan-card")) window.customCards.push({
   type: "smartify-energy-plan-card",
   name: "smartify Energiemanager",
   description: "Überschuss, Prioritäten (Drag & Drop) und PV-Plan des smartify Energiemanagers.",

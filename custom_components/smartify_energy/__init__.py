@@ -7,7 +7,8 @@ from pathlib import Path
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
+from homeassistant.core import CoreState, HomeAssistant, ServiceCall
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
@@ -94,10 +95,54 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         ])
         version = (await async_get_integration(hass, DOMAIN)).version
         card_hash = await hass.async_add_executor_job(_file_hash, path)
-        add_extra_js_url(hass, f"{CARD_URL}?v={version}-{card_hash}")
+        card_url = f"{CARD_URL}?v={version}-{card_hash}"
+        add_extra_js_url(hass, card_url)
     except Exception:  # noqa: BLE001
         _LOGGER.warning("Dashboard-Card konnte nicht registriert werden", exc_info=True)
+        return True
+
+    # Additionally keep a Lovelace resource with the identical URL. The frontend
+    # fetches resources on every dashboard load, so the card is present even if
+    # the page was opened before SEP finished starting (extra JS URLs are baked
+    # into index.html at page load). Identical URL → the module executes once.
+    async def _register_resource(_event=None) -> None:
+        try:
+            await _async_ensure_lovelace_resource(hass, card_url)
+        except Exception:  # noqa: BLE001
+            _LOGGER.warning("Lovelace-Ressource für die Card konnte nicht angelegt werden", exc_info=True)
+
+    if hass.state is CoreState.running:
+        await _register_resource()
+    else:
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _register_resource)
     return True
+
+
+async def _async_ensure_lovelace_resource(hass: HomeAssistant, url: str) -> None:
+    """Create or update the SEP card resource in storage-mode Lovelace."""
+    try:
+        from homeassistant.components.lovelace.const import LOVELACE_DATA
+        data = hass.data.get(LOVELACE_DATA)
+    except ImportError:  # pragma: no cover - very old HA
+        data = None
+    resources = getattr(data, "resources", None)
+    if resources is None or not hasattr(resources, "async_create_item"):
+        return  # YAML mode or Lovelace unavailable: extra JS URL remains.
+    if not getattr(resources, "loaded", True):
+        await resources.async_load()
+        resources.loaded = True
+    base = CARD_URL
+    ours = [item for item in resources.async_items()
+            if str(item.get("url", "")).split("?")[0] == base]
+    if not ours:
+        await resources.async_create_item({"res_type": "module", "url": url})
+        _LOGGER.info("Lovelace-Ressource für SEP-Card angelegt: %s", url)
+        return
+    first, *duplicates = ours
+    if first.get("url") != url or first.get("type") != "module":
+        await resources.async_update_item(first["id"], {"res_type": "module", "url": url})
+    for item in duplicates:
+        await resources.async_delete_item(item["id"])
 
 
 def _file_hash(path: Path) -> str:

@@ -76,7 +76,7 @@ Ein grüner Freigabehaken erscheint nur, wenn alle drei Bedingungen erfüllt sin
 
 ### Dashboard-Karte
 
-Die Integration stellt die Karte bereit; sie kann bei Bedarf auch manuell eingefügt werden:
+Die Integration stellt die Karte bereit und registriert sie selbst als Lovelace-Ressource – kein manueller Ressourceneintrag nötig. Sie kann bei Bedarf auch manuell eingefügt werden:
 
 ```yaml
 type: custom:smartify-energy-plan-card

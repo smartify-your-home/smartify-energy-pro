@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 0.3.38 – Kein „Konfigurationsfehler“ mehr nach Neustart/Update
+- Die SEP-Karte wird zusätzlich als Lovelace-Ressource (Storage-Modus) mit derselben versions- und hashbasierten URL registriert. Ressourcen lädt das Frontend bei jedem Dashboard-Aufruf; die Karte fehlt damit nicht mehr, wenn das Dashboard vor dem vollständigen Start von SEP geöffnet wurde oder ein Kiosk-Tab eine alte Seite offenhält.
+- Vorhandene SEP-Ressourceneinträge werden auf die aktuelle URL aktualisiert, Duplikate entfernt. YAML-Modus: unverändert nur über die bisherige Frontend-Einbindung.
+- Karte und Editor registrieren sich nur einmal (kein Fehler bei doppeltem Laden).
+
 ## 0.3.37 – Prioritätsänderungen ohne Wartezeit
 - Drag & Drop in SEP zeigt die neue Reihenfolge und Prioritätsnummer unmittelbar an.
 - Der Backend-Service speichert alle Prioritäten gesammelt und fordert sofort einen Regelzyklus an (kein 2-Sekunden-Debounce für manuelle Sortierung).

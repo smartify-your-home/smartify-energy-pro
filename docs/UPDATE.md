@@ -88,7 +88,7 @@ Das zuvor neu gezeichnete, vom Original abweichende Symbol wurde ersetzt. Die SE
 4. Browser-/App-Ansicht des Dashboards neu laden. Wenn die Karte noch veraltet aussieht, den Frontend-Cache aktualisieren.
 5. In **Einstellungen → Geräte & Dienste** die Integration und den Status aller Untereinträge prüfen; erst dann Automatik aktivieren.
 
-HACS-Repository: https://github.com/smartify-your-home/smartify-energy-pro (Kategorie **Integration**). Es ist kein eigener JavaScript-Installationsschritt für die mitgelieferte SEP-Karte dokumentiert.
+HACS-Repository: https://github.com/smartify-your-home/smartify-energy-pro (Kategorie **Integration**). Für die mitgelieferte SEP-Karte ist kein eigener JavaScript-Installationsschritt nötig: Ab 0.3.38 legt SEP die Lovelace-Ressource `/smartify_energy/smartify-energy-plan-card.js?v=…` selbst an und hält die Versionsangabe aktuell. Diese Ressource nicht manuell löschen; sie wird beim nächsten Start ohnehin neu angelegt. Bei Lovelace im YAML-Modus bleibt es bei der bisherigen automatischen Einbindung.
 
 ## Manuelles Update
 Den gesamten Ordner `custom_components/smartify_energy` aus dieser Repository-Version nach `/config/custom_components/smartify_energy` kopieren (Dateien ersetzen), Home Assistant neu starten und Dashboard neu laden. Keine einzelnen Python-Dateien verschiedener Versionen mischen.
