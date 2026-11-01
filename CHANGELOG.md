@@ -1,4 +1,5 @@
 ## Unreleased
+- Prioritätsreihenfolge in der SEP-Karte erscheint sofort nach Drag & Drop; der Aufruf wird asynchron bestätigt. Fehler führen zum Rollback und einer Meldung. Der Backend-Dienst speichert die komplette Reihenfolge in einem Schritt und löst den Regelzyklus unmittelbar aus, statt pro Gerät die 2-Sekunden-Bündelung anzustoßen.
 
 ## 0.3.36 – Sofortige manuelle Aktionen und bereinigte Geräteeinstellungen
 - Reset/Fertig und Sofortstart lösen den SEP-Regelzyklus direkt aus; normale Sensoränderungen werden weiterhin gebündelt.
