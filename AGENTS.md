@@ -31,6 +31,9 @@ Stand dieser Übergabe: Quellcode 0.3.34, 31.10.2026. Ausgangspunkt war main 87f
 ## Prioritäten per Drag & Drop (nach 0.3.36)
 - Karten-Reihenfolge beim Loslassen optimistisch und unmittelbar zeichnen, Backendantwort nicht vor der Darstellung abwarten. Bei Servicefehler Position wiederherstellen und Fehler anzeigen. Prioritätsänderung als eine Aktion übernehmen und Regelzyklus ohne Sensor-Debounce ausführen. Laufende Sensoraktualisierungen dürfen die optimistische Ansicht nicht überschreiben.
 
+## Stand 0.3.37
+- Optimistische Prioritätssortierung mit sofortiger Anzeige, zusammengefasster Backend-Übernahme und Fehler-Rollback. Sensor-Debounce bleibt für normale Messwertänderungen erhalten.
+
 ## Dokumentation bei jeder Änderung
 Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verhaltens-/UI-Änderungen README.md (HACS-Infoseite), docs/SEP_CURRENT.md, docs/FUNCTIONS.md, relevante Update-/Konfigurationshinweise und CHANGELOG.md abgleichen. Veraltete widersprüchliche Aussagen ersetzen. Pflicht/optional und Bedeutung von Einstellungen in einfachen Worten erklären; DE/EN-UI und Übersetzungsschlüssel konsistent halten. AGENTS.md bei wichtigen Architektur-/Verhaltensänderungen aktualisieren. Vollständige Chronik im CHANGELOG, keine Zugangsdaten oder privaten Anlagenwerte eintragen.
 
