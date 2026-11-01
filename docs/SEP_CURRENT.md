@@ -1,3 +1,6 @@
+## Update 0.3.37: Prioritäten
+Ziehen und Loslassen in der SEP-Karte sortiert Geräte und Prioritätsnummern sofort. Eine Backend-Anforderung übernimmt die neue gesamte Folge und triggert unmittelbar eine Aktualisierung. Normale Sensoränderungen behalten ihren Debounce. Bei Servicefehlern zeigt die Karte eine Fehlermeldung und kehrt zur Server-Reihenfolge zurück.
+
 ## 0.3.35: Programmerkennung, Fertigerkennung und Freigabe
 Die SEP-Geräteeinstellungen erlauben pro Waschmaschine und Geschirrspüler Start-Erkennung über einer Leistungsschwelle (Standard 9 W) für eine Mindestdauer (Standard 20 s). Die identische Prüfung gilt in Bereit und Fertig. Unterbrechungen setzen den Timer zurück. Die Startfreigabegrenze über 100 W ist davon unabhängig. Ende: standardmäßig unter 5 W für zwei Minuten.
 
