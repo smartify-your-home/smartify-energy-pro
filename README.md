@@ -2,7 +2,7 @@
 
 **PV-Überschuss intelligent verteilen – mit Prioritäten, Geräteprogrammen, Batteriespeicher und Home-Assistant-Dashboard.**
 
-**Aktueller Quellcode-Stand: 0.3.36** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
+**Aktueller Quellcode-Stand: 0.3.37** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
 
 > **Versionshinweis:** Die Versionsnummer beschreibt den Repository-Stand. In HACS erscheint eine neue Version erst, wenn der zugehörige GitHub-Release-Tag erfolgreich veröffentlicht und von HACS erkannt wurde. [Veröffentlichte Versionen ansehen](https://github.com/smartify-your-home/smartify-energy-pro/releases).
 
@@ -132,3 +132,6 @@ Ganz unten befindet sich **Budgetfreigabe nach Heizphase**. 0 % gibt kein zusät
 ## Update 0.3.36
 - In der SEP-Karte werden verwaiste, nicht verfügbare Einstellungen der früheren Heizpausen-Reservierung (`pause_reservation_pct`) nicht mehr angezeigt.
 - Die manuellen Aktionen **Reset/Fertig** und **Sofortstart** lösen den Regelzyklus ohne die übliche 2-Sekunden-Bündelung unmittelbar aus. Die Sensor-Bündelung bleibt unverändert.
+
+## Version 0.3.37 – Direkte Prioritätsänderung
+Beim Verschieben der Geräte in der SEP-Karte werden Reihenfolge und Prioritätsnummern sofort angezeigt, ohne auf den Home-Assistant-Service zu warten. Das Backend übernimmt die Reihenfolge gesammelt und löst ohne 2-s-Sensor-Debounce einen Regelzyklus aus. Bei Speicherfehlern wird die tatsächliche Reihenfolge wiederhergestellt und ein Fehler eingeblendet.
