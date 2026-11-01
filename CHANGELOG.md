@@ -1,6 +1,13 @@
 ## Unreleased
 - Dashboard-Card wird mit Inhalts-Hash der JS-Datei eingebunden (`?v=<version>-<hash>`). Kiosk-Tablets/WebViews (z. B. Dashie, Fully Kiosk) laden eine geänderte Card damit sicher neu, auch ohne Versionssprung.
 
+## 0.3.35 – Programm- und Fertigerkennung pro Haushaltsgerät
+- SEP-Karte: Gerätespezifisch einstellbare Programmerkennung (Leistung über Grenzwert, durchgehend für Zeit). Standard 9 W / 20 s. Kurzer GS-Türöffnungsimpuls von 10 W / 10 s löst keine neue Erkennung aus.
+- Im Zahnrad der Waschmaschine/des Geschirrspülers stehen Programm- und Fertigerkennung gemeinsam; die Fertigerkennung bleibt standardmäßig unter 5 W für 2 min.
+- Neuer letzter Abschnitt „Budgetfreigabe nach Heizphase“: 0 % bedeutet volle Reservierung, 100 % bedeutet vollständige Freigabe zusätzlicher Reservierung; gemessene Leistung bleibt berücksichtigt.
+- Beim Laden werden gespeicherte Altwerte `pause_reservation_pct` invertiert in `pause_budget_release_pct` übernommen, sodass die wirksame Reservierung erhalten bleibt.
+- Regressionstests für Türöffnungsimpuls, individuelle Erkennungsdauer und Migration ergänzt.
+
 ## 0.3.34 – Pflichtstart ohne kurze Stromunterbrechung
 - Fälliger Spätstart wird bereits im Zustand „erkannt“ vor den PV-Prüfungen berücksichtigt. Ein eingeschaltetes Haushaltsgerät wechselt direkt zu „läuft“, statt erst AUS und im nächsten Zyklus wieder EIN zu schalten.
 - Gilt für Waschmaschine, Geschirrspüler, sonstige Haushaltsgeräte und wiederanlauffähige Trockner. Bereits wartende Geräte werden wie bisher eingeschaltet. Programmerkennung und früheste Startzeit bleiben wirksam.

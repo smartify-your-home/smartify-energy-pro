@@ -79,7 +79,9 @@ const SETTING_HELP = {
   "battery_safety": "Zusätzlicher Puffer bei der Prognose: 1,5 verlangt das 1,5-Fache der noch benötigten Speicherenergie. Höhere Werte bevorzugen den Speicher vorsichtiger.",
   "battery_strategy": "SEP berechnet weiter eine Prognose-Priorität für den Hausspeicher. Ohne direkte Stellmöglichkeit am Speicher wird dessen Ladeleistung jedoch aus Sicherheitsgründen nicht als sofort verfügbares Steuerbudget freigegeben. Die Auswahl steuert den Wechselrichter nicht.",
   "nominal_power": "Erwartete maximale Heizleistung dieses Haushaltsgeräts in Watt (W), z. B. 2000 W. Vor dem Ende der ersten Heizphase wird sie vollständig abgesichert. In späteren Heizpausen gilt die einstellbare Restreservierung. Bereits gemessener Verbrauch wird nicht doppelt abgezogen.",
-  "pause_reservation_pct": "Restreservierung in Heizpausen nach der ersten erkannten Heizphase. 100 % (Standard) sichert die volle Nennleistung ab; 50 % reserviert bei 2000 W Nennleistung nur 1000 W, sodass nachrangige Geräte früher starten können. Während tatsächlicher Heizphasen zählt mindestens der gemessene Verbrauch. Ohne gültigen Leistungssensor bleibt die volle Nennleistung reserviert. Niedrigere Werte können bei gleichzeitigem Heizen Netzbezug verursachen; bereits gestartete Programme werden nicht unterbrochen.",
+  "pause_budget_release_pct": "Gibt nach der ersten abgeschlossenen Heizphase einen Teil der Nennleistung für weitere Geräte frei: 0 % = keine Freigabe (volle Reservierung), 50 % = halbe Reservierung, 100 % = volle Freigabe der zusätzlichen Reservierung. Die tatsächlich gemessene Leistung bleibt berücksichtigt. Ohne gültigen Leistungssensor bleibt die volle Nennleistung reserviert; bei späteren Heizphasen kann Netzbezug entstehen.",
+  "detect_threshold": "Ein neues Programm wird erkannt, wenn die Leistungsaufnahme durchgehend über diesem Grenzwert liegt.",
+  "detect_seconds": "Mindestdauer der Leistungsaufnahme über dem Grenzwert. Beispiel: 20 s ignoriert eine automatische Türöffnung mit 10 W für 10 s. Gilt sowohl nach Bereit als auch nach Fertig.",
   "min_surplus": "Zusätzliche einstellbare PV-Startschwelle in Watt (W). Für einen automatischen PV-Start zählt der höhere Wert aus Nennleistung und Mindest-Überschuss: z. B. bei 2000 W Heizleistung und 1500 W Schwelle müssen mindestens 2000 W frei sein. Auch der Mittelwert muss reichen. Negative Werte senken diese Heizlast-Absicherung nicht ab; Netzbezug kann aber durch Spätstart, Sofortfenster oder Sofort starten ausdrücklich erlaubt werden.",
   "finish_threshold": "Unter dieser Leistung kann das Programm als fertig gelten, sobald die Fertigerkennung freigegeben ist. Beispiel: 5 W. Eine zu hohe Schwelle kann längere Programmpausen mit dem Programmende verwechseln.",
   "finish_minutes": "So lange muss die Leistung unter der Fertig-Schwelle bleiben. Erst dann erscheint „Fertig“. Ein längerer Wert vermeidet Fehlmeldungen bei Pausen, meldet das Ende aber später.",
@@ -608,9 +610,13 @@ class SmartifyEnergyPlanCard extends HTMLElement {
   _settings(items, prefix, cls = "") {
     if (!items.length) return "";
     const main = items.filter(i => !i.config);
-    const cfg = items.filter(i => i.config);
+    const detectionKeys = ["detect_threshold", "detect_seconds", "finish_threshold", "finish_minutes"];
+    const budgetKey = "pause_budget_release_pct";
+    const detection = items.filter(i => i.config && detectionKeys.includes(i.key));
+    const budget = items.filter(i => i.config && i.key === budgetKey);
+    const cfg = items.filter(i => i.config && !detectionKeys.includes(i.key) && i.key !== budgetKey);
     const rows = list => list.map(i => `
-      <label title="${esc(this._label(i.id, prefix))}">${esc(this._label(i.id, prefix))}</label>
+      <label title="${esc(this._label(i.id, prefix))}">${esc(({detect_threshold:"Programmerkennung: Leistung über",detect_seconds:"Programmerkennung: Zeitraum",finish_threshold:"Fertigerkennung: Leistung unter",finish_minutes:"Fertigerkennung: Zeitraum",pause_budget_release_pct:"Budgetfreigabe nach Heizphase"})[i.key] || this._label(i.id, prefix))}</label>
       <div class="ctl">${this._control(i)}</div>
       <div class="setting-help">${esc((i.key === "mode" && this._st(i.id)?.attributes?.options?.includes("disabled")
         ? "Automatik: SEP löst den WW-Boost nach den eingestellten Bedingungen aus. Beobachten: nur Empfehlungen, kein Auslösen. Deaktiviert: kein neuer WW-Boost durch SEP. Eine bereits gestartete Warmwasserladung läuft unter Kontrolle der Wärmepumpe weiter."
@@ -618,6 +624,8 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     return `<div class="settings ${cls}">
       ${main.length ? `<div class="grp">Bedienung</div>${rows(main)}` : ""}
       ${cfg.length ? `<div class="grp">Einstellungen</div>${rows(cfg)}` : ""}
+      ${detection.length ? `<div class="grp">Programm- und Fertigerkennung</div>${rows(detectionKeys.flatMap(k => detection.filter(i => i.key === k)))}` : ""}
+      ${budget.length ? `<div class="grp">Budgetfreigabe nach Heizphase</div>${rows(budget)}` : ""}
     </div>`;
   }
 

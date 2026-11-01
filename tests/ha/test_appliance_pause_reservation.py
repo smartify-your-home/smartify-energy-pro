@@ -30,14 +30,14 @@ def appliance(monkeypatch):
 def test_default_is_full_reservation(appliance):
     dev, measured = appliance
     dev.state["hp_done"] = True
-    assert dev.p("pause_reservation_pct") == 100
+    assert dev.p("pause_budget_release_pct") == 0
     assert dev.reserved_power == 2000
     assert additional_reservation(dev.reserved_power, measured["value"], 0) == 1900
 
 
 def test_half_reservation_only_after_first_heating_phase(appliance):
     dev, measured = appliance
-    dev.params["pause_reservation_pct"] = 50
+    dev.params["pause_budget_release_pct"] = 50
     assert dev.reserved_power == 2000  # before first completed heating phase
     dev.state["hp_done"] = True
     assert dev.reserved_power == 1000
@@ -50,7 +50,7 @@ def test_half_reservation_only_after_first_heating_phase(appliance):
 
 def test_zero_reservation_and_sensor_failure(appliance):
     dev, measured = appliance
-    dev.params["pause_reservation_pct"] = 0
+    dev.params["pause_budget_release_pct"] = 100
     dev.state["hp_done"] = True
     assert dev.reserved_power == 100
     measured["value"] = None

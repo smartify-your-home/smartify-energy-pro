@@ -42,7 +42,7 @@ class LoadDevice(BaseDevice):
     def status_attrs(self) -> dict:
         return {**super().status_attrs(), "icon": self.appliance_icon,
                 "haushaltsgeraet_typ": self.cfg.get("appliance_type", "washing_machine"),
-                "heizpause_reservierung_prozent": self.p("pause_reservation_pct"),
+                "heizpause_reservierung_prozent": 100 - float(self.p("pause_budget_release_pct")),
                 "reservierte_leistung_w": round(self.reserved_power),
                 "phase": self.state.get("sm"),
                 "nachladen_aktiv": bool(self.p("nachladen")) if self._has_param("nachladen") else False,
@@ -94,15 +94,26 @@ class LoadDevice(BaseDevice):
             ParamSpec("nominal_power", "number", float(self.cfg.get("nominal_power", 2200)),
                       "mdi:flash", 100, 4000, 50, "W"),
             ParamSpec("min_surplus", "number", 1500, "mdi:solar-power", -3000, 4000, 50, "W"),
-            ParamSpec("pause_reservation_pct", "number", 100, "mdi:percent-outline", 0, 100, 10, "%"),
+            ParamSpec("pause_budget_release_pct", "number", 0, "mdi:percent-outline", 0, 100, 10, "%"),
             ParamSpec("earliest_start", "time", "00:00", "mdi:clock-start"),
             ParamSpec("latest_start", "time", "16:00", "mdi:clock-alert-outline"),
+            ParamSpec("detect_threshold", "number", 9, "mdi:flash-outline", 0, 100, 0.5, "W"),
+            ParamSpec("detect_seconds", "number", 20, "mdi:timer-outline", 1, 300, 1, "s"),
             ParamSpec("finish_threshold", "number", 5, "mdi:power-plug-off", 0, 50, 0.5, "W"),
             ParamSpec("finish_minutes", "number", 2, "mdi:timer-sand", 1, 60, 1, "min"),
             ParamSpec("duration", "number", float(self.cfg.get("duration", 2.0)),
                       "mdi:timer-outline", 0.5, 6, 0.25, "h"),
             ParamSpec("nachladen", "switch", False, "mdi:washing-machine-alert", config=False),
         ]
+
+    def load(self, data: dict) -> None:
+        """Migrate legacy reservation to release without changing effective budget."""
+        data = dict(data)
+        params = dict(data.get("params") or {})
+        if "pause_budget_release_pct" not in params and "pause_reservation_pct" in params:
+            params["pause_budget_release_pct"] = 100 - max(0, min(100, float(params["pause_reservation_pct"])))
+        data["params"] = params
+        super().load(data)
 
     def sensor_specs(self) -> list[SensorSpec]:
         specs = super().sensor_specs()
@@ -255,13 +266,13 @@ class LoadDevice(BaseDevice):
                 self._finished_off_seen = True
                 return False
             return self._finished_off_seen
-        if not (sw_on and p > 9):
+        if not (sw_on and p > float(self.p("detect_threshold") if self.p("detect_threshold") is not None else 9)):
             self._detected_since = None
             return False
         if self._detected_since is None:
             self._detected_since = ctx.now
             return False
-        return ctx.now - self._detected_since >= timedelta(seconds=5)
+        return ctx.now - self._detected_since >= timedelta(seconds=float(self.p("detect_seconds") if self.p("detect_seconds") is not None else 20))
 
     @property
     def reserved_power(self) -> float:
@@ -278,7 +289,7 @@ class LoadDevice(BaseDevice):
             return max(p, self.nominal)
         if not self.state["hp_done"]:
             return max(p, self.nominal)
-        floor = self.nominal * float(self.p("pause_reservation_pct")) / 100.0
+        floor = self.nominal * (100.0 - float(self.p("pause_budget_release_pct"))) / 100.0
         return max(p, floor)
 
     # ── Entscheidung ─────────────────────────────────────────────────────────
@@ -297,7 +308,7 @@ class LoadDevice(BaseDevice):
 
         if sm == IDLE:
             # SEM v3: 5 seconds stable above 9 W (or switch on without sensor).
-            detected = sw_on and (p > 9 or not self.cfg.get(CONF_POWER_SENSOR))
+            detected = sw_on and (p > float(self.p("detect_threshold")) or not self.cfg.get(CONF_POWER_SENSOR))
             if not detected:
                 self._detected_since = None
                 self.status = "bereit"
@@ -305,8 +316,8 @@ class LoadDevice(BaseDevice):
             if self._detected_since is None:
                 self._detected_since = ctx.now
                 self.status = "bereit"
-                return Decision(False, 0, "Programmerkennung: 5 Sekunden prüfen")
-            if ctx.now - self._detected_since < timedelta(seconds=5):
+                return Decision(False, 0, "Programmerkennung: Mindestdauer prüfen")
+            if ctx.now - self._detected_since < timedelta(seconds=float(self.p("detect_seconds"))):
                 self.status = "bereit"
                 return Decision(False, 0, "Programmerkennung: 5 Sekunden prüfen")
             self._detected_since = None
