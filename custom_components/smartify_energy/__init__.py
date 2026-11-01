@@ -61,11 +61,16 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     or len(set(dev.id for dev in non_battery)) != len(by_identifier)
                     or (has_battery_item != manager.has_battery)):
                 raise ServiceValidationError(translation_domain=DOMAIN, translation_key="incomplete_order")
+            # Apply the whole permutation atomically, not one delayed
+            # manager run per participant. Update entities in one immediate cycle.
             for rank, (token, dev) in enumerate(zip(device_ids, matches, strict=True), start=1):
                 if token == battery_token:
-                    manager.set_param("battery_rank", rank)
+                    manager.params["battery_rank"] = rank
                 else:
-                    dev.set_param("priority", rank)
+                    dev.params["priority"] = rank
+            manager._plan_dirty = True
+            manager._store.async_delay_save(manager._dump, 5)
+            await manager.async_request_run(immediate=True)
             return
         raise ServiceValidationError(translation_domain=DOMAIN, translation_key="order_not_found")
 
