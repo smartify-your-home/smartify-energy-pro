@@ -16,6 +16,11 @@ Stand dieser Übergabe: Quellcode 0.3.34, 31.10.2026. Ausgangspunkt war main 87f
 - Freigegebene Haushaltsprogramme dürfen bei PV-Abfall weiterlaufen. Nicht wiederanlauffähige Trockner nicht durch Steckdosenabschaltung steuern.
 - Reguläre PV-Starts: Langmittel, Kurztrend-Mittel und aktuelles individuelles Budget müssen jeweils ausreichen; bei stark fallendem Trend zusätzlich die Fortschreibung. Erzwungene Starts sind bewusst Ausnahmen.
 
+## Änderung 0.3.35 (01.11.2026)
+- Pro Haushaltsgerät: `detect_threshold` (9 W) und `detect_seconds` (20 s) in der bestehenden SEP-Karte. `finish_threshold` und `finish_minutes` in derselben Gruppe; beide Erkennungszustände „bereit“ und „fertig“ verwenden dieselben Startparameter.
+- `pause_budget_release_pct` ersetzt `pause_reservation_pct`: 0 % Freigabe = volle Reservierung. Altwerte beim Laden invertieren; gemessene Last bleibt berücksichtigt. Die Einstellung erscheint am Ende des Gerätemenüs.
+- Dokumentation, Test und Releaseversion synchron halten. Diese Zeilen beschreiben 0.3.35 und ersetzen nicht die Verpflichtung zum Remote-Abgleich.
+
 ## Dokumentation bei jeder Änderung
 Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verhaltens-/UI-Änderungen README.md (HACS-Infoseite), docs/SEP_CURRENT.md, docs/FUNCTIONS.md, relevante Update-/Konfigurationshinweise und CHANGELOG.md abgleichen. Veraltete widersprüchliche Aussagen ersetzen. Pflicht/optional und Bedeutung von Einstellungen in einfachen Worten erklären; DE/EN-UI und Übersetzungsschlüssel konsistent halten. AGENTS.md bei wichtigen Architektur-/Verhaltensänderungen aktualisieren. Vollständige Chronik im CHANGELOG, keine Zugangsdaten oder privaten Anlagenwerte eintragen.
 
