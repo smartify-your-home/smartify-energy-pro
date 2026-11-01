@@ -646,9 +646,11 @@ class SmartifyEnergyPlanCard extends HTMLElement {
 
   _devices(d) {
     const rows = d.devices
-      .map(dev => ({ dev, prio: dev.virtualBattery
-        ? (num(this._st(dev.rankEntity)?.state) ?? 99)
-        : (num(this._st(dev.status)?.attributes?.prioritaet) ?? 5) }))
+      .map(dev => ({ dev, prio: this._priorityOrder?.includes(dev.id)
+        ? this._priorityOrder.indexOf(dev.id) + 1
+        : dev.virtualBattery
+          ? (num(this._st(dev.rankEntity)?.state) ?? 99)
+          : (num(this._st(dev.status)?.attributes?.prioritaet) ?? 5) }))
       .sort((a, b) => {
         if (this._priorityOrder) {
           const x = this._priorityOrder.indexOf(a.dev.id);
@@ -658,7 +660,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         return a.prio - b.prio || a.dev.name.localeCompare(b.dev.name);
       });
     if (!rows.length) return `<div class="empty">Noch keine Geräte – in der Integration „+ Gerät hinzufügen“.</div>`;
-    return `<div class="list">${rows.map(({ dev, prio }) => {
+    return `${this._priorityError ? `<div role="alert" style="padding:8px 12px;color:var(--error-color);border:1px solid var(--error-color);border-radius:8px;margin-bottom:8px">Prioritäten konnten nicht gespeichert werden: ${esc(this._priorityError)}</div>` : ""}<div class="list">${rows.map(({ dev, prio }) => {
       if (dev.virtualBattery) {
         const charge = Math.max(0, num(this._st(dev.batteryBudget)?.attributes?.speicher_w) || 0);
         const soc = num(this._st(dev.status)?.attributes?.soc);
