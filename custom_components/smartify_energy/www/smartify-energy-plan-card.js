@@ -186,7 +186,9 @@ function collect(hass, hubId) {
     (byDevice[e.device_id] ||= {})[`${e.entity_id.split(".")[0]}:${e.translation_key}`] = e.entity_id;
     const dom = e.entity_id.split(".")[0];
     if (SETTING_DOMAINS.includes(dom)) {
-      if (!["priority", "battery_rank"].includes(e.translation_key)) (settings[e.device_id] ||= []).push({ id: e.entity_id, dom, key: e.translation_key, config: e.entity_category === "config" });
+      // Old registry entries may survive an update even after their entity has been removed.
+      // Never expose the obsolete inverted reservation parameter in the settings UI.
+      if (!["priority", "battery_rank", "pause_reservation_pct"].includes(e.translation_key)) (settings[e.device_id] ||= []).push({ id: e.entity_id, dom, key: e.translation_key, config: e.entity_category === "config" });
     }
   }
   for (const list of Object.values(settings)) {
