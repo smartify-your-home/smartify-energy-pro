@@ -2,7 +2,7 @@
 
 **PV-Überschuss intelligent verteilen – mit Prioritäten, Geräteprogrammen, Batteriespeicher und Home-Assistant-Dashboard.**
 
-**Aktueller Quellcode-Stand: 0.3.35** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
+**Aktueller Quellcode-Stand: 0.3.36** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
 
 > **Versionshinweis:** Die Versionsnummer beschreibt den Repository-Stand. In HACS erscheint eine neue Version erst, wenn der zugehörige GitHub-Release-Tag erfolgreich veröffentlicht und von HACS erkannt wurde. [Veröffentlichte Versionen ansehen](https://github.com/smartify-your-home/smartify-energy-pro/releases).
 
@@ -128,3 +128,7 @@ Wirksame Aktionen stehen direkt beim Gerät: Sofortstart, Nachladen/Nachladen be
 Bei Waschmaschine und Geschirrspüler sind in der bestehenden SEP-Karte über das Zahnrad die vier Werte für Programm- und Fertigerkennung pro Gerät einstellbar. Standard Programmerkennung: über 9 W für 20 Sekunden (ignoriert z. B. eine kurze Türöffnung mit 10 W für 10 Sekunden). Standard Fertigerkennung: unter 5 W für zwei Minuten. Die Freigabeprüfung über 100 W bleibt unverändert.
 
 Ganz unten befindet sich **Budgetfreigabe nach Heizphase**. 0 % gibt kein zusätzliches Budget frei (100 % Reservierung), 100 % gibt den gesamten ungemessenen Reservierungsanteil frei. Der gemessene Verbrauch zählt weiterhin. Bestehende Reservierungsprozente werden beim Update automatisch umgerechnet; die tatsächliche Budgetwirkung bleibt erhalten.
+
+## Update 0.3.36
+- In der SEP-Karte werden verwaiste, nicht verfügbare Einstellungen der früheren Heizpausen-Reservierung (`pause_reservation_pct`) nicht mehr angezeigt.
+- Die manuellen Aktionen **Reset/Fertig** und **Sofortstart** lösen den Regelzyklus ohne die übliche 2-Sekunden-Bündelung unmittelbar aus. Die Sensor-Bündelung bleibt unverändert.
