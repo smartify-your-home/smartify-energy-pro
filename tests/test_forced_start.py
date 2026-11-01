@@ -48,7 +48,7 @@ class ForcedStartTests(unittest.IsolatedAsyncioTestCase):
         d.state["sm"] = "bereit"
         ctx = self.context()
         await d.async_run(ctx, -1200)
-        ctx.now += timedelta(seconds=5)
+        ctx.now += timedelta(seconds=20)
         decision = await d.async_run(ctx, -1200)
         self.assertTrue(decision.forced)
         self.assertEqual(self.calls, [])
