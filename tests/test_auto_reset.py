@@ -39,7 +39,7 @@ class AutoResetTests(unittest.TestCase):
         self.values["sensor.dev"] = "40"
         dev.decide(self.ctx(now), 0)
         self.assertEqual(dev.state["sm"], "fertig")
-        dev.decide(self.ctx(now + timedelta(seconds=6)), 0)
+        dev.decide(self.ctx(now + timedelta(seconds=20)), 0)
         self.assertEqual(dev.state["sm"], "erkannt")
 
     def test_short_spike_does_not_reset(self):
@@ -69,7 +69,7 @@ class AutoResetTests(unittest.TestCase):
         now = datetime(2026, 10, 27, 12, tzinfo=timezone.utc)
         self.values["sensor.dev"] = "900"
         dev.decide(self.ctx(now), 0)
-        dev.decide(self.ctx(now + timedelta(seconds=6)), 0)
+        dev.decide(self.ctx(now + timedelta(seconds=20)), 0)
         self.assertEqual(dev.state["sm"], "laeuft")
 
 
