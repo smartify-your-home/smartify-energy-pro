@@ -1,4 +1,10 @@
 ## Unreleased
+
+## 0.3.36 – Sofortige manuelle Aktionen und bereinigte Geräteeinstellungen
+- Reset/Fertig und Sofortstart lösen den SEP-Regelzyklus direkt aus; normale Sensoränderungen werden weiterhin gebündelt.
+- Veraltete `pause_reservation_pct`-Entitäten werden in der JS-Karte nicht mehr angezeigt. Die aktuelle Budgetfreigabe bleibt erhalten.
+- Regressionstests und GitHub-CI für beide Änderungen erfolgreich.
+
 - Manuelle Haushaltsgeräte-Aktionen Reset/Fertig und Sofortstart umgehen die 2-s-Sensor-Bündelung und aktualisieren den SEP-Zustand direkt. Vorher geplante verzögerte Regelzyklen werden dabei abbestellt.
 - Dashboard-Card wird mit Inhalts-Hash der JS-Datei eingebunden (`?v=<version>-<hash>`). Kiosk-Tablets/WebViews (z. B. Dashie, Fully Kiosk) laden eine geänderte Card damit sicher neu, auch ohne Versionssprung.
 
