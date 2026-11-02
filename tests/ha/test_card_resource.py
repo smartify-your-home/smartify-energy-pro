@@ -37,3 +37,8 @@ async def test_updates_url_and_removes_duplicates(hass):
 
 async def test_without_lovelace_is_noop(hass):
     await _async_ensure_lovelace_resource(hass, f"{CARD_URL}?v=x")
+
+async def test_unavailable_lovelace_returns_false_for_retry(hass):
+    assert await _async_ensure_lovelace_resource(hass, f"{CARD_URL}?v=retry") is False
+    await _resources(hass)
+    assert await _async_ensure_lovelace_resource(hass, f"{CARD_URL}?v=retry") is True
