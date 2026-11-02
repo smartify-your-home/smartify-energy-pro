@@ -1,4 +1,10 @@
 ## Unreleased
+
+## 0.3.41 – Erneute Registrierung der SEP-Kartenressource
+- Der Fix aus 0.3.38 (Frontend-Einbindung plus Lovelace-Modulressource mit Hash-URL) bleibt erhalten.
+- Wenn Lovelace beim Start noch nicht bereit ist, wird die Registrierung begrenzt erneut versucht, statt still zu enden. Nach mehreren Fehlschlägen wird ein Fehler protokolliert.
+- Regressionstest für zunächst fehlendes Lovelace ergänzt; CI einschließlich HACS, Hassfest und zwei HA-Testumgebungen bestanden.
+
 - SEP-Karte: Lovelace-Ressourcenregistrierung wird bei beim Start noch nicht verfügbarem Lovelace wiederholt (bis zu sechs Versuche). Statt stiller Aufgabe werden wiederholte Fehlschläge protokolliert. Das behebt eine mögliche Ursache für „Custom element doesn't exist“.
 
 ## 0.3.40 – Hintergrundtransparenz für die SEP-Karte
