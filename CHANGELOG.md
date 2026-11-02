@@ -1,4 +1,10 @@
 ## Unreleased
+
+## 0.3.40 – Hintergrundtransparenz für die SEP-Karte
+- Neuer Regler im Karteneditor „Darstellung“ (0–100 %, Standard 0 %).
+- Themabasierte Transparenz für Karte, Gerätezeilen, Kennzahlen, Einstellungen und Zeitleiste; Schrift und Schalter bleiben deckend.
+- GitHub-CI: Tests beider HA-Versionen, Hassfest und HACS erfolgreich.
+
 - SEP-Karte: Hintergrundtransparenz als Schieberegler (0–100 %, Standard 0 %) im Karteneditor. Kartenfläche, Gerätezeilen, Kennzahl-Kacheln, Einstellungen und Zeitleiste werden transparent über themeabhängige Hintergrundfarben; Texte und Bedienelemente behalten ihre Deckkraft.
 
 ## 0.3.39 – Kompakte Gerätezeilen
