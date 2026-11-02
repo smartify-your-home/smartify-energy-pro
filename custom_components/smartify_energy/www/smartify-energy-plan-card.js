@@ -376,7 +376,7 @@ const CARD_CSS = `
   .sep-actions { display:flex; flex-wrap:wrap; gap:4px; margin-top:3px; }
   .right .sep-actions { justify-content:flex-end; margin-top:5px; max-width:100%; }
   .right .sep-act { white-space:nowrap; }
-  @media (max-width:560px) { .right .sep-actions { justify-content:flex-start; } }
+
   .sep-act { border:1px solid var(--divider-color); border-radius:12px; padding:2px 10px; background:var(--secondary-background-color);
              color:var(--txt); font:inherit; font-size:11px; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
   .sep-act ha-icon { --mdc-icon-size:14px; }
@@ -400,11 +400,18 @@ const CARD_CSS = `
   .pb-budget.negative { color:var(--error-color, #d45b48); }
   .pb-budget.positive { color:var(--success-color, #2e7d32); }
   @media (max-width:560px) {
-    .dev { grid-template-columns:18px 24px 24px minmax(0,1fr); gap:5px; }
-    .right { grid-column:4; grid-row:2; align-items:flex-start; width:100%; }
-    .power-budget { justify-content:flex-start; gap:12px; }
-    .pb-item { align-items:flex-start; }
-    }
+    /* Never move metrics and actions below the status on phones/tablets. */
+    .dev { grid-template-columns:16px 24px 24px minmax(0,1fr) minmax(122px,auto); gap:4px; padding-right:4px; }
+    .dev .main { min-width:0; overflow-wrap:anywhere; }
+    .dev .main .name span.t { white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:anywhere; }
+    .dev .main .sub { white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:anywhere; line-height:1.35; }
+    .right { grid-column:5; grid-row:1; align-items:flex-end; width:auto; min-width:0; }
+    .power-budget { justify-content:flex-end; gap:4px 8px; }
+    .pb-item { align-items:flex-end; }
+    .right .sep-actions { justify-content:flex-end; }
+    .right .sep-act { padding:2px 6px; }
+    .dev .sep-gates { flex-wrap:wrap; white-space:normal; }
+  }
   .chip { font-size:10px; padding:1px 6px; border-radius:8px; color:#000; font-weight:600; }
 
   .timeline { background:var(--row-bg); border-radius:var(--radius); padding:8px 6px 4px; box-sizing:border-box; }
