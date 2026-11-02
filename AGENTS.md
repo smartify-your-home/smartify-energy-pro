@@ -46,6 +46,9 @@ Stand dieser Übergabe: Quellcode 0.3.34, 31.10.2026. Ausgangspunkt war main 87f
 ## Hintergrundtransparenz SEP-Karte
 - `background_transparency` ist eine kartenspezifische Lovelace-Option (0–100 %, Standard 0 %), im Karteneditor über Schieberegler einstellbar. Nur Hintergründe mit themeabhängigen Farben mischen, nicht das komplette Element per opacity ausblenden; Lesbarkeit von Schrift, Icons und Schaltflächen erhalten. Karten- und Gerätehintergründe einschließlich Zeitleiste beachten.
 
+## Release 0.3.40
+- Kartenoption `background_transparency` (0–100 %, Standard 0 %) steuert ausschließlich Flächen via themeabhängigem CSS `color-mix`; Text und Aktionsknöpfe bleiben lesbar.
+
 ## Dokumentation bei jeder Änderung
 Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verhaltens-/UI-Änderungen README.md (HACS-Infoseite), docs/SEP_CURRENT.md, docs/FUNCTIONS.md, relevante Update-/Konfigurationshinweise und CHANGELOG.md abgleichen. Veraltete widersprüchliche Aussagen ersetzen. Pflicht/optional und Bedeutung von Einstellungen in einfachen Worten erklären; DE/EN-UI und Übersetzungsschlüssel konsistent halten. AGENTS.md bei wichtigen Architektur-/Verhaltensänderungen aktualisieren. Vollständige Chronik im CHANGELOG, keine Zugangsdaten oder privaten Anlagenwerte eintragen.
 
