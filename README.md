@@ -2,7 +2,7 @@
 
 **PV-Überschuss intelligent verteilen – mit Prioritäten, Geräteprogrammen, Batteriespeicher und Home-Assistant-Dashboard.**
 
-**Aktueller Quellcode-Stand: 0.3.40** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
+**Aktueller Quellcode-Stand: 0.3.41** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
 
 > **Versionshinweis:** Die Versionsnummer beschreibt den Repository-Stand. In HACS erscheint eine neue Version erst, wenn der zugehörige GitHub-Release-Tag erfolgreich veröffentlicht und von HACS erkannt wurde. [Veröffentlichte Versionen ansehen](https://github.com/smartify-your-home/smartify-energy-pro/releases).
 
@@ -141,3 +141,6 @@ Die Aktionen Sofortstart, Nachladen und Fertig befinden sich direkt rechts unter
 
 ## Neu in 0.3.40 – Hintergrundtransparenz
 Der Lovelace-Karteneditor bietet unter „Darstellung“ eine Hintergrundtransparenz von 0 bis 100 %. Die Kartenoberfläche, Gerätezeilen, Kacheln und Zeitleiste folgen den Theme-Farben, ohne die Deckkraft von Schrift und Schaltflächen zu verändern. Standard 0 % entspricht der bisherigen Ansicht.
+
+## 0.3.41 – Stabilere SEP-Kartenregistrierung
+Die Karte wird weiterhin über die versions-/hashbasierte JavaScript-Adresse und die Lovelace-Ressource geladen. Falls Lovelace beim Start noch nicht bereit ist, versucht SEP die Ressourcenregistrierung erneut (bis zu sechs Versuche); anhaltende Fehler werden protokolliert. Damit wird ein möglicher Auslöser für „Custom element doesn't exist: smartify-energy-plan-card“ behoben. Bei fortbestehenden Fehlern die HA-Protokolle und Dashboards → Ressourcen prüfen.
