@@ -37,6 +37,9 @@ Stand dieser Übergabe: Quellcode 0.3.34, 31.10.2026. Ausgangspunkt war main 87f
 ## Stand 0.3.38 – Card-Einbindung
 - Card wird zweifach mit identischer URL eingebunden: `add_extra_js_url` und Lovelace-Storage-Ressource (`_async_ensure_lovelace_resource`, nach `homeassistant_started`). Grund: Extra-JS steht fest in der beim Seitenaufruf geladenen index.html und fehlt, wenn das Dashboard vor SEP-Setup geladen wurde → „Konfigurationsfehler“. Beide Wege erhalten; `customElements.define` bleibt durch `customElements.get` abgesichert.
 
+## Kompakte Gerätezeilen (nach 0.3.38)
+- Sofortstart, Nachladen und Fertig rechts unter Leistung/Budget statt unter Statusmeldungen. Aktionslogik und Click-Handler bleiben unverändert. Bei schmalen Displays dürfen Tasten umbrechen und der rechte Block wandert unter die Statusinfos.
+
 ## Dokumentation bei jeder Änderung
 Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verhaltens-/UI-Änderungen README.md (HACS-Infoseite), docs/SEP_CURRENT.md, docs/FUNCTIONS.md, relevante Update-/Konfigurationshinweise und CHANGELOG.md abgleichen. Veraltete widersprüchliche Aussagen ersetzen. Pflicht/optional und Bedeutung von Einstellungen in einfachen Worten erklären; DE/EN-UI und Übersetzungsschlüssel konsistent halten. AGENTS.md bei wichtigen Architektur-/Verhaltensänderungen aktualisieren. Vollständige Chronik im CHANGELOG, keine Zugangsdaten oder privaten Anlagenwerte eintragen.
 
