@@ -452,6 +452,9 @@ const CARD_CSS = `
   .tgl span::before { content:""; position:absolute; width:16px; height:16px; left:2px; top:2px; background:#fff; border-radius:50%; transition:.2s; }
   .tgl input:checked + span { background:var(--primary-color); }
   .tgl input:checked + span::before { transform:translateX(16px); }
+  /* These rules must come after the default surface rules above. */
+  .tile, .dev, .timeline { background:color-mix(in srgb, var(--row-bg) var(--sep-surface-opacity,100%), transparent); }
+  .settings { background:color-mix(in srgb, var(--secondary-background-color) var(--sep-surface-opacity,100%), transparent); }
 `;
 
 // Patch live values in place. Preserve nodes, handlers, focus and scroll position.
