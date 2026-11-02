@@ -1,4 +1,10 @@
 ## Unreleased
+
+## 0.3.39 – Kompakte Gerätezeilen
+- Schaltflächen Sofortstart, Nachladen und Fertig in der SEP-Karte rechts unter die Leistungs- und Budgetanzeige verschoben.
+- Responsiver Umbruch auf schmalen Displays. Backend- und Schaltlogik unverändert.
+- Vier CI-Prüfungen des Pull Requests #9 erfolgreich.
+
 - SEP-Karte: Die Tasten Sofortstart, Nachladen und Fertig befinden sich platzsparend rechts unter den Leistungs- und Budgetwerten; bei schmalen Ansichten passen sie sich an. Die Aktionslogik bleibt unverändert.
 
 ## 0.3.38 – Kein „Konfigurationsfehler“ mehr nach Neustart/Update
