@@ -1,3 +1,6 @@
+## 0.3.41 – Kartenregistrierung beim Start
+Nach dem Home-Assistant-Start versucht SEP die Registrierung der Lovelace-Kartenressource erneut, falls die Lovelace-Verwaltung zunächst noch nicht bereit ist. Das bestehende Cache-Busting und die separate Frontend-JavaScript-Einbindung bleiben bestehen. Bei bleibendem Fehler werden Warnungen und ein Fehler im HA-Protokoll ausgegeben. Dieser Fix betrifft die Kartenverfügbarkeit, nicht die Energieregelung.
+
 ## 0.3.40 – Hintergrundtransparenz der SEP-Karte
 Der Karteneditor enthält unter Darstellung einen Regler für Hintergrundtransparenz (0–100 %). Der Regler betrifft Hauptfläche, Gerätezeilen, Kacheln, Einstellungsflächen und Zeitleiste, nicht die Deckkraft der Texte oder Bedienelemente. 0 % erhält das bestehende Aussehen. Farben folgen dem Home-Assistant-Theme.
 
