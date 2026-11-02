@@ -1,4 +1,5 @@
 ## Unreleased
+- SEP-Karte mobil: Leistungswerte, Budget, Zahnrad und Aktionen bleiben rechts in derselben Gerätezeile; Status und Gerätename dürfen umbrechen statt die rechte Spalte nach unten zu drücken.
 
 ## 0.3.41 – Erneute Registrierung der SEP-Kartenressource
 - Der Fix aus 0.3.38 (Frontend-Einbindung plus Lovelace-Modulressource mit Hash-URL) bleibt erhalten.
