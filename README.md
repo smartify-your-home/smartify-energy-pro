@@ -144,3 +144,6 @@ Der Lovelace-Karteneditor bietet unter „Darstellung“ eine Hintergrundtranspa
 
 ## 0.3.41 – Stabilere SEP-Kartenregistrierung
 Die Karte wird weiterhin über die versions-/hashbasierte JavaScript-Adresse und die Lovelace-Ressource geladen. Falls Lovelace beim Start noch nicht bereit ist, versucht SEP die Ressourcenregistrierung erneut (bis zu sechs Versuche); anhaltende Fehler werden protokolliert. Damit wird ein möglicher Auslöser für „Custom element doesn't exist: smartify-energy-plan-card“ behoben. Bei fortbestehenden Fehlern die HA-Protokolle und Dashboards → Ressourcen prüfen.
+
+## Responsive Geräteliste (kommende Version)
+Auf Smartphone und Tablet bleiben Leistungsanzeige, Budget, Zahnrad und Aktionsknöpfe rechts neben den Geräteinformationen. Lange Statustexte werden links über mehrere Zeilen dargestellt. Die Steuerlogik bleibt unverändert.

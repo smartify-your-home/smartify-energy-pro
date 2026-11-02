@@ -55,6 +55,9 @@ Stand dieser Übergabe: Quellcode 0.3.34, 31.10.2026. Ausgangspunkt war main 87f
 ## Release 0.3.41
 - Lovelace-Registrierung beim Start bei temporärer Nichtverfügbarkeit erneut versuchen; beide bestehenden Ressourcenwege erhalten und Fehler protokollieren. Vor Veröffentlichung alle CI-Jobs prüfen.
 
+## Responsive SEP-Karte (nach 0.3.41)
+- Auf iPhone/iPad bleiben Leistung, Budget, Zahnrad und Aktionen stets in Spalte 5 rechts; keinen mobilen `grid-row:2`-Umbruch für `.right` verwenden. Status und Geräbename links dürfen mehrzeilig umbrechen; Bedienelemente und Drag-Handle bleiben bedienbar.
+
 ## Dokumentation bei jeder Änderung
 Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verhaltens-/UI-Änderungen README.md (HACS-Infoseite), docs/SEP_CURRENT.md, docs/FUNCTIONS.md, relevante Update-/Konfigurationshinweise und CHANGELOG.md abgleichen. Veraltete widersprüchliche Aussagen ersetzen. Pflicht/optional und Bedeutung von Einstellungen in einfachen Worten erklären; DE/EN-UI und Übersetzungsschlüssel konsistent halten. AGENTS.md bei wichtigen Architektur-/Verhaltensänderungen aktualisieren. Vollständige Chronik im CHANGELOG, keine Zugangsdaten oder privaten Anlagenwerte eintragen.
 

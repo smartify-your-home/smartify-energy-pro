@@ -1,3 +1,6 @@
+## Responsive Gerätezeilen (kommende Version)
+Auf schmalen Home-Assistant-Dashboards bleiben Leistung, Budget, Einstellungszahnrad und Aktionen rechts in derselben Zeile. Namen und Statustexte brechen links um; die mobilen Bedienelemente behalten ihre Funktionen.
+
 ## 0.3.41 – Kartenregistrierung beim Start
 Nach dem Home-Assistant-Start versucht SEP die Registrierung der Lovelace-Kartenressource erneut, falls die Lovelace-Verwaltung zunächst noch nicht bereit ist. Das bestehende Cache-Busting und die separate Frontend-JavaScript-Einbindung bleiben bestehen. Bei bleibendem Fehler werden Warnungen und ein Fehler im HA-Protokoll ausgegeben. Dieser Fix betrifft die Kartenverfügbarkeit, nicht die Energieregelung.
 
