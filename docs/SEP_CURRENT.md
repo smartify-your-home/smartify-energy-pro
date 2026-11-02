@@ -1,3 +1,6 @@
+## 0.3.39 – Kompakte Gerätesteuerung
+In der SEP-Karte werden die kontextabhängigen Schaltflächen Sofortstart, Nachladen und Fertig platzsparend rechts unter den Werten Leistung und Budget aktuell dargestellt. Bei schmalen Displays passen sich die Schaltflächen an. Die zugrunde liegenden Aktionen, Verfügbarkeitsbedingungen und Budgetregeln bleiben unverändert.
+
 ## Update 0.3.37: Prioritäten
 Ziehen und Loslassen in der SEP-Karte sortiert Geräte und Prioritätsnummern sofort. Eine Backend-Anforderung übernimmt die neue gesamte Folge und triggert unmittelbar eine Aktualisierung. Normale Sensoränderungen behalten ihren Debounce. Bei Servicefehlern zeigt die Karte eine Fehlermeldung und kehrt zur Server-Reihenfolge zurück.
 
