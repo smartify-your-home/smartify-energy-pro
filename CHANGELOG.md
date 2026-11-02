@@ -1,4 +1,10 @@
 ## Unreleased
+
+## 0.3.42 – Mobilansicht der SEP-Gerätezeilen korrigiert
+- Auf iPhone und iPad bleiben Leistung, Budget, Einstellungen und Aktionsknöpfe rechts, statt unter Statusinformationen zu rutschen.
+- Gerätenamen und Statustexte umbrechen links auf mehrere Zeilen. Keine Änderung an der Regelung.
+- Vier GitHub-Prüfungen für PR #12 bestanden.
+
 - SEP-Karte mobil: Leistungswerte, Budget, Zahnrad und Aktionen bleiben rechts in derselben Gerätezeile; Status und Gerätename dürfen umbrechen statt die rechte Spalte nach unten zu drücken.
 
 ## 0.3.41 – Erneute Registrierung der SEP-Kartenressource
