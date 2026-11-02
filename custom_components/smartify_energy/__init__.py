@@ -14,6 +14,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
+from homeassistant.helpers.event import async_call_later
 
 from .const import DOMAIN, PLATFORMS
 from .manager import EnergyManager
@@ -105,11 +106,26 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     # fetches resources on every dashboard load, so the card is present even if
     # the page was opened before SEP finished starting (extra JS URLs are baked
     # into index.html at page load). Identical URL → the module executes once.
-    async def _register_resource(_event=None) -> None:
-        try:
-            await _async_ensure_lovelace_resource(hass, card_url)
-        except Exception:  # noqa: BLE001
-            _LOGGER.warning("Lovelace-Ressource für die Card konnte nicht angelegt werden", exc_info=True)
+    def _schedule_resource_attempt(attempt: int) -> None:
+        async def _attempt(_now=None) -> None:
+            try:
+                if await _async_ensure_lovelace_resource(hass, card_url):
+                    return
+                _LOGGER.debug("SEP-Card-Ressource noch nicht verfügbar (%s/6)", attempt)
+            except Exception:  # noqa: BLE001
+                _LOGGER.warning("SEP-Card-Ressource: Registrierung fehlgeschlagen (%s/6)", attempt, exc_info=True)
+            if attempt < 6:
+                async_call_later(hass, 2 * attempt, lambda now: hass.async_create_task(_attempt_next(now)))
+            else:
+                _LOGGER.error("SEP-Card-Ressource nach sechs Versuchen nicht registriert: %s", card_url)
+
+        async def _attempt_next(_now=None) -> None:
+            _schedule_resource_attempt(attempt + 1)
+
+        hass.async_create_task(_attempt())
+
+    def _register_resource(_event=None) -> None:
+        _schedule_resource_attempt(1)
 
     if hass.state is CoreState.running:
         await _register_resource()
@@ -118,7 +134,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 
-async def _async_ensure_lovelace_resource(hass: HomeAssistant, url: str) -> None:
+async def _async_ensure_lovelace_resource(hass: HomeAssistant, url: str) -> bool:
     """Create or update the SEP card resource in storage-mode Lovelace."""
     try:
         from homeassistant.components.lovelace.const import LOVELACE_DATA
@@ -127,7 +143,7 @@ async def _async_ensure_lovelace_resource(hass: HomeAssistant, url: str) -> None
         data = None
     resources = getattr(data, "resources", None)
     if resources is None or not hasattr(resources, "async_create_item"):
-        return  # YAML mode or Lovelace unavailable: extra JS URL remains.
+        return False  # Lovelace may still be starting; retry from caller.
     if not getattr(resources, "loaded", True):
         await resources.async_load()
         resources.loaded = True
@@ -137,12 +153,13 @@ async def _async_ensure_lovelace_resource(hass: HomeAssistant, url: str) -> None
     if not ours:
         await resources.async_create_item({"res_type": "module", "url": url})
         _LOGGER.info("Lovelace-Ressource für SEP-Card angelegt: %s", url)
-        return
+        return True
     first, *duplicates = ours
     if first.get("url") != url or first.get("type") != "module":
         await resources.async_update_item(first["id"], {"res_type": "module", "url": url})
     for item in duplicates:
         await resources.async_delete_item(item["id"])
+    return True
 
 
 def _file_hash(path: Path) -> str:
