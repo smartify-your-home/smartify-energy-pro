@@ -362,6 +362,9 @@ const CARD_CSS = `
   .sep-gate { --mdc-icon-size:16px; display:inline-flex; vertical-align:middle; }
   .sep-log-toggle { border:1px solid var(--divider-color); border-radius:6px; padding:1px 6px; background:transparent; color:var(--secondary-text-color); font:inherit; font-size:10px; cursor:pointer; }
   .sep-actions { display:flex; flex-wrap:wrap; gap:4px; margin-top:3px; }
+  .right .sep-actions { justify-content:flex-end; margin-top:5px; max-width:100%; }
+  .right .sep-act { white-space:nowrap; }
+  @media (max-width:560px) { .right .sep-actions { justify-content:flex-start; } }
   .sep-act { border:1px solid var(--divider-color); border-radius:12px; padding:2px 10px; background:var(--secondary-background-color);
              color:var(--txt); font:inherit; font-size:11px; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
   .sep-act ha-icon { --mdc-icon-size:14px; }
@@ -771,10 +774,9 @@ class SmartifyEnergyPlanCard extends HTMLElement {
             <div class="sub" title="${esc(sub)}">${esc(sub)}</div>
             ${planTxt ? `<div class="plan">${esc(planTxt)}</div>` : ""}
             ${trendText ? `<div class="plan">${trendText} ${logToggle}</div>${logOpen ? logText : ""}` : ""}
-            ${actions ? `<div class="sep-actions">${actions}</div>` : ""}
           </div>
-          <div class="right" title="${esc(budgetTitle)}">
-            <div class="power-budget">
+          <div class="right">
+            <div class="power-budget" title="${esc(budgetTitle)}">
               <div class="pb-item">
                 <span class="pb-label">Leistung</span>
                 <span class="pw">${power != null ? fmtW(power) : "–"}</span>
@@ -787,6 +789,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
               ${this._config.show_mode ? this._modeSelect(dev.mode, "", a.geraetetyp === "heater") : ""}
               ${this._config.show_settings !== false && dev.settings.length ? `<button class="gear ${open ? "open" : ""}" data-gear="${dev.id}" title="Einstellungen"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}
             </div>
+            ${actions ? `<div class="sep-actions">${actions}</div>` : ""}
           </div>
         </div>
         ${open ? this._settings(dev.settings, dev.name) : ""}

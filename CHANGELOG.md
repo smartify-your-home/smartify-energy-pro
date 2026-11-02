@@ -1,4 +1,5 @@
 ## Unreleased
+- SEP-Karte: Die Tasten Sofortstart, Nachladen und Fertig befinden sich platzsparend rechts unter den Leistungs- und Budgetwerten; bei schmalen Ansichten passen sie sich an. Die Aktionslogik bleibt unverändert.
 
 ## 0.3.38 – Kein „Konfigurationsfehler“ mehr nach Neustart/Update
 - Die SEP-Karte wird zusätzlich als Lovelace-Ressource (Storage-Modus) mit derselben versions- und hashbasierten URL registriert. Ressourcen lädt das Frontend bei jedem Dashboard-Aufruf; die Karte fehlt damit nicht mehr, wenn das Dashboard vor dem vollständigen Start von SEP geöffnet wurde oder ein Kiosk-Tab eine alte Seite offenhält.
