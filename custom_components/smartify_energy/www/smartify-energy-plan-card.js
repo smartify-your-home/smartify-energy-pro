@@ -248,6 +248,7 @@ const EDITOR_CSS = `
   .row { display:flex; gap:8px; align-items:center; margin:6px 0; }
   .row label { margin:0; font-size:13px; color:var(--primary-text-color); }
   input[type=checkbox] { width:16px; height:16px; cursor:pointer; flex-shrink:0; }
+  input[type=range] { width:100%; accent-color:var(--primary-color); cursor:pointer; }
   .hint { font-size:11px; color:var(--secondary-text-color); margin-top:3px; }
 `;
 
@@ -277,6 +278,10 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
       </select>
       <div class="hint">Bei mehreren Energiemanagern wählen Sie hier das gewünschte Haus oder System. Automatisch verwendet den ersten gefundenen Manager.</div>
       ${hubs.size ? "" : `<div class="hint">Kein smartify Energiemanager gefunden – Integration installiert?</div>`}
+      <div class="section">Darstellung</div>
+      <label for="background_transparency">Hintergrundtransparenz: <strong id="background_transparency_value">${Math.max(0, Math.min(100, Number(c.background_transparency) || 0))} %</strong></label>
+      <input type="range" id="background_transparency" min="0" max="100" step="5" value="${Math.max(0, Math.min(100, Number(c.background_transparency) || 0))}">
+      <div class="hint">0 % = deckend (bisherige Darstellung), 100 % = vollständig transparent. Betrifft Kartenhintergrund, Gerätezeilen, Kennzahlen und Zeitleiste; Schrift und Bedienelemente bleiben lesbar.</div>
       <div class="section">Bereiche</div>
       <div class="row"><input type="checkbox" id="show_header" ${chk("show_header")}><label for="show_header">Netzsaldo- und Budgetleiste</label></div>
       <div class="hint">Zeigt den echten Netzsaldo (+ Einspeisung, − Bezug) getrennt vom rechnerischen Steuerbudget sowie Verteilung, Prognose und Speicherdaten.</div>
@@ -294,6 +299,10 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
     const $ = id => this.shadowRoot.getElementById(id);
     $("title").addEventListener("change", e => set("title", e.target.value));
     $("hub").addEventListener("change", e => set("hub", e.target.value));
+    $("background_transparency").addEventListener("input", e => {
+      $("background_transparency_value").textContent = `${e.target.value} %`;
+      set("background_transparency", Number(e.target.value));
+    });
     ["show_header", "show_priorities", "show_mode", "show_settings", "show_timeline"].forEach(k =>
       $(k).addEventListener("change", e => set(k, e.target.checked)));
 
@@ -306,7 +315,10 @@ if (!customElements.get("smartify-energy-plan-card-editor")) customElements.defi
 const CARD_CSS = `
   :host { display:block; --row-bg:var(--smartify-plan-row-background, var(--card-background-color));
           --radius:var(--smartify-plan-border-radius, 6px); --txt:var(--smartify-plan-text-color, var(--primary-text-color)); }
-  ha-card { padding:12px; color:var(--txt); }
+  ha-card { padding:12px; color:var(--txt);
+    background:color-mix(in srgb, var(--ha-card-background, var(--card-background-color)) var(--sep-surface-opacity,100%), transparent); }
+  .tile, .dev, .timeline { background:color-mix(in srgb, var(--row-bg) var(--sep-surface-opacity,100%), transparent); }
+  .settings { background:color-mix(in srgb, var(--secondary-background-color) var(--sep-surface-opacity,100%), transparent); }
   .title { font-size:16px; font-weight:600; margin:0 0 10px 2px; display:flex; align-items:center; gap:8px; }
   .sep-brand-icon { width:40px; height:40px; flex:0 0 40px; object-fit:contain; border-radius:7px; }
   .title .sp { flex:1; }
@@ -856,15 +868,17 @@ class SmartifyEnergyPlanCard extends HTMLElement {
   _render() {
     if (!this._hass) return;
     const c = this._config;
+    const transparency = Math.max(0, Math.min(100, Number(c.background_transparency) || 0));
+    const surfaceOpacity = 100 - transparency;
     const d = this._data ?? collect(this._hass, c.hub);
     if (!d) {
-      this.shadowRoot.innerHTML = `<style>${CARD_CSS}</style><ha-card><div class="empty">Kein smartify Energiemanager gefunden.</div></ha-card>`;
+      this.shadowRoot.innerHTML = `<style>${CARD_CSS}</style><ha-card style="--sep-surface-opacity:${surfaceOpacity}%"><div class="empty">Kein smartify Energiemanager gefunden.</div></ha-card>`;
       return;
     }
     const title = c.title ?? d.name;
     const markup = `
       <style>${CARD_CSS}</style>
-      <ha-card>
+      <ha-card style="--sep-surface-opacity:${surfaceOpacity}%">
         ${title || d.ents["select:mode"] ? `<div class="title"><img class="sep-brand-icon" src="/smartify_energy/sep-logo.png" alt="Smartify Energy Pro Logo"><span>Smartify Energy Pro</span><span class="sp"></span>${this._modeSelect(d.ents["select:mode"])}
           ${c.show_settings !== false && d.hubSettings.length ? `<button class="gear ${this._open.has("hub") ? "open" : ""}" data-gear="hub" title="Einstellungen Energiemanager"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}</div>` : ""}
         ${this._open.has("hub") ? this._settings(d.hubSettings, d.name, "hub") : ""}
