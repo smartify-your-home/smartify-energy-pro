@@ -12,9 +12,9 @@ from homeassistant.core import CoreState, HomeAssistant, ServiceCall
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
-from homeassistant.helpers.event import async_call_later
 
 from .const import DOMAIN, PLATFORMS
 from .manager import EnergyManager
