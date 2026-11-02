@@ -49,6 +49,9 @@ Stand dieser Übergabe: Quellcode 0.3.34, 31.10.2026. Ausgangspunkt war main 87f
 ## Release 0.3.40
 - Kartenoption `background_transparency` (0–100 %, Standard 0 %) steuert ausschließlich Flächen via themeabhängigem CSS `color-mix`; Text und Aktionsknöpfe bleiben lesbar.
 
+## Card-Ladestabilität (nach 0.3.40)
+- Fehlende Lovelace-Ressource nach HA-Start nicht still ignorieren; bei später bereitgestelltem Lovelace mit begrenzten Wiederholungsversuchen nachregistrieren. Frühere Hash-URL sowie idempotente Ressourcen-Updates erhalten. Fehler protokollieren.
+
 ## Dokumentation bei jeder Änderung
 Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verhaltens-/UI-Änderungen README.md (HACS-Infoseite), docs/SEP_CURRENT.md, docs/FUNCTIONS.md, relevante Update-/Konfigurationshinweise und CHANGELOG.md abgleichen. Veraltete widersprüchliche Aussagen ersetzen. Pflicht/optional und Bedeutung von Einstellungen in einfachen Worten erklären; DE/EN-UI und Übersetzungsschlüssel konsistent halten. AGENTS.md bei wichtigen Architektur-/Verhaltensänderungen aktualisieren. Vollständige Chronik im CHANGELOG, keine Zugangsdaten oder privaten Anlagenwerte eintragen.
 

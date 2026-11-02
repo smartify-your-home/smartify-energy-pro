@@ -1,4 +1,5 @@
 ## Unreleased
+- SEP-Karte: Lovelace-Ressourcenregistrierung wird bei beim Start noch nicht verfügbarem Lovelace wiederholt (bis zu sechs Versuche). Statt stiller Aufgabe werden wiederholte Fehlschläge protokolliert. Das behebt eine mögliche Ursache für „Custom element doesn't exist“.
 
 ## 0.3.40 – Hintergrundtransparenz für die SEP-Karte
 - Neuer Regler im Karteneditor „Darstellung“ (0–100 %, Standard 0 %).
