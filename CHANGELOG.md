@@ -1,4 +1,5 @@
 ## Unreleased
+- SEP-Karte: Hintergrundtransparenz als Schieberegler (0–100 %, Standard 0 %) im Karteneditor. Kartenfläche, Gerätezeilen, Kennzahl-Kacheln, Einstellungen und Zeitleiste werden transparent über themeabhängige Hintergrundfarben; Texte und Bedienelemente behalten ihre Deckkraft.
 
 ## 0.3.39 – Kompakte Gerätezeilen
 - Schaltflächen Sofortstart, Nachladen und Fertig in der SEP-Karte rechts unter die Leistungs- und Budgetanzeige verschoben.
