@@ -2,7 +2,7 @@
 
 **PV-Überschuss intelligent verteilen – mit Prioritäten, Geräteprogrammen, Batteriespeicher und Home-Assistant-Dashboard.**
 
-**Aktueller Quellcode-Stand: 0.3.37** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
+**Aktueller Quellcode-Stand: 0.3.39** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
 
 > **Versionshinweis:** Die Versionsnummer beschreibt den Repository-Stand. In HACS erscheint eine neue Version erst, wenn der zugehörige GitHub-Release-Tag erfolgreich veröffentlicht und von HACS erkannt wurde. [Veröffentlichte Versionen ansehen](https://github.com/smartify-your-home/smartify-energy-pro/releases).
 
@@ -135,3 +135,6 @@ Ganz unten befindet sich **Budgetfreigabe nach Heizphase**. 0 % gibt kein zusät
 
 ## Version 0.3.37 – Direkte Prioritätsänderung
 Beim Verschieben der Geräte in der SEP-Karte werden Reihenfolge und Prioritätsnummern sofort angezeigt, ohne auf den Home-Assistant-Service zu warten. Das Backend übernimmt die Reihenfolge gesammelt und löst ohne 2-s-Sensor-Debounce einen Regelzyklus aus. Bei Speicherfehlern wird die tatsächliche Reihenfolge wiederhergestellt und ein Fehler eingeblendet.
+
+## Neu in 0.3.39 – Kompaktere Gerätezeilen
+Die Aktionen Sofortstart, Nachladen und Fertig befinden sich direkt rechts unter Leistung und Budget aktuell. Dadurch wird die Anzeige der Waschmaschine und des Geschirrspülers flacher. Auf schmalen Ansichten umbrechen die Aktionsknöpfe bei Bedarf. Die Schaltlogik ist unverändert.
