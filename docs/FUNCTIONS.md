@@ -1,3 +1,6 @@
+## Release 0.3.42
+Auf schmalen Bildschirmen bleiben Gerätekennzahlen und Aktionen rechts neben dem Status. Statusmeldungen und Gerätenamen können links mehrzeilig angezeigt werden. Keine Änderung der Automatik oder Bedienaktionen.
+
 ## Responsive Gerätezeilen (kommende Version)
 Auf schmalen Home-Assistant-Dashboards bleiben Leistung, Budget, Einstellungszahnrad und Aktionen rechts in derselben Zeile. Namen und Statustexte brechen links um; die mobilen Bedienelemente behalten ihre Funktionen.
 
