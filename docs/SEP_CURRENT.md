@@ -1,3 +1,6 @@
+## 0.3.40 – Hintergrundtransparenz der SEP-Karte
+Der Karteneditor enthält unter Darstellung einen Regler für Hintergrundtransparenz (0–100 %). Der Regler betrifft Hauptfläche, Gerätezeilen, Kacheln, Einstellungsflächen und Zeitleiste, nicht die Deckkraft der Texte oder Bedienelemente. 0 % erhält das bestehende Aussehen. Farben folgen dem Home-Assistant-Theme.
+
 ## 0.3.39 – Kompakte Gerätesteuerung
 In der SEP-Karte werden die kontextabhängigen Schaltflächen Sofortstart, Nachladen und Fertig platzsparend rechts unter den Werten Leistung und Budget aktuell dargestellt. Bei schmalen Displays passen sich die Schaltflächen an. Die zugrunde liegenden Aktionen, Verfügbarkeitsbedingungen und Budgetregeln bleiben unverändert.
 
