@@ -72,3 +72,6 @@ Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verha
 - Release erst als veröffentlicht melden, wenn GitHub-Release existiert, Ziel-Commit passt und erforderliche Prüfungen erfolgreich sind. Keine Prüfungen umgehen. Automatisierte Tests nicht als Test an echter Hardware darstellen.
 
 - Schmale Prioritätenlisten anhand ihrer eigenen Breite formatieren. Die rechte Spalte begrenzen, damit Modus und Zahnrad den Gerätenamen nicht verdrängen.
+
+## Release 0.3.43
+- Kompakte Modusnamen und begrenzte rechte Spalte auf schmalen Karten.

@@ -1,3 +1,7 @@
+# Update auf 0.3.43
+
+SEP in HACS aktualisieren, Home Assistant neu starten und das Dashboard neu laden. Die Karte zeigt kurze Modusnamen und begrenzt auf schmalen Karten die Breite der rechten Spalte.
+
 # Update auf 0.3.34
 
 In HACS auf 0.3.34 aktualisieren, Home Assistant neu starten und das Dashboard neu laden. Es müssen keine Entitäten oder Geräteeinstellungen neu angelegt werden. Der Pflichtstart verhindert jetzt den unnötigen AUS/EIN-Impuls bereits erkannter Programme. Die Heizstab-Abschaltung aus 0.3.32 und die Gerätezeile aus 0.3.33 bleiben enthalten.
