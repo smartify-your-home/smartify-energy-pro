@@ -1,4 +1,5 @@
 ## Unreleased
+- Die Modusauswahl im Kartenkopf und in den Gerätezeilen zeigt Automatik, Beobachten, Manuell und Aus als kurze Namen. Beim WP-Boost bleibt die gerätespezifische Auswahl erhalten.
 
 ## 0.3.42 – Mobilansicht der SEP-Gerätezeilen korrigiert
 - Auf iPhone und iPad bleiben Leistung, Budget, Einstellungen und Aktionsknöpfe rechts, statt unter Statusinformationen zu rutschen.

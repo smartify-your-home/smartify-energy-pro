@@ -1,4 +1,6 @@
 ## Release 0.3.42
+
+Die Modusauswahl im Kartenkopf und in den Gerätezeilen zeigt Automatik, Beobachten, Manuell und Aus als kurze Namen. Beim WP-Boost bleibt die gerätespezifische Auswahl erhalten.
 Auf schmalen Bildschirmen bleiben Gerätekennzahlen und Aktionen rechts neben dem Status. Statusmeldungen und Gerätenamen können links mehrzeilig angezeigt werden. Keine Änderung der Automatik oder Bedienaktionen.
 
 ## Responsive Gerätezeilen (kommende Version)

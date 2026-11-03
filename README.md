@@ -1,5 +1,7 @@
 # Smartify Energy Pro
 
+Die Modusauswahl im Kartenkopf und in den Gerätezeilen zeigt Automatik, Beobachten, Manuell und Aus als kurze Namen. Beim WP-Boost bleibt die gerätespezifische Auswahl erhalten.
+
 **PV-Überschuss intelligent verteilen – mit Prioritäten, Geräteprogrammen, Batteriespeicher und Home-Assistant-Dashboard.**
 
 **Aktueller Quellcode-Stand: 0.3.42** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch

@@ -51,7 +51,6 @@ const OPTION_LABELS = {
   one: "1-phasig", three: "3-phasig",
 };
 const MODE_LABELS = { auto: "Automatik", observe: "Beobachten", manual: "Manuell", off: "Aus", disabled: "Deaktiviert" };
-const MODE_HELP = { auto: "SEP steuert", observe: "nur Empfehlung", manual: "Sie steuern", off: "ausgesetzt", disabled: "kein neuer WW-Boost" };
 const TYPE_ICONS = { load: "mdi:washing-machine", pool: "mdi:pool", ev: "mdi:ev-station", heatpump: "mdi:heat-pump", heater: "mdi:water-boiler" };
 const STATUS_LABELS = {"initializing": "Initialisierung", "ready": "Bereit", "detected": "Erkannt", "waiting": "Wartet", "running": "Läuft", "finished": "Fertig", "off": "Aus", "manual": "Manuell", "observing": "Beobachten", "inactive": "Inaktiv", "locked": "Sperrzeit", "limit_reached": "Grenze erreicht", "disconnected": "Nicht verbunden", "full": "Voll", "charging_now": "Lädt sofort", "charging_required": "Pflichtladen", "charging_pv": "PV-Laden", "boost": "Boost", "actuator_unavailable": "Aktor nicht verfügbar", "actuator_error": "Aktorfehler",
   laeuft: "läuft", wartet: "wartet", bereit: "bereit", erkannt: "erkannt", fertig: "fertig",
@@ -602,13 +601,12 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         </div>`).join("")}</div>`;
   }
 
-  _modeSelect(entityId, cls = "", heater = false) {
+  _modeSelect(entityId, cls = "") {
     const st = this._st(entityId);
     if (!st) return "";
     const opts = st.attributes.options || Object.keys(MODE_LABELS);
-    const label = o => [MODE_LABELS[o] || o, (heater && o === "manual" ? "Temperaturregelung · Netz erlaubt" : MODE_HELP[o])].filter(Boolean).join(" · ");
     return `<select class="mode ${esc(st.state)} ${cls}" data-select="${entityId}" aria-label="Betriebsmodus">
-      ${opts.map(o => `<option value="${esc(o)}" ${o === st.state ? "selected" : ""}>${esc(label(o))}</option>`).join("")}
+      ${opts.map(o => `<option value="${esc(o)}" ${o === st.state ? "selected" : ""}>${esc(MODE_LABELS[o] || o)}</option>`).join("")}
     </select>`;
   }
 
@@ -808,7 +806,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
                 <span class="pb-budget ${budgetNow == null ? "" : budgetNow < 0 ? "negative" : budgetOk ? "positive" : ""}">${fmtW(budgetNow)}</span>
               </div>
               ${a.geraetetyp === "ev" ? `<div class="pb-item"><span class="pb-label">Akku</span><span class="pw">${evSoc == null ? "–" : evSoc.toFixed(0) + " %"}</span></div>` : ""}
-              ${this._config.show_mode ? this._modeSelect(dev.mode, "", a.geraetetyp === "heater") : ""}
+              ${this._config.show_mode ? this._modeSelect(dev.mode) : ""}
               ${this._config.show_settings !== false && dev.settings.length ? `<button class="gear ${open ? "open" : ""}" data-gear="${dev.id}" title="Einstellungen"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}
             </div>
             ${actions ? `<div class="sep-actions">${actions}</div>` : ""}
