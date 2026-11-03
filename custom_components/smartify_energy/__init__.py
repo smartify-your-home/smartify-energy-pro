@@ -1,6 +1,7 @@
 """smartify Energiemanager – PV-Überschuss mit Prioritäten, Prognose und Speicherlogik."""
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 from pathlib import Path
@@ -8,11 +9,10 @@ from pathlib import Path
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
-from homeassistant.core import CoreState, HomeAssistant, ServiceCall
+from homeassistant.core import CoreState, HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
 
@@ -106,32 +106,43 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     # fetches resources on every dashboard load, so the card is present even if
     # the page was opened before SEP finished starting (extra JS URLs are baked
     # into index.html at page load). Identical URL → the module executes once.
-    def _schedule_resource_attempt(attempt: int) -> None:
-        async def _attempt(_now=None) -> None:
-            try:
-                if await _async_ensure_lovelace_resource(hass, card_url):
-                    return
-                _LOGGER.debug("SEP-Card-Ressource noch nicht verfügbar (%s/6)", attempt)
-            except Exception:  # noqa: BLE001
-                _LOGGER.warning("SEP-Card-Ressource: Registrierung fehlgeschlagen (%s/6)", attempt, exc_info=True)
-            if attempt < 6:
-                async_call_later(hass, 2 * attempt, lambda now: hass.async_create_task(_attempt_next(now)))
-            else:
-                _LOGGER.error("SEP-Card-Ressource nach sechs Versuchen nicht registriert: %s", card_url)
-
-        async def _attempt_next(_now=None) -> None:
-            _schedule_resource_attempt(attempt + 1)
-
-        hass.async_create_task(_attempt())
-
-    def _register_resource(_event=None) -> None:
-        _schedule_resource_attempt(1)
-
+    # All of this runs in the event loop: listeners are @callback, retries use
+    # asyncio.sleep inside one background task (no executor threads).
     if hass.state is CoreState.running:
-        await _register_resource()
+        _start_resource_registration(hass, card_url)
     else:
-        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _register_resource)
+        @callback
+        def _on_started(_event) -> None:
+            _start_resource_registration(hass, card_url)
+
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _on_started)
     return True
+
+
+RESOURCE_ATTEMPTS = 6
+
+
+@callback
+def _start_resource_registration(hass: HomeAssistant, card_url: str) -> None:
+    hass.async_create_background_task(
+        _async_register_resource_with_retry(hass, card_url), f"{DOMAIN}_card_resource")
+
+
+async def _async_register_resource_with_retry(hass: HomeAssistant, card_url: str,
+                                              delay: float = 2.0) -> bool:
+    """Lovelace can finish later than SEP; retry a few times, then give up."""
+    for attempt in range(1, RESOURCE_ATTEMPTS + 1):
+        try:
+            if await _async_ensure_lovelace_resource(hass, card_url):
+                return True
+            _LOGGER.debug("SEP-Card-Ressource noch nicht verfügbar (%s/%s)", attempt, RESOURCE_ATTEMPTS)
+        except Exception:  # noqa: BLE001
+            _LOGGER.warning("SEP-Card-Ressource: Registrierung fehlgeschlagen (%s/%s)",
+                            attempt, RESOURCE_ATTEMPTS, exc_info=True)
+        if attempt < RESOURCE_ATTEMPTS:
+            await asyncio.sleep(delay * attempt)
+    _LOGGER.error("SEP-Card-Ressource nach %s Versuchen nicht registriert: %s", RESOURCE_ATTEMPTS, card_url)
+    return False
 
 
 async def _async_ensure_lovelace_resource(hass: HomeAssistant, url: str) -> bool:

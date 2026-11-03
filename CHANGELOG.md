@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 0.3.44 – SEP-Karte in der Companion-App wieder sichtbar
+- Behoben: Die Registrierung der Lovelace-Ressource lief seit 0.3.39 in einem Hintergrund-Thread und brach beim Start mit `RuntimeError` („calls hass.async_create_task from a thread other than the event loop“) ab. Die Ressource blieb dadurch auf einer alten URL stehen; Apps und Kiosk-WebViews mit Cache luden eine veraltete oder gar keine Karte.
+- Registrierung läuft jetzt vollständig im Event-Loop (`@callback`-Listener, eine Hintergrundaufgabe mit bis zu sechs Versuchen bei spät startendem Lovelace). Beim nächsten Start wird die veraltete Ressourcen-URL automatisch aktualisiert.
+- Regressionstest deckt den vollständigen Startpfad ab.
+
 ## 0.3.43 – Kompakte Moduswahl und lesbare Gerätenamen
 - Auf schmalen Karten teilen sich Gerätetext und Bedienelemente den verfügbaren Platz. Messwerte, Modus und Zahnrad können innerhalb der rechten Spalte umbrechen.
 - Die Modusauswahl im Kartenkopf und in den Gerätezeilen zeigt Automatik, Beobachten, Manuell und Aus als kurze Namen. Beim WP-Boost bleibt die gerätespezifische Auswahl erhalten.

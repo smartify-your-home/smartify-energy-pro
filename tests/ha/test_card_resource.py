@@ -42,3 +42,59 @@ async def test_unavailable_lovelace_returns_false_for_retry(hass):
     assert await _async_ensure_lovelace_resource(hass, f"{CARD_URL}?v=retry") is False
     await _resources(hass)
     assert await _async_ensure_lovelace_resource(hass, f"{CARD_URL}?v=retry") is True
+
+
+async def test_started_event_updates_stale_resource_in_event_loop(hass):
+    """Regression 0.3.39–0.3.43: listener ran in a worker thread and crashed."""
+    from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
+    from homeassistant.core import CoreState
+    from custom_components.smartify_energy import _start_resource_registration
+
+    res = await _resources(hass)
+    await res.async_create_item({"res_type": "module", "url": f"{CARD_URL}?v=0.3.38-old"})
+    hass.set_state(CoreState.starting)
+    from homeassistant.core import callback
+
+    @callback
+    def _on_started(_event):
+        _start_resource_registration(hass, f"{CARD_URL}?v=new")
+
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _on_started)
+    hass.set_state(CoreState.running)
+    hass.bus.async_fire(EVENT_HOMEASSISTANT_STARTED)
+    await hass.async_block_till_done()
+    assert [i["url"] for i in _ours(res)] == [f"{CARD_URL}?v=new"]
+
+
+async def test_retry_waits_for_lovelace(hass):
+    from custom_components.smartify_energy import _async_register_resource_with_retry
+    import asyncio
+
+    task = asyncio.create_task(_async_register_resource_with_retry(hass, f"{CARD_URL}?v=late", delay=0.01))
+    await asyncio.sleep(0.02)
+    res = await _resources(hass)
+    assert await task is True
+    assert [i["url"] for i in _ours(res)] == [f"{CARD_URL}?v=late"]
+
+
+async def test_async_setup_registers_without_thread_errors(hass, caplog):
+    """Full async_setup path during startup: stale URL replaced, no thread error."""
+    from unittest.mock import AsyncMock, MagicMock, patch
+    from homeassistant.core import CoreState
+    from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
+    from custom_components.smartify_energy import async_setup
+
+    res = await _resources(hass)
+    await res.async_create_item({"res_type": "module", "url": f"{CARD_URL}?v=0.3.38-old"})
+    hass.set_state(CoreState.starting)
+    hass.http = MagicMock(async_register_static_paths=AsyncMock())
+    hass.config.components.add("frontend")
+    with patch("homeassistant.components.frontend.add_extra_js_url") as extra:
+        assert await async_setup(hass, {})
+    hass.set_state(CoreState.running)
+    hass.bus.async_fire(EVENT_HOMEASSISTANT_STARTED)
+    await hass.async_block_till_done()
+    urls = [i["url"] for i in _ours(res)]
+    assert urls == [extra.call_args.args[1]]
+    assert "0.3.38-old" not in urls[0]
+    assert "thread other than the event loop" not in caplog.text

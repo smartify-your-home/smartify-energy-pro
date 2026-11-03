@@ -36,6 +36,7 @@ Stand dieser Übergabe: Quellcode 0.3.34, 31.10.2026. Ausgangspunkt war main 87f
 
 ## Stand 0.3.38 – Card-Einbindung
 - Card wird zweifach mit identischer URL eingebunden: `add_extra_js_url` und Lovelace-Storage-Ressource (`_async_ensure_lovelace_resource`, nach `homeassistant_started`). Grund: Extra-JS steht fest in der beim Seitenaufruf geladenen index.html und fehlt, wenn das Dashboard vor SEP-Setup geladen wurde → „Konfigurationsfehler“. Beide Wege erhalten; `customElements.define` bleibt durch `customElements.get` abgesichert.
+- 0.3.44: Registrierung nur im Event-Loop. Event-Listener und Timer-Callbacks, die `hass.async_*` aufrufen, MÜSSEN `@callback` oder `async def` sein – eine normale `def`-Funktion führt HA im Executor-Thread aus (`RuntimeError` thread-safety). Wiederholungen über `asyncio.sleep` in einer `hass.async_create_background_task`. Test: tests/ha/test_card_resource.py.
 
 ## Kompakte Gerätezeilen (nach 0.3.38)
 - Sofortstart, Nachladen und Fertig rechts unter Leistung/Budget statt unter Statusmeldungen. Aktionslogik und Click-Handler bleiben unverändert. Bei schmalen Displays dürfen Tasten umbrechen und der rechte Block wandert unter die Statusinfos.
