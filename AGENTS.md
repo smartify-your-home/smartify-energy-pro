@@ -1,9 +1,11 @@
 # Smartify Energy Pro – Arbeitsregeln für alle Agenten
 
-## Vor jeder Arbeit
-- Diese Datei, CHANGELOG.md und die zum Auftrag passenden Dokumente lesen.
+## Verbindliche Lesepflicht vor der ersten Änderung
+
 - Es arbeiten mehrere Personen/Agenten am Repository. Zuerst aktuellen Remote-Stand von main und neuestes Release abrufen; niemals eine alte lokale Kopie als aktuell annehmen.
 - Bei einem Git-Checkout zuerst Status/Diff prüfen und fremde lokale Änderungen erhalten. Bei einer API-Arbeitskopie den Ausgangs-Commit dokumentieren und betroffene Dateien aus genau diesem Commit laden.
+- Vor dem ersten Edit diese Datei, CHANGELOG.md und die Dokumentation zur betroffenen Funktion lesen. Den aktuellen Code entlang des betroffenen Ablaufs sowie die zugehörigen Tests lesen. In der Git-Historie gezielt nach früheren Fixes suchen und deren Änderungen prüfen, auch wenn sie von anderen Agenten stammen.
+- Vor dem Bearbeiten im Arbeitsbericht kurz festhalten, welches bestehende Verhalten erhalten bleiben muss und welcher Test es prüft. Fehlt ein passender Test, die geplante Prüfung benennen. Beispiel Kartenregistrierung: Beim HA-Start im Event-Loop ausführen und bei verspätetem Lovelace-Start erneut versuchen (tests/ha/test_card_resource.py).
 - Vor dem Push Remote-HEAD erneut prüfen. API-Updates mit expected_sha, Git-Push ohne Force. Bei zwischenzeitlichen Änderungen neu abgleichen und Tests wiederholen. Keine Änderungen der Kollegin überschreiben.
 
 ## Stand und wichtige Regeln
