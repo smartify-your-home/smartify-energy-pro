@@ -70,3 +70,5 @@ Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verha
 - Mit HA-Testumgebung: python -m pytest tests/ha -q; ruff check custom_components. Fehlende lokale Abhängigkeiten offen nennen; GitHub-CI muss erfolgreich sein.
 - Version in custom_components/smartify_energy/manifest.json und dazu passenden Changelog-Abschnitt pflegen. Manifeständerung auf main startet die bestehende Publish-SEP-Pipeline.
 - Release erst als veröffentlicht melden, wenn GitHub-Release existiert, Ziel-Commit passt und erforderliche Prüfungen erfolgreich sind. Keine Prüfungen umgehen. Automatisierte Tests nicht als Test an echter Hardware darstellen.
+
+- Schmale Prioritätenlisten anhand ihrer eigenen Breite formatieren. Die rechte Spalte begrenzen, damit Modus und Zahnrad den Gerätenamen nicht verdrängen.
