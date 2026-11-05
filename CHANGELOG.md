@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 0.3.46 – Wallbox: PV-Boost mit Netzbezug
+- Neu: zeitlich begrenzter PV-Boost für die Wallbox. Schalter `PV-Boost` (Karte: „Boost“/„Boost beenden“), Einstellungen `Boost-Faktor` (1,5–4, Standard ×2), `Boost-Dauer` (0,5–12 h, Standard 3 h) und `Boost-Mindestleistung` (0–11.000 W, Standard 1.400 W).
+- Ladeleistung = max(Faktor × PV-Überschuss, Mindestleistung), begrenzt durch Mindest-/Maximalstrom; Netzbezug erlaubt. Karte zeigt „Boost bis HH:MM“, Status `boost`, Attribut `boost_bis`.
+- Ende nach Ablauf, beim Ausschalten oder Abstecken. Sofort- und Pflichtladung haben Vorrang. Vorrangige Verbraucher können die Boost-Leistung reduzieren, die Wallbox aber nicht vollständig abschalten. Bei Ziel km/Tage zählt während des Boosts die eigene Ladeleistung zum Budget, damit sich der Boost nicht selbst herunterrechnet.
+- Ohne Mindestleistung und mit zu wenig PV: kein Start; ein laufender Boost stoppt nach der Stopp-Verzögerung (Anzeige „PV-Stopp HH:MM“).
+
 ## 0.3.45 – Wallbox: PV-Stopp-Zeit und Akku zuerst
 - Neues Status-Attribut `pv_stopp_um` der Wallbox: Zeitpunkt, zu dem eine laufende PV-Ladung bei anhaltend fehlendem Überschuss gestoppt wird (Beginn der Unterdeckung + Stopp-Verzögerung). Die Karte zeigt „PV-Stopp HH:MM – zu wenig Überschuss“ nur, solange die Verzögerung läuft.
 - Rücksetzen: Überschuss reicht wieder, Ladung gestoppt, Auto abgesteckt, Sofort- oder Pflichtladung, Verdrängung durch vorrangigen Verbraucher, Neustart.

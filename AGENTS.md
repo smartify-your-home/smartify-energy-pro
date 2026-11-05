@@ -80,5 +80,8 @@ Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verha
 - `EvDevice.pv_stop_at` = `_deficit_since + stop_delay`, nur bei Status `charging_pv` (Statuscodes über `STATUS_CODES` vergleichen, nicht Legacy-Strings). `_deficit_since` wird bei nicht laufender Ladung, Sofort-/Pflichtladung, Abstecken und Verdrängung gelöscht. Strom wird weiterhin sofort reduziert, abgeschaltet erst nach Ablauf. Test: tests/test_ev_stop_delay.py.
 - Karte: EV-Zeile Akku zuerst, Leistung/Budget in `.pb-stack` untereinander; andere Geräte `.pb-pair` (display:contents) unverändert.
 
+## Wallbox PV-Boost (0.3.46)
+- Param `boost` (switch), `boost_factor`, `boost_hours`, `boost_min_power`; Endzeit in `state["boost_until"]` (persistiert), gesetzt im ersten Zyklus nach dem Einschalten (ctx.now), Ablauf/Abstecken → `_end_boost()`. Boost-Zweig in `decide` NACH Sofort/Pflicht, VOR PV-Laden; ignoriert `preempt_until`; `can_preempt` False während Boost; `_can_reclaim_pv_power` gilt auch für Boost bei Ziel km/Tage. Test: tests/test_ev_boost.py.
+
 ## Release 0.3.43
 - Kompakte Modusnamen und begrenzte rechte Spalte auf schmalen Karten.

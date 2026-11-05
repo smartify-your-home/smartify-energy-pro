@@ -689,6 +689,15 @@
       },
       "phase_hysteresis": {
         "name": "Phasenwechsel-Hysterese"
+      },
+      "boost_factor": {
+        "name": "Boost-Faktor"
+      },
+      "boost_hours": {
+        "name": "Boost-Dauer"
+      },
+      "boost_min_power": {
+        "name": "Boost-Mindestleistung"
       }
     },
     "time": {
@@ -735,6 +744,9 @@
       },
       "sinks_yield": {
         "name": "Überschuss-Senken weichen aus"
+      },
+      "boost": {
+        "name": "PV-Boost"
       }
     },
     "sensor": {

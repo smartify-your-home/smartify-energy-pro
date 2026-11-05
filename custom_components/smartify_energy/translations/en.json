@@ -689,6 +689,15 @@
       },
       "phase_hysteresis": {
         "name": "Phase switch hysteresis"
+      },
+      "boost_factor": {
+        "name": "Boost factor"
+      },
+      "boost_hours": {
+        "name": "Boost duration"
+      },
+      "boost_min_power": {
+        "name": "Boost minimum power"
       }
     },
     "time": {
@@ -735,6 +744,9 @@
       },
       "sinks_yield": {
         "name": "Surplus sinks yield"
+      },
+      "boost": {
+        "name": "PV boost"
       }
     },
     "sensor": {

@@ -113,6 +113,10 @@ class EvDevice(BaseDevice):
             ParamSpec("consumption", "number", self._c(CONF_CONSUMPTION, 18), "mdi:gauge", 5, 40, 0.5, "kWh/100km"),
             ParamSpec("pv_share", "number", 100, "mdi:solar-power-variant", 10, 100, 5, "%"),
             ParamSpec("stop_delay", "number", 5, "mdi:timer-pause", 1, 30, 1, "min"),
+            ParamSpec("boost", "switch", False, "mdi:rocket-launch", config=False),
+            ParamSpec("boost_factor", "number", 2, "mdi:multiplication", 1.5, 4, 0.5, "×"),
+            ParamSpec("boost_hours", "number", 3, "mdi:timer-outline", 0.5, 12, 0.5, "h"),
+            ParamSpec("boost_min_power", "number", 1400, "mdi:flash", 0, 11000, 100, "W"),
         ]
         if self.cfg.get(CONF_PHASE_ENTITY):
             specs += [
@@ -125,6 +129,64 @@ class EvDevice(BaseDevice):
     def on_param_changed(self, key: str) -> None:
         if key in ("goal", "target_km", "deadline"):
             self.state["charged_wh"] = 0.0
+        if key == "boost":
+            # Start time is set in the next cycle (ctx.now); OFF ends at once.
+            self.state["boost_until"] = None
+        if key == "boost_hours" and self.state.get("boost_until"):
+            self.state["boost_until"] = None  # restart with the new duration
+
+    # ── PV-Boost ─────────────────────────────────────────────────────────────
+    def boost_until(self) -> datetime | None:
+        ts = self.state.get("boost_until")
+        return datetime.fromtimestamp(float(ts)).astimezone() if ts else None
+
+    def _boost_active(self, now: datetime) -> bool:
+        """Arm, run and expire the time-limited boost. Returns True while running."""
+        if not self.p("boost"):
+            self.state["boost_until"] = None
+            return False
+        if not self.connected:
+            self._end_boost()
+            return False
+        if not self.state.get("boost_until"):
+            self.state["boost_until"] = (now + timedelta(hours=float(self.p("boost_hours")))).timestamp()
+        if now.timestamp() >= float(self.state["boost_until"]):
+            self._end_boost()
+            return False
+        return True
+
+    def _end_boost(self) -> None:
+        self.params["boost"] = False
+        self.state["boost_until"] = None
+
+    def _decide_boost(self, ctx: Context, budget_left: float, on: bool) -> Decision:
+        """PV budget × factor, at least the minimum power – grid import allowed."""
+        avail = ctx.now_left(budget_left)
+        factor = float(self.p("boost_factor"))
+        floor_w = float(self.p("boost_min_power"))
+        target = max(avail * factor, floor_w)
+        phases = self._phases_for(target, ctx)
+        p_min = self.min_a * self.voltage * phases
+        until = self.boost_until()
+        until_txt = f" bis {until:%H:%M}" if until else ""
+        if target < p_min:
+            # Neither factor nor minimum reach the wallbox minimum: behave like
+            # PV charging (stop delay), never start.
+            if not on:
+                self._deficit_since = None
+                self.status = "wartet"
+                return Decision(False, 0, f"Boost{until_txt}: zu wenig PV ({avail:.0f} W × {factor:g})")
+            self._deficit_since = self._deficit_since or ctx.now
+            if ctx.now - self._deficit_since >= timedelta(minutes=float(self.p("stop_delay"))):
+                self._deficit_since = None
+                self.status = "wartet"
+                return Decision(False, 0, f"Boost{until_txt}: zu wenig PV ({avail:.0f} W × {factor:g})")
+            target = p_min
+        else:
+            self._deficit_since = None
+        amps = clamp(math.floor(target / (self.voltage * phases)), self.min_a, self.max_a)
+        self.status = "boost"
+        return self._charge(amps, phases, f"Boost ×{factor:g} {amps:.0f} A × {phases}")
 
     def sensor_specs(self) -> list[SensorSpec]:
         return super().sensor_specs() + [
@@ -145,7 +207,8 @@ class EvDevice(BaseDevice):
         start = self._latest_start if self._need_wh > 0 else None
         return {**super().status_attrs(), "soc": self.soc,
                 "pflicht_start": start.isoformat() if start else None,
-                "pv_stopp_um": self.pv_stop_at.isoformat() if self.pv_stop_at else None}
+                "pv_stopp_um": self.pv_stop_at.isoformat() if self.pv_stop_at else None,
+                "boost_bis": self.boost_until().isoformat() if self.boost_until() else None}
 
     @property
     def pv_stop_at(self) -> datetime | None:
@@ -155,7 +218,7 @@ class EvDevice(BaseDevice):
         timer is cleared as soon as the surplus covers the minimum again, when
         the charge stops, the car is unplugged, a forced/immediate charge takes
         over, or a higher-priority load preempts the wallbox."""
-        if self._deficit_since is None or self.status != STATUS_CODES["laedt_pv"]:
+        if self._deficit_since is None or self.status not in (STATUS_CODES["laedt_pv"], "boost"):
             return None
         return self._deficit_since + timedelta(minutes=float(self.p("stop_delay")))
 
@@ -198,7 +261,7 @@ class EvDevice(BaseDevice):
         """Only an active, metered, modulated PV charge has immediately reducible power."""
         return bool(
             self.mode == "auto"
-            and self.p("goal") == EV_GOAL_PV
+            and (self.p("goal") == EV_GOAL_PV or bool(self.p("boost")))
             and self.connected
             and self.is_on()
             and self.cfg.get("power_sensor")
@@ -218,6 +281,8 @@ class EvDevice(BaseDevice):
 
     def can_preempt(self, now: datetime) -> bool:
         """Only voluntary PV charging with a real OFF actuator can yield."""
+        if self.p("boost") and float(self.state.get("boost_until") or 0) > now.timestamp():
+            return False  # boost explicitly requested: reduce, but never switch off
         control = self.cfg.get(CONF_CONTROL_ENTITY)
         if not (self._can_reclaim_pv_power() and control and not self._unavailable_actor()
                 and now.timestamp() >= self._actuator_retry_at):
@@ -330,6 +395,8 @@ class EvDevice(BaseDevice):
         if not self.connected:
             self.status = "nicht_verbunden"
             self._deficit_since = None
+            if self.p("boost"):
+                self._end_boost()
             return Decision(False, 0, "Auto nicht angesteckt")
         soc = self.soc
         if soc is not None and soc >= float(self.p("max_soc")):
@@ -338,7 +405,8 @@ class EvDevice(BaseDevice):
 
         on = self.is_on()
         goal = self.p("goal")
-        if goal == EV_GOAL_PV and ctx.now.timestamp() < float(self.state.get("preempt_until") or 0):
+        boost = self._boost_active(ctx.now)
+        if not boost and goal == EV_GOAL_PV and ctx.now.timestamp() < float(self.state.get("preempt_until") or 0):
             self.status = "wartet"
             return Decision(False, 0, "Vorrangiger Verbraucher – PV-Ladung pausiert")
         max_ph = 3 if self.cfg.get(CONF_PHASE_ENTITY) else self.max_phases
@@ -354,6 +422,9 @@ class EvDevice(BaseDevice):
             return self._charge(self.max_a, max_ph,
                                 f"Ziel {self._target_km:.0f} km bis {self._deadline:%H:%M} – Netzladung",
                                 forced=True)
+
+        if boost:
+            return self._decide_boost(ctx, budget_left, on)
 
         # Follow instantaneous grid power for modulation; longer averages are
         # only start gates, not a throttle on a running charge.

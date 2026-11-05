@@ -55,7 +55,7 @@ ENGLISH = {
     "PV-Freigabe: aktuell": "PV release: current", "Sofortfenster": "Immediate-start window",
     "Spätstart": "Latest-start deadline", "Manueller Sofortstart": "Manual immediate start",
     "Nachladen": "Reload", "Netzladung für Ziel": "Grid charging for target",
-    "EIN": "ON", "AUS": "OFF",
+    "EIN": "ON", "AUS": "OFF", "zu wenig PV": "insufficient PV", " bis ": " until ",
 }
 
 

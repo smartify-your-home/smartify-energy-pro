@@ -114,6 +114,10 @@ const SETTING_HELP = {
   "phase_switch_minutes": "So lange muss mindestens zwischen zwei Umschaltungen ein-/dreiphasig liegen. Beispiel: 20 min. Längere Werte schonen Wallbox und Auto, nutzen schwankenden Überschuss aber ungenauer.",
   "phase_hysteresis": "Abstand zur Dreiphasen-Mindestleistung (6 A × 3). Dreiphasig ab Mindestleistung plus diesem Wert, zurück auf einphasig unter Mindestleistung minus diesem Wert. Beispiel: 500 W → ca. 4,6 kW hoch, 3,6 kW zurück.",
   "phase_mode": "Einphasig eignet sich für wenig Solarüberschuss, dreiphasig für höhere Ladeleistung. Automatik wählt passend zum Überschuss. In der aktuellen Version verwenden Sofort- und Pflichtladung bei vorhandener Umschaltung dennoch drei Phasen.",
+  "boost": "Lädt das Auto für die eingestellte Boost-Dauer mit dem Boost-Faktor × PV-Überschuss, mindestens mit der Boost-Mindestleistung. Netzbezug ist erlaubt. Danach automatisch zurück zum normalen Laden; Abstecken beendet den Boost.",
+  "boost_factor": "Vielfaches des PV-Überschusses beim Boost. ×2 heißt: etwa die Hälfte kommt aus PV, die andere Hälfte aus dem Netz.",
+  "boost_hours": "So lange läuft ein Boost nach dem Einschalten. Eine Änderung während eines laufenden Boosts startet die Dauer neu.",
+  "boost_min_power": "Mit dieser Leistung lädt der Boost mindestens, auch bei Wolken oder ohne PV (aus dem Netz). 0 W = nur Faktor × PV; reicht das nicht für den Mindeststrom, gilt die Stopp-Verzögerung.",
   "stop_delay": "So lange darf zu wenig Solarüberschuss vorhanden sein, bevor SEP den Betrieb beendet. Kurze Wolken führen dadurch nicht gleich zum Stopp. Währenddessen kann Netzstrom nötig sein.",
   "target_temp": "Warmwasser-Zieltemperatur: Ein neuer WW-Boost darf nur starten, wenn der Speicher um die Hysterese darunter liegt. Einmal ausgelöste WW-Ladungen über Button/Schalter werden von der Wärmepumpe selbst beendet. Bei Sollwert-Boost regelt SEP weiterhin aktiv.",
   "max_per_day": "Maximale Dauer der aktiv geregelten Sollwert-Boost-Freigabe pro Kalendertag (nur bei Number-Boost). Einmalige WW-Starts verwenden stattdessen den einstellbaren Mindestabstand.",
@@ -212,6 +216,7 @@ function collect(hass, hubId) {
         startNow: ents["button:start_now"],
         reset: ents["button:reset"],
         nachladen: ents["switch:nachladen"],
+        boost: ents["switch:boost"],
         settings: settings[id] || [],
       };
     })
@@ -397,6 +402,8 @@ const CARD_CSS = `
   .pb-stack { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
   .plan.sep-stop { color:var(--warning-color, #f57c00); display:flex; align-items:center; gap:4px; }
   .plan.sep-stop ha-icon { --mdc-icon-size:14px; }
+  .plan.sep-boost { color:var(--primary-color); display:flex; align-items:center; gap:4px; }
+  .plan.sep-boost ha-icon { --mdc-icon-size:14px; }
   .pb-label { font-size:10px; opacity:.72; }
   .pw { font-size:13px; font-weight:bold; white-space:nowrap; }
   .pb-budget { font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; }
@@ -519,7 +526,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     if (this._drag) return;
     const data = collect(hass, this._config.hub);
     const ids = data ? [...Object.values(data.ents), ...data.hubSettings.map(x => x.id),
-      ...data.devices.flatMap(d => [d.status, d.power, d.planned, d.mode, d.active, d.nachladen, ...d.settings.map(x => x.id)])] : [];
+      ...data.devices.flatMap(d => [d.status, d.power, d.planned, d.mode, d.active, d.nachladen, d.boost, ...d.settings.map(x => x.id)])] : [];
     const sig = ids.map(id => { const s = hass.states[id]; return s ? `${id}:${s.last_updated}` : id; }).join("|");
     if (sig === this._sig) return;
     this._data = data;
@@ -774,7 +781,12 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         .filter(Boolean).join(" · ");
       // Aktionen nur anzeigen, wenn sie im aktuellen Zustand wirken.
       const phase = a.phase || a.status_code || st?.state;
-      const canAct = a.geraetetyp === "load" && mode !== "off";
+      const canAct = (a.geraetetyp === "load" || a.geraetetyp === "ev") && mode !== "off";
+      const boostOn = this._st(dev.boost)?.state === "on";
+      const boostUntil = a.geraetetyp === "ev" && boostOn && a.boost_bis ? fmtTime(a.boost_bis) : null;
+      const boostTxt = boostUntil ? `Boost bis ${boostUntil}` : "";
+      const boostPossible = mode === "auto" && !["nicht_verbunden", "disconnected", "voll", "full",
+        "laedt_sofort", "charging_now", "laedt_pflicht", "charging_required"].includes(phase);
       const nachladenOn = this._st(dev.nachladen)?.state === "on";
       const act = (attr, id, icon, label, cls = "") =>
         `<button type="button" class="sep-act ${cls}" ${attr}="${esc(id)}"><ha-icon icon="${icon}"></ha-icon>${esc(label)}</button>`;
@@ -785,6 +797,8 @@ class SmartifyEnergyPlanCard extends HTMLElement {
           ? act("data-toggle", dev.nachladen, "mdi:washing-machine-alert", nachladenOn ? "Nachladen beenden" : "Nachladen", nachladenOn ? "on" : "") : "",
         dev.reset && ["laeuft", "running"].includes(phase)
           ? act("data-press", dev.reset, "mdi:check-circle-outline", "Fertig") : "",
+        dev.boost && (boostOn || boostPossible)
+          ? act("data-toggle", dev.boost, "mdi:rocket-launch", boostOn ? "Boost beenden" : "Boost", boostOn ? "on" : "") : "",
       ].join("") : "";
       const evSoc = a.geraetetyp === "ev" ? num(a.soc) : null;
       const chip = forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`
@@ -801,6 +815,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
             <div class="name"><span class="t">${esc(dev.name)}</span>${chip}</div>
             <div class="sub" title="${esc(sub)}">${esc(sub)}</div>
             ${planTxt ? `<div class="plan">${esc(planTxt)}</div>` : ""}
+            ${boostTxt ? `<div class="plan sep-boost"><ha-icon icon="mdi:rocket-launch"></ha-icon>${esc(boostTxt)}</div>` : ""}
             ${pvStopTxt ? `<div class="plan sep-stop" title="Stopp-Verzögerung läuft. Kehrt der Überschuss vorher zurück, lädt das Auto weiter und die Anzeige verschwindet."><ha-icon icon="mdi:timer-pause"></ha-icon>${esc(pvStopTxt)}</div>` : ""}
             ${trendText ? `<div class="plan">${trendText} ${logToggle}</div>${logOpen ? logText : ""}` : ""}
           </div>
