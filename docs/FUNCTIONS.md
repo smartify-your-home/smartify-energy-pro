@@ -66,6 +66,7 @@ Nur Haushaltsgeräte und WP-Boost zeigen unter dem Status die Zeit des langen Mi
 - Eine laufende PV-Ladung regelt ihren Sollstrom aus dem momentanen Restbudget. Die Startfreigabe nutzt weiterhin ein geglättetes Signal.
 - Hardwaregrenzen beachten: Mindeststrom, maximale Stromstärke, ganze Ampere, ggf. 1-/3-Phasenwechsel sowie dessen Sperrzeit.
 - Unterhalb der nötigen Leistung reduziert SEP bis zum Mindeststrom und schaltet erst nach Ablauf von `stop_delay` ab. Netzbezug ist dabei möglich.
+- Während die Stopp-Verzögerung läuft, zeigt die Karte die geplante Abschaltzeit („PV-Stopp HH:MM“, Attribut `pv_stopp_um`). Rücksetzen: Überschuss reicht wieder, Ladung gestoppt, Auto abgesteckt, Sofort-/Pflichtladung, Verdrängung durch vorrangigen Verbraucher, HA-Neustart. Ist die Ladung bereits aus, wird ein alter Verzögerungszeitpunkt verworfen, damit ein neuer PV-Start nicht sofort wieder stoppt.
 
 ## Batteriespeicher
 - SEP kann Speicherleistung, SoC, Kapazität und PV-Prognosen berücksichtigen. Seit 0.2.22 ist der **PV-Akku als passiver Teilnehmer in der Drag-and-Drop-Prioritätenliste** enthalten; seine Position bestimmt, welche höher priorisierten Geräte gemessene Akkuladung nutzen dürfen. Die Gutschrift verwendet getrennte Messreihen für Momentanwert, 2-Minuten- und konfigurierten Mittelwert.

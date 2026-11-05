@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 0.3.45 – Wallbox: PV-Stopp-Zeit und Akku zuerst
+- Neues Status-Attribut `pv_stopp_um` der Wallbox: Zeitpunkt, zu dem eine laufende PV-Ladung bei anhaltend fehlendem Überschuss gestoppt wird (Beginn der Unterdeckung + Stopp-Verzögerung). Die Karte zeigt „PV-Stopp HH:MM – zu wenig Überschuss“ nur, solange die Verzögerung läuft.
+- Rücksetzen: Überschuss reicht wieder, Ladung gestoppt, Auto abgesteckt, Sofort- oder Pflichtladung, Verdrängung durch vorrangigen Verbraucher, Neustart.
+- Behoben: Ein Verzögerungszeitpunkt aus einer bereits beendeten Ladung (z. B. Max-SoC oder externer Stopp) blieb gespeichert und konnte eine spätere PV-Ladung sofort wieder stoppen. Er wird jetzt verworfen, sobald die Wallbox nicht lädt.
+- Karte: Bei der Wallbox steht der Akkustand zuerst; Leistung und Budget stehen rechts untereinander. Andere Geräte unverändert.
+
 ## 0.3.44 – SEP-Karte in der Companion-App wieder sichtbar
 - Behoben: Die Registrierung der Lovelace-Ressource lief seit 0.3.39 in einem Hintergrund-Thread und brach beim Start mit `RuntimeError` („calls hass.async_create_task from a thread other than the event loop“) ab. Die Ressource blieb dadurch auf einer alten URL stehen; Apps und Kiosk-WebViews mit Cache luden eine veraltete oder gar keine Karte.
 - Registrierung läuft jetzt vollständig im Event-Loop (`@callback`-Listener, eine Hintergrundaufgabe mit bis zu sechs Versuchen bei spät startendem Lovelace). Beim nächsten Start wird die veraltete Ressourcen-URL automatisch aktualisiert.

@@ -45,6 +45,7 @@ from ..const import (
     EV_PHASE_MODES,
 )
 from ..helpers import ParamSpec, SensorSpec, clamp, power_w, state_float, state_str, time_from_str
+from ..status import STATUS_CODES
 from .base import BaseDevice, Context, Decision, PlanDemand
 
 _LOGGER = logging.getLogger(__name__)
@@ -143,7 +144,20 @@ class EvDevice(BaseDevice):
     def status_attrs(self) -> dict:
         start = self._latest_start if self._need_wh > 0 else None
         return {**super().status_attrs(), "soc": self.soc,
-                "pflicht_start": start.isoformat() if start else None}
+                "pflicht_start": start.isoformat() if start else None,
+                "pv_stopp_um": self.pv_stop_at.isoformat() if self.pv_stop_at else None}
+
+    @property
+    def pv_stop_at(self) -> datetime | None:
+        """When a running PV charge stops if the surplus does not recover.
+
+        Only set while the stop delay is counting (``_deficit_since``). The
+        timer is cleared as soon as the surplus covers the minimum again, when
+        the charge stops, the car is unplugged, a forced/immediate charge takes
+        over, or a higher-priority load preempts the wallbox."""
+        if self._deficit_since is None or self.status != STATUS_CODES["laedt_pv"]:
+            return None
+        return self._deficit_since + timedelta(minutes=float(self.p("stop_delay")))
 
     # ── Messwerte ────────────────────────────────────────────────────────────
     @property
@@ -330,10 +344,12 @@ class EvDevice(BaseDevice):
         max_ph = 3 if self.cfg.get(CONF_PHASE_ENTITY) else self.max_phases
 
         if goal == EV_GOAL_NOW:
+            self._deficit_since = None
             self.status = "laedt_sofort"
             return self._charge(self.max_a, max_ph, "Sofort laden", forced=True)
 
         if self._latest_start and ctx.now >= self._latest_start and self._need_wh > 0:
+            self._deficit_since = None
             self.status = "laedt_pflicht"
             return self._charge(self.max_a, max_ph,
                                 f"Ziel {self._target_km:.0f} km bis {self._deadline:%H:%M} – Netzladung",
@@ -363,6 +379,9 @@ class EvDevice(BaseDevice):
             self.status = "laedt_pv"
             return self._charge(amps, phases, f"PV-Laden {amps:.0f} A × {phases}")
 
+        # Not charging: no stop delay can be running (e.g. after Max-SoC or an
+        # external stop). A stale timer would stop the next PV start at once.
+        self._deficit_since = None
         if avail >= threshold and avail_avg >= threshold:
             amps = clamp(math.floor(avail / (self.voltage * phases)), self.min_a, self.max_a)
             self.status = "laedt_pv"

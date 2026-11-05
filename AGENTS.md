@@ -76,5 +76,9 @@ Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verha
 
 - Schmale Prioritätenlisten anhand ihrer eigenen Breite formatieren. Die rechte Spalte begrenzen, damit Modus und Zahnrad den Gerätenamen nicht verdrängen.
 
+## Wallbox PV-Stopp (0.3.45)
+- `EvDevice.pv_stop_at` = `_deficit_since + stop_delay`, nur bei Status `charging_pv` (Statuscodes über `STATUS_CODES` vergleichen, nicht Legacy-Strings). `_deficit_since` wird bei nicht laufender Ladung, Sofort-/Pflichtladung, Abstecken und Verdrängung gelöscht. Strom wird weiterhin sofort reduziert, abgeschaltet erst nach Ablauf. Test: tests/test_ev_stop_delay.py.
+- Karte: EV-Zeile Akku zuerst, Leistung/Budget in `.pb-stack` untereinander; andere Geräte `.pb-pair` (display:contents) unverändert.
+
 ## Release 0.3.43
 - Kompakte Modusnamen und begrenzte rechte Spalte auf schmalen Karten.

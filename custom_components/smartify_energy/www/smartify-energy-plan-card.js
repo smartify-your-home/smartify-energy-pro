@@ -393,6 +393,10 @@ const CARD_CSS = `
   .right { display:flex; flex-direction:column; align-items:flex-end; gap:2px; min-width:0; }
   .power-budget { display:flex; gap:10px; justify-content:flex-end; align-items:center; flex-wrap:wrap; }
   .pb-item { display:flex; flex-direction:column; align-items:flex-end; gap:1px; white-space:nowrap; }
+  .pb-pair { display:contents; }
+  .pb-stack { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+  .plan.sep-stop { color:var(--warning-color, #f57c00); display:flex; align-items:center; gap:4px; }
+  .plan.sep-stop ha-icon { --mdc-icon-size:14px; }
   .pb-label { font-size:10px; opacity:.72; }
   .pw { font-size:13px; font-weight:bold; white-space:nowrap; }
   .pb-budget { font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; }
@@ -763,6 +767,9 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const forcedAt = a.pflicht_start && !forced ? Date.parse(a.pflicht_start) : NaN;
       const forcedTxt = Number.isFinite(forcedAt)
         ? (forcedAt <= Date.now() + 60e3 ? "Pflichtstart fällig" : `Pflichtstart ${fmtTime(a.pflicht_start)}`) : "";
+      // Auto: läuft die Stopp-Verzögerung (zu wenig PV), Abschaltzeit zeigen.
+      const pvStopTxt = a.geraetetyp === "ev" && a.pv_stopp_um && fmtTime(a.pv_stopp_um)
+        ? `PV-Stopp ${fmtTime(a.pv_stopp_um)} – zu wenig Überschuss` : "";
       const planTxt = [pt ? `Empf. Start ${pt}${planned.attributes.pv_anteil_prozent != null ? ` · ${planned.attributes.pv_anteil_prozent} % PV` : ""}` : "", forcedTxt]
         .filter(Boolean).join(" · ");
       // Aktionen nur anzeigen, wenn sie im aktuellen Zustand wirken.
@@ -794,10 +801,13 @@ class SmartifyEnergyPlanCard extends HTMLElement {
             <div class="name"><span class="t">${esc(dev.name)}</span>${chip}</div>
             <div class="sub" title="${esc(sub)}">${esc(sub)}</div>
             ${planTxt ? `<div class="plan">${esc(planTxt)}</div>` : ""}
+            ${pvStopTxt ? `<div class="plan sep-stop" title="Stopp-Verzögerung läuft. Kehrt der Überschuss vorher zurück, lädt das Auto weiter und die Anzeige verschwindet."><ha-icon icon="mdi:timer-pause"></ha-icon>${esc(pvStopTxt)}</div>` : ""}
             ${trendText ? `<div class="plan">${trendText} ${logToggle}</div>${logOpen ? logText : ""}` : ""}
           </div>
           <div class="right">
             <div class="power-budget" title="${esc(budgetTitle)}">
+              ${a.geraetetyp === "ev" ? `<div class="pb-item"><span class="pb-label">Akku</span><span class="pw">${evSoc == null ? "–" : evSoc.toFixed(0) + " %"}</span></div>` : ""}
+              <div class="${a.geraetetyp === "ev" ? "pb-stack" : "pb-pair"}">
               <div class="pb-item">
                 <span class="pb-label">Leistung</span>
                 <span class="pw">${power != null ? fmtW(power) : "–"}</span>
@@ -806,7 +816,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
                 <span class="pb-label">Budget aktuell</span>
                 <span class="pb-budget ${budgetNow == null ? "" : budgetNow < 0 ? "negative" : budgetOk ? "positive" : ""}">${fmtW(budgetNow)}</span>
               </div>
-              ${a.geraetetyp === "ev" ? `<div class="pb-item"><span class="pb-label">Akku</span><span class="pw">${evSoc == null ? "–" : evSoc.toFixed(0) + " %"}</span></div>` : ""}
+              </div>
               ${this._config.show_mode ? this._modeSelect(dev.mode) : ""}
               ${this._config.show_settings !== false && dev.settings.length ? `<button class="gear ${open ? "open" : ""}" data-gear="${dev.id}" title="Einstellungen"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}
             </div>
