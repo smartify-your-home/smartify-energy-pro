@@ -154,7 +154,7 @@ class BaseDevice:
     def set_param(self, key: str, value: Any) -> None:
         self.params[key] = value
         self.on_param_changed(key)
-        self.manager.async_param_changed()
+        self.manager.async_param_changed(immediate=(key == "mode"))
 
     def on_param_changed(self, key: str) -> None:
         """Hook für Unterklassen."""
