@@ -1,3 +1,8 @@
+## Heizstab-Responsive-Layout (nach 0.3.50, für 0.3.51)
+- `Auto | Ein | Aus` bleibt ausschließlich bei temperaturgeregeltem Heizstab, behält den vorhandenen `data-setmode`-Handler (auto/manual/off) und befindet sich als erstes Kindelement in `.power-budget.heater-power-budget`.
+- Breite Ansicht: Umschalter und Messwerte liegen nebeneinander **innerhalb desselben rechten Leistungs-/Budgetblocks**. Schmale Karten (bestehende Container-Breakpoint 560 px): Umschalter **oberhalb** von Leistung und Budget in derselben rechten Spalte (`grid-column:5; grid-row:1`). Namen/Status links dürfen umbrechen. Weder Steuerlogik noch andere Gerätetypen ändern.
+- Regression: `tests/ui/card.test.cjs` prüft Position, Reihenfolge, mobile CSS und bestehenden Modus-Serviceaufruf.
+
 # Smartify Energy Pro – Arbeitsregeln für alle Agenten
 
 ## Verbindliche Lesepflicht vor der ersten Änderung

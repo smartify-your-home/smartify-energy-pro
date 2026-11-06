@@ -475,6 +475,11 @@ const CARD_CSS = `
   .power-budget { display:flex; gap:10px; justify-content:flex-end; align-items:center; flex-wrap:wrap; }
   .pb-item { display:flex; flex-direction:column; align-items:flex-end; gap:1px; white-space:nowrap; }
   .pb-pair { display:contents; }
+  /* Heizstab: keep the three existing mode actions INSIDE the metrics area.
+     Wide rows place the switch beside the numbers; narrow rows place it above. */
+  .heater-power-budget { flex-wrap:nowrap; gap:10px; }
+  .heater-power-budget .pb-pair { display:flex; gap:10px; align-items:center; justify-content:flex-end; }
+  .heater-power-budget .seg { flex:none; }
   .pb-full { font-size:10px; color:var(--secondary-text-color); white-space:nowrap; }
   .gear.boost.on { color:var(--primary-color); }
   .pb-stack { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
@@ -495,6 +500,9 @@ const CARD_CSS = `
     .dev .main .sub { white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:anywhere; line-height:1.35; }
     .right { grid-column:5; grid-row:1; align-items:flex-end; width:auto; min-width:0; }
     .power-budget { width:100%; justify-content:flex-end; gap:4px 8px; }
+    .heater-power-budget { flex-direction:column; flex-wrap:nowrap; align-items:flex-end; gap:5px; }
+    .heater-power-budget .pb-pair { width:100%; justify-content:flex-end; gap:8px; }
+    .heater-power-budget .seg { align-self:flex-end; }
     .power-budget select.mode { max-width:100%; box-sizing:border-box; }
     .pb-item { align-items:flex-end; }
     .right .sep-actions { justify-content:flex-end; }
@@ -969,7 +977,8 @@ class SmartifyEnergyPlanCard extends HTMLElement {
             ${trendText ? `<div class="plan">${trendText} ${logToggle}</div>${logOpen ? logText : ""}` : ""}
           </div>
           <div class="right">
-            <div class="power-budget" title="${esc(budgetTitle)}">
+            <div class="power-budget${a.geraetetyp === "heater" ? " heater-power-budget" : ""}" title="${esc(budgetTitle)}">
+              ${a.geraetetyp === "heater" ? this._heaterSwitch(dev.mode) : ""}
               ${a.geraetetyp === "ev" ? `<div class="pb-item"><span class="pb-label">Akku</span><span class="pw">${evSoc == null ? "–" : evSoc.toFixed(0) + " %"}</span>${a.voll_um && fmtTime(a.voll_um) ? `<span class="pb-full" title="Geschätzt bei gleichbleibender Ladeleistung bis Max-SoC">voll ${fmtTime(a.voll_um)}</span>` : ""}</div>` : ""}
               <div class="${a.geraetetyp === "ev" ? "pb-stack" : "pb-pair"}">
               <div class="pb-item">
@@ -981,7 +990,6 @@ class SmartifyEnergyPlanCard extends HTMLElement {
                 <span class="pb-budget ${budgetNow == null ? "" : budgetNow < 0 ? "negative" : budgetOk ? "positive" : ""}">${fmtW(budgetNow)}</span>
               </div>
               </div>
-              ${a.geraetetyp === "heater" ? this._heaterSwitch(dev.mode) : ""}
               ${a.geraetetyp !== "heater" && mode && !["auto", "observe"].includes(mode) ? `<span class="mode-tag ${esc(mode)}" title="Modus – ändern im Zahnrad">${esc(MODE_LABELS[mode] || mode)}</span>` : ""}
               ${a.geraetetyp === "ev" && this._config.show_mode !== false ? this._quickSelect(dev.goal, "Ladeziel") : ""}
               ${actions ? `<div class="sep-actions">${actions}</div>` : ""}

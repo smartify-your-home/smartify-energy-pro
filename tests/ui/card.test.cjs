@@ -201,3 +201,28 @@ test('heater row offers Auto/Ein/Aus mapped to auto/manual/off',()=>{
   btns[2].click();
   assert.equal(JSON.stringify(calls[0]),JSON.stringify(['select','select_option',{entity_id:'select.hs_mode',option:'off'}]));
 });
+
+test('heater Auto/Ein/Aus shares the metrics container; narrow layout puts it above the measurements',()=>{
+  const root=rowCard({hs:[
+    ['sensor.hs','status','manuell',{geraetetyp:'heater',modus:'manual'}],
+    ['select.hs_mode','mode','manual',{options:['auto','observe','manual','off']}],
+  ]});
+  const heater=root.querySelector('.heater-power-budget');
+  assert.ok(heater,'heater has its own responsive metrics container');
+  assert.ok(heater.classList.contains('power-budget'));
+  const seg=heater.querySelector(':scope > .seg');
+  const pair=heater.querySelector(':scope > .pb-pair');
+  assert.ok(seg,'Auto/Ein/Aus is inside power-budget, not a sibling');
+  assert.ok(pair,'power and budget stay grouped together');
+  assert.ok(seg.compareDocumentPosition(pair) & 4,'switch is before power/budget for narrow stacking');
+  assert.deepEqual([...seg.querySelectorAll('button')].map(b=>b.textContent),['Auto','Ein','Aus']);
+  assert.equal(pair.querySelectorAll('.pb-item').length,2);
+  const css=source;
+  assert.match(css,/\.heater-power-budget\s*\{\s*flex-wrap:nowrap;/,'desktop uses a horizontal metrics group');
+  assert.match(css,/@container \(max-width:560px\)\s*\{[\s\S]*?\.heater-power-budget\s*\{\s*flex-direction:column;/,
+    'mobile card container stacks switch over both metrics');
+  assert.match(css,/\.heater-power-budget \.seg\s*\{\s*align-self:flex-end;/,
+    'mobile switch stays in right metrics column');
+  assert.match(css,/\.right\s*\{\s*grid-column:5; grid-row:1;/,
+    'mobile metrics never move below device status');
+});

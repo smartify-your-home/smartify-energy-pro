@@ -1,3 +1,6 @@
+## Nach 0.3.50 – Heizstab Auto/Ein/Aus in der Gerätezeile (0.3.51 vorbereitet)
+Der Betriebsmodus wird über den bestehenden Segmentschalter im rechten Leistungs-/Budgetbereich gesetzt (Auto → auto, Ein → manual, Aus → off). Breit: Schalter neben den Werten; schmal: Schalter über Leistung/Budget, rechte Spalte bleibt erhalten. Keine Änderung von Temperaturschutz, Mindestpause, Modusdienst oder Budgetsteuerung.
+
 ## Release 0.3.43
 
 Auf schmalen Karten teilen sich Gerätetext und Bedienelemente den verfügbaren Platz. Messwerte, Modus und Zahnrad können innerhalb der rechten Spalte umbrechen. Die Modusauswahl im Kartenkopf und in den Gerätezeilen zeigt Automatik, Beobachten, Manuell und Aus als kurze Namen. Beim WP-Boost bleibt die gerätespezifische Auswahl erhalten.
