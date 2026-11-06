@@ -1,3 +1,6 @@
+## Aktuelle Budgets und Reaktionszeiten (Unreleased)
+Netzsaldo, Akkuleistung und die Leistungssensoren aller SEP-Geräte lösen eine kurzfristig gebündelte (0,25 s) Neuberechnung aus; andere Sensoränderungen bleiben bei 2 s. Schnellere Anforderungen verdrängen bereits vorgemerkte langsamere Aktualisierungen. Gerätemoduswechsel starten die Auswertung ohne absichtliche Verzögerung. Das Budget in der rechten Gerätezeile bleibt der momentane individuelle Wert, nicht der historische Mittelwert. Die Sensoraktualisierung selbst hängt weiterhin vom jeweiligen Gerät und Home Assistant ab. Schutzbedingungen, Start-/Stopplogik, Prognoseintervalle und Akkupriorität bleiben unverändert.
+
 ## Nach 0.3.50 – Responsiver Heizstab-Umschalter (0.3.51 vorbereitet)
 Der vorhandene Auto/Ein/Aus-Umschalter wird in den Leistungs-/Budgetblock der Gerätezeile verschoben. Bei breiter Karte liegt er neben den Messwerten, bei schmaler Karte direkt oberhalb von Leistung und Budget. Er bleibt in der rechten Spalte und verdrängt nicht den umbruchfähigen Status links. Die vorhandene Modi-Zuordnung und die Temperaturregelung bleiben unverändert.
 

@@ -92,6 +92,7 @@ class EnergyManager:
         self._fast_inputs: frozenset[str] = frozenset()
         self._unsubs: list = []
         self._pending_run = None
+        self._pending_delay: float | None = None
         self._last_run: datetime | None = None
         self._last_plan: datetime | None = None
         self._plan_dirty = False
@@ -259,12 +260,15 @@ class EnergyManager:
         for field in HUB_ENTITY_FIELDS:
             value = self.cfg.get(field)
             entities.update(value if isinstance(value, list) else [value] if value else [])
+        # Every metered device affects instantaneous budget. Keep these inputs
+        # responsive, without changing device start/stop safety rules.
         fast_inputs = {self.cfg.get(CONF_GRID_SENSOR), self.cfg.get(CONF_GRID_EXPORT_SENSOR),
                        self.cfg.get(CONF_BAT_POWER)}
         for dev in self.devices.values():
             entities.update(dev.observed_entities())
+            fast_inputs.add(dev.cfg.get("power_sensor"))
             if dev.TYPE == "ev":
-                fast_inputs.update(dev.cfg.get(key) for key in ("power_sensor", "current_entity"))
+                fast_inputs.add(dev.cfg.get("current_entity"))
         self._fast_inputs = frozenset(item for item in fast_inputs if item)
         if entities:
             self._unsubs.append(async_track_state_change_event(self.hass, entities, self._input_changed))
@@ -283,7 +287,7 @@ class EnergyManager:
         # Grid / battery metering changes need a shorter control loop than
         # forecast or miscellaneous device state changes.
         entity_id = event.data.get("entity_id")
-        self._schedule_run(0.5 if entity_id in self._fast_inputs else 2.0)
+        self._schedule_run(0.25 if entity_id in self._fast_inputs else 2.0)
 
     def _weighted_average(self, now: datetime, window: timedelta, fallback: float,
                           history: deque[tuple[datetime, float]] | None = None) -> float:
@@ -325,6 +329,7 @@ class EnergyManager:
         if self._pending_run:
             self._pending_run()
             self._pending_run = None
+            self._pending_delay = None
         async with self._lock:
             await self._store.async_save(self._dump())
 
@@ -397,12 +402,12 @@ class EnergyManager:
         await self._store.async_save(self._dump())
 
     @callback
-    def async_param_changed(self) -> None:
+    def async_param_changed(self, immediate: bool = False) -> None:
         # Changing a device mode/parameter must immediately invalidate the
         # displayed forecast allocation instead of waiting for PLAN_INTERVAL.
         self._plan_dirty = True
         self._store.async_delay_save(self._dump, 5)
-        self._schedule_run()
+        self._schedule_run(0.0 if immediate else 2.0)
 
     @callback
     def _schedule_run(self, delay: float = 2.0) -> None:
@@ -411,12 +416,19 @@ class EnergyManager:
         if self._lock.locked():
             self._rerun = True
             return
+        # A pending slow run must never hold up an urgent meter/mode update.
+        # Keep coalescing equal/slower requests to avoid command storms.
         if self._pending_run:
-            return
+            if self._pending_delay is not None and delay >= self._pending_delay:
+                return
+            self._pending_run()
+            self._pending_run = None
+        self._pending_delay = delay
 
         @callback
         def _run(_now) -> None:
             self._pending_run = None
+            self._pending_delay = None
             self.hass.async_create_task(self.async_run())
 
         self._pending_run = async_call_later(self.hass, delay, _run)
@@ -429,6 +441,7 @@ class EnergyManager:
         if self._pending_run is not None:
             self._pending_run()
             self._pending_run = None
+            self._pending_delay = None
         await self.async_run()
 
     async def _async_tick(self, _now=None) -> None:

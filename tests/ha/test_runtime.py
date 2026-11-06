@@ -113,7 +113,37 @@ async def test_explicit_input_fields_and_fast_cache(hass):
     assert d.observed_entities()=={'switch.wp','sensor.power','binary_sensor.ww'}
     await m.async_start()
     assert 'sensor.grid' in m._fast_inputs
+    assert 'sensor.power' in m._fast_inputs  # Every metered load updates current budgets quickly.
     await m.async_stop()
+
+
+async def test_urgent_budget_update_preempts_pending_slow_cycle(hass):
+    m = manager(hass)
+    with patch("custom_components.smartify_energy.manager.async_call_later") as later:
+        m._schedule_run(2.0)
+        first_cancel = later.return_value
+        assert later.call_count == 1
+        m._schedule_run(0.25)
+        assert first_cancel.call_count == 1
+        assert later.call_count == 2
+        assert m._pending_delay == 0.25
+        m._schedule_run(2.0)  # Slower subsequent changes are coalesced.
+        assert later.call_count == 2
+        m._schedule_run(0.0)  # Manual mode change takes precedence.
+        assert later.call_count == 3
+        assert m._pending_delay == 0.0
+        m._pending_run()
+
+
+async def test_device_mode_change_requests_immediate_budget_cycle(hass):
+    m = manager(hass)
+    d = HeatPumpDevice(m, 'wp', 'WP', {})
+    with patch.object(m, "async_param_changed") as notify:
+        d.set_param("mode", "manual")
+        notify.assert_called_once_with(immediate=True)
+        notify.reset_mock()
+        d.set_param("nominal_power", 2100)
+        notify.assert_called_once_with()
 
 
 async def test_sensor_enum_recorder_and_dedup(hass):

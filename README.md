@@ -1,10 +1,13 @@
+
+**Budget-Reaktionszeit (0.3.52):** Netz-, Akku- und Geräteleistungen werden nach einer kurzen Bündelung von 0,25 Sekunden neu bewertet. Ein bereits geplanter langsamer Zyklus kann vorgezogen werden; Gerätemoduswechsel werden ohne absichtliche Wartezeit bewertet. Die individuellen aktuellen Budgets in der Gerätezeile sind Momentanwerte. Bestehende Hysterese, Schutzzeiten sowie Trend-/Mittelwertprüfungen für automatische Starts bleiben erhalten.
+
 # Smartify Energy Pro
 
 Auf schmalen Karten teilen sich Gerätetext und Bedienelemente den verfügbaren Platz. Messwerte, Modus und Zahnrad können innerhalb der rechten Spalte umbrechen. Die Modusauswahl im Kartenkopf zeigt Automatik, Beobachten, Manuell und Aus als kurze Namen. Ab 0.3.49 steht der Gerätemodus nur noch im Zahnrad (Gruppe „Bedienung“); in der Gerätezeile zeigt das Auto stattdessen die Ladeziel-Auswahl, Haushaltsgeräte zeigen die jeweils wirksamen Buttons Sofortstart, Nachladen und Fertig. Der Heizstab hat im rechten Leistungs-/Budgetblock einen Umschalter Auto | Ein | Aus (Ein = Modus Manuell: heizt bis zur Maximaltemperatur, auch mit Netzstrom; Temperaturschutz und Mindestpause bleiben aktiv; Aus schaltet sofort ab). Auf breiten Karten liegen die drei Tasten neben Leistung/Budget, bei schmaler Kartenbreite darüber. Werte und Tasten bleiben rechts, Status links darf umbrechen. Ist ein anderes Gerät auf Manuell oder Aus, erscheint der Modus als kleiner Hinweis; Beobachten zeigt weiterhin den Status-Chip. Beim WP-Boost bleibt die gerätespezifische Auswahl erhalten.
 
 **PV-Überschuss intelligent verteilen – mit Prioritäten, Geräteprogrammen, Batteriespeicher und Home-Assistant-Dashboard.**
 
-**Aktueller Quellcode-Stand (vorbereitet): 0.3.51** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
+**Aktueller Quellcode-Stand (vorbereitet): 0.3.52** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
 
 > **Versionshinweis:** Die Versionsnummer beschreibt den Repository-Stand. In HACS erscheint eine neue Version erst, wenn der zugehörige GitHub-Release-Tag erfolgreich veröffentlicht und von HACS erkannt wurde. [Veröffentlichte Versionen ansehen](https://github.com/smartify-your-home/smartify-energy-pro/releases).
 
