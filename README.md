@@ -84,7 +84,7 @@ Die Integration stellt die Karte bereit und registriert sie selbst als Lovelace-
 type: custom:smartify-energy-plan-card
 ```
 
-Die Karte bietet die Prioritätenliste, Geräteeinstellungen mit Hilfetexten, Statusanzeigen und den Prognoseplan. Für einzelne Einstellungen das Zahnrad des betreffenden Geräts verwenden.
+Die Karte bietet die Prioritätenliste, Geräteeinstellungen mit Hilfetexten, Statusanzeigen und den Prognoseplan. Für einzelne Einstellungen das Zahnrad des betreffenden Geräts verwenden. Ab 0.3.48 sind die Einstellungen kompakt: thematische Gruppen (Bedienung, Ladeziel, PV-Boost, Fahrzeug, Temperatur, Laufzeit, Leistung & PV, Zeiten, Speicher; zugeklappt: Programm- & Fertigerkennung, Wetterfilter, Erweitert mit Zusammenfassung der Werte), je Einstellung eine Kurzinfo; die ausführliche Erklärung öffnet (i). Am Desktop zweispaltig, am Handy einspaltig. Einstellungen ohne Wirkung im aktuellen Zustand werden ausgeblendet: Abfahrtszeit/Ziel-Kilometer nur bei Ladeziel „km bis Uhrzeit“, Pool-Sperrzeiten nur bei aktiver Sperre, Sonnenwinkel nur bei aktivem Sonnenfilter, Bewölkungs- bzw. Prognosegrenzen nur beim passenden WW-Boost-Startfilter.
 
 ## Wichtige Hinweise
 

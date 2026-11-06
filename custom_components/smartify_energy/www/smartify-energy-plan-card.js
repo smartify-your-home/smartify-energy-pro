@@ -140,6 +140,69 @@ const SETTING_HELP = {
   "trigger_cooldown": "Mindestzeit zwischen zwei WW-Boost-Auslösungen in Minuten. Standard 60 min, einstellbar 60–720 min. Nach erfolgreicher Startfreigabe wird der Zeitstempel VOR dem WP-Befehl gespeichert und übersteht auch Home-Assistant-Neustarts. Während laufender WW-Ladung ist nach der konfigurierten WW-Aktiv-Wartezeit höchstens ein Boost je Zyklus möglich."
 };
 
+// Kompakte Einstellungen: Kurzinfo je Einstellung, lange Erklärung über (i).
+const SETTING_SHORT = {
+  mode: "Wer das Gerät steuert", goal: "Wann und wie geladen wird", season: "Sommer/Winter-Betrieb",
+  nachladen: "Steckdose kurz freigeben", start_now: "Programm jetzt freigeben", reset: "Erkennung zurücksetzen",
+  deadline: "Abfahrtszeit", target_km: "Strecke bis Abfahrt",
+  boost: "Mit Netzanteil laden", boost_factor: "× PV-Überschuss", boost_hours: "danach normales Laden", boost_min_power: "auch ohne PV",
+  reserve_soc: "zählt nicht als Reichweite", max_soc: "Ladung endet hier", consumption: "je 100 km",
+  pv_share: "Solaranteil für den Start", stop_delay: "Wartezeit bei Wolken",
+  phase_mode: "1-, 3-phasig oder automatisch", phase_switch_minutes: "Abstand zwischen Umschaltungen", phase_hysteresis: "Puffer beim Umschalten",
+  nominal_power: "typische Leistung", min_surplus: "Überschuss für den Start", pause_budget_release_pct: "Budget nach Heizphase freigeben",
+  earliest_start: "nicht vor dieser Zeit", latest_start: "spätestens starten", duration: "typische Programmdauer",
+  detect_threshold: "Programm erkannt ab", detect_seconds: "so lange darüber", finish_threshold: "fertig unter", finish_minutes: "so lange darunter",
+  fixed_runtime: "Laufzeit pro Tag", temp_factor: "Laufzeit je °C", runtime_min: "mindestens pro Tag", runtime_max: "höchstens pro Tag (Temperatur)",
+  max_runtime: "absolute Obergrenze", winter_temp: "darunter Winterbetrieb", vm_share: "Anteil bis Vormittags-Ziel", vm_deadline: "Vormittags-Ziel",
+  lock_enabled: "Mittagssperre", lock_start: "Sperre ab", lock_end: "Sperre bis",
+  min_on: "Mindestlaufzeit", min_off: "Mindestpause", max_per_day: "Maximum pro Tag",
+  target_temp: "Ziel-Warmwasser", boost_hysteresis: "Abstand zum Ziel für Start", boost_value: "Sollwert im Boost", normal_value: "Sollwert normal",
+  idle_power_threshold: "Leerlauf unter", idle_minutes: "Leerlauf-Dauer", trigger_cooldown: "Pause zwischen Auslösungen", ww_active_minutes: "WW-Bereitung erkannt nach",
+  sun_filter_active: "nur bei Sonnenstand", sun_angle_min: "Sonnenwinkel mindestens", boost_start_filter: "Wetterbedingung für Start",
+  boost_forecast_hours: "Prognosefenster", boost_forecast_min_kwh: "PV im Fenster mindestens", cloud_now_max: "Bewölkung jetzt höchstens", cloud_next_max: "Bewölkung nächste Stunde höchstens",
+  heater_max_temp: "sofort aus ab", heater_hysteresis: "wieder ein unter Max − Wert", heater_start_surplus: "Überschuss für EIN", heater_stop_surplus: "AUS unter",
+  heater_earliest_start: "nicht vor dieser Zeit", heater_min_on: "Mindestlaufzeit", heater_min_off: "Mindestpause",
+  avg_window: "Mittelwert über", trend_window: "Trend über", trend_tolerance: "Toleranz für Trend", grid_reserve: "Puffer zum Netz", base_load: "Grundlast im Haus",
+  night_start: "Nachtfenster ab", night_end: "Nachtfenster bis", sinks_yield: "Heizstab/Pool weichen Geräten",
+  battery_strategy: "wer zuerst PV bekommt", battery_min_soc: "Speicher mindestens", battery_target_soc: "Speicher-Ziel", battery_safety: "Sicherheitsfaktor Prognose",
+};
+
+// Gruppen in Anzeigereihenfolge. collapsed: standardmäßig zugeklappt (mit Zusammenfassung).
+const SETTING_GROUPS = [
+  { id: "control", title: "Bedienung", keys: ["mode", "goal", "season", "nachladen", "start_now", "reset", "battery_strategy"] },
+  { id: "goal", title: "Ladeziel", keys: ["deadline", "target_km"] },
+  { id: "boost", title: "PV-Boost", keys: ["boost", "boost_factor", "boost_hours", "boost_min_power"] },
+  { id: "vehicle", title: "Fahrzeug", keys: ["reserve_soc", "max_soc", "consumption"] },
+  { id: "temp", title: "Temperatur", keys: ["target_temp", "boost_hysteresis", "boost_value", "normal_value", "heater_max_temp", "heater_hysteresis"] },
+  { id: "runtime", title: "Laufzeit", keys: ["fixed_runtime", "temp_factor", "runtime_min", "runtime_max", "max_runtime", "winter_temp", "vm_share", "max_per_day", "duration"] },
+  { id: "power", title: "Leistung & PV", keys: ["nominal_power", "min_surplus", "heater_start_surplus", "heater_stop_surplus", "grid_reserve", "base_load", "sinks_yield", "pause_budget_release_pct"] },
+  { id: "times", title: "Zeiten", keys: ["earliest_start", "latest_start", "heater_earliest_start", "vm_deadline", "lock_enabled", "lock_start", "lock_end", "night_start", "night_end"] },
+  { id: "battery", title: "Speicher", keys: ["battery_min_soc", "battery_target_soc", "battery_safety"] },
+  { id: "detection", title: "Programm- & Fertigerkennung", collapsed: true, keys: ["detect_threshold", "detect_seconds", "finish_threshold", "finish_minutes"] },
+  { id: "weather", title: "Wetterfilter", collapsed: true, keys: ["boost_start_filter", "boost_forecast_hours", "boost_forecast_min_kwh", "cloud_now_max", "cloud_next_max", "sun_filter_active", "sun_angle_min"] },
+  { id: "advanced", title: "Erweitert", collapsed: true, keys: ["pv_share", "stop_delay", "phase_mode", "phase_switch_minutes", "phase_hysteresis", "min_on", "min_off", "heater_min_on", "heater_min_off", "avg_window", "trend_window", "trend_tolerance", "idle_power_threshold", "idle_minutes", "trigger_cooldown", "ww_active_minutes"] },
+];
+
+const SETTING_LABELS = {
+  detect_threshold: "Programmerkennung: Leistung über", detect_seconds: "Programmerkennung: Zeitraum",
+  finish_threshold: "Fertigerkennung: Leistung unter", finish_minutes: "Fertigerkennung: Zeitraum",
+  pause_budget_release_pct: "Budgetfreigabe nach Heizphase",
+};
+
+// Nur anzeigen, wenn die Einstellung im aktuellen Zustand wirkt.
+// state(key) liefert den aktuellen Zustand einer anderen Einstellung desselben Geräts.
+const SETTING_VISIBLE = {
+  deadline: st => st("goal") == null || st("goal") === "km_until",
+  target_km: st => st("goal") == null || st("goal") === "km_until",
+  lock_start: st => st("lock_enabled") !== "off",
+  lock_end: st => st("lock_enabled") !== "off",
+  sun_angle_min: st => st("sun_filter_active") !== "off",
+  cloud_now_max: st => st("boost_start_filter") == null || st("boost_start_filter") === "cloud",
+  cloud_next_max: st => st("boost_start_filter") == null || st("boost_start_filter") === "cloud",
+  boost_forecast_hours: st => st("boost_start_filter") == null || st("boost_start_filter") === "pv_forecast",
+  boost_forecast_min_kwh: st => st("boost_start_filter") == null || st("boost_start_filter") === "pv_forecast",
+};
+
 const SETTING_DOMAINS = ["select", "switch", "time", "number", "button"];
 
 const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -451,13 +514,27 @@ const CARD_CSS = `
   .gear ha-icon { --mdc-icon-size:20px; }
   .dev-wrap { display:flex; flex-direction:column; }
   .settings { background:var(--secondary-background-color); border-radius:0 0 var(--radius) var(--radius);
-              margin:-4px 0 0; padding:8px 10px 10px; display:grid; grid-template-columns:1fr auto; gap:6px 10px;
-              align-items:center; font-size:13px; }
+              margin:-4px 0 0; padding:6px 8px 8px; display:flex; flex-direction:column; gap:6px; font-size:13px; }
   .settings.hub { border-radius:var(--radius); margin:0 0 10px; }
   .settings .grp { grid-column:1 / -1; font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
                    color:var(--secondary-text-color); margin-top:4px; }
   .settings label { color:var(--txt); white-space:normal; overflow-wrap:anywhere; }
-  .setting-help { grid-column:1 / -1; font-size:12px; line-height:1.5; color:var(--secondary-text-color); padding:0 0 12px; border-bottom:1px solid var(--divider-color); white-space:normal; overflow-wrap:anywhere; }
+  .setting-help { grid-column:1 / -1; font-size:12px; line-height:1.45; color:var(--txt); white-space:normal; overflow-wrap:anywhere;
+                  background:color-mix(in srgb, var(--primary-color) 10%, transparent); border-radius:6px; padding:6px 8px; margin:2px 0 2px; }
+  .sgrp { background:var(--card-background-color); border-radius:calc(var(--radius) - 2px); overflow:hidden; }
+  .sgh { width:100%; display:flex; justify-content:space-between; align-items:center; gap:8px; background:none; border:none;
+         padding:7px 10px; font:inherit; font-size:13px; font-weight:600; color:var(--txt); cursor:pointer; text-align:left; }
+  .sgh small { font-weight:400; font-size:11px; color:var(--secondary-text-color); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  .sgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr)); column-gap:20px; align-items:start; padding:0 10px 4px; }
+  .srow { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; column-gap:8px; padding:5px 0;
+          border-top:1px solid var(--divider-color); min-height:34px; }
+  .slabel { display:flex; flex-direction:column; min-width:0; }
+  .sname { color:var(--txt); display:flex; align-items:center; gap:5px; min-width:0; }
+  .sshort { font-size:11px; color:var(--secondary-text-color); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .info { flex:none; width:16px; height:16px; padding:0; border-radius:50%; border:1.3px solid var(--secondary-text-color);
+          background:none; color:var(--secondary-text-color); font:700 10px/1 sans-serif; cursor:pointer; display:inline-flex;
+          align-items:center; justify-content:center; }
+  .info.on, .info:hover { background:var(--primary-color); border-color:var(--primary-color); color:var(--text-primary-color,#fff); }
   .settings .ctl { display:flex; align-items:center; gap:4px; justify-self:end; }
   .settings input[type=number], .settings input[type=time], .settings select.set {
     background:var(--card-background-color); color:var(--txt); border:1px solid var(--divider-color);
@@ -514,6 +591,10 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._priorityError = "";
     this._open = new Set();
     this._logOpen = new Set();
+    this._infoOpen = new Set();   // (i) aufgeklappte Erklärungen
+    this._grpOpen = new Set();    // geöffnete, standardmäßig zugeklappte Gruppen
+    this._grpClosed = new Set();  // geschlossene, standardmäßig offene Gruppen
+    this._boostUntil = {};
   }
 
   static getConfigElement() { return document.createElement("smartify-energy-plan-card-editor"); }
@@ -661,26 +742,60 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     }
   }
 
-  _settings(items, prefix, cls = "") {
+  _settingValue(item) {
+    const st = this._st(item.id);
+    if (!st || ["unknown", "unavailable"].includes(st.state)) return "–";
+    if (item.dom === "switch") return st.state === "on" ? "an" : "aus";
+    if (item.dom === "select") return OPTION_LABELS[st.state] || MODE_LABELS[st.state] || st.state;
+    if (item.dom === "time") return String(st.state).slice(0, 5);
+    const n = num(st.state);
+    const unit = st.attributes?.unit_of_measurement || "";
+    return `${n == null ? st.state : String(n).replace(".", ",")}${unit ? ` ${unit}` : ""}`;
+  }
+
+  _settingHelp(item) {
+    if (item.key === "mode" && this._st(item.id)?.attributes?.options?.includes("disabled"))
+      return "Automatik: SEP löst den WW-Boost nach den eingestellten Bedingungen aus. Beobachten: nur Empfehlungen, kein Auslösen. Deaktiviert: kein neuer WW-Boost durch SEP. Eine bereits gestartete Warmwasserladung läuft unter Kontrolle der Wärmepumpe weiter.";
+    return SETTING_HELP[item.key] || "";
+  }
+
+  _settings(items, prefix, cls = "", scope = "hub") {
     if (!items.length) return "";
-    const main = items.filter(i => !i.config);
-    const detectionKeys = ["detect_threshold", "detect_seconds", "finish_threshold", "finish_minutes"];
-    const budgetKey = "pause_budget_release_pct";
-    const detection = items.filter(i => i.config && detectionKeys.includes(i.key));
-    const budget = items.filter(i => i.config && i.key === budgetKey);
-    const cfg = items.filter(i => i.config && !detectionKeys.includes(i.key) && i.key !== budgetKey);
-    const rows = list => list.map(i => `
-      <label title="${esc(this._label(i.id, prefix))}">${esc(({detect_threshold:"Programmerkennung: Leistung über",detect_seconds:"Programmerkennung: Zeitraum",finish_threshold:"Fertigerkennung: Leistung unter",finish_minutes:"Fertigerkennung: Zeitraum",pause_budget_release_pct:"Budgetfreigabe nach Heizphase"})[i.key] || this._label(i.id, prefix))}</label>
-      <div class="ctl">${this._control(i)}</div>
-      <div class="setting-help">${esc((i.key === "mode" && this._st(i.id)?.attributes?.options?.includes("disabled")
-        ? "Automatik: SEP löst den WW-Boost nach den eingestellten Bedingungen aus. Beobachten: nur Empfehlungen, kein Auslösen. Deaktiviert: kein neuer WW-Boost durch SEP. Eine bereits gestartete Warmwasserladung läuft unter Kontrolle der Wärmepumpe weiter."
-        : SETTING_HELP[i.key]) || "")}</div>`).join("");
-    return `<div class="settings ${cls}">
-      ${main.length ? `<div class="grp">Bedienung</div>${rows(main)}` : ""}
-      ${cfg.length ? `<div class="grp">Einstellungen</div>${rows(cfg)}` : ""}
-      ${detection.length ? `<div class="grp">Programm- und Fertigerkennung</div>${rows(detectionKeys.flatMap(k => detection.filter(i => i.key === k)))}` : ""}
-      ${budget.length ? `<div class="grp">Budgetfreigabe nach Heizphase</div>${rows(budget)}` : ""}
-    </div>`;
+    const byKey = Object.fromEntries(items.map(i => [i.key, i]));
+    const stateOf = key => byKey[key] ? this._st(byKey[key].id)?.state ?? null : null;
+    const visible = items.filter(i => !SETTING_VISIBLE[i.key] || SETTING_VISIBLE[i.key](stateOf));
+    const known = new Set(SETTING_GROUPS.flatMap(g => g.keys));
+    const groups = [
+      ...SETTING_GROUPS.map(g => ({ ...g, items: g.keys.map(k => visible.find(i => i.key === k)).filter(Boolean) })),
+      { id: "other", title: "Weitere", items: visible.filter(i => !known.has(i.key)) },
+    ].filter(g => g.items.length);
+    const row = i => {
+      const help = this._settingHelp(i);
+      const infoKey = `${scope}:${i.id}`;
+      const infoOpen = this._infoOpen.has(infoKey);
+      const label = SETTING_LABELS[i.key] || this._label(i.id, prefix);
+      return `<div class="srow">
+          <div class="slabel"><span class="sname" title="${esc(label)}">${esc(label)}${help ? ` <button type="button" class="info ${infoOpen ? "on" : ""}" data-info="${esc(infoKey)}" aria-expanded="${infoOpen}" aria-label="Erklärung ${esc(label)}">i</button>` : ""}</span>
+            ${SETTING_SHORT[i.key] ? `<span class="sshort">${esc(SETTING_SHORT[i.key])}</span>` : ""}</div>
+          <div class="ctl">${this._control(i)}</div>
+          ${infoOpen && help ? `<div class="setting-help">${esc(help)}</div>` : ""}
+        </div>`;
+    };
+    return `<div class="settings ${cls}">${groups.map(g => {
+      const gKey = `${scope}:${g.id}`;
+      const open = g.collapsed ? this._grpOpen.has(gKey) : !this._grpClosed.has(gKey);
+      let summary = "";
+      if (g.id === "boost") {
+        const until = stateOf("boost") === "on" ? this._boostUntil?.[scope] : null;
+        summary = until ? `läuft bis ${until}` : stateOf("boost") === "on" ? "läuft" : "";
+      }
+      if (!open && !summary) summary = g.items.slice(0, 3).map(i => `${SETTING_LABELS[i.key] || this._label(i.id, prefix)} ${this._settingValue(i)}`).join(" · ");
+      return `<div class="sgrp ${open ? "open" : ""}">
+        <button type="button" class="sgh" data-grp="${esc(gKey)}" data-collapsed="${g.collapsed ? 1 : 0}" aria-expanded="${open}">
+          <span>${esc(g.title)}</span><small>${esc(summary)} ${open ? "▾" : "▸"}</small></button>
+        ${open ? `<div class="sgrid">${g.items.map(row).join("")}</div>` : ""}
+      </div>`;
+    }).join("")}</div>`;
   }
 
   _devices(d) {
@@ -789,6 +904,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const boostOn = this._st(dev.boost)?.state === "on";
       const boostUntil = a.geraetetyp === "ev" && boostOn && a.boost_bis ? fmtTime(a.boost_bis) : null;
       const boostTxt = boostUntil ? `Boost bis ${boostUntil}` : "";
+      this._boostUntil[dev.id] = boostUntil;
       const boostPossible = mode === "auto" && !["nicht_verbunden", "disconnected", "voll", "full",
         "laedt_sofort", "charging_now", "laedt_pflicht", "charging_required"].includes(phase);
       const nachladenOn = this._st(dev.nachladen)?.state === "on";
@@ -841,7 +957,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
             ${actions ? `<div class="sep-actions">${actions}</div>` : ""}
           </div>
         </div>
-        ${open ? this._settings(dev.settings, dev.name) : ""}
+        ${open ? this._settings(dev.settings, dev.name, "", dev.id) : ""}
         </div>`;
     }).join("")}</div>`;
   }
@@ -918,7 +1034,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       <ha-card style="--sep-surface-opacity:${surfaceOpacity}%">
         ${title || d.ents["select:mode"] ? `<div class="title"><img class="sep-brand-icon" src="/smartify_energy/sep-logo.png" alt="Smartify Energy Pro Logo"><span>Smartify Energy Pro</span><span class="sp"></span>${this._modeSelect(d.ents["select:mode"])}
           ${c.show_settings !== false && d.hubSettings.length ? `<button class="gear ${this._open.has("hub") ? "open" : ""}" data-gear="hub" title="Einstellungen Energiemanager"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}</div>` : ""}
-        ${this._open.has("hub") ? this._settings(d.hubSettings, d.name, "hub") : ""}
+        ${this._open.has("hub") ? this._settings(d.hubSettings, d.name, "hub", "hub") : ""}
         ${c.show_header ? this._header(d) : ""}
         ${c.show_priorities ? `<div class="section"><span>Prioritäten</span><span>1 = hoher Vorrang · ziehen zum Sortieren</span></div>${this._devices(d)}` : ""}
         ${c.show_timeline ? `<div class="section"><span>PV-Plan</span><span>Heute + morgen</span></div>${this._timeline(d)}` : ""}
@@ -935,7 +1051,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._eventsBound = true;
     const root = this.shadowRoot;
     root.addEventListener("click", e => {
-      const el = e.target.closest?.("[data-log], [data-gear], [data-more], [data-press], [data-toggle], select");
+      const el = e.target.closest?.("[data-log], [data-gear], [data-more], [data-press], [data-toggle], [data-info], [data-grp], select");
       if (!el) return;
       if (el.matches("select")) { e.stopPropagation(); return; }
       if (el.hasAttribute("data-log")) {
@@ -953,6 +1069,17 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         this._pendingBlur = false;
         this._sig = "";
         this._data = collect(this._hass, this._config.hub);
+        this._render();
+      } else if (el.dataset.info) {
+        e.stopPropagation(); e.preventDefault();
+        const k = el.dataset.info;
+        this._infoOpen.has(k) ? this._infoOpen.delete(k) : this._infoOpen.add(k);
+        this._render();
+      } else if (el.dataset.grp) {
+        e.stopPropagation();
+        const k = el.dataset.grp;
+        const set = el.dataset.collapsed === "1" ? this._grpOpen : this._grpClosed;
+        set.has(k) ? set.delete(k) : set.add(k);
         this._render();
       } else if (el.dataset.toggle) {
         e.stopPropagation();

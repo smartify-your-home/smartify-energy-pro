@@ -90,3 +90,66 @@ test('expandable H/T/B log exposes live actual and target values',()=>{
   assert.match(source,/Neues Programm wird autom\. erkannt/);
   assert.doesNotMatch(source,/<div class="pb-extra">\s*<span>Ø/);
 });
+
+function settingsCard(goal='pv_only'){
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const E=(id,k,dev,cat)=>({platform:'smartify_energy',translation_key:k,device_id:dev,entity_id:id,entity_category:cat});
+  const S=(state,name,extra={})=>({state,attributes:{friendly_name:name,...extra}});
+  const entities={
+    plan:E('sensor.plan','plan','hub'), st:E('sensor.ev','status','ev'),
+    mode:E('select.ev_mode','mode','ev'), goal:E('select.ev_goal','goal','ev'),
+    dl:E('time.ev_deadline','deadline','ev'), km:E('number.ev_target_km','target_km','ev'),
+    boost:E('switch.ev_boost','boost','ev'), bf:E('number.ev_boost_factor','boost_factor','ev','config'),
+    max:E('number.ev_max_soc','max_soc','ev','config'), sd:E('number.ev_stop_delay','stop_delay','ev','config'),
+    pv:E('number.ev_pv_share','pv_share','ev','config'),
+  };
+  const states={'sensor.plan':S('–','Plan',{stunden:[]}),'sensor.ev':S('charging_pv','Auto',{geraetetyp:'ev',modus:'auto'}),
+    'select.ev_mode':S('auto','Auto Modus',{options:['auto','observe','manual','off']}),
+    'select.ev_goal':S(goal,'Auto Ladeziel',{options:['pv_only','km_until','days','now']}),
+    'time.ev_deadline':S('06:00:00','Auto Fertig bis / Abfahrt'),'number.ev_target_km':S('300','Auto Ziel-Kilometer',{unit_of_measurement:'km'}),
+    'switch.ev_boost':S('off','Auto PV-Boost'),'number.ev_boost_factor':S('2.5','Auto Boost-Faktor',{unit_of_measurement:'×'}),
+    'number.ev_max_soc':S('100','Auto Max-SoC',{unit_of_measurement:'%'}),'number.ev_stop_delay':S('30','Auto Stopp-Verzögerung',{unit_of_measurement:'min'}),
+    'number.ev_pv_share':S('100','Auto Mindest-PV-Anteil zum Start',{unit_of_measurement:'%'})};
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:false});
+  dom.window.document.body.appendChild(card);
+  card.hass={entities,states,devices:{hub:{name:'SEP'},ev:{name:'Auto',via_device_id:'hub'}},callService(){return Promise.resolve()}};
+  card.shadowRoot.querySelector('[data-gear="ev"]').click();
+  return card.shadowRoot;
+}
+
+test('settings are grouped, short by default and expand long help via (i)',()=>{
+  const root=settingsCard();
+  const titles=[...root.querySelectorAll('.sgh span')].map(x=>x.textContent);
+  assert.deepEqual(titles,['Bedienung','PV-Boost','Fahrzeug','Erweitert']);
+  assert.equal(root.querySelectorAll('.setting-help').length,0,'long help hidden by default');
+  assert.ok([...root.querySelectorAll('.sshort')].some(x=>x.textContent==='Ladung endet hier'));
+  const adv=[...root.querySelectorAll('.sgrp')].find(g=>g.textContent.includes('Erweitert'));
+  assert.equal(adv.querySelector('.sgrid'),null,'advanced collapsed');
+  assert.match(adv.querySelector('small').textContent,/Mindest-PV-Anteil zum Start 100 %/);
+  root.querySelector('[data-info="ev:number.ev_max_soc"]').click();
+  assert.equal(root.querySelectorAll('.setting-help').length,1);
+  assert.match(root.querySelector('.setting-help').textContent,/Max|Akkustand/);
+  adv.querySelector('[data-grp]').click();
+  assert.ok(root.querySelector('[data-num="number.ev_stop_delay"]'),'advanced opens on click');
+});
+
+test('charge goal fields are shown only for km_until',()=>{
+  assert.equal(settingsCard('pv_only').querySelector('[data-num="number.ev_target_km"]'),null);
+  assert.equal(settingsCard('pv_only').querySelector('[data-time="time.ev_deadline"]'),null);
+  const km=settingsCard('km_until');
+  assert.ok(km.querySelector('[data-num="number.ev_target_km"]'));
+  assert.ok(km.querySelector('[data-time="time.ev_deadline"]'));
+});
+
+test('every documented setting has a short text and a group',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source+'\nwindow.T={SETTING_HELP,SETTING_SHORT,SETTING_GROUPS};');
+  const {SETTING_HELP,SETTING_SHORT,SETTING_GROUPS}=dom.window.T;
+  const grouped=new Set(SETTING_GROUPS.flatMap(g=>g.keys));
+  const keys=Object.keys(SETTING_HELP).filter(k=>!['priority'].includes(k));
+  assert.deepEqual(keys.filter(k=>!SETTING_SHORT[k]),[],'missing short text');
+  assert.deepEqual(keys.filter(k=>!grouped.has(k)),[],'missing group');
+  for (const t of Object.values(SETTING_SHORT)) assert.ok(t.length<=34,`short text too long: ${t}`);
+});

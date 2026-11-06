@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 0.3.48 – Kompakte Einstellungen
+- Einstellungen (Zahnrad) aller Geräte und des Energiemanagers in thematischen, einklappbaren Gruppen; Desktop zweispaltig, Handy einspaltig.
+- Je Einstellung eine Kurzinfo; die bisherige ausführliche Erklärung öffnet sich über (i) direkt unter der Einstellung.
+- Selten benötigte Gruppen (Programm- & Fertigerkennung, Wetterfilter, Erweitert) standardmäßig zugeklappt, im Kopf mit Zusammenfassung der Werte; PV-Boost zeigt „läuft bis HH:MM“.
+- Kontextabhängig ausgeblendet: Abfahrtszeit und Ziel-Kilometer außerhalb von „km bis Uhrzeit“, Pool-Sperrzeiten bei deaktivierter Sperre, Sonnenwinkel bei inaktivem Sonnenfilter, Bewölkungs-/Prognosegrenzen beim nicht gewählten WW-Boost-Startfilter. Werte und Steuerlogik unverändert.
+
 ## 0.3.47 – Wallbox: Ladeende-Prognose, kompakter Boost-Button, „Verteilt“ optional
 - Neues Status-Attribut `voll_um` der Wallbox: geschätzte Uhrzeit, zu der Max-SoC erreicht wird, wenn mit der aktuell gemessenen Leistung weitergeladen wird (berücksichtigt Ladewirkungsgrad). Nur während einer Ladung ab 500 W und mit Akkukapazität und SoC-Sensor. Karte: „voll HH:MM“ unter dem Akkustand.
 - Karte: PV-Boost als Raketen-Symbol neben dem Zahnrad statt eigener Button-Zeile – keine zusätzliche Zeilenhöhe.
