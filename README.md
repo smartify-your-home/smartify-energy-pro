@@ -1,5 +1,5 @@
 
-**Budget-Reaktionszeit (Unreleased):** Netz-, Akku- und Geräteleistungen werden nach einer kurzen Bündelung von 0,25 Sekunden neu bewertet. Ein bereits geplanter langsamer Zyklus kann vorgezogen werden; Gerätemoduswechsel werden ohne absichtliche Wartezeit bewertet. Die individuellen aktuellen Budgets in der Gerätezeile sind Momentanwerte. Bestehende Hysterese, Schutzzeiten sowie Trend-/Mittelwertprüfungen für automatische Starts bleiben erhalten.
+**Budget-Reaktionszeit (0.3.52):** Netz-, Akku- und Geräteleistungen werden nach einer kurzen Bündelung von 0,25 Sekunden neu bewertet. Ein bereits geplanter langsamer Zyklus kann vorgezogen werden; Gerätemoduswechsel werden ohne absichtliche Wartezeit bewertet. Die individuellen aktuellen Budgets in der Gerätezeile sind Momentanwerte. Bestehende Hysterese, Schutzzeiten sowie Trend-/Mittelwertprüfungen für automatische Starts bleiben erhalten.
 
 # Smartify Energy Pro
 
@@ -7,7 +7,7 @@ Auf schmalen Karten teilen sich Gerätetext und Bedienelemente den verfügbaren 
 
 **PV-Überschuss intelligent verteilen – mit Prioritäten, Geräteprogrammen, Batteriespeicher und Home-Assistant-Dashboard.**
 
-**Aktueller Quellcode-Stand (vorbereitet): 0.3.51** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
+**Aktueller Quellcode-Stand (vorbereitet): 0.3.52** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
 
 > **Versionshinweis:** Die Versionsnummer beschreibt den Repository-Stand. In HACS erscheint eine neue Version erst, wenn der zugehörige GitHub-Release-Tag erfolgreich veröffentlicht und von HACS erkannt wurde. [Veröffentlichte Versionen ansehen](https://github.com/smartify-your-home/smartify-energy-pro/releases).
 
