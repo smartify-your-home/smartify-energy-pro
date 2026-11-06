@@ -143,7 +143,7 @@ async def test_device_mode_change_requests_immediate_budget_cycle(hass):
         notify.assert_called_once_with(immediate=True)
         notify.reset_mock()
         d.set_param("nominal_power", 2100)
-        notify.assert_called_once_with(immediate=False)
+        notify.assert_called_once_with()
 
 
 async def test_sensor_enum_recorder_and_dedup(hass):
