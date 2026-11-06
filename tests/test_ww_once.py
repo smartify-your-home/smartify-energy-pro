@@ -39,7 +39,7 @@ class WarmWaterOnceTests(unittest.IsolatedAsyncioTestCase):
 
         self.manager = NS(
             hass=NS(states=NS(get=get), services=NS(async_call=call)),
-            hub_mode="auto", async_param_changed=lambda: None,
+            hub_mode="auto", async_param_changed=lambda **kwargs: None,
             async_save_now=save,
         )
         self.cfg = {
