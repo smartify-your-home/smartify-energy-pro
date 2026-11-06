@@ -103,3 +103,9 @@ Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verha
 
 ## Release 0.3.43
 - Kompakte Modusnamen und begrenzte rechte Spalte auf schmalen Karten.
+
+## Schnelle aktuelle Budgets (Branch fix/fast-budget-input-refresh)
+- Netz-, Akku- und sämtliche konfigurierten Geräte-Leistungssensoren werden mit 0,25 s kurzer Bündelung ausgewertet; weniger budgetkritische Sensoren bleiben bei 2 s.
+- Ein früher geplanter langsamer Zyklus darf einen später eintreffenden schnelleren niemals blockieren. Schnellere Anforderung ersetzt den ausstehenden Timer; gleich schnelle/langsamere bleiben gebündelt.
+- Geräte-Moduswechsel (inkl. Heizstab Auto/Ein/Aus) veranlassen einen Regelzyklus ohne absichtliche Verzögerung. Bestehende Verriegelung und Rerun schützen vor Parallelzyklen.
+- Keine Aufweichung von Gerätehysterese, PV-Gates, Mindestzeiten, Stopp-Verzögerung, Hardware-Kommandogrenzen oder Akku-Prioritätsgutschrift. Tests in tests/ha/test_runtime.py.
