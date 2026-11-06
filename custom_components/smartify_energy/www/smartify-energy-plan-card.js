@@ -12,6 +12,7 @@
  *   title: Energiemanager
  *   hub: <device_id>          # nur nötig bei mehreren Energiemanagern
  *   show_header: true
+ *   show_allocated: false     # Kachel „Verteilt“ im Kopf
  *   show_priorities: true
  *   show_timeline: true
  *   timeline_hours: 24
@@ -288,6 +289,7 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
       <div class="hint">0 % = deckend (bisherige Darstellung), 100 % = vollständig transparent. Betrifft Kartenhintergrund, Gerätezeilen, Kennzahlen und Zeitleiste; Schrift und Bedienelemente bleiben lesbar.</div>
       <div class="section">Bereiche</div>
       <div class="row"><input type="checkbox" id="show_header" ${chk("show_header")}><label for="show_header">Netzsaldo- und Budgetleiste</label></div>
+      <div class="row"><input type="checkbox" id="show_allocated" ${chk("show_allocated", false)}><label for="show_allocated">Kachel „Verteilt“ im Kopf</label></div>
       <div class="hint">Zeigt den echten Netzsaldo (+ Einspeisung, − Bezug) getrennt vom rechnerischen Steuerbudget sowie Verteilung, Prognose und Speicherdaten.</div>
       <div class="row"><input type="checkbox" id="show_priorities" ${chk("show_priorities")}><label for="show_priorities">Prioritäten (Drag &amp; Drop)</label></div>
       <div class="hint">Zeigt die Geräteliste mit ihrer Reihenfolge. Ziehen verändert, wer den verfügbaren Solarstrom zuerst bekommt.</div>
@@ -307,7 +309,7 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
       $("background_transparency_value").textContent = `${e.target.value} %`;
       set("background_transparency", Number(e.target.value));
     });
-    ["show_header", "show_priorities", "show_mode", "show_settings", "show_timeline"].forEach(k =>
+    ["show_header", "show_allocated", "show_priorities", "show_mode", "show_settings", "show_timeline"].forEach(k =>
       $(k).addEventListener("change", e => set(k, e.target.checked)));
 
   }
@@ -399,6 +401,8 @@ const CARD_CSS = `
   .power-budget { display:flex; gap:10px; justify-content:flex-end; align-items:center; flex-wrap:wrap; }
   .pb-item { display:flex; flex-direction:column; align-items:flex-end; gap:1px; white-space:nowrap; }
   .pb-pair { display:contents; }
+  .pb-full { font-size:10px; color:var(--secondary-text-color); white-space:nowrap; }
+  .gear.boost.on { color:var(--primary-color); }
   .pb-stack { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
   .plan.sep-stop { color:var(--warning-color, #f57c00); display:flex; align-items:center; gap:4px; }
   .plan.sep-stop ha-icon { --mdc-icon-size:14px; }
@@ -585,9 +589,9 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         ent: e["sensor:budget_avg"], nowEnt: e["sensor:budget"],
         icon: "mdi:solar-power-variant", g: b > 0 ? ["#81C784", "#00ACC1"] : ["#FFB74D", "#E65100"] },
     ];
-    const tiles = [
-      { ent: e["sensor:allocated"], icon: "mdi:call-split", v: fmtW(num(alloc?.state)), n: "Verteilt", g: PALETTE[0] },
-    ];
+    const tiles = this._config.show_allocated
+      ? [{ ent: e["sensor:allocated"], icon: "mdi:call-split", v: fmtW(num(alloc?.state)), n: "Verteilt", g: PALETTE[0] }]
+      : [];
     if (fc && fc.state !== "unknown" && fc.state !== "unavailable") {
       const rest = fc.attributes.rest_heute_kwh;
       tiles.push({ ent: e["sensor:forecast_today"], icon: "mdi:weather-sunny", v: `${num(fc.state)?.toFixed(1)} kWh`,
@@ -797,8 +801,6 @@ class SmartifyEnergyPlanCard extends HTMLElement {
           ? act("data-toggle", dev.nachladen, "mdi:washing-machine-alert", nachladenOn ? "Nachladen beenden" : "Nachladen", nachladenOn ? "on" : "") : "",
         dev.reset && ["laeuft", "running"].includes(phase)
           ? act("data-press", dev.reset, "mdi:check-circle-outline", "Fertig") : "",
-        dev.boost && (boostOn || boostPossible)
-          ? act("data-toggle", dev.boost, "mdi:rocket-launch", boostOn ? "Boost beenden" : "Boost", boostOn ? "on" : "") : "",
       ].join("") : "";
       const evSoc = a.geraetetyp === "ev" ? num(a.soc) : null;
       const chip = forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`
@@ -821,7 +823,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
           </div>
           <div class="right">
             <div class="power-budget" title="${esc(budgetTitle)}">
-              ${a.geraetetyp === "ev" ? `<div class="pb-item"><span class="pb-label">Akku</span><span class="pw">${evSoc == null ? "–" : evSoc.toFixed(0) + " %"}</span></div>` : ""}
+              ${a.geraetetyp === "ev" ? `<div class="pb-item"><span class="pb-label">Akku</span><span class="pw">${evSoc == null ? "–" : evSoc.toFixed(0) + " %"}</span>${a.voll_um && fmtTime(a.voll_um) ? `<span class="pb-full" title="Geschätzt bei gleichbleibender Ladeleistung bis Max-SoC">voll ${fmtTime(a.voll_um)}</span>` : ""}</div>` : ""}
               <div class="${a.geraetetyp === "ev" ? "pb-stack" : "pb-pair"}">
               <div class="pb-item">
                 <span class="pb-label">Leistung</span>
@@ -833,6 +835,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
               </div>
               </div>
               ${this._config.show_mode ? this._modeSelect(dev.mode) : ""}
+              ${dev.boost && canAct && (boostOn || boostPossible) ? `<button type="button" class="gear boost ${boostOn ? "on" : ""}" data-toggle="${esc(dev.boost)}" title="${boostOn ? "Boost beenden" : "PV-Boost starten"}" aria-label="${boostOn ? "Boost beenden" : "PV-Boost starten"}"><ha-icon icon="${boostOn ? "mdi:rocket-launch" : "mdi:rocket-launch-outline"}"></ha-icon></button>` : ""}
               ${this._config.show_settings !== false && dev.settings.length ? `<button class="gear ${open ? "open" : ""}" data-gear="${dev.id}" title="Einstellungen"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}
             </div>
             ${actions ? `<div class="sep-actions">${actions}</div>` : ""}

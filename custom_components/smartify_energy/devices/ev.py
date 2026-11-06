@@ -208,7 +208,24 @@ class EvDevice(BaseDevice):
         return {**super().status_attrs(), "soc": self.soc,
                 "pflicht_start": start.isoformat() if start else None,
                 "pv_stopp_um": self.pv_stop_at.isoformat() if self.pv_stop_at else None,
-                "boost_bis": self.boost_until().isoformat() if self.boost_until() else None}
+                "boost_bis": self.boost_until().isoformat() if self.boost_until() else None,
+                "voll_um": full.isoformat() if (full := self.full_at()) else None}
+
+    def full_at(self, now: datetime | None = None) -> datetime | None:
+        """Estimated time Max-SoC is reached if charging continues at the
+        currently measured power. None if not charging or data is missing."""
+        if not self.connected or not self.is_on():
+            return None
+        cap_wh = self._c(CONF_CAPACITY, 0) * 1000
+        soc = self.soc
+        power = power_w(self.hass, self.cfg.get("power_sensor"))
+        if not cap_wh or soc is None or power is None or power < 500:
+            return None
+        need_wh = max(0.0, (float(self.p("max_soc")) - soc) / 100 * cap_wh / self.efficiency)
+        if need_wh <= 0:
+            return None
+        now = now or datetime.now().astimezone()
+        return now + timedelta(hours=need_wh / power)
 
     @property
     def pv_stop_at(self) -> datetime | None:

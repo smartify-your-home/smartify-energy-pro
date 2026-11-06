@@ -91,3 +91,32 @@ class EVBoostTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class EVFullAtTests(unittest.TestCase):
+    def setUp(self):
+        EVStopDelayTests.setUp(self)
+        self.ev.cfg.update(capacity=60, efficiency=100, soc_sensor="sensor.soc")
+        self.ev.params["max_soc"] = 80
+        self.values["sensor.soc"] = "50"
+        self.values["sensor.ev"] = "3600"
+
+    def test_full_time_from_current_power(self):
+        # 30 % of 60 kWh = 18 kWh at 3.6 kW = 5 h
+        self.assertEqual(self.ev.full_at(T0), T0 + timedelta(hours=5))
+
+    def test_efficiency_extends_time(self):
+        self.ev.cfg["efficiency"] = 90
+        self.assertEqual(self.ev.full_at(T0), T0 + timedelta(hours=18000 / 0.9 / 3600))
+
+    def test_hidden_when_not_charging_or_data_missing(self):
+        self.values["switch.charge"] = "off"
+        self.assertIsNone(self.ev.full_at(T0))
+        self.values["switch.charge"] = "on"
+        self.values["sensor.ev"] = "100"
+        self.assertIsNone(self.ev.full_at(T0))
+        self.values["sensor.ev"] = "3600"
+        self.values["sensor.soc"] = "80"
+        self.assertIsNone(self.ev.full_at(T0))
+        del self.values["sensor.soc"]
+        self.assertIsNone(self.ev.full_at(T0))

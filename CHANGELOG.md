@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 0.3.47 – Wallbox: Ladeende-Prognose, kompakter Boost-Button, „Verteilt“ optional
+- Neues Status-Attribut `voll_um` der Wallbox: geschätzte Uhrzeit, zu der Max-SoC erreicht wird, wenn mit der aktuell gemessenen Leistung weitergeladen wird (berücksichtigt Ladewirkungsgrad). Nur während einer Ladung ab 500 W und mit Akkukapazität und SoC-Sensor. Karte: „voll HH:MM“ unter dem Akkustand.
+- Karte: PV-Boost als Raketen-Symbol neben dem Zahnrad statt eigener Button-Zeile – keine zusätzliche Zeilenhöhe.
+- Karte: Kopf-Kachel „Verteilt“ standardmäßig ausgeblendet; einblendbar über den Karten-Editor oder `show_allocated: true`. Card-Version unverändert kompatibel.
+
 ## 0.3.46 – Wallbox: PV-Boost mit Netzbezug
 - Neu: zeitlich begrenzter PV-Boost für die Wallbox. Schalter `PV-Boost` (Karte: „Boost“/„Boost beenden“), Einstellungen `Boost-Faktor` (1,5–4, Standard ×2), `Boost-Dauer` (0,5–12 h, Standard 3 h) und `Boost-Mindestleistung` (0–11.000 W, Standard 1.400 W).
 - Ladeleistung = max(Faktor × PV-Überschuss, Mindestleistung), begrenzt durch Mindest-/Maximalstrom; Netzbezug erlaubt. Karte zeigt „Boost bis HH:MM“, Status `boost`, Attribut `boost_bis`.
