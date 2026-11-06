@@ -1,4 +1,7 @@
 ## Unreleased
+- Aktuelles Budget: Netz-, Akku- und Leistungsänderungen aller verwalteten Geräte werden nach kurzer 0,25-s-Bündelung ausgewertet (statt für viele Geräte erst nach 2 s).
+- Eine schnelle Budgetaktualisierung kann einen bereits geplanten langsamen 2-s-Zyklus vorziehen; gleiche/langsamere Ereignisse bleiben gebündelt.
+- Gerätemoduswechsel, einschließlich Heizstab Auto/Ein/Aus, stoßen die Auswertung ohne absichtliche Wartezeit an. Geräteschutz, Mittelwerte, Trend und PV-Freigaben unverändert.
 
 ## 0.3.51 – Heizstab-Umschalter responsiv im Leistungs-/Budgetbereich (vorbereitet)
 - Auto/Ein/Aus des Heizstabs jetzt **innerhalb** des rechten Leistungs-/Budgetblocks, nicht mehr außerhalb.
