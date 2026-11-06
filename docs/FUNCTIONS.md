@@ -1,3 +1,6 @@
+## Budgetaktualisierung (Unreleased)
+Die individuellen aktuellen Budgetwerte werden durch Änderungen am Netzsaldo, der Akkuleistung und an allen konfigurierten Geräteleistungssensoren nach 0,25 s gebündelt neu berechnet. Ein schon geplanter langsamer 2-s-Zyklus kann dadurch vorgezogen werden. Auto/Manuell/Aus und andere Gerätemoduswechsel stoßen eine sofortige Neubewertung an. Die Gerätesteuerung verwendet weiterhin ihre vorhandenen Temperaturgrenzen, Hysterese, Wartezeiten, PV-Trend-/Mittelwert-Gates sowie Wallbox-/Akku-Prioritätsregeln. Es werden keine Stellbefehle unmittelbar aus der Karte am Regelwerk vorbei gesendet.
+
 ## Nach 0.3.50 – Heizstab Auto/Ein/Aus in der Gerätezeile (0.3.51 vorbereitet)
 Der Betriebsmodus wird über den bestehenden Segmentschalter im rechten Leistungs-/Budgetbereich gesetzt (Auto → auto, Ein → manual, Aus → off). Breit: Schalter neben den Werten; schmal: Schalter über Leistung/Budget, rechte Spalte bleibt erhalten. Keine Änderung von Temperaturschutz, Mindestpause, Modusdienst oder Budgetsteuerung.
 
