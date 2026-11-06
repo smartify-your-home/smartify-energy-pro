@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 0.3.51 – Heizstab-Umschalter responsiv im Leistungs-/Budgetbereich (vorbereitet)
+- Auto/Ein/Aus des Heizstabs jetzt **innerhalb** des rechten Leistungs-/Budgetblocks, nicht mehr außerhalb.
+- Desktop: Schalter und Leistung/Budget stehen nebeneinander. Bei schmaler Kartenbreite (Container-Breakpoint 560 px): Auto/Ein/Aus darüber, Messwerte direkt darunter; alles bleibt in rechter Spalte neben dem umbrechenden Gerätestatus.
+- Modusabbildung (Auto=auto, Ein=manual, Aus=off), Klick-Handler und Temperatur-/Aktorsteuerung bleiben unverändert; andere Gerätetypen ebenfalls.
+- UI-Regression sichert DOM-Struktur, Desktop-/Mobilregel und bestehende Schaltfunktion ab.
+
 ## 0.3.50 – Heizstab: Auto/Ein/Aus in der Gerätezeile
 - Karte: Heizstab-Zeile mit Umschalter Auto | Ein | Aus. Ein = bestehender Modus Manuell (heizt bis zur Maximaltemperatur, Netzbezug erlaubt, Temperaturschutz und Mindestpause aktiv), Aus = sofort aus, Auto = PV-Betrieb. Steuerlogik unverändert; Beobachten weiterhin im Zahnrad.
 
