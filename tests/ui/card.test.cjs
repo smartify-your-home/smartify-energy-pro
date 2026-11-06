@@ -189,3 +189,15 @@ test('device rows: no mode select, EV shows charge goal, loads show actions',()=
   assert.match(root.textContent,/Aus/,'non-auto mode stays visible as tag');
   assert.ok(root.querySelector('.mode-tag.off'));
 });
+
+test('heater row offers Auto/Ein/Aus mapped to auto/manual/off',()=>{
+  const calls=[];
+  const root=rowCard({hs:[['sensor.hs','status','manuell',{geraetetyp:'heater',modus:'manual'}],['select.hs_mode','mode','manual',{options:['auto','observe','manual','off']}]]});
+  const card=root.host; card._hass.callService=(d,s,data)=>{calls.push([d,s,data]);return Promise.resolve();};
+  const btns=[...root.querySelectorAll('.seg button')];
+  assert.deepEqual(btns.map(b=>b.textContent),['Auto','Ein','Aus']);
+  assert.ok(btns[1].classList.contains('on'),'Ein active in manual mode');
+  assert.equal(root.querySelector('.mode-tag'),null,'no duplicate mode tag');
+  btns[2].click();
+  assert.equal(JSON.stringify(calls[0]),JSON.stringify(['select','select_option',{entity_id:'select.hs_mode',option:'off'}]));
+});

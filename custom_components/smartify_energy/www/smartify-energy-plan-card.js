@@ -423,6 +423,11 @@ const CARD_CSS = `
   .mode-tag { font-size:11px; padding:1px 8px; border-radius:10px; border:1px solid var(--divider-color); color:var(--secondary-text-color); white-space:nowrap; }
   .mode-tag.observe { border-color:#0288D1; color:#0288D1; } .mode-tag.off { border-color:#E65100; color:#E65100; }
   .mode-tag.manual { border-color:#8E24AA; color:#8E24AA; }
+  .seg { display:inline-flex; border:1px solid var(--divider-color); border-radius:12px; overflow:hidden; }
+  .seg button { border:none; background:none; color:var(--secondary-text-color); font:inherit; font-size:11px; padding:2px 8px; cursor:pointer; }
+  .seg button + button { border-left:1px solid var(--divider-color); }
+  .seg button.on { color:#fff; }
+  .seg button.on.auto { background:#43A047; } .seg button.on.manual { background:#E53935; } .seg button.on.off { background:#757575; }
 
   .list { container-type:inline-size; display:flex; flex-direction:column; gap:4px; position:relative; }
   .dev { display:grid; grid-template-columns:22px 26px 28px minmax(0,1fr) auto; align-items:center; gap:8px;
@@ -713,6 +718,17 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     </select>`;
   }
 
+  // Heizstab: Auto (PV) | Ein (= Modus Manuell: auf Maximaltemperatur, Netz erlaubt) | Aus.
+  _heaterSwitch(entityId) {
+    const st = this._st(entityId);
+    if (!st) return "";
+    const opts = [["auto", "Auto", "Automatik: nur mit PV-Überschuss"],
+      ["manual", "Ein", "Ein: heizt bis zur Maximaltemperatur, auch mit Netzstrom (Temperaturschutz und Mindestpause bleiben aktiv)"],
+      ["off", "Aus", "Aus: Heizstab sofort ausschalten"]];
+    return `<div class="seg" role="group" aria-label="Heizstab">${opts.map(([v, l, t]) =>
+      `<button type="button" class="${st.state === v ? "on " + v : ""}" data-setmode="${esc(entityId)}" data-opt="${v}" title="${esc(t)}" aria-pressed="${st.state === v}">${l}</button>`).join("")}</div>`;
+  }
+
   _modeSelect(entityId, cls = "") {
     const st = this._st(entityId);
     if (!st) return "";
@@ -965,7 +981,8 @@ class SmartifyEnergyPlanCard extends HTMLElement {
                 <span class="pb-budget ${budgetNow == null ? "" : budgetNow < 0 ? "negative" : budgetOk ? "positive" : ""}">${fmtW(budgetNow)}</span>
               </div>
               </div>
-              ${mode && !["auto", "observe"].includes(mode) ? `<span class="mode-tag ${esc(mode)}" title="Modus – ändern im Zahnrad">${esc(MODE_LABELS[mode] || mode)}</span>` : ""}
+              ${a.geraetetyp === "heater" ? this._heaterSwitch(dev.mode) : ""}
+              ${a.geraetetyp !== "heater" && mode && !["auto", "observe"].includes(mode) ? `<span class="mode-tag ${esc(mode)}" title="Modus – ändern im Zahnrad">${esc(MODE_LABELS[mode] || mode)}</span>` : ""}
               ${a.geraetetyp === "ev" && this._config.show_mode !== false ? this._quickSelect(dev.goal, "Ladeziel") : ""}
               ${actions ? `<div class="sep-actions">${actions}</div>` : ""}
               ${dev.boost && canAct && (boostOn || boostPossible) ? `<button type="button" class="gear boost ${boostOn ? "on" : ""}" data-toggle="${esc(dev.boost)}" title="${boostOn ? "Boost beenden" : "PV-Boost starten"}" aria-label="${boostOn ? "Boost beenden" : "PV-Boost starten"}"><ha-icon icon="${boostOn ? "mdi:rocket-launch" : "mdi:rocket-launch-outline"}"></ha-icon></button>` : ""}
@@ -1067,7 +1084,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._eventsBound = true;
     const root = this.shadowRoot;
     root.addEventListener("click", e => {
-      const el = e.target.closest?.("[data-log], [data-gear], [data-more], [data-press], [data-toggle], [data-info], [data-grp], select");
+      const el = e.target.closest?.("[data-log], [data-gear], [data-more], [data-press], [data-toggle], [data-info], [data-grp], [data-setmode], select");
       if (!el) return;
       if (el.matches("select")) { e.stopPropagation(); return; }
       if (el.hasAttribute("data-log")) {
@@ -1086,6 +1103,9 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         this._sig = "";
         this._data = collect(this._hass, this._config.hub);
         this._render();
+      } else if (el.dataset.setmode) {
+        e.stopPropagation();
+        this._hass.callService("select", "select_option", {entity_id: el.dataset.setmode, option: el.dataset.opt});
       } else if (el.dataset.info) {
         e.stopPropagation(); e.preventDefault();
         const k = el.dataset.info;

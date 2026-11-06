@@ -1,5 +1,8 @@
 ## Unreleased
 
+## 0.3.50 – Heizstab: Auto/Ein/Aus in der Gerätezeile
+- Karte: Heizstab-Zeile mit Umschalter Auto | Ein | Aus. Ein = bestehender Modus Manuell (heizt bis zur Maximaltemperatur, Netzbezug erlaubt, Temperaturschutz und Mindestpause aktiv), Aus = sofort aus, Auto = PV-Betrieb. Steuerlogik unverändert; Beobachten weiterhin im Zahnrad.
+
 ## 0.3.49 – Gerätezeile: Ladeziel und Aktionen statt Modus
 - Gerätemodus (Automatik/Beobachten/Manuell/Aus) aus der Gerätezeile ins Zahnrad verschoben (Gruppe „Bedienung“). Kartenkopf-Modus des Energiemanagers unverändert.
 - Auto: Ladeziel (Nur PV, km bis Uhrzeit, Tage-Konfigurator, Sofort laden) direkt in der Gerätezeile auswählbar.
