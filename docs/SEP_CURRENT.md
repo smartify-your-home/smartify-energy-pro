@@ -1,3 +1,6 @@
+## Nach 0.3.50 – Responsiver Heizstab-Umschalter (0.3.51 vorbereitet)
+Der vorhandene Auto/Ein/Aus-Umschalter wird in den Leistungs-/Budgetblock der Gerätezeile verschoben. Bei breiter Karte liegt er neben den Messwerten, bei schmaler Karte direkt oberhalb von Leistung und Budget. Er bleibt in der rechten Spalte und verdrängt nicht den umbruchfähigen Status links. Die vorhandene Modi-Zuordnung und die Temperaturregelung bleiben unverändert.
+
 ## Release 0.3.43
 
 Auf schmalen Karten teilen sich Gerätetext und Bedienelemente den verfügbaren Platz. Messwerte, Modus und Zahnrad können innerhalb der rechten Spalte umbrechen. Die Modusauswahl im Kartenkopf zeigt Automatik, Beobachten, Manuell und Aus als kurze Namen. Ab 0.3.49 steht der Gerätemodus nur noch im Zahnrad (Gruppe „Bedienung“); in der Gerätezeile zeigt das Auto stattdessen die Ladeziel-Auswahl, Haushaltsgeräte zeigen die jeweils wirksamen Buttons Sofortstart, Nachladen und Fertig. Der Heizstab hat in der Zeile einen Umschalter Auto | Ein | Aus (Ein = Modus Manuell: heizt bis zur Maximaltemperatur, auch mit Netzstrom; Temperaturschutz und Mindestpause bleiben aktiv; Aus schaltet sofort ab). Ist ein anderes Gerät auf Manuell oder Aus, erscheint der Modus als kleiner Hinweis; Beobachten zeigt weiterhin den Status-Chip. Beim WP-Boost bleibt die gerätespezifische Auswahl erhalten.
