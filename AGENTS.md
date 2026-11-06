@@ -80,6 +80,9 @@ Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verha
 - `EvDevice.pv_stop_at` = `_deficit_since + stop_delay`, nur bei Status `charging_pv` (Statuscodes über `STATUS_CODES` vergleichen, nicht Legacy-Strings). `_deficit_since` wird bei nicht laufender Ladung, Sofort-/Pflichtladung, Abstecken und Verdrängung gelöscht. Strom wird weiterhin sofort reduziert, abgeschaltet erst nach Ablauf. Test: tests/test_ev_stop_delay.py.
 - Karte: EV-Zeile Akku zuerst, Leistung/Budget in `.pb-stack` untereinander; andere Geräte `.pb-pair` (display:contents) unverändert.
 
+## Gerätezeile (0.3.49)
+- Kein `_modeSelect` mehr in Gerätezeilen (nur Kartenkopf/Hub). EV: `_quickSelect(dev.goal)`; Load: `.sep-actions` innerhalb `.power-budget`; Manuell/Aus als `.mode-tag`. UI-Test „device rows: no mode select…“.
+
 ## Kompakte Einstellungen (0.3.48)
 - Karte: `SETTING_SHORT` (Kurzinfo, ≤ 34 Zeichen), `SETTING_GROUPS` (Reihenfolge, `collapsed`), `SETTING_VISIBLE` (kontextabhängig), lange Texte weiter in `SETTING_HELP` hinter (i). Neue Parameter MÜSSEN in SETTING_SHORT und einer Gruppe stehen – UI-Test „every documented setting has a short text and a group“ prüft das.
 

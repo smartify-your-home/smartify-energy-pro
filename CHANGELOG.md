@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 0.3.49 – Gerätezeile: Ladeziel und Aktionen statt Modus
+- Gerätemodus (Automatik/Beobachten/Manuell/Aus) aus der Gerätezeile ins Zahnrad verschoben (Gruppe „Bedienung“). Kartenkopf-Modus des Energiemanagers unverändert.
+- Auto: Ladeziel (Nur PV, km bis Uhrzeit, Tage-Konfigurator, Sofort laden) direkt in der Gerätezeile auswählbar.
+- Haushaltsgeräte: Sofortstart, Nachladen und Fertig stehen an der Stelle der Modusauswahl (nur wenn wirksam) – keine zusätzliche Zeile.
+- Manuell/Aus bleiben als kleiner Hinweis sichtbar. Kartenoption `show_mode` steuert jetzt die Ladeziel-Auswahl in der Zeile.
+
 ## 0.3.48 – Kompakte Einstellungen
 - Einstellungen (Zahnrad) aller Geräte und des Energiemanagers in thematischen, einklappbaren Gruppen; Desktop zweispaltig, Handy einspaltig.
 - Je Einstellung eine Kurzinfo; die bisherige ausführliche Erklärung öffnet sich über (i) direkt unter der Einstellung.

@@ -16,7 +16,7 @@
  *   show_priorities: true
  *   show_timeline: true
  *   timeline_hours: 24
- *   show_mode: true           # Modus-Auswahl je Gerät
+ *   show_mode: true           # Schnellbedienung je Gerät: Auto = Ladeziel, Haushaltsgerät = Aktionen (Modus im Zahnrad)
  *   show_settings: true       # Zahnrad: alle Einstellungen je Gerät / Energiemanager
  *
  * Theme-Variablen (haben Vorrang):
@@ -276,6 +276,7 @@ function collect(hass, hubId) {
         planned: ents["sensor:planned_start"],
         priority: ents["number:priority"],
         mode: ents["select:mode"],
+        goal: ents["select:goal"],
         active: ents["binary_sensor:active"],
         startNow: ents["button:start_now"],
         reset: ents["button:reset"],
@@ -356,7 +357,7 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
       <div class="hint">Zeigt den echten Netzsaldo (+ Einspeisung, − Bezug) getrennt vom rechnerischen Steuerbudget sowie Verteilung, Prognose und Speicherdaten.</div>
       <div class="row"><input type="checkbox" id="show_priorities" ${chk("show_priorities")}><label for="show_priorities">Prioritäten (Drag &amp; Drop)</label></div>
       <div class="hint">Zeigt die Geräteliste mit ihrer Reihenfolge. Ziehen verändert, wer den verfügbaren Solarstrom zuerst bekommt.</div>
-      <div class="row"><input type="checkbox" id="show_mode" ${chk("show_mode")}><label for="show_mode">Modus-Auswahl je Gerät</label></div>
+      <div class="row"><input type="checkbox" id="show_mode" ${chk("show_mode")}><label for="show_mode">Schnellbedienung je Gerät (Ladeziel / Aktionen)</label></div>
       <div class="hint">Zeigt die schnelle Betriebsmodus-Auswahl neben jedem Gerät.</div>
       <div class="row"><input type="checkbox" id="show_settings" ${chk("show_settings")}><label for="show_settings">Einstellungen (Zahnrad) erlauben</label></div>
       <div class="hint">Zeigt das Zahnrad mit Einstellungen und Erklärungen. Ausblenden verändert keine Regelung und ist keine Zugriffssperre.</div>
@@ -417,6 +418,11 @@ const CARD_CSS = `
                 padding:2px 10px; cursor:pointer; max-width:180px; white-space:nowrap; text-overflow:ellipsis; }
   select.mode.auto { border-color:#43A047; } select.mode.observe { border-color:#0288D1; }
   select.mode.off { border-color:#E65100; }
+  select.mode.quick { border-color:var(--primary-color); }
+  .power-budget .sep-actions { margin-top:0; }
+  .mode-tag { font-size:11px; padding:1px 8px; border-radius:10px; border:1px solid var(--divider-color); color:var(--secondary-text-color); white-space:nowrap; }
+  .mode-tag.observe { border-color:#0288D1; color:#0288D1; } .mode-tag.off { border-color:#E65100; color:#E65100; }
+  .mode-tag.manual { border-color:#8E24AA; color:#8E24AA; }
 
   .list { container-type:inline-size; display:flex; flex-direction:column; gap:4px; position:relative; }
   .dev { display:grid; grid-template-columns:22px 26px 28px minmax(0,1fr) auto; align-items:center; gap:8px;
@@ -698,6 +704,15 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         </div>`).join("")}</div>`;
   }
 
+  // Kompakte Auswahl in der Gerätezeile (z. B. Ladeziel), gleiche Optik wie die Modus-Pille.
+  _quickSelect(entityId, label) {
+    const st = this._st(entityId);
+    if (!st || ["unknown", "unavailable"].includes(st.state)) return "";
+    return `<select class="mode quick" data-select="${entityId}" aria-label="${esc(label)}" title="${esc(label)}">
+      ${(st.attributes.options || []).map(o => `<option value="${esc(o)}" ${o === st.state ? "selected" : ""}>${esc(OPTION_LABELS[o] || o)}</option>`).join("")}
+    </select>`;
+  }
+
   _modeSelect(entityId, cls = "") {
     const st = this._st(entityId);
     if (!st) return "";
@@ -950,11 +965,12 @@ class SmartifyEnergyPlanCard extends HTMLElement {
                 <span class="pb-budget ${budgetNow == null ? "" : budgetNow < 0 ? "negative" : budgetOk ? "positive" : ""}">${fmtW(budgetNow)}</span>
               </div>
               </div>
-              ${this._config.show_mode ? this._modeSelect(dev.mode) : ""}
+              ${mode && !["auto", "observe"].includes(mode) ? `<span class="mode-tag ${esc(mode)}" title="Modus – ändern im Zahnrad">${esc(MODE_LABELS[mode] || mode)}</span>` : ""}
+              ${a.geraetetyp === "ev" && this._config.show_mode !== false ? this._quickSelect(dev.goal, "Ladeziel") : ""}
+              ${actions ? `<div class="sep-actions">${actions}</div>` : ""}
               ${dev.boost && canAct && (boostOn || boostPossible) ? `<button type="button" class="gear boost ${boostOn ? "on" : ""}" data-toggle="${esc(dev.boost)}" title="${boostOn ? "Boost beenden" : "PV-Boost starten"}" aria-label="${boostOn ? "Boost beenden" : "PV-Boost starten"}"><ha-icon icon="${boostOn ? "mdi:rocket-launch" : "mdi:rocket-launch-outline"}"></ha-icon></button>` : ""}
               ${this._config.show_settings !== false && dev.settings.length ? `<button class="gear ${open ? "open" : ""}" data-gear="${dev.id}" title="Einstellungen"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}
             </div>
-            ${actions ? `<div class="sep-actions">${actions}</div>` : ""}
           </div>
         </div>
         ${open ? this._settings(dev.settings, dev.name, "", dev.id) : ""}

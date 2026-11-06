@@ -153,3 +153,39 @@ test('every documented setting has a short text and a group',()=>{
   assert.deepEqual(keys.filter(k=>!grouped.has(k)),[],'missing group');
   for (const t of Object.values(SETTING_SHORT)) assert.ok(t.length<=34,`short text too long: ${t}`);
 });
+
+function rowCard(devs){
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const entities={plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}};
+  const states={'sensor.plan':{state:'-',attributes:{stunden:[]}}};
+  const devices={hub:{name:'SEP'}};
+  for (const [dev,list] of Object.entries(devs)) {
+    devices[dev]={name:dev,via_device_id:'hub'};
+    for (const [id,k,state,attrs] of list) { entities[id]={platform:'smartify_energy',translation_key:k,device_id:dev,entity_id:id}; states[id]={state,attributes:attrs||{}}; }
+  }
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:false});
+  dom.window.document.body.appendChild(card);
+  card.hass={entities,states,devices,callService(){return Promise.resolve()}};
+  return card.shadowRoot;
+}
+
+test('device rows: no mode select, EV shows charge goal, loads show actions',()=>{
+  const modeOpts={options:['auto','observe','manual','off']};
+  const root=rowCard({
+    ev:[['sensor.ev','status','charging_pv',{geraetetyp:'ev',modus:'auto'}],['select.ev_mode','mode','auto',modeOpts],
+        ['select.ev_goal','goal','pv_only',{options:['pv_only','km_until','days','now']}]],
+    wm:[['sensor.wm','status','waiting',{geraetetyp:'load',modus:'auto',phase:'wartet'}],['select.wm_mode','mode','auto',modeOpts],
+        ['button.wm_start','start_now','x'],['switch.wm_n','nachladen','off'],['button.wm_reset','reset','x']],
+    pool:[['sensor.pool','status','off',{geraetetyp:'pool',modus:'off'}],['select.pool_mode','mode','off',modeOpts]],
+  });
+  assert.equal(root.querySelector('.list [data-select="select.ev_mode"]'),null,'mode moved to settings');
+  assert.equal(root.querySelector('.list [data-select="select.wm_mode"]'),null);
+  assert.ok(root.querySelector('.list select.quick[data-select="select.ev_goal"]'),'EV goal selectable in row');
+  const wm=root.querySelector('[data-wrap="wm"]')||root;
+  const labels=[...root.querySelectorAll('.sep-act')].map(b=>b.textContent.trim());
+  assert.deepEqual(labels,['Sofortstart','Nachladen']);
+  assert.match(root.textContent,/Aus/,'non-auto mode stays visible as tag');
+  assert.ok(root.querySelector('.mode-tag.off'));
+});
