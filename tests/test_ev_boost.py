@@ -45,6 +45,25 @@ class EVBoostTests(unittest.TestCase):
         self.assertEqual(self.ev.status_attrs()["pv_stopp_um"], (T0 + timedelta(minutes=30)).isoformat())
         self.assertFalse(self.decide(30, 400).on)
 
+    def test_minimum_below_three_phase_wallbox_minimum_keeps_charging(self):
+        """Live-Fall 07.11.: ×2 auf ~1058 W PV, Minimum 2000 W, Wallbox 3-phasig
+        (6 A × 3 = 4140 W). Kein PV-Stopp, sondern Laden mit Wallbox-Minimum."""
+        self.ev.cfg["phases"] = 3
+        self.start_boost(boost_min_power=2000)
+        for minute in (0, 15, 31, 60):
+            d = self.decide(minute, 1058)
+            self.assertTrue(d.on, f"Boost darf nach {minute} min nicht stoppen")
+            self.assertEqual(self.amps(d), 6)
+            self.assertIn("Wallbox-Minimum", d.reason)
+        self.assertIsNone(self.ev.status_attrs()["pv_stopp_um"])
+
+    def test_factor_only_on_three_phases_still_uses_stop_delay(self):
+        self.ev.cfg["phases"] = 3
+        self.start_boost(boost_min_power=0)
+        self.assertTrue(self.decide(0, 1058).on)
+        self.assertIsNotNone(self.ev.status_attrs()["pv_stopp_um"])
+        self.assertFalse(self.decide(30, 1058).on)
+
     def test_expires_after_duration_and_switches_off(self):
         self.start_boost(boost_min_power=2300)
         self.decide(0, 0)

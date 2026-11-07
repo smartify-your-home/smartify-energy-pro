@@ -933,9 +933,13 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const forcedTxt = Number.isFinite(forcedAt)
         ? (forcedAt <= Date.now() + 60e3 ? "Pflichtstart fällig" : `Pflichtstart ${fmtTime(a.pflicht_start)}`) : "";
       // Auto: läuft die Stopp-Verzögerung (zu wenig PV), Abschaltzeit zeigen.
+      const evBoosting = a.geraetetyp === "ev" && (a.status_code === "boost" || st?.state === "boost");
       const pvStopTxt = a.geraetetyp === "ev" && a.pv_stopp_um && fmtTime(a.pv_stopp_um)
-        ? `PV-Stopp ${fmtTime(a.pv_stopp_um)} – zu wenig Überschuss` : "";
-      const planTxt = [pt ? `Empf. Start ${pt}${planned.attributes.pv_anteil_prozent != null ? ` · ${planned.attributes.pv_anteil_prozent} % PV` : ""}` : "", forcedTxt]
+        ? `${evBoosting ? "Boost endet" : "PV-Stopp"} ${fmtTime(a.pv_stopp_um)} – zu wenig Überschuss` : "";
+      // Lädt das Auto bereits, ist eine Start-Empfehlung irreführend.
+      const evCharging = a.geraetetyp === "ev" && ["boost", "charging_pv", "charging_now", "charging_required"]
+        .includes(a.status_code || st?.state);
+      const planTxt = [pt && !evCharging ? `Empf. Start ${pt}${planned.attributes.pv_anteil_prozent != null ? ` · ${planned.attributes.pv_anteil_prozent} % PV` : ""}` : "", forcedTxt]
         .filter(Boolean).join(" · ");
       // Aktionen nur anzeigen, wenn sie im aktuellen Zustand wirken.
       const phase = a.phase || a.status_code || st?.state;

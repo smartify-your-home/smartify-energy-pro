@@ -75,7 +75,7 @@ Nur Haushaltsgeräte und WP-Boost zeigen unter dem Status die Zeit des langen Mi
 - Eine laufende PV-Ladung regelt ihren Sollstrom aus dem momentanen Restbudget. Die Startfreigabe nutzt weiterhin ein geglättetes Signal.
 - Hardwaregrenzen beachten: Mindeststrom, maximale Stromstärke, ganze Ampere, ggf. 1-/3-Phasenwechsel sowie dessen Sperrzeit.
 - Unterhalb der nötigen Leistung reduziert SEP bis zum Mindeststrom und schaltet erst nach Ablauf von `stop_delay` ab. Netzbezug ist dabei möglich.
-- PV-Boost: zeitlich begrenzt (Standard 3 h) Faktor × PV-Überschuss (1,5–4), mindestens `boost_min_power`, Netzbezug erlaubt. Endet nach Ablauf, beim Ausschalten oder Abstecken; Sofort-/Pflichtladung hat Vorrang; keine vollständige Abschaltung durch vorrangige Verbraucher. Attribut `boost_bis`.
+- PV-Boost: zeitlich begrenzt (Standard 3 h) Faktor × PV-Überschuss (1,5–4), mindestens `boost_min_power`, Netzbezug erlaubt. Mit Mindestleistung > 0 nie Stopp wegen Wallbox-Minimum – dann Laden mit Mindeststrom; Stopp-Verzögerung nur bei Mindestleistung 0 W (Karte: „Boost endet HH:MM“). Endet nach Ablauf, beim Ausschalten oder Abstecken; Sofort-/Pflichtladung hat Vorrang; keine vollständige Abschaltung durch vorrangige Verbraucher. Attribut `boost_bis`.
 - Während die Stopp-Verzögerung läuft, zeigt die Karte die geplante Abschaltzeit („PV-Stopp HH:MM“, Attribut `pv_stopp_um`). Rücksetzen: Überschuss reicht wieder, Ladung gestoppt, Auto abgesteckt, Sofort-/Pflichtladung, Verdrängung durch vorrangigen Verbraucher, HA-Neustart. Ist die Ladung bereits aus, wird ein alter Verzögerungszeitpunkt verworfen, damit ein neuer PV-Start nicht sofort wieder stoppt.
 
 ## Batteriespeicher

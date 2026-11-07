@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.3.54 – Boost stoppt nicht mehr fälschlich bei 3-phasiger Wallbox
+- Behoben: Lag Faktor × PV bzw. die Boost-Mindestleistung unter dem Wallbox-Minimum (z. B. 2.000 W bei 6 A × 3 = 4.140 W), lief beim Boost die Stopp-Verzögerung und die Karte zeigte gleichzeitig „Boost“ und „PV-Stopp“. Mit gesetzter Mindestleistung lädt der Boost jetzt mit dem Wallbox-Minimum weiter (Grund „… (Wallbox-Minimum)“). Nur bei Mindestleistung 0 W gilt weiterhin die Stopp-Verzögerung.
+- Karte: Läuft beim Boost die Stopp-Verzögerung, heißt die Anzeige „Boost endet HH:MM – zu wenig Überschuss“ statt „PV-Stopp“. „Empf. Start“ wird beim Auto nicht mehr angezeigt, solange es bereits lädt.
+
 ## 0.3.53 – Optionale Abwesenheitssperre
 - Heizstab und Wärmepumpen-WW-Boost: optionaler Abwesenheits-Binärsensor (`binary_sensor`/`input_boolean`, EIN = abwesend) je Gerät. Im Abwesenheitszustand wird der Heizstab auch bei manuellem Modus abgeschaltet, ein aktiver Number-WW-Boost zurückgesetzt und neue Einmal-WW-Boost-Auslösungen gesperrt. Konfigurierte nicht verfügbare Signale blockieren vorsorglich. Laufende eigenständige WW-Zyklen der Wärmepumpe werden nicht abgebrochen; bisherige Betriebsmodi bleiben gespeichert.
 

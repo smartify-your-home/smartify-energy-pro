@@ -226,3 +226,13 @@ test('heater Auto/Ein/Aus shares the metrics container; narrow layout puts it ab
   assert.match(css,/\.right\s*\{\s*grid-column:5; grid-row:1;/,
     'mobile metrics never move below device status');
 });
+
+test('EV boost with running stop delay says "Boost endet", not "PV-Stopp"',()=>{
+  const soon=new Date(Date.now()+20*60e3).toISOString();
+  const root=rowCard({ev:[['sensor.ev','status','boost',{geraetetyp:'ev',modus:'auto',status_code:'boost',reason:'Boost ×2 6 A × 3',pv_stopp_um:soon,boost_bis:new Date(Date.now()+3*3600e3).toISOString()}],
+    ['select.ev_goal','goal','pv_only',{options:['pv_only','km_until','days','now']}],['switch.ev_boost','boost','on']]});
+  const stop=root.querySelector('.plan.sep-stop');
+  assert.ok(stop);
+  assert.match(stop.textContent,/Boost endet/);
+  assert.doesNotMatch(root.textContent,/PV-Stopp/);
+});

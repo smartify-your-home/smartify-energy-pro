@@ -98,6 +98,9 @@ Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verha
 - `EvDevice.full_at()` → Attribut `voll_um`: (Max-SoC − SoC) × Kapazität / Wirkungsgrad / gemessene Leistung; nur bei Ladung ≥ 500 W, verbunden, SoC und Kapazität vorhanden. Test: tests/test_ev_boost.py (EVFullAtTests).
 - Karte: Boost-Toggle ist `button.gear.boost` neben dem Zahnrad (nicht in `.sep-actions`); `show_allocated` (Standard false) steuert die Kachel „Verteilt“.
 
+## Wallbox PV-Boost Wallbox-Minimum (0.3.54)
+- `_decide_boost`: `boost_min_power > 0` ⇒ Ziel mindestens Wallbox-Minimum (`min_a × V × Phasen`), kein `_deficit_since`. Nur bei 0 W Stopp-Verzögerung. Tests: `test_minimum_below_three_phase_wallbox_minimum_keeps_charging`, `test_factor_only_on_three_phases_still_uses_stop_delay`; UI „Boost endet“.
+
 ## Wallbox PV-Boost (0.3.46)
 - Param `boost` (switch), `boost_factor`, `boost_hours`, `boost_min_power`; Endzeit in `state["boost_until"]` (persistiert), gesetzt im ersten Zyklus nach dem Einschalten (ctx.now), Ablauf/Abstecken → `_end_boost()`. Boost-Zweig in `decide` NACH Sofort/Pflicht, VOR PV-Laden; ignoriert `preempt_until`; `can_preempt` False während Boost; `_can_reclaim_pv_power` gilt auch für Boost bei Ziel km/Tage. Test: tests/test_ev_boost.py.
 

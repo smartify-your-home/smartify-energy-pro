@@ -169,8 +169,13 @@ class EvDevice(BaseDevice):
         p_min = self.min_a * self.voltage * phases
         until = self.boost_until()
         until_txt = f" bis {until:%H:%M}" if until else ""
+        raised = ""
+        if target < p_min and floor_w > 0:
+            # A configured minimum power means "keep charging": if the wallbox
+            # minimum (e.g. 6 A × 3) is above it, charge at that minimum.
+            target, raised = p_min, " (Wallbox-Minimum)"
         if target < p_min:
-            # Neither factor nor minimum reach the wallbox minimum: behave like
+            # Factor-only boost (minimum 0 W) without enough PV: behave like
             # PV charging (stop delay), never start.
             if not on:
                 self._deficit_since = None
@@ -186,7 +191,7 @@ class EvDevice(BaseDevice):
             self._deficit_since = None
         amps = clamp(math.floor(target / (self.voltage * phases)), self.min_a, self.max_a)
         self.status = "boost"
-        return self._charge(amps, phases, f"Boost ×{factor:g} {amps:.0f} A × {phases}")
+        return self._charge(amps, phases, f"Boost ×{factor:g} {amps:.0f} A × {phases}{raised}")
 
     def sensor_specs(self) -> list[SensorSpec]:
         return super().sensor_specs() + [
