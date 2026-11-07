@@ -39,6 +39,7 @@ CONF_POWER_SENSOR = "power_sensor"
 CONF_NOMINAL = "nominal_power"
 CONF_DURATION = "duration"
 CONF_TEMP_SENSOR = "temperature_sensor"
+CONF_ABSENCE_ENTITY = "absence_entity"  # Optional: ON means nobody at home
 CONF_CURRENT_ENTITY = "current_entity"
 CONF_CONTROL_ENTITY = "control_entity"
 CONF_CONTROL_ON = "control_on"
