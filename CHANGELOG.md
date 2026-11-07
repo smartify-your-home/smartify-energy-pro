@@ -1,4 +1,5 @@
 ## Unreleased
+- Heizstab und Wärmepumpen-WW-Boost: optionaler Abwesenheits-Binärsensor (`binary_sensor`/`input_boolean`, EIN = abwesend) je Gerät. Im Abwesenheitszustand wird der Heizstab auch bei manuellem Modus abgeschaltet, ein aktiver Number-WW-Boost zurückgesetzt und neue Einmal-WW-Boost-Auslösungen gesperrt. Konfigurierte nicht verfügbare Signale blockieren vorsorglich. Laufende eigenständige WW-Zyklen der Wärmepumpe werden nicht abgebrochen; bisherige Betriebsmodi bleiben gespeichert.
 
 ## 0.3.52 – Schnellere Budgetaktualisierung
 - Aktuelles Budget: Netz-, Akku- und Leistungsänderungen aller verwalteten Geräte werden nach kurzer 0,25-s-Bündelung ausgewertet (statt für viele Geräte erst nach 2 s).
