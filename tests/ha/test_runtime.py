@@ -13,6 +13,7 @@ from custom_components.smartify_energy import async_setup
 from custom_components.smartify_energy.config_flow import HeatPumpSubentryFlow
 from custom_components.smartify_energy.devices.base import BaseDevice, Context, Decision
 from custom_components.smartify_energy.devices.heatpump import HeatPumpDevice
+from custom_components.smartify_energy.devices.heater import HeaterDevice
 from custom_components.smartify_energy.manager import EnergyManager
 from custom_components.smartify_energy.sensor import SmartifySensor
 from custom_components.smartify_energy.helpers import SensorSpec
@@ -548,3 +549,67 @@ async def test_heater_stop_precedes_other_failures(hass, failure):
     assert events[:2] == ["heater_off", "failure"]
     assert events.count("heater_off") == 1
     assert not heater.last_decision.on
+
+
+async def test_absence_blocks_heater_in_manual_and_auto_and_restores_mode(hass):
+    m = manager(hass)
+    heater = HeaterDevice(m, "heater", "Heizstab", {
+        "switch": "switch.heater", "temperature_sensor": "sensor.temp",
+        "absence_entity": "binary_sensor.away",
+    })
+    heater.params["mode"] = "manual"
+    m.devices["heater"] = heater
+    hass.states.async_set("switch.heater", "on")
+    hass.states.async_set("sensor.temp", "40")
+    hass.states.async_set("binary_sensor.away", "on")
+    assert heater.mode == "off"
+    assert heater.absence_blocked
+    assert "binary_sensor.away" in heater.observed_entities()
+    with patch.object(heater, "_switch", new_callable=AsyncMock) as switch:
+        await heater.async_run(Context(dt_util.now(), 0, 2500, 2500, 2500, True, False), 2500)
+        switch.assert_awaited_once_with("switch.heater", False)
+    assert "Abwesenheit" in heater.reason
+    assert heater.params["mode"] == "manual"  # Do not overwrite user selection.
+    heater.params["mode"] = "auto"
+    assert heater.mode == "off"
+    hass.states.async_set("binary_sensor.away", "unavailable")
+    assert heater.mode == "off"  # Fail safe on missing status.
+    hass.states.async_set("binary_sensor.away", "off")
+    assert heater.mode == "auto"
+
+
+async def test_absence_blocks_ww_one_shot_without_cancelling_running_cycle(hass):
+    m = manager(hass)
+    wp = HeatPumpDevice(m, "wp", "WW", {
+        "boost_type": "switch", "boost_entity": "input_boolean.ww_trigger",
+        "ww_active_entity": "binary_sensor.ww_active",
+        "absence_entity": "input_boolean.away",
+    })
+    wp.params["mode"] = "auto"
+    m.devices["wp"] = wp
+    hass.states.async_set("input_boolean.ww_trigger", "off")
+    hass.states.async_set("binary_sensor.ww_active", "on")
+    hass.states.async_set("input_boolean.away", "on")
+    assert wp.mode == "off"
+    assert "input_boolean.away" in wp.observed_entities()
+    with patch.object(wp, "_set", new_callable=AsyncMock) as set_boost:
+        await wp.async_run(Context(dt_util.now(), 0, 3000, 3000, 3000, True, False), 3000)
+        set_boost.assert_not_awaited()
+    hass.states.async_set("input_boolean.away", "off")
+    assert wp.mode == "auto"
+
+
+async def test_absence_resets_active_number_ww_boost(hass):
+    m = manager(hass)
+    wp = HeatPumpDevice(m, "wp", "WW", {
+        "boost_type": "number", "boost_entity": "number.ww_target",
+        "absence_entity": "binary_sensor.away",
+    })
+    wp.params["mode"] = "auto"
+    wp.state["active"] = True
+    hass.states.async_set("number.ww_target", "55")
+    hass.states.async_set("binary_sensor.away", "on")
+    with patch.object(wp, "_set", new_callable=AsyncMock) as set_boost:
+        await wp.async_run(Context(dt_util.now(), 0, 3000, 3000, 3000, True, False), 3000)
+        set_boost.assert_awaited_once_with(False)
+    assert not wp.state["active"]
