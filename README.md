@@ -9,7 +9,7 @@ Auf schmalen Karten teilen sich Gerätetext und Bedienelemente den verfügbaren 
 
 **PV-Überschuss intelligent verteilen – mit Prioritäten, Geräteprogrammen, Batteriespeicher und Home-Assistant-Dashboard.**
 
-**Aktueller Quellcode-Stand (vorbereitet): 0.3.52** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
+**Aktueller Quellcode-Stand (vorbereitet): 0.3.53** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
 
 > **Versionshinweis:** Die Versionsnummer beschreibt den Repository-Stand. In HACS erscheint eine neue Version erst, wenn der zugehörige GitHub-Release-Tag erfolgreich veröffentlicht und von HACS erkannt wurde. [Veröffentlichte Versionen ansehen](https://github.com/smartify-your-home/smartify-energy-pro/releases).
 
