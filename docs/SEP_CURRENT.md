@@ -1,3 +1,6 @@
+## Abwesenheitskontakt für Heizstab und Wärmepumpen-WW-Boost
+Bei beiden Gerätetypen kann in der SEP-Gerätekonfiguration optional `Abwesenheit` auf einen `binary_sensor` oder `input_boolean` gesetzt werden. EIN = abwesend: Heizstab stoppt auch in Manuell; Number-WW-Boost stellt seinen Normalwert zurück; One-shot-WW-Boosts senden keinen neuen Startimpuls. Eine bereits gestartete, eigenständig laufende WW-Ladung der Wärmepumpe wird von SEP nicht abgebrochen. AUS = normaler gespeicherter Betriebsmodus. Ist der konfigurierte Sensor unbekannt/nicht verfügbar, bleibt die Freigabe vorsichtshalber gesperrt. Ohne Auswahl unverändertes Verhalten.
+
 ## Aktuelle Budgets und Reaktionszeiten (Unreleased)
 Netzsaldo, Akkuleistung und die Leistungssensoren aller SEP-Geräte lösen eine kurzfristig gebündelte (0,25 s) Neuberechnung aus; andere Sensoränderungen bleiben bei 2 s. Schnellere Anforderungen verdrängen bereits vorgemerkte langsamere Aktualisierungen. Gerätemoduswechsel starten die Auswertung ohne absichtliche Verzögerung. Das Budget in der rechten Gerätezeile bleibt der momentane individuelle Wert, nicht der historische Mittelwert. Die Sensoraktualisierung selbst hängt weiterhin vom jeweiligen Gerät und Home Assistant ab. Schutzbedingungen, Start-/Stopplogik, Prognoseintervalle und Akkupriorität bleiben unverändert.
 

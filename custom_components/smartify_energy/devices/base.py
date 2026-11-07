@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 from homeassistant.core import HomeAssistant
 
-from ..const import DEVICE_MODES, MODE_AUTO, MODE_MANUAL, MODE_OBSERVE, MODE_OFF
+from ..const import CONF_ABSENCE_ENTITY, DEVICE_MODES, MODE_AUTO, MODE_MANUAL, MODE_OBSERVE, MODE_OFF
 from ..helpers import BinarySpec, ButtonSpec, ParamSpec, SensorSpec, power_w
 from ..reasons import localize_reason
 from ..status import STATUS_CODES
@@ -24,11 +24,11 @@ ACTOR_FIELDS = {
 }
 ENTITY_FIELDS = {
     "load": ("switch", "power_sensor"), "dryer": ("switch", "power_sensor"),
-    "pool": ("switch", "power_sensor"), "heater": ("switch", "power_sensor", "temperature_sensor"),
+    "pool": ("switch", "power_sensor"), "heater": ("switch", "power_sensor", "temperature_sensor", CONF_ABSENCE_ENTITY),
     "ev": ("control_entity", "current_entity", "phase_entity", "connected_entity", "soc_sensor",
            "days_entity", "power_sensor"),
     "heatpump": ("boost_entity", "power_sensor", "temperature_sensor", "ww_active_entity",
-                 "ww_boost_temp_entity", "sun_angle_entity", "cloud_now_entity", "cloud_next_entity"),
+                 "ww_boost_temp_entity", "sun_angle_entity", "cloud_now_entity", "cloud_next_entity", CONF_ABSENCE_ENTITY),
 }
 
 
@@ -188,6 +188,8 @@ class BaseDevice:
         return {
             "geraetetyp": self.TYPE,
             "modus": self.mode,
+            "abwesenheitssperre": self.absence_blocked,
+            "abwesenheit_entitaet": self.cfg.get(CONF_ABSENCE_ENTITY),
             "prioritaet": self.priority,
             "grund": self.reason,
             "reason": localize_reason(self.reason, getattr(getattr(self.hass, "config", None), "language", "de")),
@@ -210,7 +212,18 @@ class BaseDevice:
 
     # ── Zustand ──────────────────────────────────────────────────────────────
     @property
+    def absence_blocked(self) -> bool:
+        """Configured ON = away; unknown/unavailable also blocks for safety."""
+        entity = self.cfg.get(CONF_ABSENCE_ENTITY)
+        if not entity or self.TYPE not in ("heater", "heatpump"):
+            return False
+        state = self.hass.states.get(entity)
+        return state is None or state.state != "off"
+
+    @property
     def mode(self) -> str:
+        if self.absence_blocked:
+            return MODE_OFF
         hub_mode = self.manager.hub_mode
         if hub_mode == MODE_OFF:
             return MODE_OFF
@@ -278,8 +291,9 @@ class BaseDevice:
             self.status = "actuator_error"
             return self.last_decision or Decision(False, reason="Aktor-Wiederholpause")
         if mode == MODE_OFF:
-            self.status, self.reason, self.would = "aus", "Modus: Aus", ""
-            self.last_decision = Decision(False, reason="Modus: Aus")
+            reason = ("Abwesenheit – gesperrt" if self.absence_blocked else "Modus: Aus")
+            self.status, self.reason, self.would = "aus", reason, ""
+            self.last_decision = Decision(False, reason=reason)
             try:
                 await self.async_disabled(ctx)
             except Exception:

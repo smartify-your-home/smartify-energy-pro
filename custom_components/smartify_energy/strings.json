@@ -324,6 +324,7 @@
         "user": {
           "title": "Heat pump – PV boost",
           "data": {
+            "absence_entity": "Away (on = absent)",
             "name": "Name",
             "boost_type": "Boost type",
             "boost_entity": "Boost entity",
@@ -341,6 +342,7 @@
             "ww_boost_temp_entity": "Optional: Hot-water boost target entity (°C)"
           },
           "data_description": {
+            "absence_entity": "Optional binary_sensor or input_boolean: ON means away and blocks this heater/boost. OFF restores the configured mode. Unknown/unavailable also blocks for safety. Heater switches OFF including manual mode; one-shot WW triggers are suppressed but already running WP hot-water cycles are not interrupted.",
             "boost_entity": "The actuator to start a WW cycle. Button/switch/input_boolean triggers only once; SEP never sends an OFF for one-shot WW loads. A helper input_boolean needs its own automation. A switch must return to OFF externally before another trigger is possible. Number setpoints still use active boost/reset control.",
             "sun_angle_entity": "Optional numeric sun elevation in degrees, not azimuth. For sun.sun, expose its elevation attribute through a numeric sensor. Requires a threshold and the active switch.",
             "sun_angle_min": "Optional minimum elevation. 12° allows starting at exactly 12°. Unset means ignored. Also select an entity and enable the check.",
@@ -361,6 +363,7 @@
         "reconfigure": {
           "title": "Heat pump – PV boost",
           "data": {
+            "absence_entity": "Away (on = absent)",
             "name": "Name",
             "boost_type": "Boost type",
             "boost_entity": "Boost entity",
@@ -378,6 +381,7 @@
             "ww_boost_temp_entity": "Optional: Hot-water boost target entity (°C)"
           },
           "data_description": {
+            "absence_entity": "Optional binary_sensor or input_boolean: ON means away and blocks this heater/boost. OFF restores the configured mode. Unknown/unavailable also blocks for safety. Heater switches OFF including manual mode; one-shot WW triggers are suppressed but already running WP hot-water cycles are not interrupted.",
             "boost_entity": "The actuator to start a WW cycle. Button/switch/input_boolean triggers only once; SEP never sends an OFF for one-shot WW loads. A helper input_boolean needs its own automation. A switch must return to OFF externally before another trigger is possible. Number setpoints still use active boost/reset control.",
             "sun_angle_entity": "Optional numeric sun elevation in degrees, not azimuth. For sun.sun, expose its elevation attribute through a numeric sensor. Requires a threshold and the active switch.",
             "sun_angle_min": "Optional minimum elevation. 12° allows starting at exactly 12°. Unset means ignored. Also select an entity and enable the check.",
@@ -414,6 +418,7 @@
         "user": {
           "title": "Heater / PV surplus sink",
           "data": {
+            "absence_entity": "Away (on = absent)",
             "name": "Name",
             "switch": "Switch / input boolean",
             "power_sensor": "Power sensor (optional)",
@@ -421,6 +426,7 @@
             "nominal_power": "Heater rated power"
           },
           "data_description": {
+            "absence_entity": "Optional binary_sensor or input_boolean: ON means away and blocks this heater/boost. OFF restores the configured mode. Unknown/unavailable also blocks for safety. Heater switches OFF including manual mode; one-shot WW triggers are suppressed but already running WP hot-water cycles are not interrupted.",
             "name": "Choose a descriptive name for this PV heater.",
             "switch": "Required writable switch.* or input_boolean.* controlling the heater relay. Do not choose the normal domestic-hot-water boost button.",
             "power_sensor": "Optional actual heater power in W or kW. It avoids double-reserving the heater draw already embedded in the grid meter. If omitted, reservations remain conservative.",
@@ -431,6 +437,7 @@
         "reconfigure": {
           "title": "Heater / PV surplus sink",
           "data": {
+            "absence_entity": "Away (on = absent)",
             "name": "Name",
             "switch": "Switch / input boolean",
             "power_sensor": "Power sensor (optional)",
@@ -438,6 +445,7 @@
             "nominal_power": "Heater rated power"
           },
           "data_description": {
+            "absence_entity": "Optional binary_sensor or input_boolean: ON means away and blocks this heater/boost. OFF restores the configured mode. Unknown/unavailable also blocks for safety. Heater switches OFF including manual mode; one-shot WW triggers are suppressed but already running WP hot-water cycles are not interrupted.",
             "name": "Choose a descriptive name for this PV heater.",
             "switch": "Required writable switch.* or input_boolean.* controlling the heater relay. Do not choose the normal domestic-hot-water boost button.",
             "power_sensor": "Optional actual heater power in W or kW. It avoids double-reserving the heater draw already embedded in the grid meter. If omitted, reservations remain conservative.",

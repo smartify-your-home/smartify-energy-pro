@@ -21,6 +21,7 @@ from .const import (
     BOOST_BUTTON,
     BOOST_NUMBER,
     BOOST_SWITCH,
+    CONF_ABSENCE_ENTITY,
     CONF_BAT_CAPACITY,
     CONF_BAT_POWER,
     CONF_BAT_SIGN,
@@ -310,6 +311,7 @@ class HeaterSubentryFlow(_DeviceFlow):
             _req(CONF_SWITCH, d): _ent(["switch", "input_boolean"]),
             _opt(CONF_POWER_SENSOR, d): _ent("sensor", "power"),
             _req(CONF_TEMP_SENSOR, d): _ent("sensor", "temperature"),
+            _opt(CONF_ABSENCE_ENTITY, d): _ent(["binary_sensor", "input_boolean"]),
             _req(CONF_NOMINAL, d, 2000): _num(100, 10000, 50, "W"),
         })
 
@@ -360,6 +362,7 @@ class HeatPumpSubentryFlow(_DeviceFlow):
             _req(CONF_NOMINAL, d, 2000): _num(200, 10000, 50, "W"),
             _opt(CONF_TEMP_SENSOR, d): _ent("sensor", "temperature"),
             _opt(CONF_WW_ACTIVE_ENTITY, d): _ent(["binary_sensor", "input_boolean"]),
+            _opt(CONF_ABSENCE_ENTITY, d): _ent(["binary_sensor", "input_boolean"]),
             _req("ww_active_minutes", d, 10): _num(0, 180, 1, "min"),
             _opt(CONF_WW_BOOST_TEMP_ENTITY, d): _ent(["input_number", "number", "sensor"]),
             _opt("sun_angle_entity", d): _ent(["sensor", "input_number", "number"]),

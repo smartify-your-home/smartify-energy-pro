@@ -495,6 +495,8 @@ class HeatPumpDevice(BaseDevice):
             await self._switch(self.entity, on)
 
     def plan_demand(self, now: datetime) -> PlanDemand | None:
+        if self.absence_blocked:
+            return None
         if self.ww_active is not False or self._cooldown_remaining(now):
             return None
         if self.one_shot:

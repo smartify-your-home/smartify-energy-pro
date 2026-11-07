@@ -324,6 +324,7 @@
         "user": {
           "title": "Wärmepumpe – PV-Boost",
           "data": {
+            "absence_entity": "Abwesenheit (Ein = abwesend)",
             "name": "[Pflicht] Name",
             "boost_type": "[Pflicht] Boost-Art",
             "boost_entity": "[Pflicht] Boost-Entity",
@@ -341,6 +342,7 @@
             "ww_active_minutes": "WW aktiv: Wartezeit bis Boost"
           },
           "data_description": {
+            "absence_entity": "Optionaler binary_sensor oder input_boolean: Ein sperrt Heizstab und WW-Boost, Aus gibt den eingestellten Modus wieder frei. Unbekannt/nicht verfügbar sperrt vorsichtshalber ebenfalls. Heizstab schaltet auch bei Manuell ab; laufende eigenständige WW-Zyklen der Wärmepumpe werden nicht abgebrochen.",
             "name": "**Pflicht:** Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
             "boost_type": "**Pflicht:** Schalter/input_boolean oder Button/input_button: startet die Warmwasserladung einmalig. SEP schaltet diesen Auslöser danach nicht wieder aus und bricht die laufende WW-Ladung nicht ab. Sollwert/Number: weiterhin aktive Sollwerterhöhung mit anschließender Rückstellung. Für einen Einmalstart bevorzugt Button.",
             "boost_entity": "**Pflicht:** Eine vorhandene Entität, die den einmaligen Warmwasser-Ladestart tatsächlich auslöst. Ein Helfer (input_boolean) braucht eine passende HA-Automation. Bei dauerhaft EIN bleibendem Schalter löst SEP nicht erneut aus; dieser muss extern zurück auf AUS gehen, um wieder startbereit zu sein.",
@@ -361,6 +363,7 @@
         "reconfigure": {
           "title": "Wärmepumpe – PV-Boost",
           "data": {
+            "absence_entity": "Abwesenheit (Ein = abwesend)",
             "name": "[Pflicht] Name",
             "boost_type": "[Pflicht] Boost-Art",
             "boost_entity": "[Pflicht] Boost-Entity",
@@ -378,6 +381,7 @@
             "ww_active_minutes": "WW aktiv: Wartezeit bis Boost"
           },
           "data_description": {
+            "absence_entity": "Optionaler binary_sensor oder input_boolean: Ein sperrt Heizstab und WW-Boost, Aus gibt den eingestellten Modus wieder frei. Unbekannt/nicht verfügbar sperrt vorsichtshalber ebenfalls. Heizstab schaltet auch bei Manuell ab; laufende eigenständige WW-Zyklen der Wärmepumpe werden nicht abgebrochen.",
             "name": "**Pflicht:** Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
             "boost_type": "**Pflicht:** Schalter/input_boolean oder Button/input_button: startet die Warmwasserladung einmalig. SEP schaltet diesen Auslöser danach nicht wieder aus und bricht die laufende WW-Ladung nicht ab. Sollwert/Number: weiterhin aktive Sollwerterhöhung mit anschließender Rückstellung. Für einen Einmalstart bevorzugt Button.",
             "boost_entity": "**Pflicht:** Eine vorhandene Entität, die den einmaligen Warmwasser-Ladestart tatsächlich auslöst. Ein Helfer (input_boolean) braucht eine passende HA-Automation. Bei dauerhaft EIN bleibendem Schalter löst SEP nicht erneut aus; dieser muss extern zurück auf AUS gehen, um wieder startbereit zu sein.",
@@ -414,6 +418,7 @@
         "user": {
           "title": "Heizstab / PV-Überschusssenke",
           "data": {
+            "absence_entity": "Abwesenheit (Ein = abwesend)",
             "name": "[Pflicht] Name",
             "switch": "[Pflicht] Schalter oder Eingabe-Boolean",
             "power_sensor": "[Optional] Leistungssensor (W)",
@@ -421,6 +426,7 @@
             "nominal_power": "[Pflicht] Heizleistung (W)"
           },
           "data_description": {
+            "absence_entity": "Optionaler binary_sensor oder input_boolean: Ein sperrt Heizstab und WW-Boost, Aus gibt den eingestellten Modus wieder frei. Unbekannt/nicht verfügbar sperrt vorsichtshalber ebenfalls. Heizstab schaltet auch bei Manuell ab; laufende eigenständige WW-Zyklen der Wärmepumpe werden nicht abgebrochen.",
             "name": "Name dieses Heizstabs, z. B. Elektroheizstab Warmwasser.",
             "switch": "Schaltbarer Aktor (switch.*) oder Helfer (input_boolean.*). Muss den Heizstab wirklich schalten beziehungsweise über eine weitere HA-Automation den Shelly ansteuern.",
             "power_sensor": "Optional: tatsächliche Heizstableistung in W oder kW, z. B. Shelly-Leistungssensor. Ohne Leistungssensor werden andere Geräte vorsichtshalber stärker reserviert.",
@@ -431,6 +437,7 @@
         "reconfigure": {
           "title": "Heizstab / PV-Überschusssenke",
           "data": {
+            "absence_entity": "Abwesenheit (Ein = abwesend)",
             "name": "[Pflicht] Name",
             "switch": "[Pflicht] Schalter oder Eingabe-Boolean",
             "power_sensor": "[Optional] Leistungssensor (W)",
@@ -438,6 +445,7 @@
             "nominal_power": "[Pflicht] Heizleistung (W)"
           },
           "data_description": {
+            "absence_entity": "Optionaler binary_sensor oder input_boolean: Ein sperrt Heizstab und WW-Boost, Aus gibt den eingestellten Modus wieder frei. Unbekannt/nicht verfügbar sperrt vorsichtshalber ebenfalls. Heizstab schaltet auch bei Manuell ab; laufende eigenständige WW-Zyklen der Wärmepumpe werden nicht abgebrochen.",
             "name": "Name dieses Heizstabs, z. B. Elektroheizstab Warmwasser.",
             "switch": "Schaltbarer Aktor (switch.*) oder Helfer (input_boolean.*). Muss den Heizstab wirklich schalten beziehungsweise über eine weitere HA-Automation den Shelly ansteuern.",
             "power_sensor": "Optional: tatsächliche Heizstableistung in W oder kW, z. B. Shelly-Leistungssensor. Ohne Leistungssensor werden andere Geräte vorsichtshalber stärker reserviert.",

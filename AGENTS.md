@@ -109,3 +109,9 @@ Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verha
 - Ein früher geplanter langsamer Zyklus darf einen später eintreffenden schnelleren niemals blockieren. Schnellere Anforderung ersetzt den ausstehenden Timer; gleich schnelle/langsamere bleiben gebündelt.
 - Geräte-Moduswechsel (inkl. Heizstab Auto/Ein/Aus) veranlassen einen Regelzyklus ohne absichtliche Verzögerung. Bestehende Verriegelung und Rerun schützen vor Parallelzyklen.
 - Keine Aufweichung von Gerätehysterese, PV-Gates, Mindestzeiten, Stopp-Verzögerung, Hardware-Kommandogrenzen oder Akku-Prioritätsgutschrift. Tests in tests/ha/test_runtime.py.
+
+## Optionale Abwesenheitssperre für Heizstab und WW-Boost
+- Je Gerät optional `absence_entity` (`binary_sensor`/`input_boolean`), `on` = abwesend; `off` = freigegeben. Fehlende/unknown/unavailable konfigurierte Entität sperrt sicherheitshalber ebenfalls.
+- Sperre wirkt als effektiver Modus `off`, ohne den vom Nutzer gespeicherten Modus zu überschreiben. Heizstab schaltet auch in Manuell ab und darf nicht neu starten; WW-Number-Boost wird auf Normalwert zurückgestellt.
+- WW-One-shot (Button/Switch/Input-Boolean): keine neuen Auslösungen bei Abwesenheit; bereits von der Wärmepumpe selbst verwaltete WW-Zyklen werden nicht abgebrochen. Abwesenheitseingang als schnelles beobachtetes Ereignis berücksichtigen.
+- Tests: `tests/ha/test_runtime.py`; Dokumentation/Übersetzungen DE/EN synchron halten.
