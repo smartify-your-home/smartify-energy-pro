@@ -267,6 +267,8 @@ class EnergyManager:
         for dev in self.devices.values():
             entities.update(dev.observed_entities())
             fast_inputs.add(dev.cfg.get("power_sensor"))
+            if dev.TYPE in ("heater", "heatpump"):
+                fast_inputs.add(dev.cfg.get("absence_entity"))
             if dev.TYPE == "ev":
                 fast_inputs.add(dev.cfg.get("current_entity"))
         self._fast_inputs = frozenset(item for item in fast_inputs if item)
