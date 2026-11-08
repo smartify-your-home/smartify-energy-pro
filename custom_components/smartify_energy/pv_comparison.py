@@ -101,8 +101,49 @@ class PVComparison:
         self._prune(now)
         self.previous = None  # Never integrate across a HA restart.
 
+    def recent(self, now: datetime, hours: int = 48) -> dict:
+        """Compare the previous 48 elapsed hours (including incomplete gaps).
+
+        Every hour is keyed in UTC, so both repeated DST hours are preserved.
+        Only complete hours with >=95% valid meter coverage count as actuals.
+        """
+        now_utc = _utc(now)
+        horizon = max(1, min(48, int(hours)))
+        current_hour = _hour(now_utc)
+        begin = current_hour - timedelta(hours=horizon - 1)
+        rows = []
+        forecast_kwh = actual_kwh = 0.0
+        compared = 0
+        for offset in range(horizon):
+            stamp = begin + timedelta(hours=offset)
+            key = stamp.isoformat()
+            expected = self.forecasts.get(key)
+            complete = stamp + timedelta(hours=1) <= now_utc
+            covered = self.coverage_s.get(key, 0.0) >= MIN_COVERAGE_SECONDS
+            valid = complete and covered and expected is not None
+            measured = self.actual_wh.get(key)
+            rows.append({
+                "zeit": key,
+                "prognose_wh": round(expected, 1) if expected is not None else None,
+                "ist_wh": round(measured, 1) if valid and measured is not None else None,
+            })
+            if valid and measured is not None:
+                compared += 1
+                forecast_kwh += expected / 1000
+                actual_kwh += measured / 1000
+        return {
+            "stunden": rows,
+            "prognose_kwh": round(forecast_kwh, 2) if compared else None,
+            "ist_kwh": round(actual_kwh, 2) if compared else None,
+            "abweichung_pct": round((actual_kwh / forecast_kwh - 1) * 100, 1)
+            if compared and forecast_kwh > 0 else None,
+            "verglichene_stunden": compared,
+            "zeitraum_stunden": horizon,
+            "hinweis": "Letzte 48 Stunden; Summen nur aus vollständig gemessenen und prognostizierten Stunden.",
+        }
+
     def today(self, now: datetime, tzinfo) -> dict:
-        """Compare only complete, sufficiently metered, forecasted local hours."""
+        """Backward-compatible calendar-day summary for existing consumers."""
         now_utc = _utc(now)
         day = now_utc.astimezone(tzinfo).date()
         rows = []
