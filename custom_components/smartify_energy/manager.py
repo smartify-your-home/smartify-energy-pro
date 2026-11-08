@@ -219,6 +219,8 @@ class EnergyManager:
                            "letzte_aktualisierung": self.forecast.last_update.isoformat()
                            if self.forecast.last_update else None,
                            "fehler": self.forecast.error,
+                           "prognose_quelle": self.forecast.source_label,
+                           "prognose_modus": self.cfg.get(CONF_SOLAR_MODE, "external"),
                            "kalibrierung_aktiv": bool(self.cfg.get(CONF_SOLAR_MODE) == "calculated"
                                                        and self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED)),
                            "kalibrierung": self.forecast.calibration.diagnostics(dt_util.now())
