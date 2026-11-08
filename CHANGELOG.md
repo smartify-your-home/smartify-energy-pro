@@ -1,5 +1,8 @@
 ## Unreleased
 
+## 0.3.55 – Auto-Zeile: Ladeziel und Boost im Leistungsblock
+- Karte: Ladeziel-Auswahl und Boost-Rakete des Autos stehen als Bediengruppe im rechten Leistungsblock – breit in einer Zeile vor Akku, Leistung und Budget, schmal oberhalb davon. Vorher lagen sie frei neben dem Namen. Logik unverändert.
+
 ## 0.3.54 – Boost stoppt nicht mehr fälschlich bei 3-phasiger Wallbox
 - Behoben: Lag Faktor × PV bzw. die Boost-Mindestleistung unter dem Wallbox-Minimum (z. B. 2.000 W bei 6 A × 3 = 4.140 W), lief beim Boost die Stopp-Verzögerung und die Karte zeigte gleichzeitig „Boost“ und „PV-Stopp“. Mit gesetzter Mindestleistung lädt der Boost jetzt mit dem Wallbox-Minimum weiter (Grund „… (Wallbox-Minimum)“). Nur bei Mindestleistung 0 W gilt weiterhin die Stopp-Verzögerung.
 - Karte: Läuft beim Boost die Stopp-Verzögerung, heißt die Anzeige „Boost endet HH:MM – zu wenig Überschuss“ statt „PV-Stopp“. „Empf. Start“ wird beim Auto nicht mehr angezeigt, solange es bereits lädt.

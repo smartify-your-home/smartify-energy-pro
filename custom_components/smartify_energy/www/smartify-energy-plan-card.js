@@ -483,6 +483,11 @@ const CARD_CSS = `
   .pb-full { font-size:10px; color:var(--secondary-text-color); white-space:nowrap; }
   .gear.boost.on { color:var(--primary-color); }
   .pb-stack { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+  /* Auto: [Ladeziel + Boost] | Akku | Leistung | Budget | Zahnrad in einer Zeile (breit),
+     schmal: Bediengruppe oben, darunter Akku links und Leistung/Budget untereinander. */
+  .ev-power-budget { flex-wrap:nowrap; }
+  .ev-power-budget .pb-stack { flex-direction:row; gap:10px; align-items:center; }
+  .ev-ctl { display:flex; align-items:center; gap:4px; flex:none; }
   .plan.sep-stop { color:var(--warning-color, #f57c00); display:flex; align-items:center; gap:4px; }
   .plan.sep-stop ha-icon { --mdc-icon-size:14px; }
   .plan.sep-boost { color:var(--primary-color); display:flex; align-items:center; gap:4px; }
@@ -503,6 +508,9 @@ const CARD_CSS = `
     .heater-power-budget { flex-direction:column; flex-wrap:nowrap; align-items:flex-end; gap:5px; }
     .heater-power-budget .pb-pair { width:100%; justify-content:flex-end; gap:8px; }
     .heater-power-budget .seg { align-self:flex-end; }
+    .ev-power-budget { flex-wrap:wrap; }
+    .ev-power-budget .ev-ctl { width:100%; justify-content:flex-end; }
+    .ev-power-budget .pb-stack { flex-direction:column; gap:3px; align-items:flex-end; }
     .power-budget select.mode { max-width:100%; box-sizing:border-box; }
     .pb-item { align-items:flex-end; }
     .right .sep-actions { justify-content:flex-end; }
@@ -950,6 +958,10 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       this._boostUntil[dev.id] = boostUntil;
       const boostPossible = mode === "auto" && !["nicht_verbunden", "disconnected", "voll", "full",
         "laedt_sofort", "charging_now", "laedt_pflicht", "charging_required"].includes(phase);
+      // Auto: Ladeziel und Boost als eine Bediengruppe im Leistungsblock.
+      const evGoalCtl = a.geraetetyp === "ev" && this._config.show_mode !== false ? this._quickSelect(dev.goal, "Ladeziel") : "";
+      const evBoostCtl = dev.boost && canAct && (boostOn || boostPossible)
+        ? `<button type="button" class="gear boost ${boostOn ? "on" : ""}" data-toggle="${esc(dev.boost)}" title="${boostOn ? "Boost beenden" : "PV-Boost starten"}" aria-label="${boostOn ? "Boost beenden" : "PV-Boost starten"}"><ha-icon icon="${boostOn ? "mdi:rocket-launch" : "mdi:rocket-launch-outline"}"></ha-icon></button>` : "";
       const nachladenOn = this._st(dev.nachladen)?.state === "on";
       const act = (attr, id, icon, label, cls = "") =>
         `<button type="button" class="sep-act ${cls}" ${attr}="${esc(id)}"><ha-icon icon="${icon}"></ha-icon>${esc(label)}</button>`;
@@ -981,8 +993,9 @@ class SmartifyEnergyPlanCard extends HTMLElement {
             ${trendText ? `<div class="plan">${trendText} ${logToggle}</div>${logOpen ? logText : ""}` : ""}
           </div>
           <div class="right">
-            <div class="power-budget${a.geraetetyp === "heater" ? " heater-power-budget" : ""}" title="${esc(budgetTitle)}">
+            <div class="power-budget${a.geraetetyp === "heater" ? " heater-power-budget" : a.geraetetyp === "ev" ? " ev-power-budget" : ""}" title="${esc(budgetTitle)}">
               ${a.geraetetyp === "heater" ? this._heaterSwitch(dev.mode) : ""}
+              ${a.geraetetyp === "ev" && (evGoalCtl || evBoostCtl) ? `<div class="ev-ctl">${evGoalCtl}${evBoostCtl}</div>` : ""}
               ${a.geraetetyp === "ev" ? `<div class="pb-item"><span class="pb-label">Akku</span><span class="pw">${evSoc == null ? "–" : evSoc.toFixed(0) + " %"}</span>${a.voll_um && fmtTime(a.voll_um) ? `<span class="pb-full" title="Geschätzt bei gleichbleibender Ladeleistung bis Max-SoC">voll ${fmtTime(a.voll_um)}</span>` : ""}</div>` : ""}
               <div class="${a.geraetetyp === "ev" ? "pb-stack" : "pb-pair"}">
               <div class="pb-item">
@@ -995,9 +1008,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
               </div>
               </div>
               ${a.geraetetyp !== "heater" && mode && !["auto", "observe"].includes(mode) ? `<span class="mode-tag ${esc(mode)}" title="Modus – ändern im Zahnrad">${esc(MODE_LABELS[mode] || mode)}</span>` : ""}
-              ${a.geraetetyp === "ev" && this._config.show_mode !== false ? this._quickSelect(dev.goal, "Ladeziel") : ""}
               ${actions ? `<div class="sep-actions">${actions}</div>` : ""}
-              ${dev.boost && canAct && (boostOn || boostPossible) ? `<button type="button" class="gear boost ${boostOn ? "on" : ""}" data-toggle="${esc(dev.boost)}" title="${boostOn ? "Boost beenden" : "PV-Boost starten"}" aria-label="${boostOn ? "Boost beenden" : "PV-Boost starten"}"><ha-icon icon="${boostOn ? "mdi:rocket-launch" : "mdi:rocket-launch-outline"}"></ha-icon></button>` : ""}
               ${this._config.show_settings !== false && dev.settings.length ? `<button class="gear ${open ? "open" : ""}" data-gear="${dev.id}" title="Einstellungen"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}
             </div>
           </div>

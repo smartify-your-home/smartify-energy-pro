@@ -236,3 +236,14 @@ test('EV boost with running stop delay says "Boost endet", not "PV-Stopp"',()=>{
   assert.match(stop.textContent,/Boost endet/);
   assert.doesNotMatch(root.textContent,/PV-Stopp/);
 });
+
+test('EV controls (goal + boost) sit inside the metrics block before the battery',()=>{
+  const root=rowCard({ev:[['sensor.ev','status','charging_pv',{geraetetyp:'ev',modus:'auto',soc:52}],['select.ev_mode','mode','auto',{options:['auto','observe','manual','off']}],
+    ['select.ev_goal','goal','pv_only',{options:['pv_only','km_until','days','now']}],['switch.ev_boost','boost','off']]});
+  const pb=root.querySelector('.power-budget.ev-power-budget');
+  assert.ok(pb,'EV metrics block');
+  const ctl=pb.querySelector(':scope > .ev-ctl');
+  assert.ok(ctl && ctl.querySelector('select.quick[data-select="select.ev_goal"]') && ctl.querySelector('button.boost'));
+  assert.equal(pb.firstElementChild,ctl,'controls first, then Akku/Leistung/Budget');
+  assert.match(source,/@container \(max-width:560px\)[\s\S]*\.ev-power-budget \.ev-ctl \{ width:100%/);
+});
