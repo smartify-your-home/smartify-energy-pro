@@ -77,6 +77,7 @@ class ForecastProvider:
         self.hours: dict[datetime, float] = {}
         self.last_update: datetime | None = None
         self.error: str | None = None
+        self.source_label: str | None = None
 
     @property
     def configured(self) -> bool:
@@ -85,6 +86,7 @@ class ForecastProvider:
     async def async_refresh(self) -> None:
         hours: dict[datetime, float] = {}
         errors: list[str] = []
+        self.source_label = None
         if self.solar_config.get("mode") == "calculated":
             # Never learn from the previous forecast if weather becomes invalid.
             self.raw_hours = {}
@@ -115,22 +117,33 @@ class ForecastProvider:
             except (TypeError, ValueError, OverflowError) as err:
                 errors.append(f"PV calculation: {err}")
             self.hours = hours
+            self.source_label = "Eigene Berechnung" if hours else None
             self.error = "; ".join(errors) or None
             self.last_update = dt_util.now()
             return
 
+        sources: set[str] = set()
         for entry_id in self.entry_ids:
             try:
                 data = await self._from_energy_platform(entry_id)
+                if data:
+                    entry = self.hass.config_entries.async_get_entry(entry_id)
+                    domain = entry.domain if entry else ""
+                    sources.add({"solcast_solar": "Solcast", "solcast": "Solcast",
+                                 "forecast_solar": "Forecast.Solar"}.get(domain, domain or "Externe Prognose"))
                 _merge(hours, data)
             except Exception as err:  # noqa: BLE001
                 errors.append(f"{entry_id}: {err}")
         for entity_id in self.sensors:
             try:
-                _merge(hours, self._from_sensor(entity_id))
+                sensor_hours = self._from_sensor(entity_id)
+                if sensor_hours:
+                    sources.add("Sensor-Prognose")
+                _merge(hours, sensor_hours)
             except Exception as err:  # noqa: BLE001
                 errors.append(f"{entity_id}: {err}")
         self.hours = hours
+        self.source_label = next(iter(sources)) if len(sources) == 1 else ("Mehrere Quellen" if sources else None)
         self.error = "; ".join(errors) or None
         if errors:
             _LOGGER.debug("Prognose-Fehler: %s", self.error)
