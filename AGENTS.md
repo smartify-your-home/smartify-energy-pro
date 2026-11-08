@@ -1,3 +1,8 @@
+## PV-Plan Gitternetz und Y-Achse (0.3.60)
+- PV-Plan zeigt Momentan-/Stundenleistung in **kW**, die neue ausklappbare historische Vergleichsgrafik Energie je Stunde in **kWh**. Einheiten nicht vertauschen.
+- Links fixierte Werteachse (Nullpunkt und vier Niveaus), vier dezente horizontale Gitternetzlinien, Balkenhöhen einheitlich auf die beschriftete Obergrenze normieren. Beim 48h-Horizont bleibt die Achse beim horizontalen Scrollen fest stehen.
+- Keine Änderungen am PV-Plan, Gerätebalken, Prognoseberechnung oder Budget. Tests/ui/card.test.cjs deckt beide Darstellungen ab.
+
 ## PV-Plan tatsächliche Energie vs. Prognose (unreleased)
 - Kollabierbare, horizontal scrollbar 48h zurückblickende Anzeige direkt nach PV-Plan (initial rechts beim neuesten Wert): echte PV-Erzeugungsleistung aus bestehendem optionalem Solar-PV-Power-Entity, niemals Netzsaldo, Batterie oder Hauslast. Unterstützt externe und berechnete Prognose.
 - Prognose pro UTC-Stunde einmalig vor Stundenbeginn einfrieren; niemals rückwirkend mit aktualisierter Prognose überschreiben. Daten sparsam persistent mit bisherigem Store, ältere Daten begrenzen.

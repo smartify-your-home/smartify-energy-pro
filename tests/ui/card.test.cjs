@@ -375,3 +375,53 @@ test('PV comparison supports a 48h scrollback including missing hours',()=>{
   assert.match(root.querySelectorAll('.pv-compare-col')[5].getAttribute('title'),/kein Wert/);
   assert.ok(root.querySelector('.pv-compare-scroll'));
 });
+
+
+test('PV plan shows readable kW axis with 4 aligned horizontal guide lines',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  const now=Date.now();
+  const soon=new Date(now-now%3600000+3600000).toISOString();
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
+  dom.window.document.body.append(card);
+  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
+    states:{'sensor.plan':{state:'–',last_updated:new Date().toISOString(),attributes:{
+      stunden:[{zeit:soon,pv_w:4300,frei_w:2000,geraete:{Waschmaschine:1800}}]}}},
+    devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  const plot=card.shadowRoot.querySelector('.timeline .bars');
+  const axis=card.shadowRoot.querySelector('.timeline .sep-y-axis');
+  assert.ok(plot,'PV plan chart exists');
+  assert.equal(plot.querySelectorAll('.sep-chart-grid i').length,4);
+  assert.equal(axis.querySelectorAll('span').length,5);
+  assert.match(axis.textContent,/kW/);
+  assert.equal(axis.querySelector('span').textContent,'5 kW','max 4.3 kW uses rounded 5 kW axis');
+  assert.equal(axis.querySelector('span:last-child').textContent,'0 kW');
+  assert.match(plot.querySelector('.col .pv').getAttribute('style'),/86%/);
+});
+
+test('PV actual-forecast comparison uses fixed left kWh axis while scrolling 48h',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
+  dom.window.document.body.append(card);
+  const start=Date.parse('2026-11-07T00:00:00Z');
+  const slots=Array.from({length:48},(_,i)=>({zeit:new Date(start+i*3600000).toISOString(),
+    prognose_wh:2500,ist_wh:i<40?2000:null}));
+  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
+    states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:true,
+      stunden:slots,prognose_kwh:90,ist_kwh:72,abweichung_pct:-20,verglichene_stunden:40}}}},
+    devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  card.shadowRoot.querySelector('[data-pvcompare]').click();
+  const root=card.shadowRoot;
+  const axis=root.querySelector('.pv-compare-body .sep-y-axis');
+  const scroll=root.querySelector('.pv-compare-scroll');
+  assert.ok(axis && scroll);
+  assert.ok(!scroll.contains(axis),'labels stay visible while chart scrolls');
+  assert.equal(root.querySelectorAll('.pv-compare-plot .sep-chart-grid i').length,4);
+  assert.equal(axis.querySelectorAll('span').length,5);
+  assert.equal(axis.querySelector('span').textContent,'2,5 kWh');
+  assert.equal(axis.querySelector('span:last-child').textContent,'0 kWh');
+  assert.match(root.querySelector('.pv-compare-forecast').getAttribute('style'),/100%/);
+});

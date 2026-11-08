@@ -84,6 +84,10 @@ SEP verteilt den verfügbaren PV-Überschuss nach einstellbarer Priorität. Das 
 | **Prioritäten** | Geräte per Drag & Drop ordnen; nachrangige regelbare Verbraucher können für höher priorisierte Starts zurückgenommen werden |
 | **Dashboard** | Gerätestatus, Leistungsbudget, Prioritäten, Einstellungen, Diagnose und PV-Plan in einer Karte |
 
+### PV-Plan: Skalierung und Leistung
+
+Im PV-Plan zeigen dezente horizontale Hilfslinien und eine links beschriftete kW-Achse die Leistung der prognostizierten PV- und Gerätebalken. Im ausklappbaren Vergleich darunter bezieht sich die Y-Achse dagegen auf kWh **je Stunde**; ihre Beschriftung bleibt beim horizontalen Scrollen durch die letzten 48 Stunden sichtbar.
+
 ### PV-Plan: Prognose und tatsächliche Erzeugung
 
 Unter dem PV-Plan befindet sich ein standardmäßig eingeklappter Bereich **PV-Prognose / Ist-Erzeugung**. Er zeigt eine horizontal scrollbar aufgebaute 48-Stunden-Historie (neueste Stunden rechts) mit stündlichen Balken, den vorhergesagten und gemessenen Energieertrag (kWh) sowie die prozentuale Abweichung. Verglichen werden nur Stunden mit mindestens 95 % tatsächlich beobachteter PV-Leistung und einer **vorher** gespeicherten Prognose. Die Stundenprognose wird nicht rückwirkend ersetzt. Für den Vergleich im Prognose-Dialog den vorhandenen optionalen **PV-Erzeugungsleistungssensor (W)** auswählen (Gesamt-PV-Leistung, nicht Netzsaldo oder Akku); dies funktioniert sowohl mit externer Prognose als auch eigener Berechnung. Die Aufzeichnung beginnt ab dem Update; frühere Tage werden nicht rückwirkend erfunden. Messlücken (z. B. HA-Neustart) erscheinen nicht als Nullertrag.
