@@ -11,9 +11,9 @@ Unter **Einstellungen → Geräte & Dienste → Smartify Energy Pro → Konfigur
 
 - **Externe Prognose (Standard):** unveränderte Forecast.Solar-/Solcast-/Sensor-Prognose.
 - **Eigene Berechnung:** Standortkoordinaten aus Home Assistant und Bewölkung über
-  `Meteonomiqs Cloud Forecast 8h` aus My-Weather. Im Auswahlfeld den *wirklichen*
+  `Meteonomiqs Cloud Forecast 48h` aus My-Weather (für die längere Prognose; der bisherige 8h-Sensor funktioniert weiterhin). Im Auswahlfeld den *wirklichen*
   Entity-ID des neuen My-Weather-Sensors wählen. Die Daten liegen im Attribut
-  `forecast` mit UTC-Zeitstempel und `cloud_coverage` (0 bis 100 %).
+  `forecast` mit UTC-Zeitstempel und `cloud_coverage` (0 bis 100 %). Nach dem My-Weather-Update unter SEP → Konfigurieren → Prognose den **neuen 48h-Sensor** auswählen, sonst bleibt SEP beim bisherigen 8h-Horizont.
 
 Bis zu **vier getrennte PV-Flächen** können konfiguriert werden. Pro Fläche:
 *installierte Peakleistung in kWp*, *Dachneigung* (0° flach bis 90° senkrecht),
@@ -25,8 +25,8 @@ Die Berechnung benutzt Sonnenstand, Ausrichtung und eine vereinfachte
 wolkenabhängige Einstrahlungs-/Verlustschätzung. Ihr Ergebnis wird in die
 bestehenden **SEP-PV-Prognose-Kacheln und Planungswerte** (stündliche Wh)
 eingespeist, ohne den gemessenen Netzsaldo oder die unmittelbaren
-Start-/Stoppschutzbedingungen zu ersetzen. Die 8-Stunden-Wetterprognose begrenzt
-den sicheren Vorhersagehorizont; für Zeiträume ohne gültige Bewölkungswerte
+Start-/Stoppschutzbedingungen zu ersetzen. Die verfügbaren stündlichen Wolkendaten (bis zu 48 Stunden) begrenzen
+den Vorhersagehorizont; für Zeiträume ohne gültige Bewölkungswerte
 werden keine vermeintlich sonnigen Stunden ergänzt. PV-Prognosen sind
 Schätzungen, bei Nebel/Hochnebel besonders unsicher. Kein zusätzlicher
 Meteonomiqs-API-Aufruf durch SEP.
