@@ -61,7 +61,7 @@
           "solar_4_tilt": "0° flat to 90° vertical.",
           "solar_4_azimuth": "0° North, 90° East, 180° South, 270° West.",
           "solar_calibration_enabled": "Only used for calculated PV forecast. Learns from measured PV generation; off by default.",
-          "solar_pv_power_entity": "Total actual generation for all modeled arrays, not net grid, house loads or battery power."
+          "solar_pv_power_entity": "Actual total PV generation (W), not grid balance, house load or battery power. Optional for the forecast-versus-actual chart below the PV plan; required if self-calibration is enabled."
         }
       },
       "battery": {
@@ -147,7 +147,7 @@
           "solar_4_tilt": "0° flat to 90° vertical.",
           "solar_4_azimuth": "0° North, 90° East, 180° South, 270° West.",
           "solar_calibration_enabled": "Only used for calculated PV forecast. Learns from measured PV generation; off by default.",
-          "solar_pv_power_entity": "Total actual generation for all modeled arrays, not net grid, house loads or battery power."
+          "solar_pv_power_entity": "Actual total PV generation (W), not grid balance, house load or battery power. Optional for the forecast-versus-actual chart below the PV plan; required if self-calibration is enabled."
         }
       },
       "battery": {
