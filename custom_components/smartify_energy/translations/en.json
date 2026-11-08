@@ -58,10 +58,6 @@
           "solar_4_kwp": "Rated STC kWp, zero disables the array.",
           "solar_4_tilt": "0° flat to 90° vertical.",
           "solar_4_azimuth": "0° North, 90° East, 180° South, 270° West."
-        },
-        "errors": {
-          "required": "Select the My-Weather cloud forecast sensor.",
-          "pv_surface_required": "Configure at least one PV array with peak power greater than 0 kWp."
         }
       },
       "battery": {
@@ -80,6 +76,10 @@
           "battery_capacity": "Usable home battery capacity in kWh. Used to estimate energy needed to fill it."
         }
       }
+    },
+    "error": {
+      "required": "Select the My-Weather cloud forecast sensor.",
+      "pv_surface_required": "Configure at least one PV array with peak power greater than 0 kWp."
     }
   },
   "options": {
@@ -140,10 +140,6 @@
           "solar_4_kwp": "Rated STC kWp, zero disables the array.",
           "solar_4_tilt": "0° flat to 90° vertical.",
           "solar_4_azimuth": "0° North, 90° East, 180° South, 270° West."
-        },
-        "errors": {
-          "required": "Select the My-Weather cloud forecast sensor.",
-          "pv_surface_required": "Configure at least one PV array with peak power greater than 0 kWp."
         }
       },
       "battery": {
@@ -162,6 +158,10 @@
           "battery_capacity": "Usable home battery capacity in kWh. Used to estimate energy needed to fill it."
         }
       }
+    },
+    "error": {
+      "required": "Select the My-Weather cloud forecast sensor.",
+      "pv_surface_required": "Configure at least one PV array with peak power greater than 0 kWp."
     }
   },
   "config_subentries": {
