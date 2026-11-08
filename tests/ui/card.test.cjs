@@ -277,14 +277,14 @@ test('PV forecast tile identifies its active source without losing remaining kWh
   };
   const states={
     'sensor.plan':{state:'-',attributes:{stunden:[]}},
-    'sensor.fc':{state:'12.5',attributes:{rest_heute_kwh:7.2,prognose_quelle:'Solcast',prognose_modus:'external'}},
+    'sensor.fc':{state:'12.5',last_updated:'2026-11-08T14:00:00Z',attributes:{rest_heute_kwh:7.2,prognose_quelle:'Solcast',prognose_modus:'external'}},
   };
   card.hass={entities,states,devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
   let tile=card.shadowRoot.querySelector('.forecast-source');
   assert.ok(tile,'source should be visible in the tile');
   assert.match(tile.textContent,/Quelle: Solcast/);
   assert.match(card.shadowRoot.textContent,/Rest 7.2 kWh/);
-  states['sensor.fc']={state:'8.1',attributes:{rest_heute_kwh:4.3,prognose_quelle:'Eigene Berechnung',prognose_modus:'calculated'}};
+  states['sensor.fc']={state:'8.1',last_updated:'2026-11-08T14:15:00Z',attributes:{rest_heute_kwh:4.3,prognose_quelle:'Eigene Berechnung',prognose_modus:'calculated'}};
   card.hass={entities,states,devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
   tile=card.shadowRoot.querySelector('.forecast-source');
   assert.match(tile.textContent,/Eigene Berechnung/);
