@@ -702,8 +702,10 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       : [];
     if (fc && fc.state !== "unknown" && fc.state !== "unavailable") {
       const rest = fc.attributes.rest_heute_kwh;
+      const source = fc.attributes.prognose_quelle || (fc.attributes.prognose_modus === "calculated" ? "Eigene Berechnung" : "Externe Prognose");
       tiles.push({ ent: e["sensor:forecast_today"], icon: "mdi:weather-sunny", v: `${num(fc.state)?.toFixed(1)} kWh`,
-                   n: rest != null ? `Rest ${Number(rest).toFixed(1)} kWh` : "Prognose heute", g: PV_GRADIENT });
+                   n: rest != null ? `Rest ${Number(rest).toFixed(1)} kWh` : "Prognose heute",
+                   src: `Quelle: ${source}`, g: PV_GRADIENT });
     }
     if (bat) {
       tiles.push({ ent: e["sensor:battery_priority"], icon: bat.state === "speicher" ? "mdi:home-battery" : "mdi:home-lightning-bolt",
@@ -721,7 +723,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         </div>`).join("")}
       ${tiles.map(t => `
         <div class="tile" data-more="${t.ent || ""}" style="border-image-source:${grad(t.g)}">
-          <ha-icon icon="${t.icon}"></ha-icon><div class="v">${esc(t.v)}</div><div class="n">${esc(t.n)}</div>
+          <ha-icon icon="${t.icon}"></ha-icon><div class="v">${esc(t.v)}</div><div class="n">${esc(t.n)}</div>${t.src ? `<div class="n forecast-source">${esc(t.src)}</div>` : ""}
         </div>`).join("")}</div>`;
   }
 
@@ -1106,7 +1108,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         ${this._open.has("hub") ? this._settings(d.hubSettings, d.name, "hub", "hub") : ""}
         ${c.show_header ? this._header(d) : ""}
         ${c.show_priorities ? `<div class="section"><span>Prioritäten</span><span>1 = hoher Vorrang · ziehen zum Sortieren</span></div>${this._devices(d)}` : ""}
-        ${c.show_timeline ? `<div class="section"><span>PV-Plan</span><span>Heute + morgen</span></div>${this._timeline(d)}` : ""}
+        ${c.show_timeline ? `<div class="section"><span>PV-Plan</span><span>Heute + morgen${this._st(d.ents["sensor:forecast_today"])?.attributes?.prognose_quelle ? ` · ${esc(this._st(d.ents["sensor:forecast_today"]).attributes.prognose_quelle)}` : ""}</span></div>${this._timeline(d)}` : ""}
       </ha-card>`;
     const template = document.createElement("template");
     template.innerHTML = markup;

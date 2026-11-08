@@ -263,3 +263,35 @@ test('EV shows history + budget start check (no trend) with exact threshold in I
   const charging=rowCard({ev:[['sensor.ev','status','charging_pv',{geraetetyp:'ev',modus:'auto',pv_startpruefung:null}]]});
   assert.equal(charging.querySelector('.sep-gates'),null);
 });
+
+test('PV forecast tile identifies its active source without losing remaining kWh',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:false});
+  dom.window.document.body.appendChild(card);
+  const hub='hub';
+  const entities={
+    plan:{platform:'smartify_energy',translation_key:'plan',device_id:hub,entity_id:'sensor.plan'},
+    forecast:{platform:'smartify_energy',translation_key:'forecast_today',device_id:hub,entity_id:'sensor.fc'},
+  };
+  const states={
+    'sensor.plan':{state:'-',attributes:{stunden:[]}},
+    'sensor.fc':{state:'12.5',last_updated:'2026-11-08T14:00:00Z',attributes:{rest_heute_kwh:7.2,prognose_quelle:'Solcast',prognose_modus:'external'}},
+  };
+  card.hass={entities,states,devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  let tile=card.shadowRoot.querySelector('.forecast-source');
+  assert.ok(tile,'source should be visible in the tile');
+  assert.match(tile.textContent,/Quelle: Solcast/);
+  assert.match(card.shadowRoot.textContent,/Rest 7.2 kWh/);
+  card.setConfig({show_timeline:true});
+  let planTitle=[...card.shadowRoot.querySelectorAll(".section")].find(x=>x.textContent.includes("PV-Plan"));
+  assert.match(planTitle.textContent,/Solcast/);
+  states['sensor.fc']={state:'8.1',last_updated:'2026-11-08T14:15:00Z',attributes:{rest_heute_kwh:4.3,prognose_quelle:'Eigene Berechnung',prognose_modus:'calculated'}};
+  card.hass={entities,states,devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  tile=card.shadowRoot.querySelector('.forecast-source');
+  assert.match(tile.textContent,/Eigene Berechnung/);
+  assert.doesNotMatch(tile.textContent,/Solcast/);
+  planTitle=[...card.shadowRoot.querySelectorAll(".section")].find(x=>x.textContent.includes("PV-Plan"));
+  assert.match(planTitle.textContent,/Eigene Berechnung/);
+});

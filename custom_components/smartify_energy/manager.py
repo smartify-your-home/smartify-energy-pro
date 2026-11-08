@@ -219,13 +219,16 @@ class EnergyManager:
                            "letzte_aktualisierung": self.forecast.last_update.isoformat()
                            if self.forecast.last_update else None,
                            "fehler": self.forecast.error,
+                           "prognose_quelle": self.forecast.source_label,
+                           "prognose_modus": self.cfg.get(CONF_SOLAR_MODE, "external"),
                            "kalibrierung_aktiv": bool(self.cfg.get(CONF_SOLAR_MODE) == "calculated"
                                                        and self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED)),
                            "kalibrierung": self.forecast.calibration.diagnostics(dt_util.now())
                            if self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED) else None,
                        }),
             SensorSpec("plan", lambda: self.next_action or "–", icon="mdi:calendar-clock",
-                       attrs=lambda: {"stunden": self.plan_hours}),
+                       attrs=lambda: {"stunden": self.plan_hours,
+                                      "prognose_quelle": self.forecast.source_label}),
         ]
         if self.has_battery:
             specs.append(SensorSpec(

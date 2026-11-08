@@ -13,7 +13,7 @@ from typing import Any
 
 
 def hourly_clouds(attributes: dict, now: datetime) -> dict[datetime, float]:
-    """Read timestamped cloud values; reject invalid and stale forecast slots."""
+    """Read up to 48 UTC hourly cloud slots; reject invalid/stale forecasts."""
     result = {}
     for row in attributes.get("forecast", []) if isinstance(attributes.get("forecast"), list) else []:
         if not isinstance(row, dict):
@@ -26,7 +26,7 @@ def hourly_clouds(attributes: dict, now: datetime) -> dict[datetime, float]:
             cloud = row.get("cloud_coverage")
             if isinstance(cloud, bool) or not isinstance(cloud, (float, int)) or not 0 <= cloud <= 100:
                 continue
-            if now.astimezone(UTC) - timedelta(hours=1) <= stamp < now.astimezone(UTC) + timedelta(hours=9):
+            if now.astimezone(UTC) - timedelta(hours=1) <= stamp < now.astimezone(UTC) + timedelta(hours=49):
                 result[stamp] = float(cloud)
         except (ValueError, KeyError, TypeError):
             continue

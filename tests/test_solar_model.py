@@ -42,6 +42,25 @@ class SolarModelTests(unittest.TestCase):
     def test_absent_cloud_forecast_is_not_assumed_clear(self):
         self.assertEqual(solar.pv_hours(self.t, 48, 13, self.south, {}), {})
 
+
+    def test_extended_48h_forecast_is_accepted_but_stale_missing_is_not(self):
+        rows = [
+            {"datetime": (self.t + timedelta(hours=i)).isoformat(),
+             "cloud_coverage": (i * 7) % 101}
+            for i in range(48)
+        ]
+        rows.extend([
+            {"datetime": (self.t - timedelta(hours=3)).isoformat(), "cloud_coverage": 0},
+            {"datetime": (self.t + timedelta(hours=60)).isoformat(), "cloud_coverage": 0},
+            {"datetime": (self.t + timedelta(hours=2)).isoformat(), "cloud_coverage": None},
+        ])
+        clouds = solar.hourly_clouds({"forecast": rows}, self.t)
+        self.assertEqual(len(clouds), 48)
+        self.assertIn(self.t + timedelta(hours=47), clouds)
+        self.assertNotIn(self.t + timedelta(hours=60), clouds)
+        self.assertNotIn(self.t - timedelta(hours=3), clouds)
+        self.assertEqual(len(solar.pv_hours(self.t, 48, 13, self.south, clouds)), 48)
+
     def test_rejects_invalid_clouds(self):
         self.assertEqual(solar.hourly_clouds({"forecast": [
             {"datetime": self.t.isoformat(), "cloud_coverage": -1},
