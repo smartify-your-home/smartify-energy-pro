@@ -58,6 +58,10 @@
           "solar_4_kwp": "Rated STC kWp, zero disables the array.",
           "solar_4_tilt": "0° flat to 90° vertical.",
           "solar_4_azimuth": "0° North, 90° East, 180° South, 270° West."
+        },
+        "errors": {
+          "required": "Select the My-Weather cloud forecast sensor.",
+          "pv_surface_required": "Configure at least one PV array with peak power greater than 0 kWp."
         }
       },
       "battery": {
@@ -136,6 +140,10 @@
           "solar_4_kwp": "Rated STC kWp, zero disables the array.",
           "solar_4_tilt": "0° flat to 90° vertical.",
           "solar_4_azimuth": "0° North, 90° East, 180° South, 270° West."
+        },
+        "errors": {
+          "required": "Select the My-Weather cloud forecast sensor.",
+          "pv_surface_required": "Configure at least one PV array with peak power greater than 0 kWp."
         }
       },
       "battery": {
