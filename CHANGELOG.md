@@ -1,4 +1,4 @@
-## Unreleased
+## 0.3.57 – 2026-11-08
 
 ### Optionale automatische PV-Kalibrierung
 - Bei eigener My-Weather-PV-Prognose optional realen Gesamt-PV-Leistungssensor auswählen.
