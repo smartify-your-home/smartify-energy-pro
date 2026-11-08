@@ -51,8 +51,8 @@ from .const import (
 from .devices import DEVICE_CLASSES, BaseDevice, Context
 from .devices.base import Decision
 from .forecast import ForecastProvider
-from .pv_comparison import PVComparison
 from .helpers import ButtonSpec, ParamSpec, SensorSpec, in_window, power_w, state_float, time_from_str
+from .pv_comparison import PVComparison
 
 _LOGGER = logging.getLogger(__name__)
 SHORT_WINDOW = timedelta(minutes=2)
