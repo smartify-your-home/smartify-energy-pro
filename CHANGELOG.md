@@ -1,3 +1,9 @@
+## 0.3.60 – 2026-11-08
+
+- PV-Plan: beschriftete kW-Y-Achse mit vier horizontalen Hilfslinien und skalierte Balken, damit PV-Leistung und Geräteanteile ablesbar bleiben.
+- Ausklappbarer 48h-Ist-/Prognosevergleich: zusätzlich kWh-Y-Achse mit horizontalen Gitternetzlinien, beim Wischen links fixierte Beschriftung.
+- Nur Kartenvisualisierung, keine Änderung der PV-Prognose oder Steuerungslogik.
+
 ## 0.3.59 – 2026-11-08
 
 - PV-Plan: ausklappbarer, horizontal bis 48 Stunden rückwärts scrollbarerer Stundenvergleich zwischen ursprünglicher PV-Energieprognose und gemessener Ist-Erzeugung mit kWh, Abweichung und Balkengrafik. Vergleich ausschließlich für vollständig beobachtete Stunden.
