@@ -51,7 +51,7 @@ from .const import (
 from .devices import DEVICE_CLASSES, BaseDevice, Context
 from .devices.base import Decision
 from .forecast import ForecastProvider
-from .helpers import ParamSpec, SensorSpec, in_window, power_w, state_float, time_from_str
+from .helpers import ButtonSpec, ParamSpec, SensorSpec, in_window, power_w, state_float, time_from_str
 
 _LOGGER = logging.getLogger(__name__)
 SHORT_WINDOW = timedelta(minutes=2)
@@ -178,6 +178,13 @@ class EnergyManager:
     @property
     def hub_mode(self) -> str:
         return self.p("mode")
+
+    def button_specs(self) -> list[ButtonSpec]:
+        if not (self.cfg.get(CONF_SOLAR_MODE) == "calculated"
+                and self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED)):
+            return []
+        return [ButtonSpec("reset_solar_calibration", self.async_reset_solar_calibration,
+                           "mdi:chart-bell-curve-cumulative")]
 
     def sensor_specs(self) -> list[SensorSpec]:
         specs = [
