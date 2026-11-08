@@ -13,9 +13,10 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.core import HomeAssistant
-from .solar_model import hourly_clouds, pv_hours
 from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
+
+from .solar_model import hourly_clouds, pv_hours
 
 _LOGGER = logging.getLogger(__name__)
 
