@@ -1,5 +1,12 @@
 ## Unreleased
 
+### Optionale automatische PV-Kalibrierung
+- Bei eigener My-Weather-PV-Prognose optional realen Gesamt-PV-Leistungssensor auswählen.
+- Robuste, bewölkungsabhängige Lernfaktoren mit begrenzter Anpassung; Lerndaten 30 Tage gespeichert.
+- Keine Lernwerte bei Nacht, ungültigen Messwerten oder wahrscheinlichem Wechselrichter-Clipping.
+- Diagnose am Prognosesensor: Faktoren, Stichproben, 7-/30-Tage-MAE; separater Reset-Button.
+- Externe Prognose und übrige Geräte-/Budgetregelung nicht verändert.
+
 ### Optionale, berechnete PV-Prognose (My-Weather)
 - Bis zu vier Flächen mit STC-Peakleistung (kWp), Neigung und Azimut.
 - Sonnengeometrie aus den Home-Assistant-Koordinaten; stündliche
