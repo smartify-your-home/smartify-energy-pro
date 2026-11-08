@@ -295,3 +295,53 @@ test('PV forecast tile identifies its active source without losing remaining kWh
   planTitle=[...card.shadowRoot.querySelectorAll(".section")].find(x=>x.textContent.includes("PV-Plan"));
   assert.match(planTitle.textContent,/Eigene Berechnung/);
 });
+
+
+test('PV plan has an initially collapsed, clickable actual-vs-forecast chart',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_priorities:false,show_header:false,show_timeline:true});
+  dom.window.document.body.append(card);
+  const hub='hub';
+  const entities={plan:{platform:'smartify_energy',translation_key:'plan',device_id:hub,entity_id:'sensor.plan'}};
+  const first=new Date().toISOString();
+  const states={'sensor.plan':{state:'–',last_updated:first,attributes:{
+    stunden:[],pv_vergleich:{konfiguriert:true,verglichene_stunden:1,
+      prognose_kwh:1,ist_kwh:0.8,abweichung_pct:-20,
+      stunden:[{zeit:'2026-11-08T08:00:00+00:00',prognose_wh:1000,ist_wh:800},
+               {zeit:'2026-11-08T09:00:00+00:00',prognose_wh:1100,ist_wh:null}]}
+  }}};
+  const hass={entities,states,devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  card.hass=hass;
+  const toggle=card.shadowRoot.querySelector('[data-pvcompare]');
+  assert.ok(toggle,'expand control must exist below PV plan even if plan timeline is empty');
+  assert.equal(toggle.getAttribute('aria-expanded'),'false');
+  assert.equal(card.shadowRoot.querySelector('.pv-compare-body'),null);
+  toggle.click();
+  assert.equal(card.shadowRoot.querySelector('[data-pvcompare]').getAttribute('aria-expanded'),'true');
+  assert.match(card.shadowRoot.querySelector('.pv-compare-body').textContent,/0,80 kWh/);
+  assert.match(card.shadowRoot.querySelector('.pv-compare-body').textContent,/-20.0 %/);
+  assert.equal(card.shadowRoot.querySelectorAll('.pv-compare-forecast').length,2);
+  assert.equal(card.shadowRoot.querySelectorAll('.pv-compare-actual').length,1);
+  const existing=card.shadowRoot.querySelector('.pv-compare-body');
+  states['sensor.plan']={...states['sensor.plan'],last_updated:new Date(Date.now()+1000).toISOString()};
+  card.hass=hass;
+  assert.ok(card.shadowRoot.querySelector('.pv-compare-body'),'expanded state survives HA refresh');
+  card.shadowRoot.querySelector('[data-pvcompare]').click();
+  assert.equal(card.shadowRoot.querySelector('.pv-compare-body'),null);
+});
+
+test('PV comparison reports missing PV generation meter rather than inventing actuals',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
+  dom.window.document.body.append(card);
+  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
+    states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:false,stunden:[]}}}},
+    devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  card.shadowRoot.querySelector('[data-pvcompare]').click();
+  assert.match(card.shadowRoot.querySelector('.pv-compare-body').textContent,/PV-Erzeugungsleistung/);
+  assert.equal(card.shadowRoot.querySelectorAll('.pv-compare-actual').length,0);
+});
