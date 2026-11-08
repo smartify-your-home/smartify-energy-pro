@@ -3,6 +3,18 @@
 - Breite Ansicht: Umschalter und Messwerte liegen nebeneinander **innerhalb desselben rechten Leistungs-/Budgetblocks**. Schmale Karten (bestehende Container-Breakpoint 560 px): Umschalter **oberhalb** von Leistung und Budget in derselben rechten Spalte (`grid-column:5; grid-row:1`). Namen/Status links dürfen umbrechen. Weder Steuerlogik noch andere Gerätetypen ändern.
 - Regression: `tests/ui/card.test.cjs` prüft Position, Reihenfolge, mobile CSS und bestehenden Modus-Serviceaufruf.
 
+## Vier-Flächen-Eigenprognose (in Vorbereitung)
+
+- Standard bleibt externe Prognose; berechneter Modus ist ausdrücklich optional.
+  Niemals Prozent-Bewölkung als Wh-Sensor verwenden oder externe und berechnete
+  Erträge unbemerkt addieren.
+- HA-Standort ist Koordinatenquelle; Flächen: kWp, Neigung 0–90°,
+  Azimut 0=N/90=E/180=S/270=W, maximal vier.
+- Prognose nur mit gültiger My-Weather-Zeitreihe; ungültige/fehlende
+  Bewölkung nicht mit 0 % ersetzen. Keine neuen API-Anfragen.
+- Externe Vorhersagen, bestehende Geräteprioritäten und Schutzlogik erhalten.
+  Vor Release Forecast-Plan, Restart, Optionen und lokale DST prüfen.
+
 # Smartify Energy Pro – Arbeitsregeln für alle Agenten
 
 ## Verbindliche Lesepflicht vor der ersten Änderung
