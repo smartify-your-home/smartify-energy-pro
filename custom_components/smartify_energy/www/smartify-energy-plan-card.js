@@ -1118,7 +1118,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const toggle = `<button type="button" class="pv-compare-toggle" data-pvcompare
       aria-expanded="${open ? "true" : "false"}" aria-controls="sep-pv-compare">
       <ha-icon icon="${open ? "mdi:chevron-down" : "mdi:chevron-right"}"></ha-icon>
-      PV-Prognose / Ist-Erzeugung <span>${open ? "Einklappen" : "Ausklappen"}</span>
+      PV-Prognose / Ist-Erzeugung (48 h) <span>${open ? "Einklappen" : "Ausklappen"}</span>
     </button>`;
     if (!open) return toggle;
     if (!data?.konfiguriert) return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
@@ -1126,7 +1126,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       den Sensor für die gesamte PV-Erzeugungsleistung (W) auswählen.
       Der Netzsaldo oder die Akkuleistung sind dafür nicht geeignet.</div></div>`;
     const rows = Array.isArray(data.stunden) ? data.stunden.filter(x =>
-      Number.isFinite(Date.parse(x.zeit)) && Number.isFinite(Number(x.prognose_wh))) : [];
+      Number.isFinite(Date.parse(x.zeit))) : [];
     if (!rows.length) return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
       <div class="pv-compare-note">Noch keine gespeicherten Stundenprognosen für heute.
       Die Auswertung beginnt mit der nächsten vollständig beobachteten Prognosestunde.</div></div>`;
@@ -1139,13 +1139,17 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const plotted = rows.map(x => {
       const t = new Date(x.zeit);
       const label = t.toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"});
-      const forecast = Number(x.prognose_wh);
+      const forecast = typeof x.prognose_wh === "number" ? x.prognose_wh : null;
       const actual = typeof x.ist_wh === "number" ? x.ist_wh : null;
       return `<div class="pv-compare-col" title="${esc(label)} · Prognose ${esc((forecast/1000).toFixed(2))} kWh · Ist ${actual === null ? "noch nicht vollständig gemessen" : esc((actual/1000).toFixed(2))+" kWh"}">
         ${bar(forecast,"pv-compare-forecast")}${bar(actual,"pv-compare-actual")}</div>`;
     }).join("");
-    const labels = rows.map((x,i) => `<span>${i%2===0 ? esc(new Date(x.zeit)
-      .toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"})) : ""}</span>`).join("");
+    const labels = rows.map((x,i) => {
+      const local = new Date(x.zeit);
+      const time = local.getHours() === 0 ? local.toLocaleDateString("de-AT",{day:"2-digit",month:"2-digit"}) :
+        i%3===0 ? local.toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"}) : "";
+      return `<span>${esc(time)}</span>`;
+    }).join("");
     const pct = data.abweichung_pct;
     const deviation = typeof pct==="number" ? (pct>0?"+":"")+pct.toFixed(1)+" %" : "–";
     return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
@@ -1154,8 +1158,8 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         <div><small>Ist-Erzeugung</small><strong>${fmt(data.ist_kwh)}</strong></div>
         <div><small>Abweichung</small><strong>${esc(deviation)}</strong></div>
       </div>
-      <div class="pv-compare-scroll"><div class="pv-compare-plot">${plotted}</div>
-        <div class="pv-compare-labels">${labels}</div></div>
+      <div class="pv-compare-scroll"><div class="pv-compare-plot" style="min-width:max(100%,${rows.length*45}px)">${plotted}</div>
+        <div class="pv-compare-labels" style="min-width:max(100%,${rows.length*45}px)">${labels}</div></div>
       <div class="pv-compare-legend">
         <span><i style="background:var(--warning-color,#e5a21a)"></i>Ursprüngliche Prognose</span>
         <span><i style="background:var(--success-color,#22a06b)"></i>Gemessene Erzeugung</span>
@@ -1207,6 +1211,10 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         e.stopPropagation();
         this._pvCompareOpen = !this._pvCompareOpen;
         this._render();
+        if (this._pvCompareOpen) {
+          const scroll = this.shadowRoot.querySelector(".pv-compare-scroll");
+          if (scroll) scroll.scrollLeft = scroll.scrollWidth;
+        }
       } else if (el.hasAttribute("data-log")) {
         e.stopPropagation();
         const id = el.dataset.log;
