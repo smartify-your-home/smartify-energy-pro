@@ -1,4 +1,4 @@
-## Unreleased
+## 0.3.59 – 2026-11-08
 
 - PV-Plan: ausklappbarer, horizontal bis 48 Stunden rückwärts scrollbarerer Stundenvergleich zwischen ursprünglicher PV-Energieprognose und gemessener Ist-Erzeugung mit kWh, Abweichung und Balkengrafik. Vergleich ausschließlich für vollständig beobachtete Stunden.
 - Für Vergleich optional den vorhandenen PV-Erzeugungsleistungs-Sensor im Prognose-Dialog auswählen (bei Solcast ebenso wie bei der Eigenprognose). Keine Verwechslung von Netzsaldo, Hauslast oder Batterieleistung mit PV-Erzeugung.
