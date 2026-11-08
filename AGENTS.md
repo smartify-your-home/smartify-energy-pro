@@ -1,7 +1,25 @@
+## PV-Kalibrierung (optional, in Vorbereitung)
+- Nur berechneter PV-Modus mit explizitem Opt-in. Sensor muss echte Erzeugungsleistung aller modellierten Flächen messen; niemals Netzsaldo, Akkuleistung oder Hausverbrauch als PV-Erzeugung interpretieren.
+- Prognosewerte vor Korrektur für Lernbeobachtungen verwenden, keine Selbstkalibrierung. Kalibrierung nur bei gültiger Vorhersage, mindestens 300 W; nachts, bei ungültigen Werten, Clipping und ohne ausreichende Daten bleibt Faktor 1.0.
+- Robuste Faktoren nach drei Wolkenklassen, auf 0.60–1.25 begrenzt. Lernhistorie persistent und auf 30 Tage begrenzt, Reset nur auf Lernhistorie, ohne Änderung der Konfiguration.
+- Externe Forecasts, Sicherheitsschaltungen und Budgetregelung unverändert. Vor Release Tests/Hassfest/HA-Versionen prüfen.
+
 ## Heizstab-Responsive-Layout (nach 0.3.50, für 0.3.51)
 - `Auto | Ein | Aus` bleibt ausschließlich bei temperaturgeregeltem Heizstab, behält den vorhandenen `data-setmode`-Handler (auto/manual/off) und befindet sich als erstes Kindelement in `.power-budget.heater-power-budget`.
 - Breite Ansicht: Umschalter und Messwerte liegen nebeneinander **innerhalb desselben rechten Leistungs-/Budgetblocks**. Schmale Karten (bestehende Container-Breakpoint 560 px): Umschalter **oberhalb** von Leistung und Budget in derselben rechten Spalte (`grid-column:5; grid-row:1`). Namen/Status links dürfen umbrechen. Weder Steuerlogik noch andere Gerätetypen ändern.
 - Regression: `tests/ui/card.test.cjs` prüft Position, Reihenfolge, mobile CSS und bestehenden Modus-Serviceaufruf.
+
+## Vier-Flächen-Eigenprognose (in Vorbereitung)
+
+- Standard bleibt externe Prognose; berechneter Modus ist ausdrücklich optional.
+  Niemals Prozent-Bewölkung als Wh-Sensor verwenden oder externe und berechnete
+  Erträge unbemerkt addieren.
+- HA-Standort ist Koordinatenquelle; Flächen: kWp, Neigung 0–90°,
+  Azimut 0=N/90=E/180=S/270=W, maximal vier.
+- Prognose nur mit gültiger My-Weather-Zeitreihe; ungültige/fehlende
+  Bewölkung nicht mit 0 % ersetzen. Keine neuen API-Anfragen.
+- Externe Vorhersagen, bestehende Geräteprioritäten und Schutzlogik erhalten.
+  Vor Release Forecast-Plan, Restart, Optionen und lokale DST prüfen.
 
 # Smartify Energy Pro – Arbeitsregeln für alle Agenten
 

@@ -56,6 +56,10 @@ from .const import (
     CONF_POWER_SENSOR,
     CONF_SINK_SENSORS,
     CONF_SOC_SENSOR,
+    CONF_SOLAR_CALIBRATION_ENABLED,
+    CONF_SOLAR_CLOUD_ENTITY,
+    CONF_SOLAR_MODE,
+    CONF_SOLAR_PV_POWER_ENTITY,
     CONF_SWITCH,
     CONF_TEMP_SENSOR,
     CONF_VOLTAGE,
@@ -133,6 +137,22 @@ def _forecast_schema(d: dict, options: list[dict[str, str]]) -> vol.Schema:
         fields[_opt(CONF_FORECAST_ENTRIES, d)] = sel.SelectSelector(
             sel.SelectSelectorConfig(options=options, multiple=True, mode=sel.SelectSelectorMode.LIST))
     fields[_opt(CONF_FORECAST_SENSORS, d)] = _ent("sensor", multiple=True)
+    fields[_req(CONF_SOLAR_MODE, d, "external")] = sel.SelectSelector(
+        sel.SelectSelectorConfig(
+            options=[
+                {"value": "external", "label": "Externe PV-Prognose (wie bisher)"},
+                {"value": "calculated", "label": "Eigene Berechnung: My-Weather + PV-Flächen"},
+            ],
+            mode=sel.SelectSelectorMode.DROPDOWN,
+        )
+    )
+    fields[_opt(CONF_SOLAR_CLOUD_ENTITY, d)] = _ent("sensor")
+    fields[_req(CONF_SOLAR_CALIBRATION_ENABLED, d, False)] = sel.BooleanSelector()
+    fields[_opt(CONF_SOLAR_PV_POWER_ENTITY, d)] = _ent("sensor", "power")
+    for i in range(1, 5):
+        fields[_opt(f"solar_{i}_kwp", d)] = _num(0, 100, 0.1, "kWp")
+        fields[_opt(f"solar_{i}_tilt", d, 30)] = _num(0, 90, 1, "°")
+        fields[_opt(f"solar_{i}_azimuth", d, 180)] = _num(0, 360, 1, "°")
     return vol.Schema(fields)
 
 
@@ -160,6 +180,36 @@ class _HubSteps:
         if user_input is not None:
             self.data.pop(CONF_FORECAST_ENTRIES, None)
             self.data.pop(CONF_FORECAST_SENSORS, None)
+            self.data.pop(CONF_SOLAR_CLOUD_ENTITY, None)
+            self.data.pop(CONF_SOLAR_PV_POWER_ENTITY, None)
+            if user_input.get(CONF_SOLAR_MODE) == "calculated":
+                if not user_input.get(CONF_SOLAR_CLOUD_ENTITY):
+                    return self.async_show_form(
+                        step_id="forecast",
+                        data_schema=_forecast_schema(
+                            {**self.data, **user_input},
+                            await async_forecast_entry_options(self.hass),
+                        ),
+                        errors={CONF_SOLAR_CLOUD_ENTITY: "required"},
+                    )
+                if not any(float(user_input.get(f"solar_{i}_kwp") or 0) > 0 for i in range(1, 5)):
+                    return self.async_show_form(
+                        step_id="forecast",
+                        data_schema=_forecast_schema(
+                            {**self.data, **user_input},
+                            await async_forecast_entry_options(self.hass),
+                        ),
+                        errors={"base": "pv_surface_required"},
+                    )
+            if (user_input.get(CONF_SOLAR_MODE) == "calculated"
+                    and user_input.get(CONF_SOLAR_CALIBRATION_ENABLED)
+                    and not user_input.get(CONF_SOLAR_PV_POWER_ENTITY)):
+                return self.async_show_form(
+                    step_id="forecast",
+                    data_schema=_forecast_schema({**self.data, **user_input},
+                                                 await async_forecast_entry_options(self.hass)),
+                    errors={CONF_SOLAR_PV_POWER_ENTITY: "required"},
+                )
             self.data.update(_clean(user_input))
             return await self.async_step_battery()
         options = await async_forecast_entry_options(self.hass)  # type: ignore[attr-defined]

@@ -5,6 +5,61 @@
 
 # Smartify Energy Pro
 
+## Neue optionale eigene PV-Prognose (My-Weather)
+
+Unter **Einstellungen → Geräte & Dienste → Smartify Energy Pro → Konfigurieren → Prognose** gibt es zwei Modi:
+
+- **Externe Prognose (Standard):** unveränderte Forecast.Solar-/Solcast-/Sensor-Prognose.
+- **Eigene Berechnung:** Standortkoordinaten aus Home Assistant und Bewölkung über
+  `Meteonomiqs Cloud Forecast 8h` aus My-Weather. Im Auswahlfeld den *wirklichen*
+  Entity-ID des neuen My-Weather-Sensors wählen. Die Daten liegen im Attribut
+  `forecast` mit UTC-Zeitstempel und `cloud_coverage` (0 bis 100 %).
+
+Bis zu **vier getrennte PV-Flächen** können konfiguriert werden. Pro Fläche:
+*installierte Peakleistung in kWp*, *Dachneigung* (0° flach bis 90° senkrecht),
+*Azimut* (0° Nord, 90° Ost, 180° Süd, 270° West).
+Leere Flächen werden ignoriert; die Summe der kWp entspricht der installierten
+Gesamt-PV-Leistung. Vorhandene SolarEdge-/Balkon-Flächen nicht doppelt erfassen.
+
+Die Berechnung benutzt Sonnenstand, Ausrichtung und eine vereinfachte
+wolkenabhängige Einstrahlungs-/Verlustschätzung. Ihr Ergebnis wird in die
+bestehenden **SEP-PV-Prognose-Kacheln und Planungswerte** (stündliche Wh)
+eingespeist, ohne den gemessenen Netzsaldo oder die unmittelbaren
+Start-/Stoppschutzbedingungen zu ersetzen. Die 8-Stunden-Wetterprognose begrenzt
+den sicheren Vorhersagehorizont; für Zeiträume ohne gültige Bewölkungswerte
+werden keine vermeintlich sonnigen Stunden ergänzt. PV-Prognosen sind
+Schätzungen, bei Nebel/Hochnebel besonders unsicher. Kein zusätzlicher
+Meteonomiqs-API-Aufruf durch SEP.
+
+### Optionale automatische Kalibrierung
+
+Im SEP-Prognose-Schritt **PV-Prognose automatisch kalibrieren** aktivieren und
+**PV-Erzeugungsleistung (W)** wählen. Der Sensor muss die reale gesamte
+PV-Erzeugung **aller konfigurierten Flächen** abbilden – nicht Netzsaldo,
+Hausverbrauch, Batterieentladung oder einen einzelnen Wechselrichter, wenn
+dessen Leistung nicht der modellierten Gesamtanlage entspricht. Standard ist
+**deaktiviert**. Kalibrierung wirkt ausschließlich im Modus **Eigene
+Berechnung**; der externe Forecast bleibt unverändert.
+
+Die Messung erfolgt höchstens alle zehn Minuten während ausreichender
+PV-Erzeugungsprognose (mindestens 300 W). Nächte, ungültige Messungen und
+wahrscheinliche Wechselrichter-Begrenzung nahe der installierten kWp werden
+nicht gelernt. Für die drei Bewölkungsbereiche (klar, teilweise, bedeckt)
+werden getrennte robuste Faktoren gebildet: vor sechs verwertbaren Messungen
+bleibt der Faktor **1,0**. Änderungen sind gedämpft und auf **0,60–1,25**
+begrenzt. Lernhistorie maximal 30 Tage, Speicherung in SEP-Restore-Daten;
+Neustarts bewahren die Werte. Die Prognose-Entität enthält im Attribut
+`kalibrierung` Faktoren, Stichproben und mittlere absolute Fehler der letzten
+7 und 30 Tage (W). Ein optionaler Button **PV-Kalibrierung zurücksetzen**
+setzt ausschließlich diese Lerndaten zurück.
+
+**Grenzen:** Kein Ersatz für eine lokale Nebelvorhersage. Abregelung, Defekte
+oder lokale Verschattung können Messungen verfälschen. Bei konfigurierter
+Leistungsbegrenzung die Kalibrierung deaktivieren. Die Leistungssumme der
+PV-Sensoren muss mit den eingetragenen Flächen übereinstimmen.
+
+
+
 Auf schmalen Karten teilen sich Gerätetext und Bedienelemente den verfügbaren Platz. Messwerte, Modus und Zahnrad können innerhalb der rechten Spalte umbrechen. Die Modusauswahl im Kartenkopf zeigt Automatik, Beobachten, Manuell und Aus als kurze Namen. Ab 0.3.49 steht der Gerätemodus nur noch im Zahnrad (Gruppe „Bedienung“); in der Gerätezeile zeigt das Auto stattdessen die Ladeziel-Auswahl, Haushaltsgeräte zeigen die jeweils wirksamen Buttons Sofortstart, Nachladen und Fertig. Der Heizstab hat im rechten Leistungs-/Budgetblock einen Umschalter Auto | Ein | Aus (Ein = Modus Manuell: heizt bis zur Maximaltemperatur, auch mit Netzstrom; Temperaturschutz und Mindestpause bleiben aktiv; Aus schaltet sofort ab). Auf breiten Karten liegen die drei Tasten neben Leistung/Budget, bei schmaler Kartenbreite darüber. Werte und Tasten bleiben rechts, Status links darf umbrechen. Ist ein anderes Gerät auf Manuell oder Aus, erscheint der Modus als kleiner Hinweis; Beobachten zeigt weiterhin den Status-Chip. Beim WP-Boost bleibt die gerätespezifische Auswahl erhalten.
 
 **PV-Überschuss intelligent verteilen – mit Prioritäten, Geräteprogrammen, Batteriespeicher und Home-Assistant-Dashboard.**

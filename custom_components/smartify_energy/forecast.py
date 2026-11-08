@@ -16,6 +16,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
+from .solar_calibration import SolarCalibration
+from .solar_model import hourly_clouds, pv_hours
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -63,21 +66,59 @@ async def async_default_forecast_entries(hass: HomeAssistant) -> list[str]:
 class ForecastProvider:
     """Liefert {Stundenbeginn (lokal): Wh} für heute und morgen."""
 
-    def __init__(self, hass: HomeAssistant, entry_ids: list[str], sensors: list[str]) -> None:
+    def __init__(self, hass: HomeAssistant, entry_ids: list[str], sensors: list[str], *, solar_config: dict | None = None) -> None:
         self.hass = hass
         self.entry_ids = entry_ids or []
         self.sensors = sensors or []
+        self.solar_config = solar_config or {}
+        self.calibration = SolarCalibration()
+        self.raw_hours: dict[datetime, float] = {}
+        self.cloud_hours: dict[datetime, float] = {}
         self.hours: dict[datetime, float] = {}
         self.last_update: datetime | None = None
         self.error: str | None = None
 
     @property
     def configured(self) -> bool:
-        return bool(self.entry_ids or self.sensors)
+        return bool(self.solar_config.get('mode') == 'calculated' or self.entry_ids or self.sensors)
 
     async def async_refresh(self) -> None:
         hours: dict[datetime, float] = {}
         errors: list[str] = []
+        if self.solar_config.get("mode") == "calculated":
+            # Never learn from the previous forecast if weather becomes invalid.
+            self.raw_hours = {}
+            self.cloud_hours = {}
+            try:
+                cloud_entity = self.solar_config.get("cloud_entity")
+                state = self.hass.states.get(cloud_entity) if cloud_entity else None
+                if state is None:
+                    raise ValueError("My-Weather cloud sensor is unavailable")
+                cloudy_hours = hourly_clouds(state.attributes, dt_util.utcnow())
+                if not cloudy_hours:
+                    raise ValueError("My-Weather has no valid hourly cloud forecast")
+                config = self.solar_config
+                surfaces = config.get("surfaces") or []
+                if not surfaces:
+                    raise ValueError("Configure at least one PV surface")
+                self.cloud_hours = {_hour(stamp): cloud for stamp, cloud in cloudy_hours.items()}
+                self.raw_hours = {
+                    _hour(stamp): wh for stamp, wh in
+                    pv_hours(dt_util.utcnow(), float(self.hass.config.latitude),
+                             float(self.hass.config.longitude), surfaces, cloudy_hours).items()
+                }
+                hours = {
+                    stamp: round(raw * self.calibration.factor(self.cloud_hours[stamp], dt_util.now()), 2)
+                    if self.solar_config.get("calibration_enabled") else raw
+                    for stamp, raw in self.raw_hours.items()
+                }
+            except (TypeError, ValueError, OverflowError) as err:
+                errors.append(f"PV calculation: {err}")
+            self.hours = hours
+            self.error = "; ".join(errors) or None
+            self.last_update = dt_util.now()
+            return
+
         for entry_id in self.entry_ids:
             try:
                 data = await self._from_energy_platform(entry_id)

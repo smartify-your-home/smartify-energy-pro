@@ -1,4 +1,22 @@
-## Unreleased
+## 0.3.57 – 2026-11-08
+
+### Optionale automatische PV-Kalibrierung
+- Bei eigener My-Weather-PV-Prognose optional realen Gesamt-PV-Leistungssensor auswählen.
+- Robuste, bewölkungsabhängige Lernfaktoren mit begrenzter Anpassung; Lerndaten 30 Tage gespeichert.
+- Keine Lernwerte bei Nacht, ungültigen Messwerten oder wahrscheinlichem Wechselrichter-Clipping.
+- Diagnose am Prognosesensor: Faktoren, Stichproben, 7-/30-Tage-MAE; separater Reset-Button.
+- Externe Prognose und übrige Geräte-/Budgetregelung nicht verändert.
+
+### Optionale, berechnete PV-Prognose (My-Weather)
+- Bis zu vier Flächen mit STC-Peakleistung (kWp), Neigung und Azimut.
+- Sonnengeometrie aus den Home-Assistant-Koordinaten; stündliche
+  Wolkenkorrektur aus dem Attribut `forecast` des My-Weather 8h-Sensors.
+- Eigene Berechnung als auswählbarer Prognosemodus; bisherige externe
+  Quelle bleibt Standard. Quellen werden nicht zusammengerechnet.
+- Bewölkungswerte außerhalb 0–100 % und fehlende Zeitintervalle werden
+  nicht als Wolkenfreiheit interpretiert.
+- Keine Änderungen an Echtzeitbudget, Schutzlogik und Geräteprioritäten.
+
 
 ## 0.3.56 – Auto: PV-Startprüfung in der Karte
 - Neues Status-Attribut `pv_startpruefung` der Wallbox (nur solange sie auf PV-Überschuss wartet): Startschwelle, aktuelles Budget, 2-min-Ø, Mittelwert bereit, Phasen, Mindestladeleistung, PV-Anteil – exakt die Werte der Startentscheidung. Nicht im Recorder.

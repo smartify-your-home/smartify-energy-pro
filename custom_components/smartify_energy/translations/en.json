@@ -25,11 +25,43 @@
         "title": "PV forecast",
         "data": {
           "forecast_entries": "Forecast integrations (summed)",
-          "forecast_sensors": "Forecast sensors (fallback)"
+          "forecast_sensors": "Forecast sensors (fallback)",
+          "solar_mode": "Solar forecast mode",
+          "solar_cloud_entity": "My-Weather cloud forecast 8h",
+          "solar_1_kwp": "PV array 1: Peak power (kWp)",
+          "solar_1_tilt": "PV array 1: Tilt (°)",
+          "solar_1_azimuth": "PV array 1: Azimuth (°)",
+          "solar_2_kwp": "PV array 2: Peak power (kWp)",
+          "solar_2_tilt": "PV array 2: Tilt (°)",
+          "solar_2_azimuth": "PV array 2: Azimuth (°)",
+          "solar_3_kwp": "PV array 3: Peak power (kWp)",
+          "solar_3_tilt": "PV array 3: Tilt (°)",
+          "solar_3_azimuth": "PV array 3: Azimuth (°)",
+          "solar_4_kwp": "PV array 4: Peak power (kWp)",
+          "solar_4_tilt": "PV array 4: Tilt (°)",
+          "solar_4_azimuth": "PV array 4: Azimuth (°)",
+          "solar_calibration_enabled": "Automatically calibrate PV forecast (optional)",
+          "solar_pv_power_entity": "Measured PV generation power (W) – actual inverter/production sensor"
         },
         "data_description": {
           "forecast_entries": "Preselected from the energy dashboard. Selected entries are summed – choose one source per array.",
-          "forecast_sensors": "Only if the forecast integration has no energy platform."
+          "forecast_sensors": "Only if the forecast integration has no energy platform.",
+          "solar_mode": "External forecast or calculated from cloud and PV geometry.",
+          "solar_cloud_entity": "Select My-Weather eight-hour cloud sensor, not a PV energy sensor.",
+          "solar_1_kwp": "Rated STC kWp, zero disables the array.",
+          "solar_1_tilt": "0° flat to 90° vertical.",
+          "solar_1_azimuth": "0° North, 90° East, 180° South, 270° West.",
+          "solar_2_kwp": "Rated STC kWp, zero disables the array.",
+          "solar_2_tilt": "0° flat to 90° vertical.",
+          "solar_2_azimuth": "0° North, 90° East, 180° South, 270° West.",
+          "solar_3_kwp": "Rated STC kWp, zero disables the array.",
+          "solar_3_tilt": "0° flat to 90° vertical.",
+          "solar_3_azimuth": "0° North, 90° East, 180° South, 270° West.",
+          "solar_4_kwp": "Rated STC kWp, zero disables the array.",
+          "solar_4_tilt": "0° flat to 90° vertical.",
+          "solar_4_azimuth": "0° North, 90° East, 180° South, 270° West.",
+          "solar_calibration_enabled": "Only used for calculated PV forecast. Learns from measured PV generation; off by default.",
+          "solar_pv_power_entity": "Total actual generation for all modeled arrays, not net grid, house loads or battery power."
         }
       },
       "battery": {
@@ -48,6 +80,10 @@
           "battery_capacity": "Usable home battery capacity in kWh. Used to estimate energy needed to fill it."
         }
       }
+    },
+    "error": {
+      "required": "Select the My-Weather cloud forecast sensor.",
+      "pv_surface_required": "Configure at least one PV array with peak power greater than 0 kWp."
     }
   },
   "options": {
@@ -75,11 +111,43 @@
         "title": "PV forecast",
         "data": {
           "forecast_entries": "Forecast integrations (summed)",
-          "forecast_sensors": "Forecast sensors (fallback)"
+          "forecast_sensors": "Forecast sensors (fallback)",
+          "solar_mode": "Solar forecast mode",
+          "solar_cloud_entity": "My-Weather cloud forecast 8h",
+          "solar_1_kwp": "PV array 1: Peak power (kWp)",
+          "solar_1_tilt": "PV array 1: Tilt (°)",
+          "solar_1_azimuth": "PV array 1: Azimuth (°)",
+          "solar_2_kwp": "PV array 2: Peak power (kWp)",
+          "solar_2_tilt": "PV array 2: Tilt (°)",
+          "solar_2_azimuth": "PV array 2: Azimuth (°)",
+          "solar_3_kwp": "PV array 3: Peak power (kWp)",
+          "solar_3_tilt": "PV array 3: Tilt (°)",
+          "solar_3_azimuth": "PV array 3: Azimuth (°)",
+          "solar_4_kwp": "PV array 4: Peak power (kWp)",
+          "solar_4_tilt": "PV array 4: Tilt (°)",
+          "solar_4_azimuth": "PV array 4: Azimuth (°)",
+          "solar_calibration_enabled": "Automatically calibrate PV forecast (optional)",
+          "solar_pv_power_entity": "Measured PV generation power (W) – actual inverter/production sensor"
         },
         "data_description": {
           "forecast_entries": "Preselected from the energy dashboard. Selected entries are summed – choose one source per array.",
-          "forecast_sensors": "Only if the forecast integration has no energy platform."
+          "forecast_sensors": "Only if the forecast integration has no energy platform.",
+          "solar_mode": "External forecast or calculated from cloud and PV geometry.",
+          "solar_cloud_entity": "Select My-Weather eight-hour cloud sensor, not a PV energy sensor.",
+          "solar_1_kwp": "Rated STC kWp, zero disables the array.",
+          "solar_1_tilt": "0° flat to 90° vertical.",
+          "solar_1_azimuth": "0° North, 90° East, 180° South, 270° West.",
+          "solar_2_kwp": "Rated STC kWp, zero disables the array.",
+          "solar_2_tilt": "0° flat to 90° vertical.",
+          "solar_2_azimuth": "0° North, 90° East, 180° South, 270° West.",
+          "solar_3_kwp": "Rated STC kWp, zero disables the array.",
+          "solar_3_tilt": "0° flat to 90° vertical.",
+          "solar_3_azimuth": "0° North, 90° East, 180° South, 270° West.",
+          "solar_4_kwp": "Rated STC kWp, zero disables the array.",
+          "solar_4_tilt": "0° flat to 90° vertical.",
+          "solar_4_azimuth": "0° North, 90° East, 180° South, 270° West.",
+          "solar_calibration_enabled": "Only used for calculated PV forecast. Learns from measured PV generation; off by default.",
+          "solar_pv_power_entity": "Total actual generation for all modeled arrays, not net grid, house loads or battery power."
         }
       },
       "battery": {
@@ -98,6 +166,10 @@
           "battery_capacity": "Usable home battery capacity in kWh. Used to estimate energy needed to fill it."
         }
       }
+    },
+    "error": {
+      "required": "Select the My-Weather cloud forecast sensor.",
+      "pv_surface_required": "Configure at least one PV array with peak power greater than 0 kWp."
     }
   },
   "config_subentries": {
@@ -852,6 +924,9 @@
       },
       "reset": {
         "name": "Reset"
+      },
+      "reset_solar_calibration": {
+        "name": "Reset PV calibration"
       }
     },
     "select": {

@@ -37,6 +37,10 @@ from .const import (
     CONF_GRID_SIGN,
     CONF_INTERVAL,
     CONF_SINK_SENSORS,
+    CONF_SOLAR_CALIBRATION_ENABLED,
+    CONF_SOLAR_CLOUD_ENTITY,
+    CONF_SOLAR_MODE,
+    CONF_SOLAR_PV_POWER_ENTITY,
     DOMAIN,
     GRID_SIGN_IMPORT_POSITIVE,
     HUB_MODES,
@@ -47,7 +51,7 @@ from .const import (
 from .devices import DEVICE_CLASSES, BaseDevice, Context
 from .devices.base import Decision
 from .forecast import ForecastProvider
-from .helpers import ParamSpec, SensorSpec, in_window, power_w, state_float, time_from_str
+from .helpers import ButtonSpec, ParamSpec, SensorSpec, in_window, power_w, state_float, time_from_str
 
 _LOGGER = logging.getLogger(__name__)
 SHORT_WINDOW = timedelta(minutes=2)
@@ -56,7 +60,8 @@ HISTORY_RETENTION = timedelta(minutes=60)
 HISTORY_SAMPLE_SECONDS = 15
 HISTORY_MAX_GAP = timedelta(seconds=120)
 HUB_ENTITY_FIELDS = (CONF_GRID_SENSOR, CONF_GRID_EXPORT_SENSOR, CONF_BAT_POWER,
-                     CONF_BAT_SOC, CONF_SINK_SENSORS, CONF_FORECAST_SENSORS)
+                     CONF_BAT_SOC, CONF_SINK_SENSORS, CONF_FORECAST_SENSORS,
+                     CONF_SOLAR_CLOUD_ENTITY, CONF_SOLAR_PV_POWER_ENTITY)
 
 
 class EnergyManager:
@@ -74,7 +79,20 @@ class EnergyManager:
             if cls:
                 self.devices[sub_id] = cls(self, sub_id, sub.title, dict(sub.data))
         self.forecast = ForecastProvider(
-            hass, self.cfg.get(CONF_FORECAST_ENTRIES) or [], self.cfg.get(CONF_FORECAST_SENSORS) or []
+            hass, self.cfg.get(CONF_FORECAST_ENTRIES) or [],
+            self.cfg.get(CONF_FORECAST_SENSORS) or [],
+            solar_config={
+                "mode": self.cfg.get(CONF_SOLAR_MODE, "external"),
+                "cloud_entity": self.cfg.get(CONF_SOLAR_CLOUD_ENTITY),
+                "calibration_enabled": bool(self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED, False)),
+                "surfaces": [
+                    {"kwp": self.cfg.get(f"solar_{i}_kwp", 0),
+                     "tilt": self.cfg.get(f"solar_{i}_tilt", 30),
+                     "azimuth": self.cfg.get(f"solar_{i}_azimuth", 180)}
+                    for i in range(1, 5)
+                    if float(self.cfg.get(f"solar_{i}_kwp") or 0) > 0
+                ],
+            },
         )
         self._store = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}")
         self._history: deque[tuple[datetime, float]] = deque()
@@ -161,6 +179,13 @@ class EnergyManager:
     def hub_mode(self) -> str:
         return self.p("mode")
 
+    def button_specs(self) -> list[ButtonSpec]:
+        if not (self.cfg.get(CONF_SOLAR_MODE) == "calculated"
+                and self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED)):
+            return []
+        return [ButtonSpec("reset_solar_calibration", self.async_reset_solar_calibration,
+                           "mdi:chart-bell-curve-cumulative")]
+
     def sensor_specs(self) -> list[SensorSpec]:
         specs = [
             SensorSpec("surplus", lambda: round(self.grid_export), unit="W", device_class="power",
@@ -194,6 +219,10 @@ class EnergyManager:
                            "letzte_aktualisierung": self.forecast.last_update.isoformat()
                            if self.forecast.last_update else None,
                            "fehler": self.forecast.error,
+                           "kalibrierung_aktiv": bool(self.cfg.get(CONF_SOLAR_MODE) == "calculated"
+                                                       and self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED)),
+                           "kalibrierung": self.forecast.calibration.diagnostics(dt_util.now())
+                           if self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED) else None,
                        }),
             SensorSpec("plan", lambda: self.next_action or "–", icon="mdi:calendar-clock",
                        attrs=lambda: {"stunden": self.plan_hours}),
@@ -233,6 +262,30 @@ class EnergyManager:
             out.sort(key=lambda item: item["prioritaet"])
         return {"geraete": out}
 
+    def _observe_pv_calibration(self, now: datetime) -> None:
+        """Learn from the actual PV generation meter, never grid or battery power."""
+        if not (self.cfg.get(CONF_SOLAR_MODE) == "calculated"
+                and self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED)):
+            return
+        entity_id = self.cfg.get(CONF_SOLAR_PV_POWER_ENTITY)
+        actual = power_w(self.hass, entity_id) if entity_id else None
+        hour = now.replace(minute=0, second=0, microsecond=0)
+        prediction = self.forecast.raw_hours.get(hour)
+        cloud = self.forecast.cloud_hours.get(hour)
+        if actual is None or prediction is None or cloud is None:
+            return
+        capacity = sum(float(s.get("kwp") or 0) for s in self.forecast.solar_config.get("surfaces", [])) * 1000
+        if self.forecast.calibration.observe(now, actual, prediction, cloud, capacity):
+            self._store.async_delay_save(self._dump, 5)
+
+    async def async_reset_solar_calibration(self) -> None:
+        """Reset only the learned PV model; do not change solar configuration."""
+        self.forecast.calibration.reset()
+        if self.cfg.get(CONF_SOLAR_MODE) == "calculated":
+            await self.forecast.async_refresh()
+        await self._store.async_save(self._dump())
+        await self.async_request_run(immediate=True)
+
     def _fc_kwh(self, day_offset: int) -> float | None:
         if not self.forecast.hours:
             return None
@@ -250,6 +303,7 @@ class EnergyManager:
     async def async_start(self) -> None:
         data = await self._store.async_load() or {}
         self._restore_history(data.get("history"))
+        self.forecast.calibration.restore(data.get("solar_calibration"), dt_util.now())
         for k, v in (data.get("hub") or {}).items():
             if k in self.params:
                 self.params[k] = v
@@ -387,6 +441,7 @@ class EnergyManager:
     def _dump(self) -> dict:
         return {
             "hub": self.params,
+            "solar_calibration": self.forecast.calibration.dump(),
             "devices": {sid: d.dump() for sid, d in self.devices.items()},
             "history": {
                 "budget": self._compact_history(self._history),
@@ -677,6 +732,7 @@ class EnergyManager:
             self._last_plan = now
 
         self._read_inputs()
+        self._observe_pv_calibration(now)
         self._battery_strategy(now)
         bat_discharge = max(-self.battery_power, 0.0)
         # A battery that SEP cannot command is not reclaimable. External
