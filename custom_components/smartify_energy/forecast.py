@@ -86,6 +86,9 @@ class ForecastProvider:
         hours: dict[datetime, float] = {}
         errors: list[str] = []
         if self.solar_config.get("mode") == "calculated":
+            # Never learn from the previous forecast if weather becomes invalid.
+            self.raw_hours = {}
+            self.cloud_hours = {}
             try:
                 cloud_entity = self.solar_config.get("cloud_entity")
                 state = self.hass.states.get(cloud_entity) if cloud_entity else None
