@@ -273,7 +273,7 @@ class EnergyManager:
             return {"konfiguriert": False, "stunden": [],
                     "hinweis": "Für den Vergleich PV-Erzeugungsleistungssensor in SEP → Prognose auswählen."}
         return {"konfiguriert": True,
-                **self.pv_comparison.today(dt_util.now(), dt_util.get_default_time_zone())}
+                **self.pv_comparison.recent(dt_util.utcnow(), 48)}
 
     def _observe_pv_calibration(self, now: datetime) -> None:
         """Learn from the actual PV generation meter, never grid or battery power."""
