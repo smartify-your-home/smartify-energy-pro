@@ -56,8 +56,10 @@ from .const import (
     CONF_POWER_SENSOR,
     CONF_SINK_SENSORS,
     CONF_SOC_SENSOR,
+    CONF_SOLAR_CALIBRATION_ENABLED,
     CONF_SOLAR_CLOUD_ENTITY,
     CONF_SOLAR_MODE,
+    CONF_SOLAR_PV_POWER_ENTITY,
     CONF_SWITCH,
     CONF_TEMP_SENSOR,
     CONF_VOLTAGE,
@@ -145,6 +147,8 @@ def _forecast_schema(d: dict, options: list[dict[str, str]]) -> vol.Schema:
         )
     )
     fields[_opt(CONF_SOLAR_CLOUD_ENTITY, d)] = _ent("sensor")
+    fields[_req(CONF_SOLAR_CALIBRATION_ENABLED, d, False)] = sel.BooleanSelector()
+    fields[_opt(CONF_SOLAR_PV_POWER_ENTITY, d)] = _ent("sensor", "power")
     for i in range(1, 5):
         fields[_opt(f"solar_{i}_kwp", d)] = _num(0, 100, 0.1, "kWp")
         fields[_opt(f"solar_{i}_tilt", d, 30)] = _num(0, 90, 1, "°")
@@ -177,6 +181,7 @@ class _HubSteps:
             self.data.pop(CONF_FORECAST_ENTRIES, None)
             self.data.pop(CONF_FORECAST_SENSORS, None)
             self.data.pop(CONF_SOLAR_CLOUD_ENTITY, None)
+            self.data.pop(CONF_SOLAR_PV_POWER_ENTITY, None)
             if user_input.get(CONF_SOLAR_MODE) == "calculated":
                 if not user_input.get(CONF_SOLAR_CLOUD_ENTITY):
                     return self.async_show_form(
@@ -196,6 +201,15 @@ class _HubSteps:
                         ),
                         errors={"base": "pv_surface_required"},
                     )
+            if (user_input.get(CONF_SOLAR_MODE) == "calculated"
+                    and user_input.get(CONF_SOLAR_CALIBRATION_ENABLED)
+                    and not user_input.get(CONF_SOLAR_PV_POWER_ENTITY)):
+                return self.async_show_form(
+                    step_id="forecast",
+                    data_schema=_forecast_schema({**self.data, **user_input},
+                                                 await async_forecast_entry_options(self.hass)),
+                    errors={CONF_SOLAR_PV_POWER_ENTITY: "required"},
+                )
             self.data.update(_clean(user_input))
             return await self.async_step_battery()
         options = await async_forecast_entry_options(self.hass)  # type: ignore[attr-defined]
