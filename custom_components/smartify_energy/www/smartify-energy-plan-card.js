@@ -1141,7 +1141,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const label = t.toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"});
       const forecast = typeof x.prognose_wh === "number" ? x.prognose_wh : null;
       const actual = typeof x.ist_wh === "number" ? x.ist_wh : null;
-      return `<div class="pv-compare-col" title="${esc(label)} · Prognose ${esc((forecast/1000).toFixed(2))} kWh · Ist ${actual === null ? "noch nicht vollständig gemessen" : esc((actual/1000).toFixed(2))+" kWh"}">
+      return `<div class="pv-compare-col" title="${esc(label)} · Prognose ${forecast === null ? "kein Wert" : esc((forecast/1000).toFixed(2))+" kWh"} · Ist ${actual === null ? "noch nicht vollständig gemessen" : esc((actual/1000).toFixed(2))+" kWh"}">
         ${bar(forecast,"pv-compare-forecast")}${bar(actual,"pv-compare-actual")}</div>`;
     }).join("");
     const labels = rows.map((x,i) => {
