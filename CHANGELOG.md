@@ -1,5 +1,9 @@
 ## Unreleased
 
+- PV-Plan: ausklappbarer Stundenvergleich zwischen ursprünglicher PV-Energieprognose und gemessener Ist-Erzeugung mit kWh, Abweichung und Balkengrafik. Vergleich ausschließlich für vollständig beobachtete Stunden.
+- Für Vergleich optional den vorhandenen PV-Erzeugungsleistungs-Sensor im Prognose-Dialog auswählen (bei Solcast ebenso wie bei der Eigenprognose). Keine Verwechslung von Netzsaldo, Hauslast oder Batterieleistung mit PV-Erzeugung.
+- Prognose-Snapshots und erfasste Energie werden begrenzt gespeichert und nach HA-Neustart wiederhergestellt. Messlücken und nicht verfügbare Werte werden nicht zu Nullwerten umgedeutet.
+
 - Korrigiert deutsche und englische Beschriftungen und Hilfetexte des My-Weather-Bewölkungssensors in beiden Prognose-Konfigurationsdialogen: 8h- und bis zu 48h-Sensor werden unterstützt; für längere Planung 48h-Sensor wählen.
 - Keine Änderung der Prognose- oder Steuerlogik.
 
