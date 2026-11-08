@@ -1,3 +1,8 @@
+## Unreleased
+
+- Korrigiert deutsche und englische Beschriftungen und Hilfetexte des My-Weather-Bewölkungssensors in beiden Prognose-Konfigurationsdialogen: 8h- und bis zu 48h-Sensor werden unterstützt; für längere Planung 48h-Sensor wählen.
+- Keine Änderung der Prognose- oder Steuerlogik.
+
 ## 0.3.58 – 2026-11-08
 
 - PV-Prognose-Kachel zeigt die aktive Prognosequelle (eigene Berechnung, Solcast, Forecast.Solar oder mehrere Quellen).
