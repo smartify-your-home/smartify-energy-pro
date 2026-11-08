@@ -308,10 +308,9 @@ function sepNiceAxisMax(value) {
   // Four evenly spaced, human-readable ticks; never clip the tallest bar.
   const max = Math.max(0, Number(value) || 0);
   if (!Number.isFinite(max) || max <= 0) return 1000;
-  const rawStep = max / 4;
-  const magnitude = 10 ** Math.floor(Math.log10(rawStep));
-  const step = [1, 2, 2.5, 5, 10].map(v => v * magnitude).find(v => v >= rawStep) || 10 * magnitude;
-  return step * 4;
+  const magnitude = 10 ** Math.floor(Math.log10(max));
+  return ([1, 2, 2.5, 4, 5, 8, 10].find(v => v * magnitude >= max)
+    || 10) * magnitude;
 }
 
 function sepAxisLabels(max, unit) {
