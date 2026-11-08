@@ -303,6 +303,27 @@ function collect(hass, hubId) {
   return { hub, name: hubs.get(hub), ents: byDevice[hub] || {}, devices, hubSettings: settings[hub] || [] };
 }
 
+
+function sepNiceAxisMax(value) {
+  // Four evenly spaced, human-readable ticks; never clip the tallest bar.
+  const max = Math.max(0, Number(value) || 0);
+  if (!Number.isFinite(max) || max <= 0) return 1000;
+  const rawStep = max / 4;
+  const magnitude = 10 ** Math.floor(Math.log10(rawStep));
+  const step = [1, 2, 2.5, 5, 10].map(v => v * magnitude).find(v => v >= rawStep) || 10 * magnitude;
+  return step * 4;
+}
+
+function sepAxisLabels(max, unit) {
+  return [4,3,2,1,0].map(level => {
+    const k = (max * level / 4) / 1000;
+    const label = k.toLocaleString("de-AT",{maximumFractionDigits:2});
+    return `<span>${esc(label)} ${unit}</span>`;
+  }).join("");
+}
+
+const SEP_GRID = '<div class="sep-chart-grid" aria-hidden="true"><i></i><i></i><i></i><i></i></div>';
+
 // ── Editor ──────────────────────────────────────────────────────────────────
 
 const EDITOR_CSS = `
@@ -520,7 +541,21 @@ const CARD_CSS = `
   .chip { font-size:10px; padding:1px 6px; border-radius:8px; color:#000; font-weight:600; }
 
   .timeline { background:var(--row-bg); border-radius:var(--radius); padding:8px 6px 4px; box-sizing:border-box; }
-  .bars { display:flex; align-items:flex-end; gap:2px; height:96px; position:relative; }
+  .sep-axis-layout { display:grid; grid-template-columns:49px minmax(0,1fr); gap:5px; min-width:0; }
+  .sep-y-axis { height:96px; display:flex; flex-direction:column; justify-content:space-between;
+    color:var(--secondary-text-color); font-size:10px; font-variant-numeric:tabular-nums;
+    text-align:right; white-space:nowrap; line-height:1; padding:0 0 0 1px; box-sizing:border-box; }
+  .sep-y-axis.compare { height:156px; padding-top:8px; }
+  .sep-chart-grid { position:absolute; inset:0; z-index:0; pointer-events:none; }
+  .sep-chart-grid i { position:absolute; width:100%; left:0;
+    border-top:1px solid color-mix(in srgb,var(--secondary-text-color) 24%,transparent); }
+  .sep-chart-grid i:nth-child(1) { top:0; }
+  .sep-chart-grid i:nth-child(2) { top:25%; }
+  .sep-chart-grid i:nth-child(3) { top:50%; }
+  .sep-chart-grid i:nth-child(4) { top:75%; }
+  .bars { display:flex; align-items:flex-end; gap:2px; height:96px; position:relative;
+    border-bottom:1px solid color-mix(in srgb,var(--secondary-text-color) 35%,transparent); box-sizing:border-box; }
+  .bars > .col, .bars > .pv-break { z-index:1; }
   .col { flex:1 1 0; min-width:0; height:100%; position:relative; display:flex; flex-direction:column; justify-content:flex-end; }
   .col .pv { position:absolute; left:0; right:0; bottom:0; border-radius:3px 3px 0 0; opacity:.22; background:${grad(PV_GRADIENT).replace("to right", "to top")}; }
   .col .seg { position:relative; width:100%; }
@@ -588,9 +623,9 @@ const CARD_CSS = `
   .pv-compare-totals small{color:var(--secondary-text-color);font-size:11px}
   .pv-compare-totals strong{font-size:16px;font-variant-numeric:tabular-nums}
   .pv-compare-scroll{overflow-x:auto;overscroll-behavior-x:contain}
-  .pv-compare-plot{min-width:max(100%,580px);height:156px;display:flex;align-items:end;gap:5px;
+  .pv-compare-plot{min-width:max(100%,580px);height:156px;display:flex;align-items:end;gap:5px;position:relative;box-sizing:border-box;
     padding:8px 0 0;border-bottom:1px solid var(--divider-color)}
-  .pv-compare-col{flex:1;min-width:19px;height:100%;display:flex;align-items:end;justify-content:center;gap:2px;position:relative}
+  .pv-compare-col{flex:1;min-width:19px;height:100%;display:flex;align-items:end;justify-content:center;gap:2px;position:relative;z-index:1}
   .pv-compare-bar{width:42%;min-height:0;border-radius:3px 3px 0 0}
   .pv-compare-forecast{background:var(--warning-color,#e5a21a);opacity:.82}
   .pv-compare-actual{background:var(--success-color,#22a06b)}
@@ -1075,6 +1110,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     if (!cols.length) return `<div class="timeline"><div class="empty">Kein PV-Ertrag im Zeitraum.</div></div>`;
     const colorOf = name => name === "Speicher" ? BATTERY_GRADIENT : (d.devices.find(x => x.name === name)?.color || PALETTE[6]);
     const max = Math.max(...cols.map(h => Math.max(h.pv_w || 0, Object.values(h.geraete || {}).reduce((a, b) => a + b, 0))), 1);
+    const axisMax = sepNiceAxisMax(max);
     const used = new Set();
     const bars = [];
     const labels = [];
@@ -1097,18 +1133,21 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const segs = Object.entries(h.geraete || {}).map(([name, w]) => {
         used.add(name);
         const g = colorOf(name);
-        return `<div class="seg" title="${esc(name)}: ${fmtW(w)}" style="height:${(w / max) * 100}%;background:linear-gradient(to top,${g.join(",")})"></div>`;
+        return `<div class="seg" title="${esc(name)}: ${fmtW(w)}" style="height:${(w / axisMax) * 100}%;background:linear-gradient(to top,${g.join(",")})"></div>`;
       }).join("");
       const hour = new Date(t).toLocaleTimeString("de-AT", { hour: "2-digit" });
       bars.push(`<div class="col ${isNow ? "now" : ""}" title="${hour} Uhr – PV ${fmtW(h.pv_w)}, frei ${fmtW(h.frei_w)}">
-          <div class="pv" style="height:${((h.pv_w || 0) / max) * 100}%"></div>${segs}</div>`);
+          <div class="pv" style="height:${((h.pv_w || 0) / axisMax) * 100}%"></div>${segs}</div>`);
       labels.push(`<div>${i % step === 0 || elapsedHours > 1 ? new Date(t).getHours() : ""}</div>`);
     });
     const legend = [`<span><i style="background:${grad(PV_GRADIENT)};opacity:.5"></i>PV-Prognose</span>`]
       .concat([...used].map(n => `<span><i style="background:${grad(colorOf(n))}"></i>${esc(n)}</span>`)).join("");
     const next = plan?.state && plan.state !== "–" ? `<div class="next">Als Nächstes: ${esc(plan.state)}</div>` : "";
-    return `<div class="timeline"><div class="bars">${bars.join("")}</div><div class="labels">${labels.join("")}</div>
-      <div class="legend">${legend}</div></div>${next}`;
+    return `<div class="timeline"><div class="sep-axis-layout">
+      <div class="sep-y-axis" aria-label="PV-Leistung in kW">${sepAxisLabels(axisMax,"kW")}</div>
+      <div class="sep-axis-content"><div class="bars">${SEP_GRID}${bars.join("")}</div>
+        <div class="labels">${labels.join("")}</div></div>
+      </div><div class="legend">${legend}</div></div>${next}`;
   }
 
   _pvComparison(d) {
@@ -1132,10 +1171,11 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       Die Auswertung beginnt mit der nächsten vollständig beobachteten Prognosestunde.</div></div>`;
     const max = Math.max(1,...rows.map(x=>Math.max(Number(x.prognose_wh)||0,
       typeof x.ist_wh === "number" ? x.ist_wh : 0)));
+    const axisMax = sepNiceAxisMax(max);
     const fmt = v => typeof v === "number" && Number.isFinite(v)
       ? v.toLocaleString("de-AT",{minimumFractionDigits:2,maximumFractionDigits:2})+" kWh" : "–";
     const bar = (wh,cls) => wh === null || wh === undefined ? "" :
-      `<div class="pv-compare-bar ${cls}" style="height:${Math.max(0,Math.min(100,Number(wh)/max*100))}%"></div>`;
+      `<div class="pv-compare-bar ${cls}" style="height:${Math.max(0,Math.min(100,Number(wh)/axisMax*100))}%"></div>`;
     const plotted = rows.map(x => {
       const t = new Date(x.zeit);
       const label = t.toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"});
@@ -1158,8 +1198,11 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         <div><small>Ist-Erzeugung</small><strong>${fmt(data.ist_kwh)}</strong></div>
         <div><small>Abweichung</small><strong>${esc(deviation)}</strong></div>
       </div>
-      <div class="pv-compare-scroll"><div class="pv-compare-plot" style="min-width:max(100%,${rows.length*45}px)">${plotted}</div>
-        <div class="pv-compare-labels" style="min-width:max(100%,${rows.length*45}px)">${labels}</div></div>
+      <div class="sep-axis-layout">
+        <div class="sep-y-axis compare" aria-label="PV-Energie je Stunde in kWh">${sepAxisLabels(axisMax,"kWh")}</div>
+        <div class="pv-compare-scroll"><div class="pv-compare-plot" style="min-width:max(100%,${rows.length*45}px)">${SEP_GRID}${plotted}</div>
+          <div class="pv-compare-labels" style="min-width:max(100%,${rows.length*45}px)">${labels}</div></div>
+      </div>
       <div class="pv-compare-legend">
         <span><i style="background:var(--warning-color,#e5a21a)"></i>Ursprüngliche Prognose</span>
         <span><i style="background:var(--success-color,#22a06b)"></i>Gemessene Erzeugung</span>
