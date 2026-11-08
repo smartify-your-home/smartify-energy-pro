@@ -578,6 +578,28 @@ const CARD_CSS = `
   .tgl span::before { content:""; position:absolute; width:16px; height:16px; left:2px; top:2px; background:#fff; border-radius:50%; transition:.2s; }
   .tgl input:checked + span { background:var(--primary-color); }
   .tgl input:checked + span::before { transform:translateX(16px); }
+  .pv-compare-toggle{display:flex;align-items:center;gap:8px;width:100%;padding:11px 8px;border:0;
+    border-bottom:1px solid var(--divider-color);background:transparent;color:var(--primary-text-color);
+    font:inherit;font-weight:600;text-align:left;cursor:pointer}
+  .pv-compare-toggle span:last-child{margin-left:auto;color:var(--secondary-text-color);font-size:12px}
+  .pv-compare-body{padding:10px 8px 14px;background:color-mix(in srgb,var(--row-bg) var(--sep-surface-opacity,100%),transparent);border-radius:var(--radius)}
+  .pv-compare-totals{display:flex;gap:14px;flex-wrap:wrap;padding:5px 0 13px}
+  .pv-compare-totals>div{min-width:75px;display:flex;flex-direction:column;gap:3px}
+  .pv-compare-totals small{color:var(--secondary-text-color);font-size:11px}
+  .pv-compare-totals strong{font-size:16px;font-variant-numeric:tabular-nums}
+  .pv-compare-scroll{overflow-x:auto;overscroll-behavior-x:contain}
+  .pv-compare-plot{min-width:max(100%,580px);height:156px;display:flex;align-items:end;gap:5px;
+    padding:8px 0 0;border-bottom:1px solid var(--divider-color)}
+  .pv-compare-col{flex:1;min-width:19px;height:100%;display:flex;align-items:end;justify-content:center;gap:2px;position:relative}
+  .pv-compare-bar{width:42%;min-height:0;border-radius:3px 3px 0 0}
+  .pv-compare-forecast{background:var(--warning-color,#e5a21a);opacity:.82}
+  .pv-compare-actual{background:var(--success-color,#22a06b)}
+  .pv-compare-labels{min-width:max(100%,580px);display:flex;gap:5px}
+  .pv-compare-labels span{flex:1;min-width:19px;text-align:center;color:var(--secondary-text-color);font-size:10px}
+  .pv-compare-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--secondary-text-color)}
+  .pv-compare-legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  .pv-compare-note{font-size:11px;color:var(--secondary-text-color);margin-top:8px}
+  @media(max-width:560px){.pv-compare-totals{gap:9px}.pv-compare-totals strong{font-size:14px}}
   /* These rules must come after the default surface rules above. */
   .tile, .dev, .timeline { background:color-mix(in srgb, var(--row-bg) var(--sep-surface-opacity,100%), transparent); }
   .settings { background:color-mix(in srgb, var(--secondary-background-color) var(--sep-surface-opacity,100%), transparent); }
@@ -622,6 +644,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._grpOpen = new Set();    // geöffnete, standardmäßig zugeklappte Gruppen
     this._grpClosed = new Set();  // geschlossene, standardmäßig offene Gruppen
     this._boostUntil = {};
+    this._pvCompareOpen = false;
   }
 
   static getConfigElement() { return document.createElement("smartify-energy-plan-card-editor"); }
@@ -1088,6 +1111,61 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       <div class="legend">${legend}</div></div>${next}`;
   }
 
+  _pvComparison(d) {
+    const plan = this._st(d.ents["sensor:plan"]);
+    const data = plan?.attributes?.pv_vergleich;
+    const open = this._pvCompareOpen;
+    const toggle = `<button type="button" class="pv-compare-toggle" data-pvcompare
+      aria-expanded="${open ? "true" : "false"}" aria-controls="sep-pv-compare">
+      <ha-icon icon="${open ? "mdi:chevron-down" : "mdi:chevron-right"}"></ha-icon>
+      PV-Prognose / Ist-Erzeugung <span>${open ? "Einklappen" : "Ausklappen"}</span>
+    </button>`;
+    if (!open) return toggle;
+    if (!data?.konfiguriert) return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
+      <div class="pv-compare-note">Für diesen Vergleich unter SEP → Konfigurieren → Prognose
+      den Sensor für die gesamte PV-Erzeugungsleistung (W) auswählen.
+      Der Netzsaldo oder die Akkuleistung sind dafür nicht geeignet.</div></div>`;
+    const rows = Array.isArray(data.stunden) ? data.stunden.filter(x =>
+      Number.isFinite(Date.parse(x.zeit)) && Number.isFinite(Number(x.prognose_wh))) : [];
+    if (!rows.length) return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
+      <div class="pv-compare-note">Noch keine gespeicherten Stundenprognosen für heute.
+      Die Auswertung beginnt mit der nächsten vollständig beobachteten Prognosestunde.</div></div>`;
+    const max = Math.max(1,...rows.map(x=>Math.max(Number(x.prognose_wh)||0,
+      typeof x.ist_wh === "number" ? x.ist_wh : 0)));
+    const fmt = v => typeof v === "number" && Number.isFinite(v)
+      ? v.toLocaleString("de-AT",{minimumFractionDigits:2,maximumFractionDigits:2})+" kWh" : "–";
+    const bar = (wh,cls) => wh === null || wh === undefined ? "" :
+      `<div class="pv-compare-bar ${cls}" style="height:${Math.max(0,Math.min(100,Number(wh)/max*100))}%"></div>`;
+    const plotted = rows.map(x => {
+      const t = new Date(x.zeit);
+      const label = t.toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"});
+      const forecast = Number(x.prognose_wh);
+      const actual = typeof x.ist_wh === "number" ? x.ist_wh : null;
+      return `<div class="pv-compare-col" title="${esc(label)} · Prognose ${esc((forecast/1000).toFixed(2))} kWh · Ist ${actual === null ? "noch nicht vollständig gemessen" : esc((actual/1000).toFixed(2))+" kWh"}">
+        ${bar(forecast,"pv-compare-forecast")}${bar(actual,"pv-compare-actual")}</div>`;
+    }).join("");
+    const labels = rows.map((x,i) => `<span>${i%2===0 ? esc(new Date(x.zeit)
+      .toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"})) : ""}</span>`).join("");
+    const pct = data.abweichung_pct;
+    const deviation = typeof pct==="number" ? (pct>0?"+":"")+pct.toFixed(1)+" %" : "–";
+    return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
+      <div class="pv-compare-totals">
+        <div><small>Prognose (vergleichbar)</small><strong>${fmt(data.prognose_kwh)}</strong></div>
+        <div><small>Ist-Erzeugung</small><strong>${fmt(data.ist_kwh)}</strong></div>
+        <div><small>Abweichung</small><strong>${esc(deviation)}</strong></div>
+      </div>
+      <div class="pv-compare-scroll"><div class="pv-compare-plot">${plotted}</div>
+        <div class="pv-compare-labels">${labels}</div></div>
+      <div class="pv-compare-legend">
+        <span><i style="background:var(--warning-color,#e5a21a)"></i>Ursprüngliche Prognose</span>
+        <span><i style="background:var(--success-color,#22a06b)"></i>Gemessene Erzeugung</span>
+      </div>
+      <div class="pv-compare-note">${Number(data.verglichene_stunden)||0} vollständig verglichene Stunden.
+      Nur für vollständig gemessene Stunden wird die Prognose in den Summen berücksichtigt.
+      Fehlende Messzeiten bleiben offen; die Prognose wird rückwirkend nicht überschrieben.</div>
+    </div>`;
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────
   _render() {
     if (!this._hass) return;
@@ -1108,7 +1186,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         ${this._open.has("hub") ? this._settings(d.hubSettings, d.name, "hub", "hub") : ""}
         ${c.show_header ? this._header(d) : ""}
         ${c.show_priorities ? `<div class="section"><span>Prioritäten</span><span>1 = hoher Vorrang · ziehen zum Sortieren</span></div>${this._devices(d)}` : ""}
-        ${c.show_timeline ? `<div class="section"><span>PV-Plan</span><span>Heute + morgen${this._st(d.ents["sensor:forecast_today"])?.attributes?.prognose_quelle ? ` · ${esc(this._st(d.ents["sensor:forecast_today"]).attributes.prognose_quelle)}` : ""}</span></div>${this._timeline(d)}` : ""}
+        ${c.show_timeline ? `<div class="section"><span>PV-Plan</span><span>Heute + morgen${this._st(d.ents["sensor:forecast_today"])?.attributes?.prognose_quelle ? ` · ${esc(this._st(d.ents["sensor:forecast_today"]).attributes.prognose_quelle)}` : ""}</span></div>${this._timeline(d)}${this._pvComparison(d)}` : ""}
       </ha-card>`;
     const template = document.createElement("template");
     template.innerHTML = markup;
@@ -1122,10 +1200,14 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._eventsBound = true;
     const root = this.shadowRoot;
     root.addEventListener("click", e => {
-      const el = e.target.closest?.("[data-log], [data-gear], [data-more], [data-press], [data-toggle], [data-info], [data-grp], [data-setmode], select");
+      const el = e.target.closest?.("[data-pvcompare], [data-log], [data-gear], [data-more], [data-press], [data-toggle], [data-info], [data-grp], [data-setmode], select");
       if (!el) return;
       if (el.matches("select")) { e.stopPropagation(); return; }
-      if (el.hasAttribute("data-log")) {
+      if (el.hasAttribute("data-pvcompare")) {
+        e.stopPropagation();
+        this._pvCompareOpen = !this._pvCompareOpen;
+        this._render();
+      } else if (el.hasAttribute("data-log")) {
         e.stopPropagation();
         const id = el.dataset.log;
         this._logOpen.has(id) ? this._logOpen.delete(id) : this._logOpen.add(id);
