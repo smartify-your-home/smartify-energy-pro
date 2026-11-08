@@ -32,6 +32,8 @@ from .const import (
     CONF_BAT_SOC,
     CONF_FORECAST_ENTRIES,
     CONF_FORECAST_SENSORS,
+    CONF_SOLAR_MODE,
+    CONF_SOLAR_CLOUD_ENTITY,
     CONF_GRID_EXPORT_SENSOR,
     CONF_GRID_SENSOR,
     CONF_GRID_SIGN,
@@ -56,7 +58,8 @@ HISTORY_RETENTION = timedelta(minutes=60)
 HISTORY_SAMPLE_SECONDS = 15
 HISTORY_MAX_GAP = timedelta(seconds=120)
 HUB_ENTITY_FIELDS = (CONF_GRID_SENSOR, CONF_GRID_EXPORT_SENSOR, CONF_BAT_POWER,
-                     CONF_BAT_SOC, CONF_SINK_SENSORS, CONF_FORECAST_SENSORS)
+                     CONF_BAT_SOC, CONF_SINK_SENSORS, CONF_FORECAST_SENSORS,
+                     CONF_SOLAR_CLOUD_ENTITY)
 
 
 class EnergyManager:
@@ -74,7 +77,19 @@ class EnergyManager:
             if cls:
                 self.devices[sub_id] = cls(self, sub_id, sub.title, dict(sub.data))
         self.forecast = ForecastProvider(
-            hass, self.cfg.get(CONF_FORECAST_ENTRIES) or [], self.cfg.get(CONF_FORECAST_SENSORS) or []
+            hass, self.cfg.get(CONF_FORECAST_ENTRIES) or [],
+            self.cfg.get(CONF_FORECAST_SENSORS) or [],
+            solar_config={
+                "mode": self.cfg.get(CONF_SOLAR_MODE, "external"),
+                "cloud_entity": self.cfg.get(CONF_SOLAR_CLOUD_ENTITY),
+                "surfaces": [
+                    {"kwp": self.cfg.get(f"solar_{i}_kwp", 0),
+                     "tilt": self.cfg.get(f"solar_{i}_tilt", 30),
+                     "azimuth": self.cfg.get(f"solar_{i}_azimuth", 180)}
+                    for i in range(1, 5)
+                    if float(self.cfg.get(f"solar_{i}_kwp") or 0) > 0
+                ],
+            },
         )
         self._store = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}")
         self._history: deque[tuple[datetime, float]] = deque()
