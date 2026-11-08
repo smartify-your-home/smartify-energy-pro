@@ -1,3 +1,8 @@
+## Quellenanzeige und verlängerter PV-Plan (unreleased)
+- PV-Prognose-Kachel UND PV-Plan zeigen dieselbe tatsächliche Quelle; bei zusammengeführten externen Quellen kein fälschliches Solcast-Label. Quelle als Attribut bereitstellen.
+- Stundenmodell nimmt bis 48h My-Weather-Wolkendaten, alte 8h-Entity bleibt gültig. Nur echte Zeitstempel und Zahlen 0–100 %, keine fehlenden Stunden auffüllen.
+- Die neuen Änderungen auf dem offenen Quellenanzeige-Branch erhalten, kein Merge/Release ohne abgeschlossene CI.
+
 ## PV-Kalibrierung (optional, in Vorbereitung)
 - Nur berechneter PV-Modus mit explizitem Opt-in. Sensor muss echte Erzeugungsleistung aller modellierten Flächen messen; niemals Netzsaldo, Akkuleistung oder Hausverbrauch als PV-Erzeugung interpretieren.
 - Prognosewerte vor Korrektur für Lernbeobachtungen verwenden, keine Selbstkalibrierung. Kalibrierung nur bei gültiger Vorhersage, mindestens 300 W; nachts, bei ungültigen Werten, Clipping und ohne ausreichende Daten bleibt Faktor 1.0.
