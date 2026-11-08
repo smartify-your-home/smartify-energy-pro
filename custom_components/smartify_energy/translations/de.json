@@ -39,7 +39,9 @@
           "solar_3_azimuth": "PV-Fläche 3: Ausrichtung (°)",
           "solar_4_kwp": "PV-Fläche 4: Peakleistung (kWp)",
           "solar_4_tilt": "PV-Fläche 4: Neigung (°)",
-          "solar_4_azimuth": "PV-Fläche 4: Ausrichtung (°)"
+          "solar_4_azimuth": "PV-Fläche 4: Ausrichtung (°)",
+          "solar_calibration_enabled": "PV-Prognose automatisch kalibrieren (optional)",
+          "solar_pv_power_entity": "PV-Erzeugungsleistung (W) – echter Wechselrichter-/Erzeugungssensor"
         },
         "data_description": {
           "forecast_entries": "**Optional:** Wählen Sie die Sonnenstrom-Prognose für Ihre PV-Anlage. Mehrere Dachflächen werden addiert. Jede Fläche nur einmal auswählen, damit der erwartete Ertrag nicht doppelt gezählt wird.",
@@ -57,7 +59,9 @@
           "solar_3_azimuth": "0° Nord, 90° Ost, 180° Süd, 270° West.",
           "solar_4_kwp": "Installierte kWp; 0 = Fläche nicht genutzt.",
           "solar_4_tilt": "0° flach bis 90° senkrecht.",
-          "solar_4_azimuth": "0° Nord, 90° Ost, 180° Süd, 270° West."
+          "solar_4_azimuth": "0° Nord, 90° Ost, 180° Süd, 270° West.",
+          "solar_calibration_enabled": "Nur bei eigener PV-Prognose wirksam. Lernt aus echten PV-Messwerten und bleibt standardmäßig aus.",
+          "solar_pv_power_entity": "Gesamtleistung der im Modell erfassten PV-Flächen, nicht Netzsaldo, Hausverbrauch oder Akkuleistung."
         }
       },
       "battery": {
@@ -121,7 +125,9 @@
           "solar_3_azimuth": "PV-Fläche 3: Ausrichtung (°)",
           "solar_4_kwp": "PV-Fläche 4: Peakleistung (kWp)",
           "solar_4_tilt": "PV-Fläche 4: Neigung (°)",
-          "solar_4_azimuth": "PV-Fläche 4: Ausrichtung (°)"
+          "solar_4_azimuth": "PV-Fläche 4: Ausrichtung (°)",
+          "solar_calibration_enabled": "PV-Prognose automatisch kalibrieren (optional)",
+          "solar_pv_power_entity": "PV-Erzeugungsleistung (W) – echter Wechselrichter-/Erzeugungssensor"
         },
         "data_description": {
           "forecast_entries": "**Optional:** Wählen Sie die Sonnenstrom-Prognose für Ihre PV-Anlage. Mehrere Dachflächen werden addiert. Jede Fläche nur einmal auswählen, damit der erwartete Ertrag nicht doppelt gezählt wird.",
@@ -139,7 +145,9 @@
           "solar_3_azimuth": "0° Nord, 90° Ost, 180° Süd, 270° West.",
           "solar_4_kwp": "Installierte kWp; 0 = Fläche nicht genutzt.",
           "solar_4_tilt": "0° flach bis 90° senkrecht.",
-          "solar_4_azimuth": "0° Nord, 90° Ost, 180° Süd, 270° West."
+          "solar_4_azimuth": "0° Nord, 90° Ost, 180° Süd, 270° West.",
+          "solar_calibration_enabled": "Nur bei eigener PV-Prognose wirksam. Lernt aus echten PV-Messwerten und bleibt standardmäßig aus.",
+          "solar_pv_power_entity": "Gesamtleistung der im Modell erfassten PV-Flächen, nicht Netzsaldo, Hausverbrauch oder Akkuleistung."
         }
       },
       "battery": {
@@ -1003,6 +1011,11 @@
           "description": "Vollständige geordnete Liste; __battery__ steht für den Akku."
         }
       }
+    }
+  },
+  "button": {
+    "reset_solar_calibration": {
+      "name": "PV-Kalibrierung zurücksetzen"
     }
   }
 }
