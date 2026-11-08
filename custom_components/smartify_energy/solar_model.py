@@ -7,8 +7,8 @@ irradiance simulation and requires measured PV feedback for calibration.
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-from math import acos, asin, cos, degrees, exp, pi, radians, sin
+from datetime import UTC, datetime, timedelta
+from math import asin, cos, degrees, exp, pi, radians, sin
 from typing import Any
 
 
@@ -22,11 +22,11 @@ def hourly_clouds(attributes: dict, now: datetime) -> dict[datetime, float]:
             stamp = datetime.fromisoformat(str(row["datetime"]).replace("Z", "+00:00"))
             if stamp.tzinfo is None:
                 continue
-            stamp = stamp.astimezone(timezone.utc).replace(minute=0, second=0, microsecond=0)
+            stamp = stamp.astimezone(UTC).replace(minute=0, second=0, microsecond=0)
             cloud = row.get("cloud_coverage")
             if isinstance(cloud, bool) or not isinstance(cloud, (float, int)) or not 0 <= cloud <= 100:
                 continue
-            if now.astimezone(timezone.utc) - timedelta(hours=1) <= stamp < now.astimezone(timezone.utc) + timedelta(hours=9):
+            if now.astimezone(UTC) - timedelta(hours=1) <= stamp < now.astimezone(UTC) + timedelta(hours=9):
                 result[stamp] = float(cloud)
         except (ValueError, KeyError, TypeError):
             continue
@@ -39,7 +39,7 @@ def _clear_sky_poa(stamp: datetime, latitude: float, longitude: float, tilt: flo
     Geometry: NOAA fractional year, equation of time and solar declination;
     direct irradiance via simple air-mass attenuation, diffuse isotropic sky.
     """
-    t = stamp.astimezone(timezone.utc)
+    t = stamp.astimezone(UTC)
     day = t.timetuple().tm_yday
     hour = t.hour + t.minute / 60
     gamma = 2 * pi / 365 * (day - 1 + (hour - 12) / 24)
