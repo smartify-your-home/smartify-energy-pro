@@ -227,7 +227,8 @@ class EnergyManager:
                            if self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED) else None,
                        }),
             SensorSpec("plan", lambda: self.next_action or "–", icon="mdi:calendar-clock",
-                       attrs=lambda: {"stunden": self.plan_hours}),
+                       attrs=lambda: {"stunden": self.plan_hours,
+                                      "prognose_quelle": self.forecast.source_label}),
         ]
         if self.has_battery:
             specs.append(SensorSpec(
