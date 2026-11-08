@@ -67,6 +67,37 @@ class PVComparisonTests(unittest.TestCase):
         self.assertAlmostEqual(model.actual_wh[self.hour.isoformat()], 1000/60,places=2)
         self.assertAlmostEqual(model.actual_wh[(self.hour+timedelta(hours=1)).isoformat()],1000/60,places=2)
 
+
+    def test_48h_history_has_missing_gaps_and_only_completed_comparisons(self):
+        model = PVComparison()
+        model.capture(self.hour-timedelta(minutes=5), {
+            self.hour: 2000, self.hour+timedelta(hours=1): 1800,
+        })
+        for i in range(61):
+            model.observe(self.hour+timedelta(minutes=i), 1000)
+        report = model.recent(self.hour+timedelta(hours=2), 48)
+        self.assertEqual(report["zeitraum_stunden"], 48)
+        self.assertEqual(len(report["stunden"]), 48)
+        self.assertEqual(report["stunden"][-3]["zeit"], self.hour.isoformat())
+        self.assertEqual(report["stunden"][-3]["ist_wh"], 1000)
+        self.assertIsNone(report["stunden"][0]["prognose_wh"])
+        self.assertIsNone(report["stunden"][0]["ist_wh"])
+        self.assertEqual(report["verglichene_stunden"], 1)
+        self.assertEqual(report["prognose_kwh"], 2)
+        self.assertEqual(report["ist_kwh"], 1)
+        self.assertEqual(report["abweichung_pct"], -50)
+
+    def test_48h_history_distinguishes_two_dst_hours(self):
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo("Europe/Vienna")
+        model = PVComparison()
+        result = model.recent(datetime(2026, 10, 25, 6, tzinfo=UTC), 48)
+        local = [datetime.fromisoformat(x["zeit"]).astimezone(tz)
+                 for x in result["stunden"]]
+        repeated = [t for t in local if t.date().isoformat()=="2026-10-25" and t.hour==2]
+        self.assertEqual(len(repeated), 2)
+        self.assertNotEqual(repeated[0].utcoffset(),repeated[1].utcoffset())
+
     def test_no_retroactive_capture_and_invalid_meter(self):
         model = PVComparison()
         model.capture(self.hour+timedelta(minutes=20), {self.hour:1000,
