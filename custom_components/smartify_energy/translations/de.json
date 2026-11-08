@@ -58,10 +58,6 @@
           "solar_4_kwp": "Installierte kWp; 0 = Fläche nicht genutzt.",
           "solar_4_tilt": "0° flach bis 90° senkrecht.",
           "solar_4_azimuth": "0° Nord, 90° Ost, 180° Süd, 270° West."
-        },
-        "errors": {
-          "required": "Bitte den My-Weather-Bewölkungssensor auswählen.",
-          "pv_surface_required": "Mindestens eine PV-Fläche mit Peakleistung größer 0 kWp eingeben."
         }
       },
       "battery": {
@@ -80,6 +76,10 @@
           "battery_capacity": "**Optional:** Nutzbare Größe des Hausspeichers in kWh, zum Beispiel 5,12. SEP braucht sie, um die zum Füllen fehlende Energie zu berechnen."
         }
       }
+    },
+    "error": {
+      "required": "Bitte den My-Weather-Bewölkungssensor auswählen.",
+      "pv_surface_required": "Mindestens eine PV-Fläche mit Peakleistung größer 0 kWp eingeben."
     }
   },
   "options": {
@@ -140,10 +140,6 @@
           "solar_4_kwp": "Installierte kWp; 0 = Fläche nicht genutzt.",
           "solar_4_tilt": "0° flach bis 90° senkrecht.",
           "solar_4_azimuth": "0° Nord, 90° Ost, 180° Süd, 270° West."
-        },
-        "errors": {
-          "required": "Bitte den My-Weather-Bewölkungssensor auswählen.",
-          "pv_surface_required": "Mindestens eine PV-Fläche mit Peakleistung größer 0 kWp eingeben."
         }
       },
       "battery": {
@@ -162,6 +158,10 @@
           "battery_capacity": "**Optional:** Nutzbare Größe des Hausspeichers in kWh, zum Beispiel 5,12. SEP braucht sie, um die zum Füllen fehlende Energie zu berechnen."
         }
       }
+    },
+    "error": {
+      "required": "Bitte den My-Weather-Bewölkungssensor auswählen.",
+      "pv_surface_required": "Mindestens eine PV-Fläche mit Peakleistung größer 0 kWp eingeben."
     }
   },
   "config_subentries": {
