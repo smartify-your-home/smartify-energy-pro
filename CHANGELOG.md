@@ -1,3 +1,10 @@
+## Unreleased
+
+- PV-Prognose-Kachel zeigt die aktive Prognosequelle (eigene Berechnung, Solcast, Forecast.Solar oder mehrere Quellen).
+- PV-Plan zeigt denselben kleinen Quellenhinweis.
+- Eigene PV-Prognose verarbeitet jetzt bis zu 48h My-Weather-Wolkenwerte aus dem optionalen 48h-Sensor statt nur 8h; fehlende Stunden bleiben ohne Prognose.
+- Bisheriger externer Prognosemodus, Sicherheits- und Regelverhalten unverändert.
+
 ## 0.3.57 – 2026-11-08
 
 ### Optionale automatische PV-Kalibrierung
