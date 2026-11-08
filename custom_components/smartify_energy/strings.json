@@ -25,11 +25,39 @@
         "title": "PV forecast",
         "data": {
           "forecast_entries": "Forecast integrations (summed)",
-          "forecast_sensors": "Forecast sensors (fallback)"
+          "forecast_sensors": "Forecast sensors (fallback)",
+          "solar_mode": "Solar forecast mode",
+          "solar_cloud_entity": "My-Weather cloud forecast 8h",
+          "solar_1_kwp": "PV array 1: Peak power (kWp)",
+          "solar_1_tilt": "PV array 1: Tilt (°)",
+          "solar_1_azimuth": "PV array 1: Azimuth (°)",
+          "solar_2_kwp": "PV array 2: Peak power (kWp)",
+          "solar_2_tilt": "PV array 2: Tilt (°)",
+          "solar_2_azimuth": "PV array 2: Azimuth (°)",
+          "solar_3_kwp": "PV array 3: Peak power (kWp)",
+          "solar_3_tilt": "PV array 3: Tilt (°)",
+          "solar_3_azimuth": "PV array 3: Azimuth (°)",
+          "solar_4_kwp": "PV array 4: Peak power (kWp)",
+          "solar_4_tilt": "PV array 4: Tilt (°)",
+          "solar_4_azimuth": "PV array 4: Azimuth (°)"
         },
         "data_description": {
           "forecast_entries": "Preselected from the energy dashboard. Selected entries are summed – choose one source per array.",
-          "forecast_sensors": "Only if the forecast integration has no energy platform."
+          "forecast_sensors": "Only if the forecast integration has no energy platform.",
+          "solar_mode": "External forecast or estimated from cloud and PV geometry.",
+          "solar_cloud_entity": "My-Weather 8h cloud sensor, not a PV energy sensor.",
+          "solar_1_kwp": "Rated STC kWp; zero means unused.",
+          "solar_1_tilt": "0° flat to 90° vertical.",
+          "solar_1_azimuth": "0° North, 90° East, 180° South, 270° West.",
+          "solar_2_kwp": "Rated STC kWp; zero means unused.",
+          "solar_2_tilt": "0° flat to 90° vertical.",
+          "solar_2_azimuth": "0° North, 90° East, 180° South, 270° West.",
+          "solar_3_kwp": "Rated STC kWp; zero means unused.",
+          "solar_3_tilt": "0° flat to 90° vertical.",
+          "solar_3_azimuth": "0° North, 90° East, 180° South, 270° West.",
+          "solar_4_kwp": "Rated STC kWp; zero means unused.",
+          "solar_4_tilt": "0° flat to 90° vertical.",
+          "solar_4_azimuth": "0° North, 90° East, 180° South, 270° West."
         }
       },
       "battery": {
@@ -75,11 +103,39 @@
         "title": "PV forecast",
         "data": {
           "forecast_entries": "Forecast integrations (summed)",
-          "forecast_sensors": "Forecast sensors (fallback)"
+          "forecast_sensors": "Forecast sensors (fallback)",
+          "solar_mode": "Solar forecast mode",
+          "solar_cloud_entity": "My-Weather cloud forecast 8h",
+          "solar_1_kwp": "PV array 1: Peak power (kWp)",
+          "solar_1_tilt": "PV array 1: Tilt (°)",
+          "solar_1_azimuth": "PV array 1: Azimuth (°)",
+          "solar_2_kwp": "PV array 2: Peak power (kWp)",
+          "solar_2_tilt": "PV array 2: Tilt (°)",
+          "solar_2_azimuth": "PV array 2: Azimuth (°)",
+          "solar_3_kwp": "PV array 3: Peak power (kWp)",
+          "solar_3_tilt": "PV array 3: Tilt (°)",
+          "solar_3_azimuth": "PV array 3: Azimuth (°)",
+          "solar_4_kwp": "PV array 4: Peak power (kWp)",
+          "solar_4_tilt": "PV array 4: Tilt (°)",
+          "solar_4_azimuth": "PV array 4: Azimuth (°)"
         },
         "data_description": {
           "forecast_entries": "Preselected from the energy dashboard. Selected entries are summed – choose one source per array.",
-          "forecast_sensors": "Only if the forecast integration has no energy platform."
+          "forecast_sensors": "Only if the forecast integration has no energy platform.",
+          "solar_mode": "External forecast or estimated from cloud and PV geometry.",
+          "solar_cloud_entity": "My-Weather 8h cloud sensor, not a PV energy sensor.",
+          "solar_1_kwp": "Rated STC kWp; zero means unused.",
+          "solar_1_tilt": "0° flat to 90° vertical.",
+          "solar_1_azimuth": "0° North, 90° East, 180° South, 270° West.",
+          "solar_2_kwp": "Rated STC kWp; zero means unused.",
+          "solar_2_tilt": "0° flat to 90° vertical.",
+          "solar_2_azimuth": "0° North, 90° East, 180° South, 270° West.",
+          "solar_3_kwp": "Rated STC kWp; zero means unused.",
+          "solar_3_tilt": "0° flat to 90° vertical.",
+          "solar_3_azimuth": "0° North, 90° East, 180° South, 270° West.",
+          "solar_4_kwp": "Rated STC kWp; zero means unused.",
+          "solar_4_tilt": "0° flat to 90° vertical.",
+          "solar_4_azimuth": "0° North, 90° East, 180° South, 270° West."
         }
       },
       "battery": {
