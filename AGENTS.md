@@ -1,3 +1,9 @@
+## PV-Plan tatsächliche Energie vs. Prognose (unreleased)
+- Kollabierbare, horizontal scrollbar 48h zurückblickende Anzeige direkt nach PV-Plan (initial rechts beim neuesten Wert): echte PV-Erzeugungsleistung aus bestehendem optionalem Solar-PV-Power-Entity, niemals Netzsaldo, Batterie oder Hauslast. Unterstützt externe und berechnete Prognose.
+- Prognose pro UTC-Stunde einmalig vor Stundenbeginn einfrieren; niemals rückwirkend mit aktualisierter Prognose überschreiben. Daten sparsam persistent mit bisherigem Store, ältere Daten begrenzen.
+- Istenergie nur über gültige Leistungsmessung integrieren (Wh). Große Messlücken nicht interpolieren und fehlende Werte nicht als Null darstellen. Stundenvergleich nur bei mindestens 95 % Datenabdeckung. DST und HA-Neustart absichern.
+- UI standardmäßig zugeklappt, klappt unabhängig vom PV-Plan auf, bleibt beim HA-Rerender stabil; Layout auch auf iPhone/iPad. Regressionen tests/test_pv_comparison.py und tests/ui/card.test.cjs.
+
 ## Quellenanzeige und verlängerter PV-Plan (unreleased)
 - PV-Prognose-Kachel UND PV-Plan zeigen dieselbe tatsächliche Quelle; bei zusammengeführten externen Quellen kein fälschliches Solcast-Label. Quelle als Attribut bereitstellen.
 - Stundenmodell nimmt bis 48h My-Weather-Wolkendaten, alte 8h-Entity bleibt gültig. Nur echte Zeitstempel und Zahlen 0–100 %, keine fehlenden Stunden auffüllen.
