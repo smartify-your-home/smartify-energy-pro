@@ -51,6 +51,7 @@ from .const import (
 from .devices import DEVICE_CLASSES, BaseDevice, Context
 from .devices.base import Decision
 from .forecast import ForecastProvider
+from .pv_comparison import PVComparison
 from .helpers import ButtonSpec, ParamSpec, SensorSpec, in_window, power_w, state_float, time_from_str
 
 _LOGGER = logging.getLogger(__name__)
@@ -95,6 +96,7 @@ class EnergyManager:
             },
         )
         self._store = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}")
+        self.pv_comparison = PVComparison()
         self._history: deque[tuple[datetime, float]] = deque()
         self.trend_delta = 0.0
         self.trend_ready = False
@@ -228,7 +230,8 @@ class EnergyManager:
                        }),
             SensorSpec("plan", lambda: self.next_action or "–", icon="mdi:calendar-clock",
                        attrs=lambda: {"stunden": self.plan_hours,
-                                      "prognose_quelle": self.forecast.source_label}),
+                                      "prognose_quelle": self.forecast.source_label,
+                                      "pv_vergleich": self._pv_comparison_attrs()}),
         ]
         if self.has_battery:
             specs.append(SensorSpec(
@@ -264,6 +267,13 @@ class EnergyManager:
             })
             out.sort(key=lambda item: item["prioritaet"])
         return {"geraete": out}
+
+    def _pv_comparison_attrs(self) -> dict:
+        if not self.cfg.get(CONF_SOLAR_PV_POWER_ENTITY):
+            return {"konfiguriert": False, "stunden": [],
+                    "hinweis": "Für den Vergleich PV-Erzeugungsleistungssensor in SEP → Prognose auswählen."}
+        return {"konfiguriert": True,
+                **self.pv_comparison.today(dt_util.now(), dt_util.get_default_time_zone())}
 
     def _observe_pv_calibration(self, now: datetime) -> None:
         """Learn from the actual PV generation meter, never grid or battery power."""
@@ -307,6 +317,7 @@ class EnergyManager:
         data = await self._store.async_load() or {}
         self._restore_history(data.get("history"))
         self.forecast.calibration.restore(data.get("solar_calibration"), dt_util.now())
+        self.pv_comparison.restore(data.get("pv_comparison"), dt_util.utcnow())
         for k, v in (data.get("hub") or {}).items():
             if k in self.params:
                 self.params[k] = v
@@ -445,6 +456,7 @@ class EnergyManager:
         return {
             "hub": self.params,
             "solar_calibration": self.forecast.calibration.dump(),
+            "pv_comparison": self.pv_comparison.dump(),
             "devices": {sid: d.dump() for sid, d in self.devices.items()},
             "history": {
                 "budget": self._compact_history(self._history),
@@ -735,6 +747,13 @@ class EnergyManager:
             self._last_plan = now
 
         self._read_inputs()
+        pv_entity = self.cfg.get(CONF_SOLAR_PV_POWER_ENTITY)
+        if pv_entity:
+            # Snapshot before observation; never retrospectively replace forecasts.
+            if forecast_due:
+                self.pv_comparison.capture(now, self.forecast.hours)
+            actual_pv_w = power_w(self.hass, pv_entity)
+            self.pv_comparison.observe(now, actual_pv_w)
         self._observe_pv_calibration(now)
         self._battery_strategy(now)
         bat_discharge = max(-self.battery_power, 0.0)
