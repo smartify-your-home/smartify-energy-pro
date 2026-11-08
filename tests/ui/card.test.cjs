@@ -247,3 +247,19 @@ test('EV controls (goal + boost) sit inside the metrics block before the battery
   assert.equal(pb.firstElementChild,ctl,'controls first, then Akku/Leistung/Budget');
   assert.match(source,/@container \(max-width:560px\)[\s\S]*\.ev-power-budget \.ev-ctl \{ width:100%/);
 });
+
+test('EV shows history + budget start check (no trend) with exact threshold in Info',()=>{
+  const gateAttrs={geraetetyp:'ev',modus:'auto',status_code:'waiting',trend_history_min:3,
+    pv_startpruefung:{schwelle_w:897,aktuell_w:-6397,mittel_w:-6100,mittel_bereit:false,phasen:1,min_w:1380,pv_anteil:65}};
+  const root=rowCard({ev:[['sensor.ev','status','waiting',gateAttrs],['select.ev_goal','goal','pv_only',{options:['pv_only','km_until','days','now']}]]});
+  const icons=[...root.querySelectorAll('.sep-gates .sep-gate')].map(i=>i.getAttribute('icon'));
+  assert.deepEqual(icons,['mdi:history','mdi:scale-balance'],'H and B, no trend');
+  root.querySelector('[data-log]').click();
+  const log=root.querySelector('.sep-log').textContent;
+  assert.match(log,/Soll ≥ 897 W/);
+  assert.match(log,/2-min-Ø Ist -6100 W|2-min-Ø Ist −6100 W|2-min-Ø Ist -6.100 W|2-min-Ø Ist/);
+  assert.match(log,/1380 W|1.380 W/);
+  // charging: no start check
+  const charging=rowCard({ev:[['sensor.ev','status','charging_pv',{geraetetyp:'ev',modus:'auto',pv_startpruefung:null}]]});
+  assert.equal(charging.querySelector('.sep-gates'),null);
+});

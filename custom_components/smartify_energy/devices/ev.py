@@ -214,7 +214,9 @@ class EvDevice(BaseDevice):
                 "pflicht_start": start.isoformat() if start else None,
                 "pv_stopp_um": self.pv_stop_at.isoformat() if self.pv_stop_at else None,
                 "boost_bis": self.boost_until().isoformat() if self.boost_until() else None,
-                "voll_um": full.isoformat() if (full := self.full_at()) else None}
+                "voll_um": full.isoformat() if (full := self.full_at()) else None,
+                "pv_startpruefung": getattr(self, "start_gate", None),
+                "trend_history_min": round(getattr(self.manager, "trend_history_minutes", 0.0), 1)}
 
     def full_at(self, now: datetime | None = None) -> datetime | None:
         """Estimated time Max-SoC is reached if charging continues at the
@@ -414,6 +416,7 @@ class EvDevice(BaseDevice):
         return want
 
     def decide(self, ctx: Context, budget_left: float) -> Decision:
+        self.start_gate = None  # set only on the regular PV start path
         if not self.connected:
             self.status = "nicht_verbunden"
             self._deficit_since = None
@@ -456,6 +459,11 @@ class EvDevice(BaseDevice):
         phases = self._phases_for(avail, ctx)
         p_min = self.min_a * self.voltage * phases
         threshold = p_min * share
+        # Exact PV start check for the card (history + budget now/short average).
+        self.start_gate = None if on else {
+            "schwelle_w": round(threshold), "aktuell_w": round(avail), "mittel_w": round(avail_avg),
+            "mittel_bereit": bool(ctx.history_ready), "phasen": phases,
+            "min_w": round(p_min), "pv_anteil": round(share * 100)}
 
         if on:
             if avail >= threshold:

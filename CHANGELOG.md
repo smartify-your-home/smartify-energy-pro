@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.3.56 – Auto: PV-Startprüfung in der Karte
+- Neues Status-Attribut `pv_startpruefung` der Wallbox (nur solange sie auf PV-Überschuss wartet): Startschwelle, aktuelles Budget, 2-min-Ø, Mittelwert bereit, Phasen, Mindestladeleistung, PV-Anteil – exakt die Werte der Startentscheidung. Nicht im Recorder.
+- Karte: Auto zeigt wie Haushaltsgeräte die Symbole Historie (nur solange unvollständig) und Budget samt „Info“ mit Ist/Soll; keine Trendprüfung, da die Wallbox keine hat. Während des Ladens keine Startprüfung.
+
 ## 0.3.55 – Auto-Zeile: Ladeziel und Boost im Leistungsblock
 - Karte: Ladeziel-Auswahl und Boost-Rakete des Autos stehen als Bediengruppe im rechten Leistungsblock – breit in einer Zeile vor Akku, Leistung und Budget, schmal oberhalb davon. Vorher lagen sie frei neben dem Namen. Logik unverändert.
 

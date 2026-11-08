@@ -923,20 +923,33 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const historyInfo = `Historie: ${trendAge ?? "–"} min vorhanden, benötigt ${avgWindow ?? "–"} min; Ø ${fmtW(budgetAverage)}`;
       const trendInfo = `Trend: ${trendReady ? (trendOk ? "Bedingung erfüllt" : "Bedingung nicht erfüllt") : "Messhistorie noch nicht vollständig"}; Fenster ${trendWindow ?? "–"} min, Kurzzeit-Ø ${fmtW(trendRecent)}, Änderung ${fmtW(trendDelta)}, Fortschreibung ${fmtW(direction.projected)}, benötigt ${fmtW(needed)}`;
       const budgetInfo = `Budget: ${budgetOk ? "Bedingung erfüllt" : "Bedingung nicht erfüllt"}; aktuell ${fmtW(budgetNow)}, Ø ${fmtW(budgetAverage)}, benötigt ${fmtW(needed)}`;
-      const trendText = trendRelevant
-        ? `<span class="sep-gates" title="${esc(historyInfo + " | " + trendInfo + " | " + budgetInfo)}">${avgReady ? "" : gate("H", avgReady, historyInfo)}${gate("T", trendOk, trendInfo)}${gate("B", budgetOk, budgetInfo)}${avgReady && trendOk && budgetOk ? '<ha-icon icon="mdi:check-circle" class="sep-history-icon" style="color:var(--success-color, #43a047)"></ha-icon>' : ""}</span>`
+      // Auto: eigene PV-Startprüfung (Historie + Budget aktuell/2-min-Ø gegen Startschwelle), kein Trend.
+      const evGate = a.geraetetyp === "ev" ? a.pv_startpruefung : null;
+      const evH = evGate ? evGate.mittel_bereit === true : true;
+      const evB = evGate ? evGate.aktuell_w >= evGate.schwelle_w && evGate.mittel_w >= evGate.schwelle_w : true;
+      const evThresholdTxt = evGate ? `${fmtW(evGate.schwelle_w)} (${fmtW(evGate.min_w)} Mindestladeleistung × ${evGate.pv_anteil} % PV-Anteil)` : "";
+      const evHistoryInfo = evGate ? `Historie: ${evH ? "Mittelwert bereit" : `noch nicht vollständig (${trendAge ?? "–"} min von ${avgWindow == null ? "–" : (avgWindow * 0.9).toFixed(0)} min) – bis dahin zählt nur der aktuelle Wert`}` : "";
+      const evBudgetInfo = evGate ? `Budget: ${evB ? "Bedingung erfüllt" : "Bedingung nicht erfüllt"}; aktuell ${fmtW(evGate.aktuell_w)}, 2-min-Ø ${fmtW(evGate.mittel_w)}, benötigt ≥ ${evThresholdTxt}` : "";
+      const evGateText = evGate
+        ? `<span class="sep-gates" title="${esc(evHistoryInfo + " | " + evBudgetInfo)}">${evH ? "" : gate("H", false, evHistoryInfo)}${gate("B", evB, evBudgetInfo)}${evH && evB ? '<ha-icon icon="mdi:check-circle" class="sep-history-icon" style="color:var(--success-color, #43a047)"></ha-icon>' : ""}</span>`
         : "";
+      const trendText = evGateText || (trendRelevant
+        ? `<span class="sep-gates" title="${esc(historyInfo + " | " + trendInfo + " | " + budgetInfo)}">${avgReady ? "" : gate("H", avgReady, historyInfo)}${gate("T", trendOk, trendInfo)}${gate("B", budgetOk, budgetInfo)}${avgReady && trendOk && budgetOk ? '<ha-icon icon="mdi:check-circle" class="sep-history-icon" style="color:var(--success-color, #43a047)"></ha-icon>' : ""}</span>`
+        : "");
       const logOpen = this._logOpen.has(dev.id);
       const logRow = (letter, ok, detail) =>
         `<div class="sep-log-row"><ha-icon class="sep-gate" icon="${GATE_ICONS[letter]}" style="color:${gateColor(ok)}"></ha-icon><span class="sep-log-detail">${esc(detail)}</span></div>`;
       const historyNeed = avgWindow == null ? null : avgWindow * 0.9;
       const trendHistoryNeed = trendWindow == null ? null : trendWindow * 2;
-      const logText = trendRelevant ? `<div class="sep-log" data-log-panel="${esc(dev.id)}" id="sep-log-${esc(dev.id)}">
+      const logText = evGate ? `<div class="sep-log" data-log-panel="${esc(dev.id)}" id="sep-log-${esc(dev.id)}">
+        ${logRow("H", evH, evH ? "Mittelwert bereit (90 % des Mittelungsfensters)" : `Ist ${trendAge == null ? "–" : trendAge.toFixed(1)} min / Soll ${historyNeed == null ? "–" : historyNeed.toFixed(1)} min – bis dahin zählt nur der aktuelle Wert`)}
+        ${logRow("B", evB, `Aktuell Ist ${fmtW(evGate.aktuell_w)} / Soll ≥ ${fmtW(evGate.schwelle_w)}; 2-min-Ø Ist ${fmtW(evGate.mittel_w)} / Soll ≥ ${fmtW(evGate.schwelle_w)} · Schwelle = Mindestladeleistung ${fmtW(evGate.min_w)} (${evGate.phasen}-phasig) × ${evGate.pv_anteil} % PV-Anteil`)}
+      </div>` : trendRelevant ? `<div class="sep-log" data-log-panel="${esc(dev.id)}" id="sep-log-${esc(dev.id)}">
         ${logRow("H", avgReady, `Ist ${trendAge == null ? "–" : trendAge.toFixed(1)} min / Soll ${historyNeed == null ? "–" : historyNeed.toFixed(1)} min (90 % von ${avgWindow ?? "–"} min)`)}
         ${logRow("T", trendOk, `Kurzzeit-Ø Ist ${fmtW(trendRecent)} / Soll ≥ ${fmtW(needed)} (Pflicht); Änderung Ist ${fmtW(trendDelta)} / Soll ≥ ${fmtW(-trendTolerance)} ODER bei stärkerem Abfall Prognose Ist ${fmtW(direction.projected)} / Soll ≥ ${fmtW(needed)}`)}
         ${logRow("B", budgetOk, `Aktuell Ist ${fmtW(budgetNow)} / Soll ≥ ${fmtW(needed)}; Ø Ist ${fmtW(budgetAverage)} / Soll ≥ ${fmtW(needed)}`)}
       </div>` : "";
-      const logToggle = trendRelevant ? `<button type="button" class="sep-log-toggle" data-log="${esc(dev.id)}" aria-expanded="${logOpen}" aria-controls="sep-log-${esc(dev.id)}" title="Ist- und Sollwerte für Historie, Trend und Budget anzeigen">${logOpen ? "Info ▴" : "Info ▾"}</button>` : "";
+      const logToggle = trendRelevant || evGate ? `<button type="button" class="sep-log-toggle" data-log="${esc(dev.id)}" aria-expanded="${logOpen}" aria-controls="sep-log-${esc(dev.id)}" title="Ist- und Sollwerte für Historie, Trend und Budget anzeigen">${logOpen ? "Info ▴" : "Info ▾"}</button>` : "";
       const forcedAt = a.pflicht_start && !forced ? Date.parse(a.pflicht_start) : NaN;
       const forcedTxt = Number.isFinite(forcedAt)
         ? (forcedAt <= Date.now() + 60e3 ? "Pflichtstart fällig" : `Pflichtstart ${fmtTime(a.pflicht_start)}`) : "";

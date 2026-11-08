@@ -98,6 +98,9 @@ Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verha
 - `EvDevice.full_at()` → Attribut `voll_um`: (Max-SoC − SoC) × Kapazität / Wirkungsgrad / gemessene Leistung; nur bei Ladung ≥ 500 W, verbunden, SoC und Kapazität vorhanden. Test: tests/test_ev_boost.py (EVFullAtTests).
 - Karte: Boost-Toggle ist `button.gear.boost` neben dem Zahnrad (nicht in `.sep-actions`); `show_allocated` (Standard false) steuert die Kachel „Verteilt“.
 
+## Auto-Startprüfung (0.3.56)
+- `EvDevice.start_gate` wird nur im regulären PV-Startpfad (nicht ladend) gesetzt, sonst None; Card nutzt ausschließlich diese Werte (2-min-Ø = `budget_short`, nicht `mittel_w`). Tests: `EVStartGateTests`, UI „EV shows history + budget start check…“.
+
 ## Auto-Zeile (0.3.55)
 - `.ev-power-budget` mit `.ev-ctl` (Ladeziel + Boost) als erstem Kind; breit nowrap, ≤560 px Bediengruppe volle Breite oben, Leistung/Budget untereinander. UI-Test „EV controls … before the battery“.
 

@@ -112,6 +112,31 @@ if __name__ == "__main__":
     unittest.main()
 
 
+class EVStartGateTests(unittest.TestCase):
+    decide = EVStopDelayTests.decide
+
+    def setUp(self):
+        EVStopDelayTests.setUp(self)
+        self.values["switch.charge"] = "off"
+        self.ev.params.update(goal="pv_only", pv_share=65)
+
+    def test_gate_values_match_decision_while_waiting(self):
+        d = self.decide(0, 500)  # 6 A × 230 V × 65 % = 897 W
+        self.assertFalse(d.on)
+        g = self.ev.status_attrs()["pv_startpruefung"]
+        self.assertEqual((g["schwelle_w"], g["aktuell_w"], g["mittel_w"], g["mittel_bereit"]), (897, 500, 500, True))
+        self.assertIn("897 W", d.reason)
+
+    def test_gate_hidden_while_charging_or_unplugged(self):
+        self.values["switch.charge"] = "on"
+        self.decide(0, 2000)
+        self.assertIsNone(self.ev.status_attrs()["pv_startpruefung"])
+        self.ev.cfg["connected_entity"] = "binary_sensor.plug"
+        self.values["binary_sensor.plug"] = "off"
+        self.decide(1, 2000)
+        self.assertIsNone(self.ev.status_attrs()["pv_startpruefung"])
+
+
 class EVFullAtTests(unittest.TestCase):
     def setUp(self):
         EVStopDelayTests.setUp(self)
