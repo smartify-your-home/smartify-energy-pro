@@ -1,4 +1,4 @@
-## Unreleased
+## 0.3.58 – 2026-11-08
 
 - PV-Prognose-Kachel zeigt die aktive Prognosequelle (eigene Berechnung, Solcast, Forecast.Solar oder mehrere Quellen).
 - PV-Plan zeigt denselben kleinen Quellenhinweis.
