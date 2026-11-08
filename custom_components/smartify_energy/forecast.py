@@ -16,6 +16,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
+from .solar_calibration import SolarCalibration
 from .solar_model import hourly_clouds, pv_hours
 
 _LOGGER = logging.getLogger(__name__)
@@ -70,6 +71,9 @@ class ForecastProvider:
         self.entry_ids = entry_ids or []
         self.sensors = sensors or []
         self.solar_config = solar_config or {}
+        self.calibration = SolarCalibration()
+        self.raw_hours: dict[datetime, float] = {}
+        self.cloud_hours: dict[datetime, float] = {}
         self.hours: dict[datetime, float] = {}
         self.last_update: datetime | None = None
         self.error: str | None = None
@@ -94,10 +98,16 @@ class ForecastProvider:
                 surfaces = config.get("surfaces") or []
                 if not surfaces:
                     raise ValueError("Configure at least one PV surface")
-                hours = {
+                self.cloud_hours = {_hour(stamp): cloud for stamp, cloud in cloudy_hours.items()}
+                self.raw_hours = {
                     _hour(stamp): wh for stamp, wh in
                     pv_hours(dt_util.utcnow(), float(self.hass.config.latitude),
                              float(self.hass.config.longitude), surfaces, cloudy_hours).items()
+                }
+                hours = {
+                    stamp: round(raw * self.calibration.factor(self.cloud_hours[stamp], dt_util.now()), 2)
+                    if self.solar_config.get("calibration_enabled") else raw
+                    for stamp, raw in self.raw_hours.items()
                 }
             except (TypeError, ValueError, OverflowError) as err:
                 errors.append(f"PV calculation: {err}")
