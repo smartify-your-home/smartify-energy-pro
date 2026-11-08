@@ -345,3 +345,33 @@ test('PV comparison reports missing PV generation meter rather than inventing ac
   assert.match(card.shadowRoot.querySelector('.pv-compare-body').textContent,/PV-Erzeugungsleistung/);
   assert.equal(card.shadowRoot.querySelectorAll('.pv-compare-actual').length,0);
 });
+
+
+test('PV comparison supports a 48h scrollback including missing hours',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
+  dom.window.document.body.append(card);
+  const base=Date.parse('2026-11-08T00:00:00Z');
+  const slots=Array.from({length:48},(_,i)=>({
+    zeit:new Date(base+i*3600000).toISOString(),
+    prognose_wh:i===5 ? null : 400+i,
+    ist_wh:i<=35 ? 300+i : null
+  }));
+  card.hass={
+    entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
+    states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:true,
+      stunden:slots,prognose_kwh:10,ist_kwh:9,abweichung_pct:-10,verglichene_stunden:35}}}},
+    devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}
+  };
+  card.shadowRoot.querySelector('[data-pvcompare]').click();
+  const root=card.shadowRoot;
+  assert.match(root.querySelector('[data-pvcompare]').textContent,/48 h/);
+  assert.equal(root.querySelectorAll('.pv-compare-col').length,48);
+  assert.equal(root.querySelectorAll('.pv-compare-forecast').length,47);
+  assert.equal(root.querySelectorAll('.pv-compare-actual').length,36);
+  assert.match(root.querySelector('.pv-compare-plot').getAttribute('style'),/2160px/);
+  assert.match(root.querySelectorAll('.pv-compare-col')[5].getAttribute('title'),/kein Wert/);
+  assert.ok(root.querySelector('.pv-compare-scroll'));
+});
