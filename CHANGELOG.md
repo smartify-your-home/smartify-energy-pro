@@ -1,5 +1,16 @@
 ## Unreleased
 
+### Optionale, berechnete PV-Prognose (My-Weather)
+- Bis zu vier Flächen mit STC-Peakleistung (kWp), Neigung und Azimut.
+- Sonnengeometrie aus den Home-Assistant-Koordinaten; stündliche
+  Wolkenkorrektur aus dem Attribut `forecast` des My-Weather 8h-Sensors.
+- Eigene Berechnung als auswählbarer Prognosemodus; bisherige externe
+  Quelle bleibt Standard. Quellen werden nicht zusammengerechnet.
+- Bewölkungswerte außerhalb 0–100 % und fehlende Zeitintervalle werden
+  nicht als Wolkenfreiheit interpretiert.
+- Keine Änderungen an Echtzeitbudget, Schutzlogik und Geräteprioritäten.
+
+
 ## 0.3.56 – Auto: PV-Startprüfung in der Karte
 - Neues Status-Attribut `pv_startpruefung` der Wallbox (nur solange sie auf PV-Überschuss wartet): Startschwelle, aktuelles Budget, 2-min-Ø, Mittelwert bereit, Phasen, Mindestladeleistung, PV-Anteil – exakt die Werte der Startentscheidung. Nicht im Recorder.
 - Karte: Auto zeigt wie Haushaltsgeräte die Symbole Historie (nur solange unvollständig) und Budget samt „Info“ mit Ist/Soll; keine Trendprüfung, da die Wallbox keine hat. Während des Ladens keine Startprüfung.
