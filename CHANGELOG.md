@@ -1,3 +1,8 @@
+## Unreleased
+
+- README neu gegliedert (Funktionen, Karte, Haushaltsgeräte, E-Auto, Heizstab/WP/Pool, Diagnose, Prognose, Installation, Hinweise) mit Bildern der Karte (Desktop, Smartphone, Einstellungen, Diagnose). Bilder unter `docs/images/`, reproduzierbar über `scripts/readme_images.cjs` mit neutralen Beispieldaten.
+- Karte: Kurzinfo der Pool-Sperre „tägliche Sperrzeit“ statt „Mittagssperre“.
+
 ## 0.3.60 – 2026-11-08
 
 - PV-Plan: beschriftete kW-Y-Achse mit vier horizontalen Hilfslinien und skalierte Balken, damit PV-Leistung und Geräteanteile ablesbar bleiben.

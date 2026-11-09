@@ -1,219 +1,171 @@
-**Neu: Abwesenheit (optional):** Beim temperaturgeregelten Heizstab und Wärmepumpen-WW-Boost kann je ein `binary_sensor` oder `input_boolean` für Abwesenheit hinterlegt werden (`on` = abwesend). Bei Abwesenheit stoppt der Heizstab auch im Handbetrieb; Number-WW-Boost wird zurückgenommen und Einmal-WW-Starts werden verhindert. Bereits laufende WP-eigene WW-Zyklen bleiben unberührt. Nach Rückkehr gelten wieder die bisherigen Regeln.
-
-
-**Budget-Reaktionszeit (0.3.52):** Netz-, Akku- und Geräteleistungen werden nach einer kurzen Bündelung von 0,25 Sekunden neu bewertet. Ein bereits geplanter langsamer Zyklus kann vorgezogen werden; Gerätemoduswechsel werden ohne absichtliche Wartezeit bewertet. Die individuellen aktuellen Budgets in der Gerätezeile sind Momentanwerte. Bestehende Hysterese, Schutzzeiten sowie Trend-/Mittelwertprüfungen für automatische Starts bleiben erhalten.
-
 # Smartify Energy Pro
 
-## Neue optionale eigene PV-Prognose (My-Weather)
+**PV-Überschuss intelligent verteilen – mit Prioritäten, Geräteprogrammen, Batteriespeicher, PV-Prognose und eigener Home-Assistant-Karte.**
 
-Unter **Einstellungen → Geräte & Dienste → Smartify Energy Pro → Konfigurieren → Prognose** gibt es zwei Modi:
+Home-Assistant-Integration `smartify_energy` · Oberfläche Deutsch / Englisch · Installation über HACS
 
-- **Externe Prognose (Standard):** unveränderte Forecast.Solar-/Solcast-/Sensor-Prognose.
-- **Eigene Berechnung:** Standortkoordinaten aus Home Assistant und Bewölkung über
-  `Meteonomiqs Cloud Forecast 48h` aus My-Weather (für die längere Prognose; der bisherige 8h-Sensor funktioniert weiterhin). Im Auswahlfeld den *wirklichen*
-  Entity-ID des neuen My-Weather-Sensors wählen. Die Daten liegen im Attribut
-  `forecast` mit UTC-Zeitstempel und `cloud_coverage` (0 bis 100 %). Nach dem My-Weather-Update unter SEP → Konfigurieren → Prognose den **neuen 48h-Sensor** auswählen, sonst bleibt SEP beim bisherigen 8h-Horizont.
+![SEP-Karte mit Kopfzeile, Prioritätenliste und PV-Plan](https://raw.githubusercontent.com/smartify-your-home/smartify-energy-pro/main/docs/images/sep-card-desktop.png)
 
-Bis zu **vier getrennte PV-Flächen** können konfiguriert werden. Pro Fläche:
-*installierte Peakleistung in kWp*, *Dachneigung* (0° flach bis 90° senkrecht),
-*Azimut* (0° Nord, 90° Ost, 180° Süd, 270° West).
-Leere Flächen werden ignoriert; die Summe der kWp entspricht der installierten
-Gesamt-PV-Leistung. Vorhandene SolarEdge-/Balkon-Flächen nicht doppelt erfassen.
+> **Versionshinweis:** In HACS erscheint eine neue Version erst, wenn der zugehörige GitHub-Release veröffentlicht und von HACS erkannt wurde. [Veröffentlichte Versionen](https://github.com/smartify-your-home/smartify-energy-pro/releases) · [Alle Änderungen (CHANGELOG)](CHANGELOG.md)
 
-Die Berechnung benutzt Sonnenstand, Ausrichtung und eine vereinfachte
-wolkenabhängige Einstrahlungs-/Verlustschätzung. Ihr Ergebnis wird in die
-bestehenden **SEP-PV-Prognose-Kacheln und Planungswerte** (stündliche Wh)
-eingespeist, ohne den gemessenen Netzsaldo oder die unmittelbaren
-Start-/Stoppschutzbedingungen zu ersetzen. Die verfügbaren stündlichen Wolkendaten (bis zu 48 Stunden) begrenzen
-den Vorhersagehorizont; für Zeiträume ohne gültige Bewölkungswerte
-werden keine vermeintlich sonnigen Stunden ergänzt. PV-Prognosen sind
-Schätzungen, bei Nebel/Hochnebel besonders unsicher. Kein zusätzlicher
-Meteonomiqs-API-Aufruf durch SEP.
+## Inhalt
 
-### Optionale automatische Kalibrierung
-
-Im SEP-Prognose-Schritt **PV-Prognose automatisch kalibrieren** aktivieren und
-**PV-Erzeugungsleistung (W)** wählen. Der Sensor muss die reale gesamte
-PV-Erzeugung **aller konfigurierten Flächen** abbilden – nicht Netzsaldo,
-Hausverbrauch, Batterieentladung oder einen einzelnen Wechselrichter, wenn
-dessen Leistung nicht der modellierten Gesamtanlage entspricht. Standard ist
-**deaktiviert**. Kalibrierung wirkt ausschließlich im Modus **Eigene
-Berechnung**; der externe Forecast bleibt unverändert.
-
-Die Messung erfolgt höchstens alle zehn Minuten während ausreichender
-PV-Erzeugungsprognose (mindestens 300 W). Nächte, ungültige Messungen und
-wahrscheinliche Wechselrichter-Begrenzung nahe der installierten kWp werden
-nicht gelernt. Für die drei Bewölkungsbereiche (klar, teilweise, bedeckt)
-werden getrennte robuste Faktoren gebildet: vor sechs verwertbaren Messungen
-bleibt der Faktor **1,0**. Änderungen sind gedämpft und auf **0,60–1,25**
-begrenzt. Lernhistorie maximal 30 Tage, Speicherung in SEP-Restore-Daten;
-Neustarts bewahren die Werte. Die Prognose-Entität enthält im Attribut
-`kalibrierung` Faktoren, Stichproben und mittlere absolute Fehler der letzten
-7 und 30 Tage (W). Ein optionaler Button **PV-Kalibrierung zurücksetzen**
-setzt ausschließlich diese Lerndaten zurück.
-
-**Grenzen:** Kein Ersatz für eine lokale Nebelvorhersage. Abregelung, Defekte
-oder lokale Verschattung können Messungen verfälschen. Bei konfigurierter
-Leistungsbegrenzung die Kalibrierung deaktivieren. Die Leistungssumme der
-PV-Sensoren muss mit den eingetragenen Flächen übereinstimmen.
-
-
-
-Auf schmalen Karten teilen sich Gerätetext und Bedienelemente den verfügbaren Platz. Messwerte, Modus und Zahnrad können innerhalb der rechten Spalte umbrechen. Die Modusauswahl im Kartenkopf zeigt Automatik, Beobachten, Manuell und Aus als kurze Namen. Ab 0.3.49 steht der Gerätemodus nur noch im Zahnrad (Gruppe „Bedienung“); in der Gerätezeile zeigt das Auto stattdessen die Ladeziel-Auswahl, Haushaltsgeräte zeigen die jeweils wirksamen Buttons Sofortstart, Nachladen und Fertig. Der Heizstab hat im rechten Leistungs-/Budgetblock einen Umschalter Auto | Ein | Aus (Ein = Modus Manuell: heizt bis zur Maximaltemperatur, auch mit Netzstrom; Temperaturschutz und Mindestpause bleiben aktiv; Aus schaltet sofort ab). Auf breiten Karten liegen die drei Tasten neben Leistung/Budget, bei schmaler Kartenbreite darüber. Werte und Tasten bleiben rechts, Status links darf umbrechen. Ist ein anderes Gerät auf Manuell oder Aus, erscheint der Modus als kleiner Hinweis; Beobachten zeigt weiterhin den Status-Chip. Beim WP-Boost bleibt die gerätespezifische Auswahl erhalten.
-
-**PV-Überschuss intelligent verteilen – mit Prioritäten, Geräteprogrammen, Batteriespeicher und Home-Assistant-Dashboard.**
-
-**Aktueller Quellcode-Stand (vorbereitet): 0.3.53** · Home-Assistant-Integration: `smartify_energy` · Oberfläche: Deutsch / Englisch
-
-> **Versionshinweis:** Die Versionsnummer beschreibt den Repository-Stand. In HACS erscheint eine neue Version erst, wenn der zugehörige GitHub-Release-Tag erfolgreich veröffentlicht und von HACS erkannt wurde. [Veröffentlichte Versionen ansehen](https://github.com/smartify-your-home/smartify-energy-pro/releases).
+- [Was macht Smartify Energy Pro?](#was-macht-smartify-energy-pro)
+- [Die SEP-Karte](#die-sep-karte)
+- [Haushaltsgeräte: Start mit PV](#haushaltsgeräte-start-mit-pv)
+- [E-Auto / Wallbox](#e-auto--wallbox)
+- [Heizstab, Wärmepumpe, Pool](#heizstab-wärmepumpe-pool)
+- [Diagnose: Historie, Trend und Budget](#diagnose-historie-trend-und-budget)
+- [PV-Prognose und PV-Plan](#pv-prognose-und-pv-plan)
+- [Installation](#installation)
+- [Wichtige Hinweise](#wichtige-hinweise)
+- [Dokumentation](#dokumentation)
 
 ## Was macht Smartify Energy Pro?
 
-SEP verteilt den verfügbaren PV-Überschuss nach einstellbarer Priorität. Das System berücksichtigt den Netzsaldo, bereits laufende und reservierte Verbraucher sowie – abhängig von der Konfiguration – den Batteriespeicher und eine PV-Prognose. Die Geräte werden in Home Assistant eingerichtet und über eine integrierte Lovelace-Karte bedient.
+SEP verteilt den verfügbaren PV-Überschuss nach einstellbarer Priorität. Berücksichtigt werden der Netzsaldo, bereits laufende und reservierte Verbraucher sowie – je nach Konfiguration – Batteriespeicher und PV-Prognose. Geräte werden in Home Assistant eingerichtet und über die mitgelieferte Lovelace-Karte bedient.
 
-| Funktion | Verhalten |
+| Gerät / Funktion | Verhalten |
 | --- | --- |
-| **Waschmaschine und Geschirrspüler** | Programm erkennen, auf PV-Freigabe warten, nach Freigabe ohne Unterbrechung weiterlaufen; Spätstart und Sofortstart möglich |
-| **Heizpausen-Reservierung** | Nach der ersten erkannten Heizphase wahlweise weniger Leistung für spätere Heizphasen reservieren; pro Gerät einstellbar |
-| **Wäschetrockner** | Eigenes Profil; Modelle ohne zuverlässigen Wiederanlauf werden nicht durch Abschalten der Steckdose gesteuert |
-| **Heizstab** | PV-abhängige Leistungs- und Temperaturregelung, Hysterese, Start- und Stoppschwellen; temperaturgeregelter Handbetrieb möglich |
-| **Wärmepumpe / Warmwasser** | PV-WW-Boost mit optionalen Wetter-, Sonnenwinkel- und Prognosebedingungen sowie Schutz vor Mehrfachauslösung |
-| **Elektroauto / Wallbox** | PV-Laderegelung, Priorisierung und Berücksichtigung von Ladebedingungen |
-| **Batteriespeicher** | Ladezustand und Ladeleistung bei der Priorisierung berücksichtigen; keine automatische direkte Speichersteuerung durch SEP |
-| **Prioritäten** | Geräte per Drag & Drop ordnen; nachrangige regelbare Verbraucher können für höher priorisierte Starts zurückgenommen werden |
-| **Dashboard** | Gerätestatus, Leistungsbudget, Prioritäten, Einstellungen, Diagnose und PV-Plan in einer Karte |
+| **Waschmaschine, Geschirrspüler** | Programm erkennen, auf PV-Freigabe warten, nach Freigabe ohne Unterbrechung durchlaufen; Spätstart (Pflichtstart), Sofortstart und Nachladen |
+| **Heizpausen-Reservierung** | Nach der ersten Heizphase wahlweise weniger Leistung für spätere Heizphasen reservieren; pro Gerät einstellbar |
+| **Wäschetrockner** | Eigenes Profil; Modelle ohne zuverlässigen Wiederanlauf werden nicht über die Steckdose angehalten |
+| **E-Auto / Wallbox** | PV-Laden mit Stromanpassung und 1/3-Phasen-Umschaltung, Ladeziele (Nur PV, km bis Uhrzeit, Tage-Konfigurator, Sofort), zeitlich begrenzter **PV-Boost** mit Netzanteil, Ladeende-Prognose |
+| **Heizstab** | PV-abhängige Temperaturregelung mit Hysterese, Start-/Stoppschwellen; Schnellumschalter Auto / Ein / Aus |
+| **Wärmepumpe / Warmwasser** | PV-WW-Boost mit optionalen Wetter-, Sonnenwinkel- und Prognosebedingungen, Schutz vor Mehrfachauslösung |
+| **Poolpumpe** | Tageslaufzeit nach Wassertemperatur, Vormittagsziel, optionale tägliche Sperrzeit |
+| **Abwesenheit (optional)** | Für Heizstab und WW-Boost je ein `binary_sensor`/`input_boolean` (EIN = abwesend) |
+| **Batteriespeicher** | Ladezustand und Ladeleistung in der Priorisierung berücksichtigen; keine direkte Speichersteuerung durch SEP |
+| **Prioritäten** | Geräte per Drag & Drop ordnen; nachrangige regelbare Verbraucher werden für höher priorisierte Starts zurückgenommen |
 
-### PV-Plan: Skalierung und Leistung
+## Die SEP-Karte
 
-Im PV-Plan zeigen dezente horizontale Hilfslinien und eine links beschriftete kW-Achse die Leistung der prognostizierten PV- und Gerätebalken. Im ausklappbaren Vergleich darunter bezieht sich die Y-Achse dagegen auf kWh **je Stunde**; ihre Beschriftung bleibt beim horizontalen Scrollen durch die letzten 48 Stunden sichtbar.
-
-### PV-Plan: Prognose und tatsächliche Erzeugung
-
-Unter dem PV-Plan befindet sich ein standardmäßig eingeklappter Bereich **PV-Prognose / Ist-Erzeugung**. Er zeigt eine horizontal scrollbar aufgebaute 48-Stunden-Historie (neueste Stunden rechts) mit stündlichen Balken, den vorhergesagten und gemessenen Energieertrag (kWh) sowie die prozentuale Abweichung. Verglichen werden nur Stunden mit mindestens 95 % tatsächlich beobachteter PV-Leistung und einer **vorher** gespeicherten Prognose. Die Stundenprognose wird nicht rückwirkend ersetzt. Für den Vergleich im Prognose-Dialog den vorhandenen optionalen **PV-Erzeugungsleistungssensor (W)** auswählen (Gesamt-PV-Leistung, nicht Netzsaldo oder Akku); dies funktioniert sowohl mit externer Prognose als auch eigener Berechnung. Die Aufzeichnung beginnt ab dem Update; frühere Tage werden nicht rückwirkend erfunden. Messlücken (z. B. HA-Neustart) erscheinen nicht als Nullertrag.
-
-## Neueste Änderungen
-
-### 0.3.28 – HACS-Infoseite überarbeitet
-
-Die bisherige Sammlung historischer Versionshinweise wurde durch eine aktuelle, kompakte Funktionsübersicht ersetzt. Technische Details und frühere Änderungen stehen weiterhin in den verlinkten Dokumentationen und im Changelog. **Keine Änderung der Regelungslogik gegenüber 0.3.26.**
-
-### 0.3.26 – Restreservierung während Heizpausen
-
-Für Waschmaschine und Geschirrspüler gibt es **Restreservierung in Heizpausen** (`pause_reservation_pct`). Der Wert ist pro Gerät von **0 bis 100 %** in 10-%-Schritten einstellbar; **Standard 100 %**.
-
-- **Vor der ersten abgeschlossenen Heizphase:** volle Nennleistung reservieren.
-- **Danach, in Heizpausen:** mindestens den eingestellten Prozentsatz der Nennleistung reservieren; der tatsächlich gemessene Verbrauch zählt immer.
-- **Bei erneutem Heizen:** mindestens die tatsächliche Leistungsaufnahme berücksichtigen.
-- **Bei fehlendem oder ungültigem Leistungssensor:** volle Nennleistung reservieren.
-- **Trockner:** unverändert, mit eigener Dauerlastreservierung.
-
-**Beispiel:** Geschirrspüler mit 2.000 W Nennleistung und 50 % Restreservierung hält in einer Heizpause 1.000 W für spätere Heizphasen zurück. Das übrige Budget kann die nachrangige Waschmaschine früher freigeben. **Achtung:** Wenn beide gleichzeitig heizen oder die PV-Leistung sinkt, kann zusätzlicher Netzbezug entstehen. Die Einstellung ist keine Netzbezugsbegrenzung.
-
-### Diagnose: Historie, Trend und Budget
-
-Die Prioritätenkarte zeigt drei Startprüfungen mit farbigem Status und einem aufklappbaren **Info ▾** mit Ist-/Sollwerten:
-
-| Anzeige | Bedeutung |
-| --- | --- |
-| **H – Historie** | Genügend Messdaten für das konfigurierte langfristige Mittel vorhanden |
-| **T – Trend** | Zwei Trendfenster vorhanden und Trendprüfung für die PV-Freigabe bestanden |
-| **B – Budget** | Aktuelles **und** gemitteltes Gerätebudget decken die erforderliche Startleistung |
-
-Ein grüner Freigabehaken erscheint nur, wenn alle drei Bedingungen erfüllt sind. **Sofortstart, Sofortfenster und Spätstart** haben eigene Ausnahmeregeln. Die Trendbewertung ist keine garantierte PV-Wetterprognose.
-
-**Alle Änderungen und technischen Release Notes:** [CHANGELOG.md](CHANGELOG.md).
-
-## So funktioniert der Start eines Haushaltsgeräts
-
-1. Steckdose und Leistungssensor werden dem Gerät in SEP zugeordnet.
-2. Das Programm wird **am Gerät** gestartet; SEP erkennt es anhand der Leistungsaufnahme.
-3. Reicht der PV-Überschuss noch nicht aus, kann SEP das Programm vor der Freigabe warten lassen – **nur bei Geräten, die nach Stromunterbrechung zuverlässig fortsetzen können**.
-4. Für den regulären PV-Start prüft SEP das verfügbare Gerätebudget, dessen Langzeitmittel und den Kurzzeittrend. Prioritäten und Leistungsreservierungen werden berücksichtigt.
-5. Nach der Freigabe läuft das Programm weiter, auch wenn der PV-Überschuss später verschwindet. Das Programm wird nicht wegen einzelner Wolken abgeschaltet.
-6. Nach Unterschreiten der einstellbaren Fertig-Leistung für die eingestellte Dauer wird das Programm als beendet erkannt. Ein neues Programm kann anschließend automatisch erkannt werden.
-
-**Wichtig:** Die Startschwelle für ein Haushaltsgerät ist mindestens die höhere der beiden Einstellungen **Nennleistung** und **Mindestüberschuss**. Die Heizpausen-Reservierung beeinflusst die nachrangigen Geräte, **nicht** diese eigene Startschwelle.
-
-## Installation über HACS
-
-1. **HACS → Benutzerdefinierte Repositories** öffnen.
-2. `https://github.com/smartify-your-home/smartify-energy-pro` als Kategorie **Integration** hinzufügen.
-3. **Smartify Energy Pro** installieren beziehungsweise aktualisieren.
-4. **Home Assistant neu starten**, damit geänderter Python-Code aktiv wird.
-5. Unter **Einstellungen → Geräte & Dienste → Integration hinzufügen** Smartify Energy Pro einrichten. Geräte und benötigte Entitäten hinzufügen.
-6. Das Dashboard neu laden, damit die aktuelle Karte angezeigt wird.
-
-### Dashboard-Karte
-
-Die Integration stellt die Karte bereit und registriert sie selbst als Lovelace-Ressource – kein manueller Ressourceneintrag nötig. Sie kann bei Bedarf auch manuell eingefügt werden:
+Die Integration bringt die Karte mit und registriert sie selbst als Lovelace-Ressource – kein manueller Ressourceneintrag nötig.
 
 ```yaml
 type: custom:smartify-energy-plan-card
 ```
 
-Die Karte bietet die Prioritätenliste, Geräteeinstellungen mit Hilfetexten, Statusanzeigen und den Prognoseplan. Für einzelne Einstellungen das Zahnrad des betreffenden Geräts verwenden. Ab 0.3.48 sind die Einstellungen kompakt: thematische Gruppen (Bedienung, Ladeziel, PV-Boost, Fahrzeug, Temperatur, Laufzeit, Leistung & PV, Zeiten, Speicher; zugeklappt: Programm- & Fertigerkennung, Wetterfilter, Erweitert mit Zusammenfassung der Werte), je Einstellung eine Kurzinfo; die ausführliche Erklärung öffnet (i). Am Desktop zweispaltig, am Handy einspaltig. Einstellungen ohne Wirkung im aktuellen Zustand werden ausgeblendet: Abfahrtszeit/Ziel-Kilometer nur bei Ladeziel „km bis Uhrzeit“, Pool-Sperrzeiten nur bei aktiver Sperre, Sonnenwinkel nur bei aktivem Sonnenfilter, Bewölkungs- bzw. Prognosegrenzen nur beim passenden WW-Boost-Startfilter.
+**Aufbau**
+
+- **Kopf:** Netzsaldo und Steuerbudget (Mittelwert und aktuell), PV-Prognose heute mit Restertrag, Modus des Energiemanagers. Die Kachel „Verteilt“ ist optional (`show_allocated: true`).
+- **Prioritätenliste:** je Gerät Status, Leistung und aktuelles Budget an seiner Prioritätsposition. Rechts stehen nur die Bedienelemente, die im aktuellen Zustand wirken:
+  - Haushaltsgeräte: **Sofortstart**, **Nachladen**, **Fertig** (setzt die Programmerkennung zurück)
+  - E-Auto: **Ladeziel**-Auswahl und Rakete für den **PV-Boost**, Akkustand mit „voll HH:MM“
+  - Heizstab: **Auto | Ein | Aus**
+  - Ist ein Gerät auf Manuell oder Aus, erscheint der Modus als kleiner Hinweis.
+- **PV-Plan:** prognostizierte PV-Leistung und geplante Geräte für heute und morgen, darunter aufklappbar der Vergleich Prognose / Ist-Erzeugung der letzten 48 Stunden.
+
+<p align="center"><img src="https://raw.githubusercontent.com/smartify-your-home/smartify-energy-pro/main/docs/images/sep-card-mobile.png" alt="SEP-Karte auf dem Smartphone" width="380"></p>
+
+Auf schmalen Karten (Smartphone) bleiben Werte und Bedienelemente rechts, lange Statustexte brechen links um.
+
+### Einstellungen (Zahnrad)
+
+Jedes Gerät und der Energiemanager haben ein Zahnrad mit allen Einstellungen – kompakt in thematischen Gruppen (Bedienung, Ladeziel, PV-Boost, Fahrzeug, Temperatur, Laufzeit, Leistung & PV, Zeiten, Speicher). Selten benötigte Gruppen (Programm- & Fertigerkennung, Wetterfilter, Erweitert) sind zugeklappt und zeigen ihre Werte als Zusammenfassung. Jede Einstellung hat eine Kurzinfo; die ausführliche Erklärung öffnet **(i)**. Einstellungen ohne Wirkung im aktuellen Zustand werden ausgeblendet (z. B. Abfahrtszeit und Ziel-Kilometer nur beim Ladeziel „km bis Uhrzeit“).
+
+![Kompakte Einstellungen des E-Autos mit geöffneter Erklärung](https://raw.githubusercontent.com/smartify-your-home/smartify-energy-pro/main/docs/images/sep-settings.png)
+
+### Kartenoptionen
+
+| Option | Standard | Wirkung |
+| --- | --- | --- |
+| `title` | – | Kartentitel |
+| `hub` | – | Geräte-ID des Energiemanagers (nur bei mehreren nötig) |
+| `show_header` | `true` | Netzsaldo-, Budget- und Prognosekacheln |
+| `show_allocated` | `false` | Kachel „Verteilt“ (vom Steuerbudget zugeteilte Leistung) |
+| `show_priorities` | `true` | Prioritätenliste |
+| `show_mode` | `true` | Ladeziel-Auswahl in der Auto-Zeile |
+| `show_settings` | `true` | Zahnrad je Gerät und Energiemanager |
+| `show_timeline` | `true` | PV-Plan |
+| `timeline_hours` | `24` | Länge des PV-Plans |
+| `background_transparency` | `0` | Hintergrundtransparenz 0–100 % (Schrift und Bedienelemente bleiben deckend) |
+
+Alle Optionen sind auch im grafischen Karteneditor einstellbar.
+
+## Haushaltsgeräte: Start mit PV
+
+1. Steckdose und Leistungssensor werden dem Gerät in SEP zugeordnet.
+2. Das Programm wird **am Gerät** gestartet; SEP erkennt es an der Leistungsaufnahme (Standard: über 9 W für 20 s; einstellbar).
+3. Reicht der Überschuss noch nicht, wartet das Programm vor der Freigabe – **nur bei Geräten, die nach Stromunterbrechung zuverlässig fortsetzen**.
+4. Für den regulären PV-Start prüft SEP Historie, Kurzzeittrend und Budget (siehe [Diagnose](#diagnose-historie-trend-und-budget)). Prioritäten und Reservierungen werden berücksichtigt.
+5. Nach der Freigabe läuft das Programm durch, auch wenn der Überschuss später fehlt.
+6. Ist die **späteste Startzeit** erreicht, gibt SEP das Programm auch ohne PV frei (Pflichtstart, Anzeige „Pflichtstart HH:MM“). Eine bereits eingeschaltete Steckdose bleibt dabei eingeschaltet.
+7. Unterschreitet die Leistung die Fertig-Schwelle lange genug (Standard: unter 5 W für 2 min), gilt das Programm als beendet.
+
+**Startschwelle:** mindestens der höhere Wert aus **Nennleistung** und **Mindestüberschuss**.
+
+**Heizpausen-Reservierung:** Nach der ersten abgeschlossenen Heizphase kann ein Teil der Nennleistung für spätere Heizphasen freigegeben werden (**Budgetfreigabe nach Heizphase**, 0 % = volle Reservierung). Der gemessene Verbrauch zählt immer; bei fehlendem Leistungssensor wird die volle Nennleistung reserviert. Mehr Freigabe lässt nachrangige Geräte früher starten, kann aber zu gleichzeitigem Heizen und Netzbezug führen.
+
+## E-Auto / Wallbox
+
+- **Nur PV:** Ladestrom folgt dem Überschuss. Start, wenn aktuelles Budget **und** 2-Minuten-Mittel die Startschwelle erreichen (Mindestladeleistung × Mindest-PV-Anteil). Fehlt Überschuss, wird der Strom sofort reduziert und erst nach der **Stopp-Verzögerung** abgeschaltet – die Karte zeigt dann „PV-Stopp HH:MM“.
+- **km bis Uhrzeit / Tage-Konfigurator:** Für die geplante Strecke lädt SEP zuerst mit PV und rechtzeitig vor der Abfahrt mit Netzstrom (Pflichtladung).
+- **Sofort:** maximaler Ladestrom, Netzbezug möglich.
+- **PV-Boost** (Rakete): für eine einstellbare Dauer (Standard 3 h) mit Boost-Faktor × PV-Überschuss laden, mindestens mit der Boost-Mindestleistung; Netzbezug ist erlaubt. Liegt das Ziel unter dem Wallbox-Minimum (z. B. 6 A × 3), lädt der Boost mit diesem Minimum. Endet nach Ablauf, beim Ausschalten oder Abstecken; Anzeige „Boost bis HH:MM“.
+- **Ladeende:** „voll HH:MM“ schätzt, wann Max-SoC bei gleichbleibender Ladeleistung erreicht ist.
+- **Startprüfung:** Wartet das Auto auf Überschuss, zeigt die Karte Historie und Budget samt Ist-/Sollwerten unter „Info“. Eine Trendprüfung gibt es beim Auto nicht, weil die Ladung jederzeit angepasst oder gestoppt werden kann.
+
+## Heizstab, Wärmepumpe, Pool
+
+- **Heizstab Auto:** heizt nur mit Überschuss zwischen Start- und Stoppschwelle bis zur Maximaltemperatur. Ohne gültigen Netzsensor-Wert wird er abgeschaltet und nicht neu gestartet („Netzsensor ungültig“). Laufende Heizstäbe werden vor allen anderen Geräten geprüft, damit sie unterhalb der Abschaltschwelle zuverlässig ausgehen.
+- **Heizstab Ein** (= Modus Manuell): heizt temperaturgeregelt bis zur Maximaltemperatur, auch mit Netzstrom; Temperaturschutz und Mindestpause bleiben aktiv. **Aus** schaltet sofort ab.
+- **Wärmepumpe:** PV-WW-Boost mit optionalem Sonnenfilter, Bewölkungs- oder PV-Prognose-Startbedingung. Bei Abwesenheit wird ein Number-WW-Boost zurückgenommen und kein neuer Einmal-WW-Start ausgelöst; WP-eigene WW-Zyklen bleiben unberührt.
+- **Poolpumpe:** Tageslaufzeit fix oder nach Wassertemperatur, Anteil bis zum Vormittagsziel (notfalls mit Netzstrom), optionale tägliche Sperrzeit (z. B. Mittagsruhe).
+
+## Diagnose: Historie, Trend und Budget
+
+Haushaltsgeräte und Wärmepumpe zeigen drei Startprüfungen als farbige Symbole, das E-Auto Historie und Budget. **Info ▾** öffnet die Ist- und Sollwerte.
+
+![Startprüfung mit geöffnetem Info-Bereich](https://raw.githubusercontent.com/smartify-your-home/smartify-energy-pro/main/docs/images/sep-diagnose.png)
+
+| Symbol | Bedeutung |
+| --- | --- |
+| **Historie** | Genügend Messdaten für das Langzeitmittel (90 % des Mittelungsfensters). Wird ausgeblendet, sobald erfüllt. |
+| **Trend** | Der Kurzzeit-Mittelwert erreicht die Startleistung; bei stärker fallendem Trend muss auch die Fortschreibung reichen. |
+| **Budget** | Aktuelles **und** gemitteltes Gerätebudget decken die Startleistung. |
+
+Der grüne Haken erscheint nur, wenn alle Bedingungen erfüllt sind. Sofortstart, Sofortfenster und Pflichtstart haben eigene Regeln. Die Trendbewertung ist keine Wetterprognose.
+
+## PV-Prognose und PV-Plan
+
+Unter **Einstellungen → Geräte & Dienste → Smartify Energy Pro → Konfigurieren → Prognose**:
+
+- **Externe Prognose (Standard):** eine Prognose-Integration der Home-Assistant-Energieplattform (z. B. Forecast.Solar, Solcast, Open-Meteo Solar Forecast) oder ein Prognosesensor.
+- **Eigene Berechnung (My-Weather):** Standort aus Home Assistant und Bewölkung aus `Meteonomiqs Cloud Forecast 48h` (Attribut `forecast` mit `cloud_coverage` 0–100 %; der bisherige 8-h-Sensor funktioniert weiterhin, liefert aber nur 8 h). Bis zu **vier PV-Flächen** mit kWp, Neigung (0° flach – 90° senkrecht) und Azimut (0° Nord, 90° Ost, 180° Süd, 270° West). Leere Flächen werden ignoriert; Flächen nicht doppelt erfassen. Für Stunden ohne Bewölkungswerte werden keine sonnigen Stunden ergänzt. SEP macht keinen eigenen Meteonomiqs-API-Aufruf.
+
+Die Prognose speist PV-Plan und Planungswerte; Netzsaldo und Start-/Stoppschutz bleiben messwertbasiert. Bei Nebel und Hochnebel sind Prognosen besonders unsicher.
+
+**Automatische Kalibrierung (optional, nur bei eigener Berechnung):** **PV-Prognose automatisch kalibrieren** aktivieren und den **PV-Erzeugungsleistungssensor (W)** wählen – er muss die gesamte Erzeugung aller konfigurierten Flächen abbilden (nicht Netzsaldo, Hausverbrauch oder Akku). Gelernt wird höchstens alle zehn Minuten bei mindestens 300 W Prognose, getrennt für klar / teilweise / bedeckt. Nächte, ungültige Messungen und wahrscheinliche Wechselrichter-Begrenzung werden ignoriert. Vor sechs Messungen bleibt der Faktor 1,0; Änderungen sind gedämpft und auf 0,60–1,25 begrenzt, Lernhistorie maximal 30 Tage (übersteht Neustarts). Das Attribut `kalibrierung` der Prognose-Entität zeigt Faktoren, Stichproben und mittlere Fehler (7/30 Tage); **PV-Kalibrierung zurücksetzen** löscht nur diese Lerndaten. Bei Abregelung, Defekten oder Verschattung die Kalibrierung deaktivieren.
+
+**PV-Plan:** kW-Achse mit Hilfslinien; prognostizierte PV-Leistung und geplante Geräte je Stunde. Der aufklappbare Bereich **PV-Prognose / Ist-Erzeugung** zeigt die letzten 48 Stunden (horizontal scrollbar, kWh je Stunde, prozentuale Abweichung). Verglichen werden nur Stunden mit mindestens 95 % gemessener Leistung und einer vorher gespeicherten Prognose; Messlücken erscheinen nicht als Nullertrag. Dafür den PV-Erzeugungsleistungssensor im Prognose-Dialog auswählen.
+
+## Installation
+
+1. **HACS → Benutzerdefinierte Repositories** öffnen.
+2. `https://github.com/smartify-your-home/smartify-energy-pro` als Kategorie **Integration** hinzufügen.
+3. **Smartify Energy Pro** installieren bzw. aktualisieren.
+4. **Home Assistant neu starten** (nötig bei jeder Änderung am Python-Code; reine Karten-Updates brauchen nur ein Neuladen des Browsers).
+5. **Einstellungen → Geräte & Dienste → Integration hinzufügen → Smartify Energy Pro**, danach Geräte und benötigte Entitäten hinzufügen ([Benötigte Felder](docs/REQUIRED_FIELDS.md)).
+6. Karte ins Dashboard einfügen und die Seite neu laden. Zeigt die Companion-App eine veraltete oder keine Karte, dort den Frontend-Cache zurücksetzen.
 
 ## Wichtige Hinweise
 
-- **Geräte mit nicht wiederanlaufenden Programmen** dürfen nicht durch eine schaltbare Steckdose angehalten werden. Bei Trocknern dafür das entsprechende nicht unterbrechbare Profil wählen.
-- **50 % Restreservierung** kann Programme früher starten lassen, erhöht aber das Risiko von gleichzeitigem Heizen und Netzbezug. Wer möglichst keinen zusätzlichen Netzbezug möchte, lässt **100 %** eingestellt.
-- **Messsensoren und Prioritäten** müssen korrekt eingerichtet sein. Ungültige Leistungsmessungen werden bei der Heizpausen-Reservierung konservativ behandelt.
-- **H/T/B** gelten für reguläre PV-Starts. Ein ausdrücklich erzwungener oder zeitlich fälliger Start kann auch Netzstrom verwenden.
-- **Hauptschalter Aus** ist kein elektrischer Not-Aus. Bei Haushaltsgeräten werden die Steckdosen zur manuellen Bedienung freigegeben.
-- **Heizstab Manuell** kann temperaturgeregelt auch mit Netzstrom heizen. Temperaturbegrenzung und geeignete elektrische Absicherung bleiben erforderlich.
-- Nach Updates die **Release Notes** prüfen, Home Assistant neu starten und die Dashboard-Seite neu laden.
+- **Nicht wiederanlauffähige Geräte** dürfen nicht über eine Steckdose angehalten werden – beim Trockner das passende Profil wählen.
+- **Hauptschalter Aus** ist kein elektrischer Not-Aus. Haushaltsgeräte-Steckdosen werden zur manuellen Bedienung freigegeben; Pool und Wallbox stoppen nur bei ihrem eigenen Modus Aus.
+- **Heizstab Ein/Manuell, Pflichtstart, Pflichtladung, Sofort und PV-Boost** können Netzstrom verwenden. Temperaturbegrenzung und elektrische Absicherung bleiben erforderlich.
+- **Messsensoren und Prioritäten** müssen korrekt eingerichtet sein. Ein plausibler, aber eingefrorener Messwert wird nicht erkannt.
+- **Reaktionszeit:** Netz-, Akku- und Geräteleistungen werden nach 0,25 s Bündelung neu bewertet; Moduswechsel und manuelle Aktionen ohne Wartezeit. Hysterese, Schutzzeiten und Startprüfungen bleiben wirksam.
+- Nach Updates die [Release Notes](CHANGELOG.md) prüfen.
 
 ## Dokumentation
 
 - [Alle Versionen und Release Notes](CHANGELOG.md)
 - [Aktueller Funktionsstand und technische Grenzen](docs/FUNCTIONS.md)
-- [SEP-Funktionen und Details](docs/SEP_CURRENT.md)
+- [SEP-Funktionen im Detail](docs/SEP_CURRENT.md)
 - [Update-Anleitung und Funktionstest](docs/UPDATE.md)
 - [Benötigte und optionale Entitäten](docs/REQUIRED_FIELDS.md)
 - [Migration von SEM v3](docs/SEM_ENTITY_MIGRATION.md)
 - [Fehler melden oder Funktionen vorschlagen](https://github.com/smartify-your-home/smartify-energy-pro/issues)
 
-**Projekt:** [smartify-your-home/smartify-energy-pro](https://github.com/smartify-your-home/smartify-energy-pro)
-
-## Kurztrend-Startbedingung (0.3.29)
-Für den automatischen PV-Start muss der gerätespezifische Kurztrend-Mittelwert **immer mindestens den Sollwert** erreichen. Bei stärker fallendem Trend muss außerdem die Fortschreibung (Kurzzeit-Ø plus Änderung zwischen den Trendfenstern) mindestens den Sollwert erreichen. Ein steigender oder neutraler Trend ersetzt keinen ausreichenden Kurzzeit-Mittelwert. In der SEP-Karte zeigt das Trend-Icon diese strengere Prüfung. History (H) und aktuelles Budget (B) sind weiterhin zusätzlich erforderlich.
-
-
-### Heizstab: Ausfall des Netzsensors (ab 0.3.31)
-Im Automatikmodus braucht der Heizstab einen gültigen Netz-Messwert. Fehlt er oder meldet der Sensor einen ungültigen Wert, schaltet SEP den Heizstab aus – auch wenn die Mindestlaufzeit noch läuft. Ein neuer Start bleibt gesperrt. Bei getrennten Sensoren für Bezug und Einspeisung müssen beide gültig sein. Sobald gültige Werte zurückkehren, gelten wieder die normalen Startbedingungen einschließlich Mindestpause. Im Status steht bei der Sperre „Netzsensor ungültig“.
-Der temperaturgeregelte Modus **Manuell** erlaubt weiterhin Netzstrom; **Beobachten** schaltet grundsätzlich nicht. Ein numerisch plausibler, aber eingefrorener Messwert wird durch diese Prüfung nicht erkannt.
-
-### Vorrangige Heizstab-Abschaltung (ab 0.3.32)
-SEP prüft laufende Heizstäbe zuerst, bevor Prognosen und andere Geräte verarbeitet werden. Ein Fehler eines Haushaltsgeräts kann diesen Ausschaltversuch deshalb nicht verhindern. Im Automatikmodus schaltet der Heizstab unterhalb seiner Abschaltschwelle auch während einer Mindestlaufzeit ab. Für diese Prüfung zählt die tatsächliche Netzleistung mit Netzreserve und Akkuentladung; Akku-Ladeleistung darf nur ein höher priorisierter Heizstab nutzen. Versprochene Leistungsfreigaben anderer Verbraucher reichen nicht. Ein abgeschalteter Heizstab wird im selben Durchlauf nicht erneut gestartet. Manuell erlaubt weiterhin Netzstrom, Beobachten schaltet nicht. Die Ausführung des Befehls setzt einen erreichbaren Aktor voraus.
-
-## Pflichtstart ohne Aus-/Ein-Impuls (0.3.35)
-Ist die späteste Startzeit erreicht, gibt SEP ein erkanntes Haushaltsprogramm direkt frei. Eine bereits eingeschaltete Steckdose bleibt eingeschaltet – auch ohne ausreichenden PV-Überschuss oder vollständige Messhistorie. Ein zuvor wartendes, ausgeschaltetes Gerät erhält nur den Einschaltbefehl. Dies gilt für Waschmaschine, Geschirrspüler, sonstige Haushaltsgeräte und Trockner mit aktiviertem Wiederanlauf. Die Programmerkennung und die früheste Startzeit bleiben wirksam; noch nicht gestartete Programme im niedrigen Standby werden dadurch nicht automatisch gestartet. Pflichtstarts dürfen Netzstrom nutzen.
-
-## Aktuelle Gerätezeile (seit 0.3.33)
-Wirksame Aktionen stehen direkt beim Gerät: Sofortstart, Nachladen/Nachladen beenden und bei laufendem Programm „Fertig“ (setzt die Programmerkennung zurück). „Pflichtstart“ zeigt die berechnete Startzeit; die Wallbox zeigt zusätzlich den Fahrzeug-SoC mit „voll HH:MM“ (Schätzung bis Max-SoC bei gleichbleibender Ladeleistung; links, Leistung und Budget rechts untereinander), während der Stopp-Verzögerung die geplante Abschaltzeit „PV-Stopp HH:MM“ und neben dem Zahnrad ein Raketen-Symbol zum Starten/Beenden des PV-Boosts mit „Boost bis HH:MM“. Die Kopf-Kachel „Verteilt“ ist ab 0.3.47 standardmäßig ausgeblendet und im Karten-Editor bzw. per `show_allocated: true` einblendbar. Historie, Trend und Budget werden als Icons dargestellt, Details stehen unter „Info“. Die Historienanzeige wird ausgeblendet, sobald die Historie vollständig ist; die Prüfung bleibt aktiv.
-
-
-## Neu in 0.3.35: Programmerkennung und Budgetfreigabe
-Bei Waschmaschine und Geschirrspüler sind in der bestehenden SEP-Karte über das Zahnrad die vier Werte für Programm- und Fertigerkennung pro Gerät einstellbar. Standard Programmerkennung: über 9 W für 20 Sekunden (ignoriert z. B. eine kurze Türöffnung mit 10 W für 10 Sekunden). Standard Fertigerkennung: unter 5 W für zwei Minuten. Die Freigabeprüfung über 100 W bleibt unverändert.
-
-Ganz unten befindet sich **Budgetfreigabe nach Heizphase**. 0 % gibt kein zusätzliches Budget frei (100 % Reservierung), 100 % gibt den gesamten ungemessenen Reservierungsanteil frei. Der gemessene Verbrauch zählt weiterhin. Bestehende Reservierungsprozente werden beim Update automatisch umgerechnet; die tatsächliche Budgetwirkung bleibt erhalten.
-
-## Update 0.3.36
-- In der SEP-Karte werden verwaiste, nicht verfügbare Einstellungen der früheren Heizpausen-Reservierung (`pause_reservation_pct`) nicht mehr angezeigt.
-- Die manuellen Aktionen **Reset/Fertig** und **Sofortstart** lösen den Regelzyklus ohne die übliche 2-Sekunden-Bündelung unmittelbar aus. Die Sensor-Bündelung bleibt unverändert.
-
-## Version 0.3.37 – Direkte Prioritätsänderung
-Beim Verschieben der Geräte in der SEP-Karte werden Reihenfolge und Prioritätsnummern sofort angezeigt, ohne auf den Home-Assistant-Service zu warten. Das Backend übernimmt die Reihenfolge gesammelt und löst ohne 2-s-Sensor-Debounce einen Regelzyklus aus. Bei Speicherfehlern wird die tatsächliche Reihenfolge wiederhergestellt und ein Fehler eingeblendet.
-
-## Neu in 0.3.39 – Kompaktere Gerätezeilen
-Die Aktionen Sofortstart, Nachladen und Fertig befinden sich direkt rechts unter Leistung und Budget aktuell. Dadurch wird die Anzeige der Waschmaschine und des Geschirrspülers flacher. Auf schmalen Ansichten umbrechen die Aktionsknöpfe bei Bedarf. Die Schaltlogik ist unverändert.
-
-## Neu in 0.3.40 – Hintergrundtransparenz
-Der Lovelace-Karteneditor bietet unter „Darstellung“ eine Hintergrundtransparenz von 0 bis 100 %. Die Kartenoberfläche, Gerätezeilen, Kacheln und Zeitleiste folgen den Theme-Farben, ohne die Deckkraft von Schrift und Schaltflächen zu verändern. Standard 0 % entspricht der bisherigen Ansicht.
-
-## 0.3.41 – Stabilere SEP-Kartenregistrierung
-Die Karte wird weiterhin über die versions-/hashbasierte JavaScript-Adresse und die Lovelace-Ressource geladen. Falls Lovelace beim Start noch nicht bereit ist, versucht SEP die Ressourcenregistrierung erneut (bis zu sechs Versuche); anhaltende Fehler werden protokolliert. Damit wird ein möglicher Auslöser für „Custom element doesn't exist: smartify-energy-plan-card“ behoben. Bei fortbestehenden Fehlern die HA-Protokolle und Dashboards → Ressourcen prüfen.
-
-## Responsive Geräteliste (kommende Version)
-Auf Smartphone und Tablet bleiben Leistungsanzeige, Budget, Zahnrad und Aktionsknöpfe rechts neben den Geräteinformationen. Lange Statustexte werden links über mehrere Zeilen dargestellt. Die Steuerlogik bleibt unverändert.
+Die Bilder in dieser README zeigen die echte Karte mit Beispieldaten; neu erzeugen mit `npm i --no-save @mdi/js@7.4.47 @fontsource/roboto@5.1.0 && node scripts/readme_images.cjs . docs/images`.

@@ -154,7 +154,7 @@ const SETTING_SHORT = {
   detect_threshold: "Programm erkannt ab", detect_seconds: "so lange darüber", finish_threshold: "fertig unter", finish_minutes: "so lange darunter",
   fixed_runtime: "Laufzeit pro Tag", temp_factor: "Laufzeit je °C", runtime_min: "mindestens pro Tag", runtime_max: "höchstens pro Tag (Temperatur)",
   max_runtime: "absolute Obergrenze", winter_temp: "darunter Winterbetrieb", vm_share: "Anteil bis Vormittags-Ziel", vm_deadline: "Vormittags-Ziel",
-  lock_enabled: "Mittagssperre", lock_start: "Sperre ab", lock_end: "Sperre bis",
+  lock_enabled: "tägliche Sperrzeit", lock_start: "Sperre ab", lock_end: "Sperre bis",
   min_on: "Mindestlaufzeit", min_off: "Mindestpause", max_per_day: "Maximum pro Tag",
   target_temp: "Ziel-Warmwasser", boost_hysteresis: "Abstand zum Ziel für Start", boost_value: "Sollwert im Boost", normal_value: "Sollwert normal",
   idle_power_threshold: "Leerlauf unter", idle_minutes: "Leerlauf-Dauer", trigger_cooldown: "Pause zwischen Auslösungen", ww_active_minutes: "WW-Bereitung erkannt nach",
