@@ -1173,7 +1173,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       den Sensor für die gesamte PV-Erzeugungsleistung (W) auswählen.
       Der Netzsaldo oder die Akkuleistung sind dafür nicht geeignet.</div></div>`;
     const windows = new Map((data.tageslicht || []).map(x => [x.datum, x]));
-    const localDay = t => new Date(t).toLocaleDateString("sv-SE");
+    const localDay = t => new Date(t).toLocaleDateString("sv-SE",{timeZone:data.zeitzone || undefined});
     const isDaylight = x => {
       const time = Date.parse(x.zeit);
       const daylight = windows.get(localDay(x.zeit));
@@ -1229,7 +1229,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     }).join("");
     const plotted = rows.map((x,i)=>{
       const t=new Date(x.zeit);
-      const label=t.toLocaleString("de-AT",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+      const label=t.toLocaleString("de-AT",{timeZone:data.zeitzone || undefined,weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
       const forecast=typeof x.prognose_wh==="number"?x.prognose_wh:null;
       const actual=typeof x.ist_wh==="number"?x.ist_wh:null;
       return `<div class="pv-compare-col ${starts.has(i)?"day-start":""}" title="${esc(label)} · Prognose ${forecast===null?"kein Wert":esc((forecast/1000).toFixed(2))+" kWh"} · Ist ${actual===null?"noch nicht vollständig gemessen":esc((actual/1000).toFixed(2))+" kWh"}">
@@ -1237,7 +1237,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     }).join("");
     const labels=rows.map((x,i)=>{
       const local=new Date(x.zeit);
-      const time=i%2===0 || starts.has(i) ? local.toLocaleTimeString("de-AT",{hour:"2-digit"}) : "";
+      const time=i%2===0 || starts.has(i) ? local.toLocaleTimeString("de-AT",{timeZone:data.zeitzone || undefined,hour:"2-digit"}) : "";
       return `<span>${esc(time)}</span>`;
     }).join("");
     const pct=data.abweichung_pct;
