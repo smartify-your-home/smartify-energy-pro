@@ -17,6 +17,7 @@ from homeassistant.helpers.event import (
     async_track_time_interval,
 )
 from homeassistant.helpers.storage import Store
+from homeassistant.helpers.sun import get_astral_event_date
 from homeassistant.util import dt as dt_util
 
 from .budget import additional_reservation, battery_priority_credit, control_budget
@@ -273,7 +274,24 @@ class EnergyManager:
             return {"konfiguriert": False, "stunden": [],
                     "hinweis": "Für den Vergleich PV-Erzeugungsleistungssensor in SEP → Prognose auswählen."}
         return {"konfiguriert": True,
-                **self.pv_comparison.recent(dt_util.utcnow(), 48)}
+                **self.pv_comparison.recent(dt_util.utcnow(), 14 * 24),
+                "tageslicht": self._pv_daylight_windows()}
+
+    def _pv_daylight_windows(self) -> list[dict]:
+        """Astronomical day/night for each historic local date, not sun.sun's current state."""
+        today = dt_util.now().date()
+        windows = []
+        for offset in range(-14, 1):
+            day = today + timedelta(days=offset)
+            sunrise = get_astral_event_date(self.hass, "sunrise", day)
+            sunset = get_astral_event_date(self.hass, "sunset", day)
+            if sunrise is not None and sunset is not None:
+                windows.append({
+                    "datum": day.isoformat(),
+                    "sonnenaufgang": sunrise.isoformat(),
+                    "sonnenuntergang": sunset.isoformat(),
+                })
+        return windows
 
     def _observe_pv_calibration(self, now: datetime) -> None:
         """Learn from the actual PV generation meter, never grid or battery power."""
