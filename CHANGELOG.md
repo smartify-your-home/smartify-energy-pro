@@ -1,5 +1,14 @@
 ## Unreleased
 
+## 0.3.61 – 2026-11-10
+
+- PV-Ist/Prognose-Vergleich: 14 Tage rückwirkende, nach Datum gegliederte Scrollgrafik statt 48 Stunden. Tagesabschnitte mit Datumsüberschriften und senkrechten Trennlinien.
+- Stündliche Abweichung (Ist gegenüber Ursprungsprognose) über jedem Balkenpaar; Tagesabweichung beim Datum. Unvollständige Tage werden ausdrücklich als „bisher“ gekennzeichnet.
+- Nachtstunden verschwinden aus der Darstellung; Tageslichtfenster stammen aus den astronomischen Sonnenaufgangs-/Sonnenuntergangszeiten des jeweiligen Datums (Home Assistant), jeweils eine Stunde Puffer.
+- Die gespeicherten ursprünglichen Stundenprognosen und gemessenen Erträge bleiben für die 14-Tage-Ansicht restartfest erhalten; Messlücken zählen weiterhin nicht als Nullertrag. Größere Vergleichsattribute werden nicht in HA Recorder geschrieben.
+- Keine Änderung an Prognoseberechnung, Kalibrierung, Geräte- und Netzbezugsregelung.
+
+
 - README neu gegliedert (Funktionen, Karte, Haushaltsgeräte, E-Auto, Heizstab/WP/Pool, Diagnose, Prognose, Installation, Hinweise) mit Bildern der Karte (Desktop, Smartphone, Einstellungen, Diagnose). Bilder unter `docs/images/`, reproduzierbar über `scripts/readme_images.cjs` mit neutralen Beispieldaten.
 - Karte: Kurzinfo der Pool-Sperre „tägliche Sperrzeit“ statt „Mittagssperre“.
 
