@@ -275,7 +275,8 @@ class EnergyManager:
                     "hinweis": "Für den Vergleich PV-Erzeugungsleistungssensor in SEP → Prognose auswählen."}
         return {"konfiguriert": True,
                 **self.pv_comparison.recent(dt_util.utcnow(), 14 * 24),
-                "tageslicht": self._pv_daylight_windows()}
+                "tageslicht": self._pv_daylight_windows(),
+                "zeitzone": self.hass.config.time_zone}
 
     def _pv_daylight_windows(self) -> list[dict]:
         """Astronomical day/night for each historic local date, not sun.sun's current state."""
