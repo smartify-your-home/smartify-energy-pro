@@ -367,11 +367,11 @@ test('PV comparison supports a 48h scrollback including missing hours',()=>{
   };
   card.shadowRoot.querySelector('[data-pvcompare]').click();
   const root=card.shadowRoot;
-  assert.match(root.querySelector('[data-pvcompare]').textContent,/48 h/);
+  assert.match(root.querySelector('[data-pvcompare]').textContent,/14 Tage/);
   assert.equal(root.querySelectorAll('.pv-compare-col').length,48);
   assert.equal(root.querySelectorAll('.pv-compare-forecast').length,47);
   assert.equal(root.querySelectorAll('.pv-compare-actual').length,36);
-  assert.match(root.querySelector('.pv-compare-plot').getAttribute('style'),/2160px/);
+  assert.match(root.querySelector('.pv-compare-scroll > div').getAttribute('style'),/2160px/);
   assert.match(root.querySelectorAll('.pv-compare-col')[5].getAttribute('title'),/kein Wert/);
   assert.ok(root.querySelector('.pv-compare-scroll'));
 });
@@ -424,4 +424,30 @@ test('PV actual-forecast comparison uses fixed left kWh axis while scrolling 48h
   assert.equal(axis.querySelector('span').textContent,'2,5 kWh');
   assert.equal(axis.querySelector('span:last-child').textContent,'0 kWh');
   assert.match(root.querySelector('.pv-compare-forecast').getAttribute('style'),/100%/);
+});
+
+test('PV comparison hides night hours using HA sunrise/sunset, keeps edge hours and day headings',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
+  dom.window.document.body.append(card);
+  const base=Date.parse('2026-11-08T00:00:00+01:00');
+  const slots=Array.from({length:48},(_,i)=>({zeit:new Date(base+i*3600000).toISOString(),
+    prognose_wh:1000,ist_wh:800}));
+  const sunlight=[8,9].map(day=>({datum:`2026-11-${String(day).padStart(2,'0')}`,
+    sonnenaufgang:`2026-11-${String(day).padStart(2,'0')}T07:00:00+01:00`,
+    sonnenuntergang:`2026-11-${String(day).padStart(2,'0')}T16:00:00+01:00`}));
+  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
+    states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:true,
+      stunden:slots,tageslicht:sunlight,prognose_kwh:20,ist_kwh:16,abweichung_pct:-20,verglichene_stunden:20}}}},
+    devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  card.shadowRoot.querySelector('[data-pvcompare]').click();
+  const root=card.shadowRoot;
+  assert.equal(root.querySelectorAll('.pv-compare-col').length,22);
+  assert.equal(root.querySelectorAll('.pv-compare-day').length,2);
+  assert.equal(root.querySelectorAll('.pv-compare-hour-pct').length,22);
+  assert.match(root.querySelector('.pv-compare-hour-pct').textContent,/-20.0 %/);
+  assert.match(root.querySelector('.pv-compare-day').textContent,/-20.0 %/);
+  assert.equal(root.querySelectorAll('.pv-compare-col.day-start').length,2);
 });
