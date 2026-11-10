@@ -10,6 +10,8 @@ from math import isfinite
 
 MAX_GAP_SECONDS = 180
 MIN_COVERAGE_SECONDS = 3420  # 95 % of one hour
+RETENTION_DAYS = 15  # 14 calendar days plus a safe boundary buffer
+MAX_REPORT_HOURS = 14 * 24
 
 
 def _utc(value: datetime) -> datetime:
@@ -65,7 +67,7 @@ class PVComparison:
         self._prune(now)
 
     def _prune(self, now: datetime) -> None:
-        cutoff = (_hour(now) - timedelta(days=3)).isoformat()
+        cutoff = (_hour(now) - timedelta(days=RETENTION_DAYS)).isoformat()
         ceiling = (_hour(now) + timedelta(days=3)).isoformat()
         for mapping in (self.forecasts, self.actual_wh, self.coverage_s):
             for key in list(mapping):
@@ -102,13 +104,13 @@ class PVComparison:
         self.previous = None  # Never integrate across a HA restart.
 
     def recent(self, now: datetime, hours: int = 48) -> dict:
-        """Compare the previous 48 elapsed hours (including incomplete gaps).
+        """Compare historical elapsed hours (including incomplete gaps).
 
         Every hour is keyed in UTC, so both repeated DST hours are preserved.
         Only complete hours with >=95% valid meter coverage count as actuals.
         """
         now_utc = _utc(now)
-        horizon = max(1, min(48, int(hours)))
+        horizon = max(1, min(MAX_REPORT_HOURS, int(hours)))
         current_hour = _hour(now_utc)
         begin = current_hour - timedelta(hours=horizon - 1)
         rows = []
@@ -139,7 +141,7 @@ class PVComparison:
             if compared and forecast_kwh > 0 else None,
             "verglichene_stunden": compared,
             "zeitraum_stunden": horizon,
-            "hinweis": "Letzte 48 Stunden; Summen nur aus vollständig gemessenen und prognostizierten Stunden.",
+            "hinweis": "Vergleich nur aus vollständig gemessenen und zuvor prognostizierten Stunden.",
         }
 
     def today(self, now: datetime, tzinfo) -> dict:

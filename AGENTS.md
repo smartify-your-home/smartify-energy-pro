@@ -1,3 +1,10 @@
+## PV-Vergleich 14 Tage (0.3.61)
+- Die bestehende `PVComparison`-Historie und der bestehende Store sind die einzige Quelle für den Ist-/Prognosevergleich. Vorhersagen ausschließlich für Zukunftsstunden einfrieren; fehlende Leistungsmessungen nie als 0 Wh ergänzen. Für Vergleich weiterhin >= 95 % Abdeckung.
+- Die 14-tägige Verlaufsgrafik im `sensor:plan`-Attribut `pv_vergleich` enthält zusätzlich astronomische Sonnenaufgangs-/Sonnenuntergangszeiten pro lokalem Datum aus Home Assistant. UI zeigt die Stunde, wenn sie Tageslicht oder den Puffer von einer Stunde schneidet; andere Nachtstunden nur visuell entfernen.
+- Lokale Datumsgruppen mit senkrechten Trennlinien, pro Stunde und pro Tag signierte Prozentabweichung (Ist/Prognose−1)×100. Fehlende Messwerte und 0-Wh-Prognosen ergeben keine Prozentabweichung. Teilweise Tagesauswertungen als „bisher“ markieren.
+- Keine Änderungen an `_plan`, `ForecastProvider`, Kalibrierung, Gerätebudget oder 15-Minuten-Netzlaststeuerung.
+- Regressionen: `tests/test_pv_comparison.py`, `tests/ui/card.test.cjs`; 14 Tage, Messlücken, Neustart, Nachtfilter, Datumstrennung, mobile Bedienbarkeit. `pv_vergleich` für HA Recorder als nicht aufzuzeichnendes Attribut kennzeichnen.
+
 ## PV-Plan Gitternetz und Y-Achse (0.3.60)
 - PV-Plan zeigt Momentan-/Stundenleistung in **kW**, die neue ausklappbare historische Vergleichsgrafik Energie je Stunde in **kWh**. Einheiten nicht vertauschen.
 - Links fixierte Werteachse (Nullpunkt und vier Niveaus), vier dezente horizontale Gitternetzlinien, Balkenhöhen einheitlich auf die beschriftete Obergrenze normieren. Beim 48h-Horizont bleibt die Achse beim horizontalen Scrollen fest stehen.

@@ -87,6 +87,24 @@ class PVComparisonTests(unittest.TestCase):
         self.assertEqual(report["ist_kwh"], 1)
         self.assertEqual(report["abweichung_pct"], -50)
 
+    def test_fourteen_day_history_retained_persisted_and_older_pruned(self):
+        model = PVComparison()
+        current = self.hour + timedelta(days=15)
+        within = current - timedelta(days=13)
+        obsolete = current - timedelta(days=17)
+        model.capture(obsolete-timedelta(hours=1), {obsolete: 1000})
+        model.capture(within-timedelta(hours=1), {within: 1200})
+        model._prune(current)
+        self.assertNotIn(obsolete.isoformat(), model.forecasts)
+        self.assertIn(within.isoformat(), model.forecasts)
+        report = model.recent(current, 336)
+        self.assertEqual(report["zeitraum_stunden"], 336)
+        self.assertEqual(len(report["stunden"]), 336)
+        self.assertIn(within.isoformat(), {row["zeit"] for row in report["stunden"]})
+        restored = PVComparison()
+        restored.restore(model.dump(), current)
+        self.assertIn(within.isoformat(), restored.forecasts)
+
     def test_48h_history_distinguishes_two_dst_hours(self):
         from zoneinfo import ZoneInfo
         tz = ZoneInfo("Europe/Vienna")

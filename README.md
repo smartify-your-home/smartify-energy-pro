@@ -140,6 +140,10 @@ Die Prognose speist PV-Plan und Planungswerte; Netzsaldo und Start-/Stoppschutz 
 
 **PV-Plan:** kW-Achse mit Hilfslinien; prognostizierte PV-Leistung und geplante Geräte je Stunde. Der aufklappbare Bereich **PV-Prognose / Ist-Erzeugung** zeigt die letzten 48 Stunden (horizontal scrollbar, kWh je Stunde, prozentuale Abweichung). Verglichen werden nur Stunden mit mindestens 95 % gemessener Leistung und einer vorher gespeicherten Prognose; Messlücken erscheinen nicht als Nullertrag. Dafür den PV-Erzeugungsleistungssensor im Prognose-Dialog auswählen.
 
+### PV-Prognose gegen Ist-Erzeugung (14 Tage)
+
+Unter dem PV-Plan öffnet die Vergleichsgrafik die letzten 14 Tage. Prognose und Ist-Erzeugung erscheinen je Stunde als Balkenpaar mit prozentualer Abweichung. Tagesüberschriften und senkrechte Trennlinien ordnen die Stunden; bei jeder Tagesüberschrift steht die Abweichung des Tages (bei Messlücken als „bisher“). Nachtstunden werden mithilfe der von Home Assistant berechneten Sonnenaufgangs- und Sonnenuntergangszeiten ausgeblendet; auf beiden Seiten bleibt eine Stunde sichtbar. Die Stundenprognose wird vor dem jeweiligen Zeitraum eingefroren, damit spätere Wetterupdates den Vergleich nicht verfälschen. Für Stunden mit fehlenden Messdaten zeigt SEP keine erfundene Ist-Energie an. Die Historie baut sich nach dem Update schrittweise auf.
+
 ## Installation
 
 1. **HACS → Benutzerdefinierte Repositories** öffnen.
