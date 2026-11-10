@@ -25,7 +25,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.4.0";
+const CARD_VERSION = "1.4.1";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -621,7 +621,16 @@ const CARD_CSS = `
   .pv-compare-totals>div{min-width:75px;display:flex;flex-direction:column;gap:3px}
   .pv-compare-totals small{color:var(--secondary-text-color);font-size:11px}
   .pv-compare-totals strong{font-size:16px;font-variant-numeric:tabular-nums}
-  .pv-compare-scroll{overflow-x:auto;overscroll-behavior-x:contain}
+  .pv-compare-scroll{overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
+  .pv-compare-days,.pv-compare-percentages{display:flex;gap:5px;min-width:100%;font-variant-numeric:tabular-nums}
+  .pv-compare-day{flex:none;min-width:0;border-left:1px dashed var(--divider-color);box-sizing:border-box;
+    color:var(--primary-text-color);font-size:11px;font-weight:600;padding:4px 4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pv-compare-day small{font-size:10px;font-weight:400;margin-left:5px}
+  .pv-compare-hour-pct{flex:0 0 40px;min-width:40px;box-sizing:border-box;font-size:9px;text-align:center;white-space:nowrap}
+  .pv-compare-hour-pct.good,.pv-compare-day .good{color:var(--success-color,#22a06b)}
+  .pv-compare-hour-pct.medium,.pv-compare-day .medium{color:var(--warning-color,#e5a21a)}
+  .pv-compare-hour-pct.bad,.pv-compare-day .bad{color:var(--error-color,#e53935)}
+  .pv-compare-col.day-start:before{content:"";position:absolute;z-index:2;left:-3px;top:0;bottom:0;border-left:1px dashed var(--divider-color);pointer-events:none}
   .pv-compare-plot{min-width:max(100%,580px);height:156px;display:flex;align-items:end;gap:5px;position:relative;box-sizing:border-box;
     padding:8px 0 0;border-bottom:1px solid var(--divider-color)}
   .pv-compare-col{flex:1;min-width:19px;height:100%;display:flex;align-items:end;justify-content:center;gap:2px;position:relative;z-index:1}
@@ -1156,18 +1165,33 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const toggle = `<button type="button" class="pv-compare-toggle" data-pvcompare
       aria-expanded="${open ? "true" : "false"}" aria-controls="sep-pv-compare">
       <ha-icon icon="${open ? "mdi:chevron-down" : "mdi:chevron-right"}"></ha-icon>
-      PV-Prognose / Ist-Erzeugung (48 h) <span>${open ? "Einklappen" : "Ausklappen"}</span>
+      PV-Prognose / Ist-Erzeugung (14 Tage) <span>${open ? "Einklappen" : "Ausklappen"}</span>
     </button>`;
     if (!open) return toggle;
     if (!data?.konfiguriert) return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
       <div class="pv-compare-note">Für diesen Vergleich unter SEP → Konfigurieren → Prognose
       den Sensor für die gesamte PV-Erzeugungsleistung (W) auswählen.
       Der Netzsaldo oder die Akkuleistung sind dafür nicht geeignet.</div></div>`;
+    const windows = new Map((data.tageslicht || []).map(x => [x.datum, x]));
+    const localDay = t => new Date(t).toLocaleDateString("sv-SE");
+    const isDaylight = x => {
+      const time = Date.parse(x.zeit);
+      const daylight = windows.get(localDay(x.zeit));
+      if (daylight) {
+        const sunrise = Date.parse(daylight.sonnenaufgang);
+        const sunset = Date.parse(daylight.sonnenuntergang);
+        // Keep complete edge hours and one additional hour around daylight.
+        if (Number.isFinite(sunrise) && Number.isFinite(sunset))
+          return time + 3600000 > sunrise - 3600000 && time < sunset + 3600000;
+      }
+      // Compatibility with older SEP backends that do not expose daylight.
+      return (Number(x.prognose_wh) || 0) > 0 || (Number(x.ist_wh) || 0) > 0;
+    };
     const rows = Array.isArray(data.stunden) ? data.stunden.filter(x =>
-      Number.isFinite(Date.parse(x.zeit))) : [];
+      Number.isFinite(Date.parse(x.zeit)) && isDaylight(x)) : [];
     if (!rows.length) return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
-      <div class="pv-compare-note">Noch keine gespeicherten Stundenprognosen für heute.
-      Die Auswertung beginnt mit der nächsten vollständig beobachteten Prognosestunde.</div></div>`;
+      <div class="pv-compare-note">Noch keine Tageslichtstunden mit gespeicherter Prognose verfügbar.
+      Der Vergleich beginnt mit der nächsten vollständig gemessenen Stunde.</div></div>`;
     const max = Math.max(1,...rows.map(x=>Math.max(Number(x.prognose_wh)||0,
       typeof x.ist_wh === "number" ? x.ist_wh : 0)));
     const axisMax = sepNiceAxisMax(max);
@@ -1175,39 +1199,69 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       ? v.toLocaleString("de-AT",{minimumFractionDigits:2,maximumFractionDigits:2})+" kWh" : "–";
     const bar = (wh,cls) => wh === null || wh === undefined ? "" :
       `<div class="pv-compare-bar ${cls}" style="height:${Math.max(0,Math.min(100,Number(wh)/axisMax*100))}%"></div>`;
-    const plotted = rows.map(x => {
-      const t = new Date(x.zeit);
-      const label = t.toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"});
-      const forecast = typeof x.prognose_wh === "number" ? x.prognose_wh : null;
-      const actual = typeof x.ist_wh === "number" ? x.ist_wh : null;
-      return `<div class="pv-compare-col" title="${esc(label)} · Prognose ${forecast === null ? "kein Wert" : esc((forecast/1000).toFixed(2))+" kWh"} · Ist ${actual === null ? "noch nicht vollständig gemessen" : esc((actual/1000).toFixed(2))+" kWh"}">
+    const classify = value => Math.abs(value) <= 10 ? "good" : Math.abs(value) <= 25 ? "medium" : "bad";
+    const signed = pct => (pct > 0 ? "+" : "") + pct.toFixed(1) + " %";
+    const deviationOf = x => typeof x.prognose_wh === "number" &&
+      typeof x.ist_wh === "number" && x.prognose_wh > 0
+      ? (x.ist_wh / x.prognose_wh - 1) * 100 : null;
+    const days = [];
+    rows.forEach((x,i) => {
+      const key = localDay(x.zeit);
+      if (!days.length || days[days.length-1].key !== key)
+        days.push({key, first:i, count:0, expected:0, actual:0, compared:0, incomplete:0});
+      const day=days[days.length-1];day.count++;
+      if(typeof x.ist_wh === "number" && typeof x.prognose_wh === "number") {
+        day.expected+=x.prognose_wh;day.actual+=x.ist_wh;day.compared++;
+      } else day.incomplete++;
+    });
+    const starts = new Set(days.map(x=>x.first));
+    const unitWidth = 45;
+    const totalWidth = Math.max(580, rows.length*unitWidth);
+    const dayHead = days.map(day=>{
+      const pct=day.compared && day.expected>0 ? (day.actual/day.expected-1)*100:null;
+      const label=new Date(day.key+"T12:00:00").toLocaleDateString("de-AT",{weekday:"short",day:"2-digit",month:"2-digit"});
+      return `<div class="pv-compare-day" style="width:${day.count*unitWidth-5}px" title="${esc(day.key)} · ${day.compared} verglichene Stunden${day.incomplete ? " · unvollständig" : ""}">
+        ${esc(label)} <small class="${pct===null?"":classify(pct)}">${pct===null?"–":esc(signed(pct))}${day.incomplete?" · bisher":""}</small></div>`;
+    }).join("");
+    const hourPct = rows.map(x=>{
+      const pct=deviationOf(x);
+      return `<span class="pv-compare-hour-pct ${pct===null?"":classify(pct)}" title="${pct===null?"Keine vollständigen Vergleichsdaten":esc(signed(pct))}">${pct===null?"–":esc(signed(pct))}</span>`;
+    }).join("");
+    const plotted = rows.map((x,i)=>{
+      const t=new Date(x.zeit);
+      const label=t.toLocaleString("de-AT",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+      const forecast=typeof x.prognose_wh==="number"?x.prognose_wh:null;
+      const actual=typeof x.ist_wh==="number"?x.ist_wh:null;
+      return `<div class="pv-compare-col ${starts.has(i)?"day-start":""}" title="${esc(label)} · Prognose ${forecast===null?"kein Wert":esc((forecast/1000).toFixed(2))+" kWh"} · Ist ${actual===null?"noch nicht vollständig gemessen":esc((actual/1000).toFixed(2))+" kWh"}">
         ${bar(forecast,"pv-compare-forecast")}${bar(actual,"pv-compare-actual")}</div>`;
     }).join("");
-    const labels = rows.map((x,i) => {
-      const local = new Date(x.zeit);
-      const time = local.getHours() === 0 ? local.toLocaleDateString("de-AT",{day:"2-digit",month:"2-digit"}) :
-        i%3===0 ? local.toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"}) : "";
+    const labels=rows.map((x,i)=>{
+      const local=new Date(x.zeit);
+      const time=i%2===0 || starts.has(i) ? local.toLocaleTimeString("de-AT",{hour:"2-digit"}) : "";
       return `<span>${esc(time)}</span>`;
     }).join("");
-    const pct = data.abweichung_pct;
-    const deviation = typeof pct==="number" ? (pct>0?"+":"")+pct.toFixed(1)+" %" : "–";
+    const pct=data.abweichung_pct;
+    const deviation=typeof pct==="number" ? signed(pct) : "–";
     return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
       <div class="pv-compare-totals">
         <div><small>Prognose (vergleichbar)</small><strong>${fmt(data.prognose_kwh)}</strong></div>
         <div><small>Ist-Erzeugung</small><strong>${fmt(data.ist_kwh)}</strong></div>
-        <div><small>Abweichung</small><strong>${esc(deviation)}</strong></div>
+        <div><small>Abweichung (vergleichbare Stunden)</small><strong>${esc(deviation)}</strong></div>
       </div>
       <div class="sep-axis-layout">
         <div class="sep-y-axis compare" aria-label="PV-Energie je Stunde in kWh">${sepAxisLabels(axisMax,"kWh")}</div>
-        <div class="pv-compare-scroll"><div class="pv-compare-plot" style="min-width:max(100%,${rows.length*45}px)">${SEP_GRID}${plotted}</div>
-          <div class="pv-compare-labels" style="min-width:max(100%,${rows.length*45}px)">${labels}</div></div>
+        <div class="pv-compare-scroll"><div style="width:${totalWidth}px">
+          <div class="pv-compare-days">${dayHead}</div>
+          <div class="pv-compare-percentages">${hourPct}</div>
+          <div class="pv-compare-plot" style="min-width:100%">${SEP_GRID}${plotted}</div>
+          <div class="pv-compare-labels" style="min-width:100%">${labels}</div></div></div>
       </div>
       <div class="pv-compare-legend">
         <span><i style="background:var(--warning-color,#e5a21a)"></i>Ursprüngliche Prognose</span>
         <span><i style="background:var(--success-color,#22a06b)"></i>Gemessene Erzeugung</span>
       </div>
       <div class="pv-compare-note">${Number(data.verglichene_stunden)||0} vollständig verglichene Stunden.
-      Nur für vollständig gemessene Stunden wird die Prognose in den Summen berücksichtigt.
+      Tageswerte mit Messlücken sind als bisher gekennzeichnet. Nur vollständig gemessene Stunden zählen.
       Fehlende Messzeiten bleiben offen; die Prognose wird rückwirkend nicht überschrieben.</div>
     </div>`;
   }
