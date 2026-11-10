@@ -440,7 +440,7 @@ test('PV comparison hides night hours using HA sunrise/sunset, keeps edge hours 
     sonnenuntergang:`2026-11-${String(day).padStart(2,'0')}T16:00:00+01:00`}));
   card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
     states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:true,
-      stunden:slots,tageslicht:sunlight,prognose_kwh:20,ist_kwh:16,abweichung_pct:-20,verglichene_stunden:20}}}},
+      stunden:slots,tageslicht:sunlight,zeitzone:"Europe/Vienna",prognose_kwh:20,ist_kwh:16,abweichung_pct:-20,verglichene_stunden:20}}}},
     devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
   card.shadowRoot.querySelector('[data-pvcompare]').click();
   const root=card.shadowRoot;
