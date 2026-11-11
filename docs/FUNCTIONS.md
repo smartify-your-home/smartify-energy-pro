@@ -155,3 +155,6 @@ Wirksame Aktionen stehen direkt beim Gerät: Sofortstart, Nachladen/Nachladen be
 ## Aktuelle PV-Prüfungen und Messhistorie
 Für reguläre PV-Starts müssen der langfristige gerätebezogene Mittelwert, der Kurztrend-Mittelwert und das aktuelle Gerätebudget jeweils mindestens den Bedarf decken. Bei stärker fallendem Trend muss zusätzlich Kurztrend-Mittelwert plus Trendänderung den Bedarf decken. Ein neutraler oder steigender Trend ersetzt kein ausreichendes Kurzzeitmittel. Die Trendberechnung benötigt zwei vollständige Trendfenster. Explizite Pflichtstarts haben eigene Ausnahmen.
 Die Messhistorie wird gespeichert und nach einem kurzen Neustart wiederverwendet, sofern Datenabdeckung und Zeitlücken gültig sind; eine Messunterbrechung von mehr als zwei Minuten erfordert einen Neuaufbau. Sie ist nicht mehr ausschließlich im Arbeitsspeicher gehalten.
+
+
+PV-Flächeneditor (0.3.74): Automatische Flächennamen werden beim Löschen fortlaufend neu nummeriert, eigene Namen und stabile IDs bleiben. Photon-Adressvorschläge mit Tipp-Pause (bis zu fünf Treffer); Nominatim-Suche nur auf explizite Aktion.
