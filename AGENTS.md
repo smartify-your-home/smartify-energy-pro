@@ -1,3 +1,10 @@
+## PV-Luftbild: Standort, Adresse und dynamisches Nachladen (0.3.73)
+- `pv_layout` liefert den HA-Standort aus `hass.config.latitude/longitude`. Ein altes Luftbild ohne explizit gewählte Adresse/Browse-Position darf den HA-Standort nicht dauerhaft überschreiben. Bei Standortabweichung über 0,002 Grad wird beim Laden **einmal** ein neues Home-Luftbild angefordert. `source: address|browse|home` im Karten-Metadaten-Store aufbewahren.
+- Neuer expliziter „HA-Standort“-Knopf; Adresssuche ausschließlich nach Eingabe plus Klick/Enter (`pv_map/geocode`, admin only). Anfrage über Backend an OpenStreetMap Nominatim mit User-Agent, maximal 1 Anfrage/s je HA, einfachem Cache; keine Autocomplete-Anfragen. Fällt die Suche oder ein Luftbild-Download aus, bleibt das bisherige Luftbild bestehen. Den Nutzer vorsehen, dass die eingegebene Adresse an Nominatim übertragen wird.
+- Bei SVG-Zoom/Pan bleibt die Kartenbedienung unmittelbar responsiv. Kacheln beim Überschreiten der Zoomschwelle oder Bildgrenzen nach einer 550-ms-Ruhezeit von basemap.at abrufen; vorhandene PV-Flächen/Koordinaten NICHT verändern. Keine Änderung an `pv_layout/save` oder der Prognoselogik.
+- Alle Luftbilder weiterhin gecacht in `.storage/smartify_energy_map/<entry_id>`, limitierte parallele Abrufe, vollständige JPEG-Prüfung und local SVG coordinates erhalten. Regressionstests für HA-Ort, Adresse, Zoom/Pan, Fehlschlag und Cache sind verpflichtend.
+- Lovelace-Karte wie bisher ausschließlich über versionierte Ressourcen laden (kein reguläres `add_extra_js_url`).
+
 ## Kritischer Setup-Schutz (0.3.72)
 - `HUB_ENTITY_FIELDS` enthält ausschließlich Konfigurationsschlüssel für Home-Assistant-Entitäts-IDs. Numerische Konfigurationswerte wie `CONF_PV_TOTAL_PEAK_KWP` dürfen nie als `async_track_state_change_event`-IDs registriert werden.
 - Regression: `tests/ha/test_pv_editor.py::test_numeric_total_peak_does_not_register_as_entity`. Integration muss mit `pv_total_peak_kwp: 10.5` starten und die Peakleistung an den Plan-Sensor ausgeben.
