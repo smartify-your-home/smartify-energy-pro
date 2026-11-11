@@ -76,12 +76,12 @@ class LivePVEstimator:
         self.index = median(values[-min(10, len(values)):])
         self.trend = median(values[-3:]) - median(values[:3])
         self.volatility = pstdev(values) / max(0.1, median(values))
-        if self.volatility > 0.20:
-            self.state = "variable"
-        elif self.trend > 0.17:
+        if self.trend > 0.17 and all(b >= a - 0.04 for a, b in zip(values, values[1:])):
             self.state = "clearing"
-        elif self.trend < -0.17:
+        elif self.trend < -0.17 and all(b <= a + 0.04 for a, b in zip(values, values[1:])):
             self.state = "dimming"
+        elif self.volatility > 0.20:
+            self.state = "variable"
         elif self.index >= 0.70:
             self.state = "clear"
         elif self.index < 0.43:
