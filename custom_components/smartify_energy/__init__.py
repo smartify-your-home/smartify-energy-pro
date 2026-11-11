@@ -18,6 +18,8 @@ from homeassistant.loader import async_get_integration
 
 from .const import DOMAIN, PLATFORMS
 from .manager import EnergyManager
+from .pv_websocket import async_register as async_register_pv_websocket
+from .pv_websocket import remove_map
 
 _LOGGER = logging.getLogger(__name__)
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -76,6 +78,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             return
         raise ServiceValidationError(translation_domain=DOMAIN, translation_key="order_not_found")
 
+    # PV surface editor card (aerial photo + drawn roof areas).
+    async_register_pv_websocket(hass)
     if not hass.services.has_service(DOMAIN, SERVICE_PRIORITY_ORDER):
         hass.services.async_register(
             DOMAIN, SERVICE_PRIORITY_ORDER, set_priority_order,
@@ -216,6 +220,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: SmartifyEnergyConfigEntr
 async def async_unload_entry(hass: HomeAssistant, entry: SmartifyEnergyConfigEntry) -> bool:
     await entry.runtime_data.async_stop()
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Delete the stored aerial photo of the PV editor together with the entry."""
+    await hass.async_add_executor_job(remove_map, hass, entry.entry_id)
 
 
 async def _async_reload(hass: HomeAssistant, entry: SmartifyEnergyConfigEntry) -> None:

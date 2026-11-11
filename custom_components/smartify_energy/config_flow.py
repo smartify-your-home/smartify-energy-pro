@@ -149,10 +149,8 @@ def _forecast_schema(d: dict, options: list[dict[str, str]]) -> vol.Schema:
     fields[_opt(CONF_SOLAR_CLOUD_ENTITY, d)] = _ent("sensor")
     fields[_req(CONF_SOLAR_CALIBRATION_ENABLED, d, False)] = sel.BooleanSelector()
     fields[_opt(CONF_SOLAR_PV_POWER_ENTITY, d)] = _ent("sensor", "power")
-    for i in range(1, 5):
-        fields[_opt(f"solar_{i}_kwp", d)] = _num(0, 100, 0.1, "kWp")
-        fields[_opt(f"solar_{i}_tilt", d, 30)] = _num(0, 90, 1, "°")
-        fields[_opt(f"solar_{i}_azimuth", d, 180)] = _num(0, 360, 1, "°")
+    # PV surfaces are drawn in the dashboard (card "smartify-energy-pv-card"),
+    # not entered here; see pv_layout.py / pv_websocket.py.
     return vol.Schema(fields)
 
 
@@ -191,15 +189,6 @@ class _HubSteps:
                             await async_forecast_entry_options(self.hass),
                         ),
                         errors={CONF_SOLAR_CLOUD_ENTITY: "required"},
-                    )
-                if not any(float(user_input.get(f"solar_{i}_kwp") or 0) > 0 for i in range(1, 5)):
-                    return self.async_show_form(
-                        step_id="forecast",
-                        data_schema=_forecast_schema(
-                            {**self.data, **user_input},
-                            await async_forecast_entry_options(self.hass),
-                        ),
-                        errors={"base": "pv_surface_required"},
                     )
             if (user_input.get(CONF_SOLAR_MODE) == "calculated"
                     and user_input.get(CONF_SOLAR_CALIBRATION_ENABLED)

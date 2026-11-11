@@ -54,6 +54,7 @@ from .devices.base import Decision
 from .forecast import ForecastProvider
 from .helpers import ButtonSpec, ParamSpec, SensorSpec, in_window, power_w, state_float, time_from_str
 from .pv_comparison import PVComparison
+from .pv_layout import model_surfaces, surfaces_from_config
 
 _LOGGER = logging.getLogger(__name__)
 SHORT_WINDOW = timedelta(minutes=2)
@@ -87,13 +88,8 @@ class EnergyManager:
                 "mode": self.cfg.get(CONF_SOLAR_MODE, "external"),
                 "cloud_entity": self.cfg.get(CONF_SOLAR_CLOUD_ENTITY),
                 "calibration_enabled": bool(self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED, False)),
-                "surfaces": [
-                    {"kwp": self.cfg.get(f"solar_{i}_kwp", 0),
-                     "tilt": self.cfg.get(f"solar_{i}_tilt", 30),
-                     "azimuth": self.cfg.get(f"solar_{i}_azimuth", 180)}
-                    for i in range(1, 5)
-                    if float(self.cfg.get(f"solar_{i}_kwp") or 0) > 0
-                ],
+                # Drawn in the PV editor card; old solar_N_* fields are migrated on read.
+                "surfaces": model_surfaces(surfaces_from_config(self.cfg)),
             },
         )
         self._store = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}")

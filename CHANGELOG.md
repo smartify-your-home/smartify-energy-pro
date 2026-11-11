@@ -1,5 +1,13 @@
 ## Unreleased
 
+## 0.3.64 – 2026-11-11
+
+- Neu: Karte **SEP PV-Flächen** (`custom:smartify-energy-pv-card`) zum Einzeichnen der PV-Flächen auf einem Luftbild. Dachflächen als Polygon mit Traufkante, Fassaden als Linie; die Ausrichtung wird aus der Zeichnung berechnet und als Pfeil angezeigt. Neigung je Fläche eingeben, Leistung wahlweise als kWp oder Module × Wp. Ecken verschiebbar, Karte verschieb- und zoombar.
+- Luftbild von basemap.at (Österreich, CC BY 4.0): nur beim ersten Öffnen bzw. über „Luftbild neu laden“ heruntergeladen und in Home Assistant gespeichert, nicht bei jedem Aufruf. Schlägt das Laden fehl, bleibt das gespeicherte Bild erhalten; ohne Bild wird auf einem Raster gezeichnet.
+- Die bisherigen zwölf Eingabefelder (Fläche 1–4: kWp, Neigung, Azimut) im Optionsdialog „Prognose“ entfallen. Vorhandene Werte werden automatisch als „nicht eingezeichnete“ Flächen übernommen; die Prognose rechnet bis zum ersten Speichern unverändert.
+- Speichern nur für Administratoren; die alten Optionsfelder werden zusätzlich gespiegelt, damit ein Downgrade weiter funktioniert. Höchstens vier Flächen wie bisher.
+- Keine Änderung an Prognoseberechnung, Kalibrierung, Budget und Regelung.
+
 ## 0.3.63 – 2026-11-11
 
 - Behoben: „PV-Prognose heute“ zeigte bei eigener Berechnung im Tagesverlauf nur noch die Prognose ab der laufenden Stunde, weil die vergangenen Stunden nicht mehr in der Wolkenprognose enthalten sind. Der Wert schrumpfte so bis zum Abend auf den Restertrag (z. B. 2,5 kWh Tagesprognose bei bereits 3,9 kWh Ertrag).

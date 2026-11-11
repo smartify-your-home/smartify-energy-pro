@@ -132,13 +132,31 @@ Der grüne Haken erscheint nur, wenn alle Bedingungen erfüllt sind. Sofortstart
 Unter **Einstellungen → Geräte & Dienste → Smartify Energy Pro → Konfigurieren → Prognose**:
 
 - **Externe Prognose (Standard):** eine Prognose-Integration der Home-Assistant-Energieplattform (z. B. Forecast.Solar, Solcast, Open-Meteo Solar Forecast) oder ein Prognosesensor.
-- **Eigene Berechnung (My-Weather):** Standort aus Home Assistant und Bewölkung aus `Meteonomiqs Cloud Forecast 48h` (Attribut `forecast` mit `cloud_coverage` 0–100 %; der bisherige 8-h-Sensor funktioniert weiterhin, liefert aber nur 8 h). Bis zu **vier PV-Flächen** mit kWp, Neigung (0° flach – 90° senkrecht) und Azimut (0° Nord, 90° Ost, 180° Süd, 270° West). Leere Flächen werden ignoriert; Flächen nicht doppelt erfassen. Für Stunden ohne Bewölkungswerte werden keine sonnigen Stunden ergänzt. SEP macht keinen eigenen Meteonomiqs-API-Aufruf.
+- **Eigene Berechnung (My-Weather):** Standort aus Home Assistant und Bewölkung aus `Meteonomiqs Cloud Forecast 48h` (Attribut `forecast` mit `cloud_coverage` 0–100 %; der bisherige 8-h-Sensor funktioniert weiterhin, liefert aber nur 8 h). Die **PV-Flächen** werden seit 0.3.64 nicht mehr in diesem Dialog eingetragen, sondern im Dashboard eingezeichnet (siehe „PV-Flächen einzeichnen“). Flächen nicht doppelt erfassen. Für Stunden ohne Bewölkungswerte werden keine sonnigen Stunden ergänzt. SEP macht keinen eigenen Meteonomiqs-API-Aufruf.
 
 Die Prognose speist PV-Plan und Planungswerte; Netzsaldo und Start-/Stoppschutz bleiben messwertbasiert. Bei Nebel und Hochnebel sind Prognosen besonders unsicher.
 
 **Automatische Kalibrierung (optional, nur bei eigener Berechnung):** **PV-Prognose automatisch kalibrieren** aktivieren und den **PV-Erzeugungsleistungssensor (W)** wählen – er muss die gesamte Erzeugung aller konfigurierten Flächen abbilden (nicht Netzsaldo, Hausverbrauch oder Akku). Gelernt wird höchstens alle zehn Minuten bei mindestens 300 W Prognose, getrennt für klar / teilweise / bedeckt. Nächte, ungültige Messungen und wahrscheinliche Wechselrichter-Begrenzung werden ignoriert. Vor sechs Messungen bleibt der Faktor 1,0; Änderungen sind gedämpft und auf 0,60–1,25 begrenzt, Lernhistorie maximal 30 Tage (übersteht Neustarts). Das Attribut `kalibrierung` der Prognose-Entität zeigt Faktoren, Stichproben und mittlere Fehler (7/30 Tage); **PV-Kalibrierung zurücksetzen** löscht nur diese Lerndaten. Bei Abregelung, Defekten oder Verschattung die Kalibrierung deaktivieren.
 
 **PV-Plan:** kW-Achse mit Hilfslinien; prognostizierte PV-Leistung und geplante Geräte je Stunde. Der aufklappbare Bereich **PV-Prognose / Ist-Erzeugung** zeigt die letzten 48 Stunden (horizontal scrollbar, kWh je Stunde, prozentuale Abweichung). Verglichen werden nur Stunden mit mindestens 95 % gemessener Leistung und einer vorher gespeicherten Prognose; Messlücken erscheinen nicht als Nullertrag. Dafür den PV-Erzeugungsleistungssensor im Prognose-Dialog auswählen.
+
+### PV-Flächen einzeichnen (ab 0.3.64)
+
+Karte **SEP PV-Flächen** zu einem Dashboard hinzufügen:
+
+```yaml
+type: custom:smartify-energy-pv-card
+title: PV-Flächen          # optional
+# entry_id: …              # nur bei mehreren Energiemanagern
+```
+
+- **Luftbild:** Orthofoto von [basemap.at](https://basemap.at) (nur Österreich, CC BY 4.0) rund um den Home-Assistant-Standort. Es wird **nur beim ersten Öffnen** heruntergeladen und in Home Assistant gespeichert (`.storage/smartify_energy_map/`, ist damit Teil der Sicherung). Neu geladen wird es nur über **„Luftbild neu laden“** – dann für den aktuellen Kartenmittelpunkt. Ohne Luftbild (z. B. außerhalb Österreichs) kann auf einem Raster gezeichnet werden.
+- **Dachfläche:** „+ Dachfläche“, die Ecken antippen, Doppelklick oder „Fertig“. Die dick markierte Kante ist die **Traufkante** (untere Dachkante); antippen einer anderen Kante der markierten Fläche ändert sie. Die **Ausrichtung** ergibt sich automatisch (Seite, zu der das Dach abfällt) und wird als Pfeil angezeigt.
+- **Fassade/Linie:** „+ Fassade/Linie“, Anfang und Ende antippen; mit „Richtung umdrehen“ die Seite wählen.
+- **Neigung** (0° flach – 90° senkrecht) je Fläche eingeben. **Leistung** wahlweise als **kWp gesamt** oder **Module × Wp**.
+- Ecken lassen sich verschieben, die Karte mit Ziehen, Mausrad oder +/− bewegen. **Speichern** übernimmt die Flächen; der Energiemanager lädt neu und rechnet die Prognose damit.
+- Höchstens vier Flächen. Bisher eingetragene Werte werden als „nicht eingezeichnet“ übernommen (Ausrichtung dort weiterhin als Zahl änderbar) und können eingezeichnet werden. Nur Administratoren können ändern.
+- Die Flächen werden nur bei Prognose-Modus **Eigene Berechnung** verwendet.
 
 ### PV-Prognose gegen Ist-Erzeugung (14 Tage)
 
