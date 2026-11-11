@@ -154,6 +154,8 @@ title: PV-Flächen          # optional
 - **Dachfläche:** „+ Dachfläche“, die Ecken antippen, Doppelklick oder „Fertig“. Die dick markierte Kante ist die **Traufkante** (untere Dachkante); antippen einer anderen Kante der markierten Fläche ändert sie. Die **Ausrichtung** ergibt sich automatisch (Seite, zu der das Dach abfällt) und wird als Pfeil angezeigt.
 - **Fassade/Linie:** „+ Fassade/Linie“, Anfang und Ende antippen; mit „Richtung umdrehen“ die Seite wählen.
 - **Neigung** (0° flach – 90° senkrecht) je Fläche eingeben. **Leistung** wahlweise als **kWp gesamt** oder **Module × Wp**.
+- **Bifazial:** Für Module, deren Rückseite mit erzeugt (Zaun, Fassade, aufgeständert), „bifazial“ anhaken und den **Bifazialfaktor** aus dem Datenblatt eintragen (Standard 0,7). Die Prognose rechnet dann zusätzlich die Rückseite in Gegenrichtung (direkte Sonne von hinten, Himmel, Bodenreflexion) mal Faktor. Bei senkrechten Ost/West-Zäunen kann das den Ertrag fast verdoppeln, bei Südzäunen im Winter nur wenige Prozent.
+- Auf breiten Bildschirmen steht die Flächenliste rechts neben dem Luftbild; jede Fläche lässt sich auf- und zuklappen (Kopfzeile mit kWp, Ausrichtung und Neigung).
 - Ecken lassen sich verschieben, die Karte mit Ziehen, Mausrad oder +/− bewegen. **Speichern** übernimmt die Flächen; der Energiemanager lädt neu und rechnet die Prognose damit.
 - Höchstens vier Flächen. Bisher eingetragene Werte werden als „nicht eingezeichnet“ übernommen (Ausrichtung dort weiterhin als Zahl änderbar) und können eingezeichnet werden. Nur Administratoren können ändern.
 - Die Flächen werden nur bei Prognose-Modus **Eigene Berechnung** verwendet.

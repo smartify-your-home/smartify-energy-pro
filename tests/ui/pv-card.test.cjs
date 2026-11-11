@@ -63,6 +63,8 @@ test('legacy surfaces are editable, saving sends the edited surfaces', async () 
   await tick(); await tick();
   const root = el.shadowRoot;
   assert.match(root.textContent, /nicht eingezeichnet/);
+  assert.equal(root.querySelector('[data-f="azimuth"]'), null, 'rows start collapsed');
+  root.querySelector('.surf [data-act="toggle"]').click();
   assert.equal(root.querySelector('[data-f="azimuth"]').value, '190');
   // switch to modules × Wp
   const sel = root.querySelector('[data-f="input"]');
@@ -73,11 +75,16 @@ test('legacy surfaces are editable, saving sends the edited surfaces', async () 
   root.querySelector('[data-f="module_wp"]').value = '380';
   root.querySelector('[data-f="module_wp"]').dispatchEvent(new dom.window.Event('change'));
   assert.match(root.querySelector('.surf .chip').textContent, /3,04 kWp/);
+  // bifacial
+  const bi = root.querySelector('[data-f="bifacial"]');
+  bi.checked = true; bi.dispatchEvent(new dom.window.Event('change'));
+  assert.equal(root.querySelector('[data-f="bifaciality"]').value, '0.7');
+  assert.match(root.querySelector('.surf .s-head').textContent, /bifazial/);
   assert.match(root.textContent, /nicht gespeichert/);
   root.querySelector('[data-act="save"]').click();
   await tick(); await tick();
   const save = calls.find(c => c.type === 'smartify_energy/pv_layout/save');
-  assert.deepEqual(JSON.parse(JSON.stringify(save.surfaces.map(s => [s.input, s.modules, s.module_wp, s.azimuth]))), [['modules', 8, 380, 190]]);
+  assert.deepEqual(JSON.parse(JSON.stringify(save.surfaces.map(s => [s.input, s.modules, s.module_wp, s.azimuth, s.bifacial]))), [['modules', 8, 380, 190, true]]);
   assert.match(root.textContent, /Gespeichert/);
 });
 
@@ -127,6 +134,7 @@ test('non-admin users see the layout read-only', async () => {
   const root = el.shadowRoot;
   assert.equal(calls.filter(c => c.type !== 'smartify_energy/pv_layout').length, 0);
   assert.equal(root.querySelector('[data-act="save"]'), null);
+  root.querySelector('.surf [data-act="toggle"]').click();
   assert.ok(root.querySelector('[data-f="tilt"]').disabled);
   assert.match(root.textContent, /Nur Administratoren/);
 });
@@ -139,4 +147,22 @@ test('hass setter never throws even if the backend is missing', async () => {
   assert.doesNotThrow(() => { el.hass = {user: {is_admin: true}, callWS: async () => { throw new Error('unknown command'); }}; });
   await tick(); await tick();
   assert.match(el.shadowRoot.textContent, /konnten nicht geladen werden/);
+});
+
+test('wide cards place the list right of the map, list rows collapse', async () => {
+  const dom = load();
+  const {el} = card(dom, {surfaces: [{id: 'a', name: 'Süd', kind: 'area', points: RECT, edge: 0, flip: false, tilt: 35,
+    azimuth: 180, input: 'kwp', kwp: 5, modules: 0, module_wp: 0, area_m2: 60}]});
+  await tick(); await tick();
+  const root = el.shadowRoot;
+  assert.ok(root.querySelector('.layout > .main .map') && root.querySelector('.layout > .side .surf'));
+  assert.match(source, /@container \(min-width: 860px\)[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(300px,380px\)/);
+  assert.match(root.querySelector('.surf .s-head').textContent, /180° S · 35°/);
+  const tog = root.querySelector('.surf .tog');
+  assert.equal(tog.getAttribute('aria-expanded'), 'false');
+  tog.click();
+  assert.equal(root.querySelector('.surf .tog').getAttribute('aria-expanded'), 'true');
+  assert.ok(root.querySelector('[data-f="tilt"]'));
+  root.querySelector('.surf .tog').click();
+  assert.equal(root.querySelector('[data-f="tilt"]'), null);
 });

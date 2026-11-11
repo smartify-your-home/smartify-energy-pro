@@ -39,17 +39,21 @@ async def test_save_replaces_old_fields_and_reloads_forecast(hass, hass_ws_clien
     entry = await _setup(hass, {"solar_mode": "calculated", "solar_1_kwp": 9, "solar_2_kwp": 1})
     client = await hass_ws_client(hass)
     surfaces = [{"id": "sued", "name": "Süddach", "kind": "area", "points": RECT, "edge": 0,
-                 "tilt": 35, "input": "modules", "modules": 8, "module_wp": 380, "azimuth": 1}]
+                 "tilt": 35, "input": "modules", "modules": 8, "module_wp": 380, "azimuth": 1},
+                {"id": "zaun", "name": "Zaun", "kind": "line", "points": RECT[:2], "tilt": 90,
+                 "input": "kwp", "kwp": 1.14, "bifacial": True, "bifaciality": 0.75}]
     await client.send_json_auto_id({"type": "smartify_energy/pv_layout/save", "surfaces": surfaces})
     msg = await client.receive_json()
     assert msg["success"], msg
     await hass.async_block_till_done()
     saved = entry.options["solar_surfaces"]
     assert abs(saved[0]["azimuth"] - 180) < 1  # derived from the drawing, client value ignored
-    assert entry.options["solar_1_kwp"] == 3.04 and entry.options["solar_2_kwp"] == 0.0
+    assert entry.options["solar_1_kwp"] == 3.04 and entry.options["solar_2_kwp"] == 1.14
+    assert entry.options["solar_3_kwp"] == 0.0  # old slot 2 (1 kWp) must not reappear
     assert entry.state is ConfigEntryState.LOADED
     model = entry.runtime_data.forecast.solar_config["surfaces"]
-    assert len(model) == 1 and model[0]["kwp"] == 3.04 and abs(model[0]["azimuth"] - 180) < 1
+    assert len(model) == 2 and model[0]["kwp"] == 3.04 and abs(model[0]["azimuth"] - 180) < 1
+    assert "bifaciality" not in model[0] and model[1]["bifaciality"] == 0.75
 
 
 async def test_save_rejects_invalid_and_non_admin(hass, hass_ws_client, hass_read_only_access_token):
