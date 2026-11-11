@@ -1,3 +1,8 @@
+## PV-Flächennamen und Photon-Suche (0.3.74)
+- Nur automatische Namen nach dem Löschen/Abbrechen fortlaufend neu nummerieren; eigene Namen, IDs, Geometrien, Leistungen erhalten.
+- Photon nach mindestens 3 Zeichen und 700-ms-Tipp-Pause, maximal 5 Treffer, Backend-Cache und Lock mit mindestens 1,1 Sekunden zwischen Requests. Kein Autocomplete über Nominatim; manuelle Suche per Klick/Enter weiterhin.
+- Auswahl verändert nur Kartenmitte. Tests in tests/ui/pv-card.test.cjs und tests/ha/test_pv_editor.py.
+
 ## PV-Luftbild: Standort, Adresse und dynamisches Nachladen (0.3.73)
 - `pv_layout` liefert den HA-Standort aus `hass.config.latitude/longitude`. Ein altes Luftbild ohne explizit gewählte Adresse/Browse-Position darf den HA-Standort nicht dauerhaft überschreiben. Bei Standortabweichung über 0,002 Grad wird beim Laden **einmal** ein neues Home-Luftbild angefordert. `source: address|browse|home` im Karten-Metadaten-Store aufbewahren.
 - Neuer expliziter „HA-Standort“-Knopf; Adresssuche ausschließlich nach Eingabe plus Klick/Enter (`pv_map/geocode`, admin only). Anfrage über Backend an OpenStreetMap Nominatim mit User-Agent, maximal 1 Anfrage/s je HA, einfachem Cache; keine Autocomplete-Anfragen. Fällt die Suche oder ein Luftbild-Download aus, bleibt das bisherige Luftbild bestehen. Den Nutzer vorsehen, dass die eingegebene Adresse an Nominatim übertragen wird.
