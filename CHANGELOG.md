@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 0.3.68 – 2026-11-11
+
+- PV-Flächen-Editor: Beschriftung steht außen an der Pfeilspitze statt in der Flächenmitte, schmale Nachbarflächen überdecken sich nicht mehr.
+- Erneutes Antippen des Startpunkts schließt eine Dachfläche. Ein Schlusspunkt auf dem Startpunkt wird nicht mehr als zusätzlicher Eckpunkt gespeichert (auch bei bereits gespeicherten Flächen beim Lesen bereinigt).
+
 ## 0.3.67 – 2026-11-11
 
 - Behoben: Einzelne Luftbildkacheln wurden nur teilweise gespeichert und erschienen als graue Flächen. Ursache war das Lesen der Antwort (nur der bereits empfangene Teil statt der ganzen Datei), nicht basemap.at; die Erklärung in 0.3.66 war falsch. Jetzt wird die vollständige Datei gelesen und nur ein vollständiges JPEG gespeichert, sonst bleibt das alte Luftbild erhalten.

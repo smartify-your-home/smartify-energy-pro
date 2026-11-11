@@ -28,7 +28,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.5.1";
+const CARD_VERSION = "1.5.2";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -1701,7 +1701,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
     this._sel = id;
     this._draw = { id, kind, points: [] };
     this._setMsg("ok", kind === "area"
-      ? "Ecken der Dachfläche nacheinander antippen. Doppelklick oder „Fertig“ schließt die Fläche."
+      ? "Ecken der Dachfläche nacheinander antippen. Startpunkt erneut antippen, Doppelklick oder „Fertig“ schließt die Fläche."
       : "Anfang und Ende der Fassade/Kante antippen.");
     this._render();
   }
@@ -1709,6 +1709,12 @@ class SmartifyEnergyPvCard extends HTMLElement {
   _finishDraw() {
     const d = this._draw;
     if (!d) return;
+    if (d.kind === "area" && d.points.length > 3) {
+      // Schlusspunkt (fast) auf dem Startpunkt → kein zusätzlicher Eckpunkt
+      const [f, l] = [d.points[0], d.points[d.points.length - 1]];
+      const tol = 12 * this._view.w / Math.max(1, this._svgWidth || 700);
+      if (Math.hypot(this._lx(f[1]) - this._lx(l[1]), this._ly(f[0]) - this._ly(l[0])) < tol) d.points.pop();
+    }
     const need = d.kind === "area" ? 3 : 2;
     if (d.points.length < need) { this._cancelDraw(); return; }
     const s = this._surfaces.find(x => x.id === d.id);
@@ -1803,8 +1809,12 @@ class SmartifyEnergyPvCard extends HTMLElement {
       const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, az = (Number(s.azimuth) || 0) * Math.PI / 180;
       const L = 34 * scale, tx = mx + Math.sin(az) * L, ty = my - Math.cos(az) * L;
       const arrow = `<line x1="${mx}" y1="${my}" x2="${tx}" y2="${ty}" stroke="#fff" stroke-width="2.5" vector-effect="non-scaling-stroke" marker-end="url(#pvArrow)" pointer-events="none"/>`;
-      const cx = xy.reduce((t, p) => t + p[0], 0) / xy.length, cy = xy.reduce((t, p) => t + p[1], 0) / xy.length;
-      const label = `<text x="${cx}" y="${cy}" font-size="${fs}" text-anchor="middle" dominant-baseline="middle" fill="#fff" stroke="#000" stroke-width="${3 * scale}" paint-order="stroke" pointer-events="none">${esc(s.name)} · ${pvFmt(Math.round(s.azimuth))}° ${pvDir(s.azimuth)}</text>`;
+      // Beschriftung außerhalb an der Pfeilspitze (schmale Nachbarflächen überdecken sich sonst)
+      const sx = Math.sin(az), cy0 = Math.cos(az), gap = 6 * scale;
+      const lx = tx + sx * gap, ly = ty - cy0 * gap;
+      const anchor = sx > 0.3 ? "start" : sx < -0.3 ? "end" : "middle";
+      const base = cy0 > 0.3 ? "auto" : cy0 < -0.3 ? "hanging" : "middle";
+      const label = `<text class="pv-label" x="${lx}" y="${ly}" font-size="${fs}" text-anchor="${anchor}" dominant-baseline="${base}" fill="#fff" stroke="#000" stroke-width="${3 * scale}" paint-order="stroke" pointer-events="none">${esc(s.name)} · ${pvFmt(Math.round(s.azimuth))}° ${pvDir(s.azimuth)}</text>`;
       if (sel && !this._draw && this._admin) handles = xy.map((p, k) =>
         `<circle class="vtx" data-vtx="${k}" cx="${p[0]}" cy="${p[1]}" r="${r}" fill="#fff" stroke="${c}" stroke-width="2" vector-effect="non-scaling-stroke" style="cursor:move"/>`).join("");
       return `<g>${shape}${eave}${arrow}${edges}${label}${handles}</g>`;
@@ -1867,7 +1877,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
     else if (!d) body = "";
     else body = `
       <div class="map">${this._svg()}
-        ${this._draw ? `<div class="drawhint">${this._draw.kind === "area" ? "Ecken antippen · Doppelklick = fertig" : "Anfang und Ende antippen"}</div>` : ""}
+        ${this._draw ? `<div class="drawhint">${this._draw.kind === "area" ? "Ecken antippen · Startpunkt oder Doppelklick = fertig" : "Anfang und Ende antippen"}</div>` : ""}
         <div class="tools"><button data-act="zin" title="Vergrößern">+</button><button data-act="zout" title="Verkleinern">−</button><button data-act="home" title="Ansicht zurücksetzen">⌂</button></div>
         <div class="attr">${d.map ? esc(d.map.attribution || d.attribution) : "kein Luftbild – Raster 64 px"}</div>
       </div>
@@ -2021,6 +2031,9 @@ class SmartifyEnergyPvCard extends HTMLElement {
       const p = [Math.round(this._lat(w[1]) * 1e8) / 1e8, Math.round(this._lon(w[0]) * 1e8) / 1e8];
       const last = this._draw.points[this._draw.points.length - 1];
       const tol = 6 * this._view.w / Math.max(1, svg.clientWidth || 700);
+      const first = this._draw.points[0];
+      if (this._draw.kind === "area" && this._draw.points.length >= 3
+          && Math.hypot(this._lx(first[1]) - w[0], this._ly(first[0]) - w[1]) < 2 * tol) { this._finishDraw(); return; }   // Klick auf Startpunkt schließt die Fläche
       if (last && Math.hypot(this._lx(last[1]) - w[0], this._ly(last[0]) - w[1]) < tol) return;   // Doppelklick → kein Doppelpunkt
       this._draw.points.push(p);
       if (this._draw.kind === "line" && this._draw.points.length === 2) this._finishDraw();
