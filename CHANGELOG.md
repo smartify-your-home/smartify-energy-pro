@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.3.66 – 2026-11-11
+
+- Behoben: Beim Laden des Luftbilds lieferte basemap.at bei 25 gleichzeitigen Anfragen einzelne dunkle Ersatzkacheln. Die Kacheln werden jetzt höchstens zu zweit mit kurzer Pause abgerufen (Dauer einige Sekunden). Bereits geladene Luftbilder mit dunklen Flecken über „Luftbild neu laden“ erneuern.
+
 ## 0.3.65 – 2026-11-11
 
 - Behoben: Im PV-Flächen-Editor blieb das Luftbild grau, obwohl es geladen war. SVG rechnet mit einfacher Genauigkeit; die absoluten Kartenkoordinaten (rund 70 Millionen Pixel bei Zoom 19) waren dafür zu groß. Die Karte wird jetzt relativ zum Luftbildausschnitt gezeichnet. Gespeicherte Flächen und Berechnung unverändert.

@@ -72,9 +72,27 @@ async def test_map_is_downloaded_once_and_kept_on_failure(hass, hass_ws_client, 
     for x, y in tile_grid(LAT, LON, 19):
         aioclient_mock.get(f"https://mapsneu.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/19/{y}/{x}.jpeg",
                            content=JPEG)
+    import asyncio
+    from unittest.mock import patch
+    from custom_components.smartify_energy import pv_websocket
+    active = peak = 0
+    real = pv_websocket._download_tile
+
+    async def counting(*args):
+        nonlocal active, peak
+        active += 1
+        peak = max(peak, active)
+        await asyncio.sleep(0)
+        try:
+            return await real(*args)
+        finally:
+            active -= 1
+
     client = await hass_ws_client(hass)
-    await client.send_json_auto_id({"type": "smartify_energy/pv_map/reload"})
-    msg = await client.receive_json()
+    with patch.object(pv_websocket, "_download_tile", counting), patch.object(pv_websocket, "TILE_PAUSE", 0):
+        await client.send_json_auto_id({"type": "smartify_energy/pv_map/reload"})
+        msg = await client.receive_json()
+    assert peak <= pv_websocket.TILE_PARALLEL  # no burst of 25 parallel requests
     assert msg["success"], msg
     assert len(msg["result"]["map"]["tiles"]) == 25 and aioclient_mock.call_count == 25
     folder = Path(hass.config.path(".storage", "smartify_energy_map", entry.entry_id))
