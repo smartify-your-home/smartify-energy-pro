@@ -496,7 +496,7 @@ test('PV summary follows horizontally visible day; no 14-day aggregate displayed
   });
   const sunlight=[8,9].map(day=>({datum:`2026-11-${String(day).padStart(2,'0')}`,
     sonnenaufgang:`2026-11-${String(day).padStart(2,'0')}T07:00:00+01:00`,
-    sonnenuntergang:`2026-11-${String(day).padStart(2,'0')}T16:00:00+01:00`}));
+    sonnenuntergang:`2026-11-${String(day).padStart(2,'0')}T18:00:00+01:00`}));
   card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
     states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{
       konfiguriert:true,gesamt_peak_kwp:10,zeitzone:'Europe/Vienna',tageslicht:sunlight,
@@ -505,6 +505,11 @@ test('PV summary follows horizontally visible day; no 14-day aggregate displayed
   card.shadowRoot.querySelector('[data-pvcompare]').click();
   const root=card.shadowRoot, scroll=root.querySelector('.pv-compare-scroll');
   assert.equal(root.querySelectorAll('.pv-compare-day').length,2);
+  // jsdom has no layout engine; simulate the measured horizontal viewport.
+  Object.defineProperty(scroll,'scrollWidth',{configurable:true,value:1170});
+  Object.defineProperty(scroll,'clientWidth',{configurable:true,value:180});
+  scroll.scrollLeft=990;
+  scroll.dispatchEvent(new dom.window.Event('scroll',{bubbles:false}));
   assert.match(root.querySelector('[data-pv-selected-date]').textContent,/09.11.2026/);
   assert.equal(root.querySelector('[data-pv-day-forecast]').textContent,'11,00 kWh');
   assert.equal(root.querySelector('[data-pv-day-actual]').textContent,'13,20 kWh');
