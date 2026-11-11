@@ -31,6 +31,7 @@
           "solar_mode": "Solar forecast mode",
           "solar_cloud_entity": "My-Weather cloud forecast 8–48h",
           "solar_calibration_enabled": "Automatically calibrate PV forecast (optional)",
+          "solar_live_adapt_enabled": "Adaptive live PV forecast (optional)",
           "solar_pv_power_entity": "Measured PV generation power (W) – actual inverter/production sensor",
           "pv_total_peak_kwp": "Total installed PV peak power (all arrays, kWp)"
         },
@@ -40,6 +41,7 @@
           "solar_mode": "External forecast or estimated from cloud and PV geometry.",
           "solar_cloud_entity": "My-Weather 8–48h cloud sensor, not a PV energy sensor.",
           "solar_calibration_enabled": "Only used for calculated PV forecast. Learns from measured PV generation; off by default.",
+          "solar_live_adapt_enabled": "**Optional, off by default:** Compares actual PV generation with a clear-sky reference (at least 5 minutes of readings) to adjust only the next ~2 hours. Only in calculated mode and with a generation power sensor covering the same arrays as the model. No new weather API; missing data or nighttime disables the live correction.",
           "solar_pv_power_entity": "Actual total PV generation (W), not grid balance, house load or battery power. Optional for the forecast-versus-actual chart below the PV plan; required if self-calibration is enabled.",
           "pv_total_peak_kwp": "Optional sum of all installed arrays, including balcony PV. Sets a stable chart Y-axis from installed peak, not from the highest hourly value in 14 days. If empty, the drawn PV surfaces are summed."
         },
@@ -97,6 +99,7 @@
           "solar_mode": "Solar forecast mode",
           "solar_cloud_entity": "My-Weather cloud forecast 8–48h",
           "solar_calibration_enabled": "Automatically calibrate PV forecast (optional)",
+          "solar_live_adapt_enabled": "Adaptive live PV forecast (optional)",
           "solar_pv_power_entity": "Measured PV generation power (W) – actual inverter/production sensor"
         },
         "data_description": {
@@ -105,6 +108,7 @@
           "solar_mode": "External forecast or estimated from cloud and PV geometry.",
           "solar_cloud_entity": "My-Weather 8–48h cloud sensor, not a PV energy sensor.",
           "solar_calibration_enabled": "Only used for calculated PV forecast. Learns from measured PV generation; off by default.",
+          "solar_live_adapt_enabled": "**Optional, off by default:** Compares actual PV generation with a clear-sky reference (at least 5 minutes of readings) to adjust only the next ~2 hours. Only in calculated mode and with a generation power sensor covering the same arrays as the model. No new weather API; missing data or nighttime disables the live correction.",
           "solar_pv_power_entity": "Actual total PV generation (W), not grid balance, house load or battery power. Optional for the forecast-versus-actual chart below the PV plan; required if self-calibration is enabled."
         },
         "description": "PV arrays (power, tilt, orientation) for the calculated forecast are drawn in the dashboard: card “SEP PV arrays” (custom:smartify-energy-pv-card)."

@@ -1,5 +1,15 @@
 ## Unreleased
 
+## 0.3.77 – 2026-11-11
+
+- Optionale „Adaptive Live-PV-Prognose“ für den Modus „Eigene Berechnung“ (Standard AUS). Nutzt vorhandene PV-Erzeugungsleistung, Dachflächen und Astronomie; keine weitere Wetter-API.
+- Lokale Analyse der letzten 30 Minuten gegenüber einer Klarhimmel-Referenz: stabile hohe oder geringe Einstrahlung, wechselhafte Verhältnisse sowie Aufhellung/Eintrübung; Diagnose im Attribut `live_pv` des PV-Prognosesensors.
+- Konservative, auf höchstens ca. 2 Stunden abklingende Korrektur. Mindestens 6 Messpunkte über 5 Minuten; bei fehlenden/veralteten Daten, niedriger Einstrahlung oder Clipping keine Anpassung. Stundenfaktor auf 0,55–1,8 begrenzt.
+- Bestehende langfristige Kalibrierung, unveränderliche Ursprungs-Prognose der 14-Tage-Grafik und alle Sicherheits- und Leistungsbudgets bleiben erhalten.
+- Tests für stabil klar, geringe Einstrahlung, wechselhaft, Aufhellung, Ausfälle, Korrekturgrenzen und Azimut ergänzt.
+
+
+
 ## 0.3.76 – 2026-11-11
 
 - **Ansage für Haushaltsgeräte:** Waschmaschine, Trockner, Geschirrspüler und sonstige Haushaltsgeräte können ansagen, wenn das Programm fertig ist. Je Gerät gibt es die Schalter **Ansage bei Fertig** und **Erinnerung alle 30 Minuten** (beide standardmäßig aus). Die Erinnerung endet mit der Fertig-Taste bzw. einem neuen Programmstart.
