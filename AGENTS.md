@@ -1,3 +1,8 @@
+## Kritischer Setup-Schutz (0.3.72)
+- `HUB_ENTITY_FIELDS` enthält ausschließlich Konfigurationsschlüssel für Home-Assistant-Entitäts-IDs. Numerische Konfigurationswerte wie `CONF_PV_TOTAL_PEAK_KWP` dürfen nie als `async_track_state_change_event`-IDs registriert werden.
+- Regression: `tests/ha/test_pv_editor.py::test_numeric_total_peak_does_not_register_as_entity`. Integration muss mit `pv_total_peak_kwp: 10.5` starten und die Peakleistung an den Plan-Sensor ausgeben.
+- Keine Änderungen an fester PV-Y-Achse, Prognose/Regelung oder Karteneinbindung.
+
 ## PV-Vergleich: Tagesauswertung beim Scrollen (0.3.71)
 - Die Zusammenfassung oberhalb der 14-Tage-Balkengrafik zeigt **nur den ausgewählten lokalen Kalendertag**, niemals `pv_vergleich.prognose_kwh` / `ist_kwh` / `abweichung_pct` (diese Attribute fassen weiterhin sämtliche vergleichbare Stunden der Historie zusammen).
 - Sichtbarer Tag wird beim Öffnen auf den jüngsten Tag gesetzt und beim horizontalen Scrollen anhand der Bildschirmmitte bestimmt. Eine HA-Neuzeichnung darf den Scrollstand nicht verlieren; der bereits vorhandene `patchChildren`-Mechanismus bleibt erhalten. Keine zeitliche Debounce-Verzögerung bei der Tagessumme.
