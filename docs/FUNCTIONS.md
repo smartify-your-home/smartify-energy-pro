@@ -1,3 +1,7 @@
+## PV-Prognose heute = ganzer Tag (0.3.63)
+
+„PV-Prognose heute“ (Sensor `forecast_today`, Kopf der SEP-Karte, „Prog.“ in der Flow-Card) ist die Prognose für den ganzen Tag. Vergangene Stunden kommen aus der ursprünglich eingefrorenen Prognose, die laufende und künftige Stunden aus der aktuellen. Vorher zeigte der Wert bei eigener Berechnung im Tagesverlauf nur noch den Rest. `rest_heute_kwh` ist unverändert der Rest ab jetzt.
+
 ## PV-Vergleich und Tageslichtfilter (0.3.61)
 Der bereits vorhandene `PVComparison` speichert eingefrorene Stundenprognosen, aus gemessener PV-Leistung integrierte Wh und Gültigkeitsabdeckung in Home Assistants Store. 14 × 24 vergangene Stunden werden über das Attribut `pv_vergleich` am SEP-Plan-Sensor bereitgestellt. Stunden werden nur ab 95 % Messabdeckung verglichen; fehlende Werte sind `null`. Die UI blendet außerhalb des astronomischen Tageslichtfensters (je 1 h vor Sonnenaufgang und nach Sonnenuntergang) die Nacht aus und gruppiert sichtbare Stunden je lokalem Datum. Stündliche und tägliche Abweichung: `(Ist / Prognose - 1) × 100`, nur wenn Prognose > 0 und Ist vollständig ist. Teilweise gemessene Tageswerte heißen „bisher“. Alte Vorhersagen werden nicht nachträglich geändert. Weder Netzbudget noch PV-Regelung werden beeinflusst.
 

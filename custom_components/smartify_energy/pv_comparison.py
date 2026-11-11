@@ -66,6 +66,35 @@ class PVComparison:
         self.previous = (now, float(watts)) if valid else None
         self._prune(now)
 
+    def day_forecast_wh(self, live_hours: dict[datetime, float], now: datetime, tzinfo) -> float | None:
+        """Forecast for the whole local calendar day of `now` (Wh).
+
+        Live hours are used as they are. Elapsed hours of the day that the live
+        forecast no longer contains (the calculated model only covers the
+        current hour onwards) are taken from the frozen original forecast, so
+        "today" does not shrink to the remaining forecast during the day.
+        Hours without either value are omitted, never invented.
+        """
+        if not live_hours:
+            return None
+        day = _utc(now).astimezone(tzinfo).date()
+        total = 0.0
+        live_utc = set()
+        for stamp, wh in live_hours.items():
+            if not isinstance(stamp, datetime) or stamp.tzinfo is None:
+                continue
+            if stamp.astimezone(tzinfo).date() != day:
+                continue
+            live_utc.add(_hour(stamp))
+            total += float(wh)
+        current = _hour(now)
+        for key, wh in self.forecasts.items():
+            start = datetime.fromisoformat(key)
+            if (start < current and start not in live_utc
+                    and start.astimezone(tzinfo).date() == day):
+                total += wh
+        return total
+
     def _prune(self, now: datetime) -> None:
         cutoff = (_hour(now) - timedelta(days=RETENTION_DAYS)).isoformat()
         ceiling = (_hour(now) + timedelta(days=3)).isoformat()

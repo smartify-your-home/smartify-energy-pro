@@ -1,3 +1,7 @@
+## PV-Prognose heute = ganzer Tag (0.3.63)
+
+„PV-Prognose heute“ (Sensor `forecast_today`, Kopf der SEP-Karte, „Prog.“ in der Flow-Card) ist die Prognose für den ganzen Tag. Vergangene Stunden kommen aus der ursprünglich eingefrorenen Prognose, die laufende und künftige Stunden aus der aktuellen. Vorher zeigte der Wert bei eigener Berechnung im Tagesverlauf nur noch den Rest. `rest_heute_kwh` ist unverändert der Rest ab jetzt.
+
 ## PV-Prognose-/Ist-Vergleich (0.3.61)
 Die ausklappbare Grafik stellt 14 Tage statt 48 Stunden dar. Stunden-Balkenpaare zeigen die vorab gespeicherte Prognose und die aus gültiger Leistungsmessung integrierte Ist-Energie, mit signierter Abweichung je Stunde. Pro Tag erscheinen Datum, Tagesabweichung und eine senkrechte Trennlinie. Fehlende Beobachtung bleibt offen und kennzeichnet den Tag als teilweise („bisher“). Home Assistant liefert die astronomischen Sonnenaufgangs-/Sonnenuntergangszeiten jedes Datums; außerhalb des Tageslichts plus je einer Stunde Puffer werden Stunden nur in der Grafik ausgeblendet. Speicherung über den bestehenden Store mit 15-Tage-Grenze (14 Tage plus Puffer), kein historisches Nachberechnen und kein geändertes Regelwerk.
 
