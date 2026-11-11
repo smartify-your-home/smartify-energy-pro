@@ -634,7 +634,7 @@ const CARD_CSS = `
   .pv-compare-hour-pct.medium,.pv-compare-day .medium{color:var(--warning-color,#e5a21a)}
   .pv-compare-hour-pct.bad,.pv-compare-day .bad{color:var(--error-color,#e53935)}
   .pv-compare-day-dividers{position:absolute;inset:0;pointer-events:none;z-index:3}
-  .pv-compare-day-divider{position:absolute;top:0;bottom:0;border-left:2px dashed color-mix(in srgb,var(--primary-text-color) 55%,transparent)}
+  .pv-compare-day-divider{position:absolute;top:0;bottom:0;border-left:2px dashed color-mix(in srgb,var(--primary-text-color) 65%,transparent)}
   .pv-compare-plot{min-width:max(100%,580px);height:186px;display:flex;align-items:end;gap:5px;position:relative;box-sizing:border-box;
     padding:30px 0 0;border-bottom:1px solid var(--divider-color)}
   .pv-compare-plot .sep-chart-grid{top:30px}
@@ -1201,7 +1201,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     // possible kWh for a one-hour bucket. Never infer the scale from history.
     const peakKwp = Number(data.gesamt_peak_kwp);
     const peakWh = Number.isFinite(peakKwp) && peakKwp > 0 ? peakKwp * 1000 : null;
-    const axisMax = peakWh ? sepNiceAxisMax(peakWh) : null;
+    const axisMax = peakWh ? Math.ceil(peakWh * 1.10 / 500) * 500 : null; // Fixed installed peak plus 10% label space.
     if (!axisMax) return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
       <div class="pv-compare-note">Für die feste Y-Achse die gesamte installierte PV-Peakleistung
       in SEP → Konfigurieren → Prognose hinterlegen (oder PV-Flächen einzeichnen).</div></div>`;
@@ -1242,7 +1242,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const actual=typeof x.ist_wh==="number"?x.ist_wh:null;
       const deviation=deviationOf(x);
       const peak=Math.max(0,forecast || 0,actual || 0);
-      const position=(peak / axisMax * 100).toFixed(3);
+      const position=(Math.min(peak, axisMax) / axisMax * 100).toFixed(3);
       return `<div class="pv-compare-col ${starts.has(i)?"day-start":""}" title="${esc(label)} · Prognose ${forecast===null?"kein Wert":esc((forecast/1000).toFixed(2))+" kWh"} · Ist ${actual===null?"noch nicht vollständig gemessen":esc((actual/1000).toFixed(2))+" kWh"}">
         ${bar(forecast,"pv-compare-forecast")}${bar(actual,"pv-compare-actual")}
         ${deviation===null?"":`<span class="pv-compare-hour-pct ${classify(deviation)}" style="bottom:calc(${position}% + 8px)" title="${esc(signed(deviation))}">${esc(signed(deviation))}</span>`}</div>`;
