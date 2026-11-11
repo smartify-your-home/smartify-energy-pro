@@ -28,7 +28,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.6.0";
+const CARD_VERSION = "1.6.1";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -547,7 +547,7 @@ const CARD_CSS = `
   .sep-y-axis { height:96px; display:flex; flex-direction:column; justify-content:space-between;
     color:var(--secondary-text-color); font-size:10px; font-variant-numeric:tabular-nums;
     text-align:right; white-space:nowrap; line-height:1; padding:0 0 0 1px; box-sizing:border-box; }
-  .sep-y-axis.compare { height:156px; padding-top:8px; }
+  .sep-y-axis.compare { height:156px; margin-top:58px; padding-top:0; }
   .sep-chart-grid { position:absolute; inset:0; z-index:0; pointer-events:none; }
   .sep-chart-grid i { position:absolute; width:100%; left:0;
     border-top:1px solid color-mix(in srgb,var(--secondary-text-color) 24%,transparent); }
@@ -625,17 +625,18 @@ const CARD_CSS = `
   .pv-compare-totals small{color:var(--secondary-text-color);font-size:11px}
   .pv-compare-totals strong{font-size:16px;font-variant-numeric:tabular-nums}
   .pv-compare-scroll{overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
-  .pv-compare-days,.pv-compare-percentages{display:flex;gap:5px;min-width:100%;font-variant-numeric:tabular-nums}
+  .pv-compare-days{display:flex;gap:5px;min-width:100%;height:28px;box-sizing:border-box;font-variant-numeric:tabular-nums}
   .pv-compare-day{flex:none;min-width:0;border-left:1px dashed var(--divider-color);box-sizing:border-box;
     color:var(--primary-text-color);font-size:11px;font-weight:600;padding:4px 4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pv-compare-day small{font-size:10px;font-weight:400;margin-left:5px}
-  .pv-compare-hour-pct{flex:0 0 40px;min-width:40px;box-sizing:border-box;font-size:9px;text-align:center;white-space:nowrap}
+  .pv-compare-hour-pct{position:absolute;left:50%;transform:translateX(-50%);font-size:9px;text-align:center;white-space:nowrap;line-height:1;z-index:3}
   .pv-compare-hour-pct.good,.pv-compare-day .good{color:var(--success-color,#22a06b)}
   .pv-compare-hour-pct.medium,.pv-compare-day .medium{color:var(--warning-color,#e5a21a)}
   .pv-compare-hour-pct.bad,.pv-compare-day .bad{color:var(--error-color,#e53935)}
   .pv-compare-col.day-start:before{content:"";position:absolute;z-index:2;left:-3px;top:0;bottom:0;border-left:1px dashed var(--divider-color);pointer-events:none}
-  .pv-compare-plot{min-width:max(100%,580px);height:156px;display:flex;align-items:end;gap:5px;position:relative;box-sizing:border-box;
-    padding:8px 0 0;border-bottom:1px solid var(--divider-color)}
+  .pv-compare-plot{min-width:max(100%,580px);height:186px;display:flex;align-items:end;gap:5px;position:relative;box-sizing:border-box;
+    padding:30px 0 0;border-bottom:1px solid var(--divider-color)}
+  .pv-compare-plot .sep-chart-grid{top:30px}
   .pv-compare-col{flex:1;min-width:19px;height:100%;display:flex;align-items:end;justify-content:center;gap:2px;position:relative;z-index:1}
   .pv-compare-bar{width:42%;min-height:0;border-radius:3px 3px 0 0}
   .pv-compare-forecast{background:var(--warning-color,#e5a21a);opacity:.82}
@@ -1197,7 +1198,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       Der Vergleich beginnt mit der nächsten vollständig gemessenen Stunde.</div></div>`;
     const max = Math.max(1,...rows.map(x=>Math.max(Number(x.prognose_wh)||0,
       typeof x.ist_wh === "number" ? x.ist_wh : 0)));
-    const axisMax = sepNiceAxisMax(max);
+    const axisMax = sepNiceAxisMax(max * 1.15); // Hourly total PV energy plus 15 % headroom.
     const fmt = v => typeof v === "number" && Number.isFinite(v)
       ? v.toLocaleString("de-AT",{minimumFractionDigits:2,maximumFractionDigits:2})+" kWh" : "–";
     const bar = (wh,cls) => wh === null || wh === undefined ? "" :
@@ -1226,17 +1227,17 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       return `<div class="pv-compare-day" style="width:${day.count*unitWidth-5}px" title="${esc(day.key)} · ${day.compared} verglichene Stunden${day.incomplete ? " · unvollständig" : ""}">
         ${esc(label)} <small class="${pct===null?"":classify(pct)}">${pct===null?"–":esc(signed(pct))}${day.incomplete?" · bisher":""}</small></div>`;
     }).join("");
-    const hourPct = rows.map(x=>{
-      const pct=deviationOf(x);
-      return `<span class="pv-compare-hour-pct ${pct===null?"":classify(pct)}" title="${pct===null?"Keine vollständigen Vergleichsdaten":esc(signed(pct))}">${pct===null?"–":esc(signed(pct))}</span>`;
-    }).join("");
     const plotted = rows.map((x,i)=>{
       const t=new Date(x.zeit);
       const label=t.toLocaleString("de-AT",{timeZone:data.zeitzone || undefined,weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
       const forecast=typeof x.prognose_wh==="number"?x.prognose_wh:null;
       const actual=typeof x.ist_wh==="number"?x.ist_wh:null;
+      const deviation=deviationOf(x);
+      const peak=Math.max(0,forecast || 0,actual || 0);
+      const position=(peak / axisMax * 100).toFixed(3);
       return `<div class="pv-compare-col ${starts.has(i)?"day-start":""}" title="${esc(label)} · Prognose ${forecast===null?"kein Wert":esc((forecast/1000).toFixed(2))+" kWh"} · Ist ${actual===null?"noch nicht vollständig gemessen":esc((actual/1000).toFixed(2))+" kWh"}">
-        ${bar(forecast,"pv-compare-forecast")}${bar(actual,"pv-compare-actual")}</div>`;
+        ${bar(forecast,"pv-compare-forecast")}${bar(actual,"pv-compare-actual")}
+        ${deviation===null?"":`<span class="pv-compare-hour-pct ${classify(deviation)}" style="bottom:calc(${position}% + 8px)" title="${esc(signed(deviation))}">${esc(signed(deviation))}</span>`}</div>`;
     }).join("");
     const labels=rows.map((x,i)=>{
       const local=new Date(x.zeit);
@@ -1255,7 +1256,6 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         <div class="sep-y-axis compare" aria-label="PV-Energie je Stunde in kWh">${sepAxisLabels(axisMax,"kWh")}</div>
         <div class="pv-compare-scroll"><div style="width:${totalWidth}px">
           <div class="pv-compare-days">${dayHead}</div>
-          <div class="pv-compare-percentages">${hourPct}</div>
           <div class="pv-compare-plot" style="min-width:100%">${SEP_GRID}${plotted}</div>
           <div class="pv-compare-labels" style="min-width:100%">${labels}</div></div></div>
       </div>
