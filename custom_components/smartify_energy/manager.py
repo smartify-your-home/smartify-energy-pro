@@ -830,6 +830,11 @@ class EnergyManager:
         if self.live_pv is not None:
             # Invalid generation meter disables the correction immediately.
             actual_live_w = power_w(self.hass, pv_entity) if pv_entity else None
+            pv_state = self.hass.states.get(pv_entity) if pv_entity else None
+            if pv_state is None or (
+                pv_state.last_updated and now - pv_state.last_updated > timedelta(minutes=3)
+            ):
+                actual_live_w = None
             if actual_live_w is None:
                 self.live_pv.samples.clear()
                 self.live_pv.index = None
