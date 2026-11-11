@@ -166,3 +166,80 @@ test('wide cards place the list right of the map, list rows collapse', async () 
   root.querySelector('.surf .tog').click();
   assert.equal(root.querySelector('[data-f="tilt"]'), null);
 });
+
+
+test('legacy aerial photo at wrong location is recentered to Home Assistant, without changing PV arrays', async()=>{
+  const dom=load();
+  const wrong={lat:48.45,lon:16.3,zoom:19,source:'legacy',fetched:'2026-11-11T12:00:00Z',
+    attribution:'Luftbild: basemap.at',tiles:[]};
+  const {el,calls}=card(dom,{map:wrong});
+  await tick();await tick();await tick();
+  const reload=calls.find(x=>x.type==='smartify_energy/pv_map/reload');
+  assert.ok(reload,'old map location triggers automatic replacement');
+  assert.equal(reload.lat,LAT);
+  assert.equal(reload.lon,LON);
+  assert.equal(reload.source,'home');
+  assert.equal(el._surfaces.length,1,'saved legacy PV areas untouched');
+});
+
+test('address input geocodes only on click and centers imagery on lookup result', async()=>{
+  const dom=load();
+  const map={lat:LAT,lon:LON,zoom:19,source:'home',fetched:'2026-11-11T12:00:00Z',
+    attribution:'Luftbild: basemap.at',tiles:[]};
+  const {el,calls}=card(dom,{map});
+  await tick();await tick();
+  let geocodes=0;
+  const originalWS=el._hass.callWS;
+  el._hass.callWS=async msg=>{
+    calls.push(msg);
+    if(msg.type==='smartify_energy/pv_map/geocode'){
+      geocodes++;
+      return {lat:48.21,lon:16.36,display_name:'Wien'};
+    }
+    if(msg.type==='smartify_energy/pv_map/reload')
+      return {map:{...map,lat:msg.lat,lon:msg.lon,source:msg.source}};
+    return originalWS(msg);
+  };
+  const input=el.shadowRoot.querySelector('[data-map-address]');
+  assert.ok(input);
+  input.value='Wien, Österreich';
+  input.dispatchEvent(new dom.window.Event('input'));
+  assert.equal(geocodes,0,'never geocode on each keystroke');
+  el.shadowRoot.querySelector('[data-act="address"]').click();
+  await tick();await tick();await tick();
+  assert.equal(geocodes,1);
+  assert.equal(calls.findLast(x=>x.type==='smartify_energy/pv_map/reload').source,'address');
+  assert.equal(el._data.map.lat,48.21);
+  assert.equal(el._surfaces.length,1);
+  el.shadowRoot.querySelector('[data-act="home"]').click();
+  await tick();await tick();await tick();
+  assert.equal(calls.findLast(x=>x.type==='smartify_energy/pv_map/reload').lat,LAT);
+  assert.equal(calls.findLast(x=>x.type==='smartify_energy/pv_map/reload').source,'home');
+});
+
+test('zoom and pan trigger a new tile request with correct zoom and center',async()=>{
+  const dom=load();
+  const x=Math.floor((LON+180)/360*2**19);
+  const y=Math.floor((1-Math.log(Math.tan(LAT*Math.PI/180)+1/Math.cos(LAT*Math.PI/180))/Math.PI)/2*2**19);
+  const map={lat:LAT,lon:LON,zoom:19,source:'home',fetched:'2026-11-11T12:00:00Z',
+    attribution:'Luftbild: basemap.at',
+    tiles:Array.from({length:25},(_,i)=>({x:x+Math.floor(i/5)-2,y:y+i%5-2,data:'/9j/'}))};
+  const {el}=card(dom,{map});
+  await tick();await tick();
+  let pending=[];
+  el._reloadMap=async(auto,target)=>{pending.push(target);};
+  el._view={...el._view,w:300,h:220};
+  el._maybeRefreshMap();
+  assert.equal(pending.length,1);
+  assert.equal(pending[0].zoom,20,'zoom in requests higher resolution tiles');
+  pending=[];
+  el._view={...el._view,w:1350,h:900};
+  el._maybeRefreshMap();
+  assert.equal(pending[0].zoom,18,'zoom out requests lower zoom tiles');
+  pending=[];
+  el._resetView();
+  el._view.x=el._view.bounds.x0+20;
+  el._maybeRefreshMap();
+  assert.equal(pending.length,1,'pan outside tile coverage fetches shifted tiles');
+  assert.equal(pending[0].zoom,19);
+});

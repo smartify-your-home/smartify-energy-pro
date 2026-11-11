@@ -15,6 +15,7 @@ import base64
 import json
 import logging
 import shutil
+import time
 from pathlib import Path
 from typing import Any
 
@@ -67,7 +68,8 @@ def _read_map(folder: Path) -> dict[str, Any] | None:
     except (OSError, ValueError, KeyError, TypeError):
         _LOGGER.warning("Gespeichertes Luftbild ist unvollständig: %s", folder)
         return None
-    return {**{k: meta[k] for k in ("lat", "lon", "zoom", "fetched", "attribution")}, "tiles": tiles}
+    return {**{k: meta[k] for k in ("lat", "lon", "zoom", "fetched", "attribution")},
+            "source": meta.get("source", "legacy"), "tiles": tiles}
 
 
 def _write_map(folder: Path, meta: dict[str, Any], images: dict[tuple[int, int], bytes]) -> None:
@@ -183,6 +185,7 @@ async def ws_save_layout(hass: HomeAssistant, connection, msg: dict) -> None:
     vol.Optional("lat"): vol.All(vol.Coerce(float), vol.Range(min=-85, max=85)),
     vol.Optional("lon"): vol.All(vol.Coerce(float), vol.Range(min=-180, max=180)),
     vol.Optional("zoom"): vol.All(vol.Coerce(int), vol.Range(min=MAP_ZOOM_MIN, max=MAP_ZOOM_MAX)),
+    vol.Optional("source"): vol.In(["home", "address", "browse"]),
 })
 @websocket_api.require_admin
 @websocket_api.async_response
@@ -213,11 +216,69 @@ async def ws_reload_map(hass: HomeAssistant, connection, msg: dict) -> None:
             f"Luftbild konnte nicht geladen werden ({failed[0]}). basemap.at deckt nur Österreich ab; "
             "das bisher gespeicherte Luftbild bleibt erhalten.")
         return
-    meta = {"lat": lat, "lon": lon, "zoom": zoom, "fetched": dt_util.utcnow().isoformat(),
+    meta = {"lat": lat, "lon": lon, "zoom": zoom, "source": msg.get("source", "browse"),
+            "fetched": dt_util.utcnow().isoformat(),
             "attribution": MAP_ATTRIBUTION, "tiles": [{"x": x, "y": y} for x, y in grid]}
     folder = _map_dir(hass, entry.entry_id)
     await hass.async_add_executor_job(_write_map, folder, meta, dict(zip(grid, results, strict=True)))
     connection.send_result(msg["id"], {"map": await hass.async_add_executor_job(_read_map, folder)})
+
+
+@websocket_api.websocket_command({
+    vol.Required("type"): f"{DOMAIN}/pv_map/geocode",
+    vol.Optional("entry_id"): str,
+    vol.Required("address"): vol.All(str, vol.Length(min=4, max=180)),
+})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_geocode_map(hass: HomeAssistant, connection, msg: dict) -> None:
+    """One-shot address lookup, never automatic or per-keystroke."""
+    if _entry(hass, msg.get("entry_id")) is None:
+        connection.send_error(msg["id"], "not_found", "Kein geladener Energiemanager gefunden")
+        return
+    address = " ".join(msg["address"].split())
+    key = address.casefold()
+    cache = hass.data.setdefault(f"{DOMAIN}_pv_geocode_cache", {})
+    if key in cache:
+        connection.send_result(msg["id"], cache[key])
+        return
+    # Public Nominatim: at most one request per second per HA installation.
+    stamp_key = f"{DOMAIN}_pv_geocode_last"
+    elapsed = time.monotonic() - hass.data.get(stamp_key, 0)
+    if elapsed < 1.1:
+        await asyncio.sleep(1.1 - elapsed)
+    hass.data[stamp_key] = time.monotonic()
+    session = async_get_clientsession(hass)
+    try:
+        async with asyncio.timeout(12):
+            async with session.get(
+                "https://nominatim.openstreetmap.org/search",
+                params={"q": address, "format": "jsonv2", "limit": 1},
+                headers={"User-Agent": "SmartifyEnergyPro/1.0 (https://github.com/smartify-your-home/smartify-energy-pro)",
+                         "Accept-Language": "de"},
+            ) as response:
+                if response.status != 200:
+                    raise ValueError(f"Adressdienst HTTP {response.status}")
+                results = await response.json()
+        if not isinstance(results, list) or not results:
+            connection.send_error(msg["id"], "not_found", "Adresse nicht gefunden. Bitte Ort und Postleitzahl ergänzen.")
+            return
+        found = results[0]
+        location = {"lat": float(found["lat"]), "lon": float(found["lon"]),
+                    "display_name": str(found.get("display_name", address))[:240]}
+        if not (-85 <= location["lat"] <= 85 and -180 <= location["lon"] <= 180):
+            raise ValueError("Ungültige Koordinaten")
+    except (TimeoutError, ValueError, TypeError, KeyError, OSError) as err:
+        connection.send_error(msg["id"], "home_assistant_error", f"Adresssuche fehlgeschlagen: {err}")
+        return
+    except Exception as err:  # noqa: BLE001 - aiohttp/network/JSON failures
+        _LOGGER.warning("PV-Adresssuche fehlgeschlagen (%s)", type(err).__name__)
+        connection.send_error(msg["id"], "home_assistant_error", "Adressdienst nicht erreichbar")
+        return
+    if len(cache) >= 100:
+        cache.clear()
+    cache[key] = location
+    connection.send_result(msg["id"], location)
 
 
 @callback
@@ -230,6 +291,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_get_layout)
     websocket_api.async_register_command(hass, ws_save_layout)
     websocket_api.async_register_command(hass, ws_reload_map)
+    websocket_api.async_register_command(hass, ws_geocode_map)
 
 
 def remove_map(hass: HomeAssistant, entry_id: str) -> None:

@@ -1,5 +1,14 @@
 ## Unreleased
 
+## 0.3.73 – 2026-11-11
+
+- PV-Flächen-Editor: gespeicherte alte Luftbilder mit falschem Mittelpunkt werden beim Öffnen am Home-Assistant-Standort neu geladen. Eine ausdrücklich ausgewählte Adresse oder verschobene Kartenposition bleibt beim erneuten Öffnen erhalten.
+- Neuer Knopf „Zum Home-Assistant-Standort“ und einmalige **Adresseingabe** (Nominatim/OpenStreetMap, nur auf Benutzerklick, keine Vorschlagssuche). Ein Suchergebnis setzt den Luftbildmittelpunkt, ohne die bereits hinterlegten PV-Flächen zu verändern.
+- Nach Vergrößern/Verkleinern fordert SEP bei Überschreiten der Bildauflösung automatisch passende Luftbildkacheln auf der richtigen Zoomstufe an. Beim Verschieben außerhalb des vorhandenen Bildbereichs lädt SEP Kacheln für den neuen Mittelpunkt nach (gebremst auf Eingabeende).
+- Kartenkacheln bleiben wie bisher in HA gespeichert; Fehlabrufe dürfen vorhandene Kacheln und PV-Daten nicht zerstören. Die externen Anbieter werden nur bei gezielter Suche beziehungsweise Kartenabruf kontaktiert.
+- Keine Änderungen an PV-Prognose, Kalibrierung, 14-Tage-Vergleich oder Energieregelung.
+
+
 ## 0.3.72 – 2026-11-11
 
 - Kritischer Startfehler behoben: Die numerische Gesamt-Peakleistung `pv_total_peak_kwp` war fälschlich in `HUB_ENTITY_FIELDS` eingetragen. Das führte bei Home Assistants Entitätsüberwachung zu `AttributeError: 'float' object has no attribute 'lower'`.
