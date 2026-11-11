@@ -168,3 +168,21 @@ async def test_address_geocode_search_and_cache(hass, hass_ws_client, aioclient_
                                     "address": "Wien, Österreich"})
     assert (await client.receive_json())["success"]
     assert aioclient_mock.call_count == 1, "cached query must not hit Nominatim again"
+
+
+async def test_photon_suggestions_cached(hass, hass_ws_client, aioclient_mock):
+    import re
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    aioclient_mock.get(re.compile(r"https://photon[.]komoot[.]io/api/.*"),
+                       json={"features": [{"geometry": {"coordinates": [16.373, 48.208]},
+                                           "properties": {"name": "Wien", "country": "Österreich"}}]})
+    payload = {"type": "smartify_energy/pv_map/suggest", "query": "Wie"}
+    await client.send_json_auto_id(payload)
+    first = await client.receive_json()
+    assert first["success"], first
+    assert first["result"]["results"][0]["lat"] == 48.208
+    await client.send_json_auto_id(payload)
+    second = await client.receive_json()
+    assert second["result"] == first["result"]
+    assert aioclient_mock.call_count == 1
