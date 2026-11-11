@@ -243,3 +243,38 @@ test('zoom and pan trigger a new tile request with correct zoom and center',asyn
   assert.equal(pending.length,1,'pan outside tile coverage fetches shifted tiles');
   assert.equal(pending[0].zoom,19);
 });
+
+
+test('deleting surfaces renumbers default names but keeps ids and custom names', async () => {
+  const dom=load(); dom.window.confirm=()=>true;
+  const surface=(id,name)=>({id,name,kind:'manual',points:[],azimuth:180,tilt:30,input:'kwp',kwp:1});
+  const {el}=card(dom,{surfaces:[surface('f1','Fläche 1'),surface('f2','Fläche 2'),surface('f3','Fläche 3'),surface('f4','Fläche 4')]});
+  await tick();await tick();
+  el._action('del','f1');el._action('del','f2');
+  assert.deepEqual(Array.from(el._surfaces,x=>x.name),['Fläche 1','Fläche 2']);
+  assert.deepEqual(Array.from(el._surfaces,x=>x.id),['f3','f4']);
+  el._change('f3',{name:'Garage'});el._action('del','f4');
+  assert.equal(el._surfaces[0].name,'Garage');
+});
+test('Photon suggestions choose coordinates without Nominatim lookup', async () => {
+  const dom=load();
+  const map={lat:LAT,lon:LON,zoom:19,source:'home',fetched:'2026-11-11T12:00:00Z',
+    attribution:'Luftbild: basemap.at',tiles:[]};
+  const {el,calls}=card(dom,{map});await tick();await tick();
+  const original=el._hass.callWS;
+  el._hass.callWS=async msg=>{
+    calls.push(msg);
+    if(msg.type==='smartify_energy/pv_map/suggest')
+      return {results:[{lat:48.21,lon:16.36,display_name:'Wien, Österreich'}]};
+    if(msg.type==='smartify_energy/pv_map/reload')
+      return {map:{...map,lat:msg.lat,lon:msg.lon,source:msg.source}};
+    return original(msg);
+  };
+  const input=el.shadowRoot.querySelector('[data-map-address]');
+  input.value='Wie';input.dispatchEvent(new dom.window.Event('input'));
+  await new Promise(resolve=>setTimeout(resolve,750));await tick();
+  const suggestion=el.shadowRoot.querySelector('[data-suggest="0"]');
+  assert.ok(suggestion);suggestion.click();await tick();await tick();
+  assert.equal(calls.filter(x=>x.type==='smartify_energy/pv_map/geocode').length,0);
+  assert.equal(calls.findLast(x=>x.type==='smartify_energy/pv_map/reload').lat,48.21);
+});

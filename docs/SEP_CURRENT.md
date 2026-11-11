@@ -1,3 +1,6 @@
+## PV-Flächen und Adresssuche (0.3.74)
+Nach dem Löschen werden Standardnamen automatisch fortlaufend neu nummeriert; individuelle Namen und interne IDs bleiben erhalten. Nach mindestens drei Zeichen und kurzer Tipp-Pause zeigt Photon bis zu fünf Adressvorschläge. Auswahl lädt das Luftbild am gewählten Ort. Alternativ bleibt die manuelle Nominatim-Suche per Klick/Enter. Eingegebener Suchtext wird an den jeweiligen Anbieter übertragen.
+
 ## PV-Vergleich Tageswerte beim horizontalen Scrollen (0.3.71)
 Die drei Werte oberhalb der 14-Tage-Ist-/Prognosegrafik sind keine Gesamtsummen mehr. Sie zeigen nur den Tag in der Mitte des horizontal sichtbaren Fensters, initial den jüngsten Tag. Das Datum inklusive Jahr ist sichtbar, laufende und bei Messlücken unvollständige Tage zeigen „bisher“. Prognose und Ist werden aus denselben vollständig beobachteten Stunden dieses Tages addiert (Tagesabweichung = Ist/Prognose−1; kein Prozentwert bei 0 oder fehlender Prognose). Der bestehende Sensor-Store, Kalibrierung und Gerätebetrieb sind unverändert.
 
