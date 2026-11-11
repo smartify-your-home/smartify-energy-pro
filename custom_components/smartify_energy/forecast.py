@@ -75,6 +75,7 @@ class ForecastProvider:
         self.raw_hours: dict[datetime, float] = {}
         self.cloud_hours: dict[datetime, float] = {}
         self.hours: dict[datetime, float] = {}
+        self.base_hours: dict[datetime, float] = {}  # weather + long-term calibration, without live feedback
         self.last_update: datetime | None = None
         self.error: str | None = None
         self.source_label: str | None = None
@@ -116,6 +117,7 @@ class ForecastProvider:
                 }
             except (TypeError, ValueError, OverflowError) as err:
                 errors.append(f"PV calculation: {err}")
+            self.base_hours = dict(hours)
             self.hours = hours
             self.source_label = "Eigene Berechnung" if hours else None
             self.error = "; ".join(errors) or None
@@ -142,6 +144,7 @@ class ForecastProvider:
                 _merge(hours, sensor_hours)
             except Exception as err:  # noqa: BLE001
                 errors.append(f"{entity_id}: {err}")
+        self.base_hours = dict(hours)
         self.hours = hours
         self.source_label = next(iter(sources)) if len(sources) == 1 else ("Mehrere Quellen" if sources else None)
         self.error = "; ".join(errors) or None
