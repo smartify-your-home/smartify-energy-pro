@@ -19,6 +19,7 @@ Diese Übersicht unterscheidet **Formular-Pflichtfelder** und **Funktionsvorauss
 |---|---|---|
 | Prognoseintegration(en) | Optional, für Prognoseplanung erforderlich | Künftiger PV-Ertrag; gleiche Fläche nicht mehrfach zählen |
 | Prognosesensor(en) | Optional / alternative Quelle | Ergänzung oder Ersatz, wenn entsprechend konfiguriert |
+| PV-Flächen (Karte `custom:smartify-energy-pv-card`) | Für „Eigene Berechnung“ erforderlich | Im Dashboard auf dem Luftbild einzeichnen; Neigung und kWp bzw. Module × Wp eingeben. Nicht mehr im Optionsdialog |
 | Speicher-SoC | Bedingt | Für SoC-Grenzen und zielorientierte Speicherpriorität |
 | Speicherleistung | Bedingt | Für Berücksichtigung tatsächlicher Ladung/Entladung im Leistungsbudget |
 | Vorzeichen Speicherleistung | Bedingt, mit Standardwert | Bei konfigurierter Speicherleistung korrekt wählen |

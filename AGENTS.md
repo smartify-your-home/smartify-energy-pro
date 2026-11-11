@@ -9,6 +9,12 @@ An den smartify-Repos wird parallel gearbeitet. Diese Regel gilt identisch in `s
 5. `customElements.define` bleibt durch `customElements.get` abgesichert; der `hass`-Setter der Karte darf keine Exception werfen (HA ersetzt die Karte sonst durch „Konfigurationsfehler“).
 6. Vor jedem Push/Merge prüfen: `grep -rn "add_extra_js_url\|extra_module_url" custom_components/` zeigt höchstens den dokumentierten YAML-Fallback. Die zugehörigen Tests dürfen nicht entfernt oder abgeschwächt werden: `tests/ha/test_card_resource.py`.
 
+## PV-Flächen-Editor (0.3.64)
+- PV-Flächen werden NUR noch über die Karte `custom:smartify-energy-pv-card` (in `smartify-energy-plan-card.js`, gleiche Lovelace-Ressource – keinen zweiten Ladeweg einführen) gepflegt, nicht im Optionsdialog. Speicherung in `options["solar_surfaces"]` (`pv_layout.normalize_surfaces`), WebSocket `smartify_energy/pv_layout`, `/pv_layout/save` (admin), `/pv_map/reload` (admin) in `pv_websocket.py`.
+- Ausrichtung wird im Backend aus der Geometrie berechnet (Fläche: Außennormale der Traufkante `edge`, `flip` dreht; Linie: Normale, Standard die südlichere). Vom Client geschickte Azimutwerte bei gezeichneten Flächen ignorieren. Die JS-Vorschau (`pvSurfaceAzimuth`) muss dieselben Ergebnisse liefern – Tests `tests/test_pv_layout.py` und `tests/ui/pv-card.test.cjs` mit denselben Fällen.
+- Luftbild (basemap.at) nur auf ausdrückliche Anforderung bzw. einmalig beim ersten Öffnen laden, in `.storage/smartify_energy_map/<entry_id>` speichern; `pv_layout`-Abfrage kontaktiert den Kachelserver nie. Fehlgeschlagenes Nachladen behält das alte Bild. Attribution „basemap.at (CC BY 4.0)“ anzeigen.
+- Alte Felder `solar_1_*`–`solar_4_*`: beim Lesen migrieren (`surfaces_from_config`), beim Speichern spiegeln (`legacy_mirror`, Downgrade). Nicht wieder in den Optionsdialog aufnehmen. Höchstens vier Flächen (`solar_model` nutzt vier). Tests: `tests/ha/test_pv_editor.py`.
+
 ## PV-Prognose heute = ganzer Tag (0.3.63)
 - `forecast_today` (Sensor „PV-Prognose heute“, Flow-Card „Prog.“) ist die Prognose für den GANZEN lokalen Tag: `PVComparison.day_forecast_wh` – aktuelle Prognosestunden plus eingefrorene Ursprungsprognose für vergangene Stunden, die in `forecast.hours` fehlen (berechneter Modus hat nur ab laufender Stunde Wolkendaten). Nicht wieder auf reine Summe von `forecast.hours` zurückbauen. Live-Werte haben Vorrang, nichts doppelt zählen, keine Werte erfinden. Test: `tests/test_pv_comparison.py` (`DayForecastTests`).
 
@@ -52,7 +58,8 @@ An den smartify-Repos wird parallel gearbeitet. Diese Regel gilt identisch in `s
   Niemals Prozent-Bewölkung als Wh-Sensor verwenden oder externe und berechnete
   Erträge unbemerkt addieren.
 - HA-Standort ist Koordinatenquelle; Flächen: kWp, Neigung 0–90°,
-  Azimut 0=N/90=E/180=S/270=W, maximal vier.
+  Azimut 0=N/90=E/180=S/270=W, maximal vier. Eingabe seit 0.3.64 über den
+  PV-Flächen-Editor (siehe oben), nicht mehr über Optionsfelder.
 - Prognose nur mit gültiger My-Weather-Zeitreihe; ungültige/fehlende
   Bewölkung nicht mit 0 % ersetzen. Keine neuen API-Anfragen.
 - Externe Vorhersagen, bestehende Geräteprioritäten und Schutzlogik erhalten.

@@ -1,3 +1,7 @@
+## PV-Flächen-Editor (0.3.64)
+
+PV-Flächen werden mit der Karte `custom:smartify-energy-pv-card` auf einem Luftbild (basemap.at, nur Österreich) eingezeichnet: Dachflächen als Polygon mit markierter Traufkante, Fassaden als Linie. Die Ausrichtung wird aus der Zeichnung berechnet (Backend `pv_layout.py`, gleiche Rechnung in der Karte für die Vorschau), Neigung und Leistung (kWp oder Module × Wp) werden eingegeben. Das Luftbild wird nur beim ersten Öffnen bzw. über „Luftbild neu laden“ geladen und in `.storage/smartify_energy_map/<entry_id>` gespeichert. Gespeichert wird in den Optionen (`solar_surfaces`); die alten Felder `solar_1_*`–`solar_4_*` werden zusätzlich gespiegelt (Downgrade) und erscheinen nicht mehr im Optionsdialog. Höchstens vier Flächen.
+
 ## PV-Prognose heute = ganzer Tag (0.3.63)
 
 „PV-Prognose heute“ (Sensor `forecast_today`, Kopf der SEP-Karte, „Prog.“ in der Flow-Card) ist die Prognose für den ganzen Tag. Vergangene Stunden kommen aus der ursprünglich eingefrorenen Prognose, die laufende und künftige Stunden aus der aktuellen. Vorher zeigte der Wert bei eigener Berechnung im Tagesverlauf nur noch den Rest. `rest_heute_kwh` ist unverändert der Rest ab jetzt.

@@ -19,13 +19,16 @@
  *   show_mode: true           # Schnellbedienung je Gerät: Auto = Ladeziel, Haushaltsgerät = Aktionen (Modus im Zahnrad)
  *   show_settings: true       # Zahnrad: alle Einstellungen je Gerät / Energiemanager
  *
+ * Zweite Karte in dieser Datei: custom:smartify-energy-pv-card (PV-Flächen auf dem
+ * Luftbild einzeichnen, ersetzt die früheren Eingabefelder im Optionsdialog).
+ *
  * Theme-Variablen (haben Vorrang):
  *   smartify-plan-row-background   Zeilen-/Kachelhintergrund (default card-background-color)
  *   smartify-plan-border-radius    Eckenradius (default 6px)
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.4.1";
+const CARD_VERSION = "1.5.0";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -1436,11 +1439,610 @@ class SmartifyEnergyPlanCard extends HTMLElement {
 
 if (!customElements.get("smartify-energy-plan-card")) customElements.define("smartify-energy-plan-card", SmartifyEnergyPlanCard);
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * smartify-energy-pv-card – PV-Flächen auf dem Luftbild einzeichnen
+ *
+ *   type: custom:smartify-energy-pv-card
+ *   title: PV-Flächen            # optional
+ *   entry_id: <config entry>     # nur bei mehreren Energiemanagern
+ *
+ * Luftbild: basemap.at (Österreich). Es wird nur beim ersten Öffnen bzw. über
+ * „Luftbild neu laden“ heruntergeladen und in Home Assistant gespeichert.
+ * Ausrichtung = Außenseite der markierten Traufkante (Fläche) bzw. Normale der
+ * Linie (Fassade). Neigung und Leistung werden eingegeben.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+const PV_TILE = 256;
+const pvWorld = z => PV_TILE * 2 ** z;
+const pvLon2x = (lon, z) => (lon + 180) / 360 * pvWorld(z);
+const pvLat2y = (lat, z) => { const r = lat * Math.PI / 180; return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * pvWorld(z); };
+const pvX2lon = (x, z) => x / pvWorld(z) * 360 - 180;
+const pvY2lat = (y, z) => { const n = Math.PI - 2 * Math.PI * y / pvWorld(z); return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))); };
+const pvAz = (e, n) => Math.round(((Math.atan2(e, n) * 180 / Math.PI) + 360) % 360 * 10) / 10;
+const PV_DIRS = ["N", "NNO", "NO", "ONO", "O", "OSO", "SO", "SSO", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+const pvDir = a => PV_DIRS[Math.round((((a % 360) + 360) % 360) / 22.5) % 16];
+
+/** Ausrichtung aus der Zeichnung (gleiches Verfahren wie pv_layout.py, in Pixelkoordinaten: Ost = +x, Nord = −y). */
+function pvSurfaceAzimuth(s, z) {
+  if (s.kind === "manual" || !Array.isArray(s.points)) return Number(s.azimuth) || 0;
+  const xy = s.points.map(([lat, lon]) => [pvLon2x(lon, z), pvLat2y(lat, z)]);
+  const normals = i => {
+    const [x1, y1] = xy[i], [x2, y2] = xy[(i + 1) % xy.length];
+    const e = x2 - x1, n = -(y2 - y1);
+    return [[n, -e], [-n, e]];
+  };
+  if (s.kind === "line") {
+    if (xy.length !== 2) return Number(s.azimuth) || 0;
+    const [n1, n2] = normals(0), a1 = pvAz(...n1), a2 = pvAz(...n2);
+    const [first, second] = Math.abs(a1 - 180) <= Math.abs(a2 - 180) ? [a1, a2] : [a2, a1];
+    return s.flip ? second : first;
+  }
+  if (xy.length < 3) return Number(s.azimuth) || 0;
+  const edge = Number.isInteger(s.edge) && s.edge >= 0 && s.edge < xy.length ? s.edge : 0;
+  const cx = xy.reduce((a, p) => a + p[0], 0) / xy.length, cy = xy.reduce((a, p) => a + p[1], 0) / xy.length;
+  const [x1, y1] = xy[edge], [x2, y2] = xy[(edge + 1) % xy.length];
+  const me = (x1 + x2) / 2 - cx, mn = -((y1 + y2) / 2 - cy);
+  const [n1, n2] = normals(edge);
+  let out = n1[0] * me + n1[1] * mn >= 0 ? n1 : n2;
+  if (s.flip) out = [-out[0], -out[1]];
+  return pvAz(...out);
+}
+
+/** Längste Kanten zuerst, davon die am ehesten nach Süden zeigende (wie default_edge in Python). */
+function pvDefaultEdge(points, z) {
+  const xy = points.map(([lat, lon]) => [pvLon2x(lon, z), pvLat2y(lat, z)]);
+  const len = xy.map((p, i) => Math.hypot(xy[(i + 1) % xy.length][0] - p[0], xy[(i + 1) % xy.length][1] - p[1]));
+  const max = Math.max(...len);
+  let best = 0, bestDiff = Infinity;
+  len.forEach((l, i) => {
+    if (l < 0.5 * max) return;
+    const d = Math.abs(pvSurfaceAzimuth({ kind: "area", points, edge: i }, z) - 180);
+    if (d < bestDiff) { best = i; bestDiff = d; }
+  });
+  return best;
+}
+
+/** Projizierte Fläche in m² (Web-Mercator-Pixel → Meter am Breitengrad). */
+function pvAreaM2(points, z) {
+  if (!Array.isArray(points) || points.length < 3) return null;
+  const mpp = 156543.03392 * Math.cos(points[0][0] * Math.PI / 180) / 2 ** z;
+  const xy = points.map(([lat, lon]) => [pvLon2x(lon, z), pvLat2y(lat, z)]);
+  let s = 0;
+  xy.forEach(([x1, y1], i) => { const [x2, y2] = xy[(i + 1) % xy.length]; s += x1 * y2 - x2 * y1; });
+  return Math.round(Math.abs(s) / 2 * mpp * mpp * 10) / 10;
+}
+
+const pvKwp = s => s.input === "modules" ? (Number(s.modules) || 0) * (Number(s.module_wp) || 0) / 1000 : Number(s.kwp) || 0;
+const pvFmt = (v, d = 2) => Number(v).toLocaleString("de-AT", { maximumFractionDigits: d, minimumFractionDigits: 0 });
+const PV_COLORS = ["#FFB300", "#29B6F6", "#66BB6A", "#EC407A"];
+
+const PV_CSS = `
+  :host { display:block; }
+  ha-card { padding:14px; color:var(--primary-text-color); }
+  .hd { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .hd h2 { margin:0; font-size:1.1em; font-weight:700; flex:1 1 auto; }
+  .chip { font-size:12px; padding:2px 8px; border-radius:10px; background:var(--secondary-background-color); }
+  .chip.warn { background:var(--warning-color,#ff9800); color:#111; }
+  .map { position:relative; border-radius:8px; overflow:hidden; background:#30363b; }
+  svg { display:block; width:100%; height:min(62vh,520px); touch-action:none; user-select:none; cursor:grab; }
+  svg.drawing { cursor:crosshair; }
+  .tools { position:absolute; right:8px; top:8px; display:flex; flex-direction:column; gap:6px; }
+  .tools button, .bar button, .s-actions button { font:inherit; font-size:13px; min-height:34px; padding:6px 10px; border-radius:8px; cursor:pointer;
+    border:1px solid var(--divider-color); background:var(--card-background-color); color:var(--primary-text-color); }
+  .tools button { width:36px; padding:0; font-size:18px; font-weight:700; }
+  button.primary { background:var(--primary-color); color:var(--text-primary-color,#fff); border-color:var(--primary-color); }
+  button:disabled { opacity:.5; cursor:default; }
+  .attr { position:absolute; left:6px; bottom:4px; font-size:10px; color:#fff; text-shadow:0 0 3px #000; pointer-events:none; }
+  .drawhint { position:absolute; left:8px; top:8px; right:56px; font-size:12px; padding:6px 8px; border-radius:6px; background:rgba(0,0,0,.65); color:#fff; }
+  .bar { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:10px 0; }
+  .bar .sp { flex:1 1 auto; }
+  .msg { font-size:13px; margin:6px 0; }
+  .msg.err { color:var(--error-color,#db4437); }
+  .msg.ok { color:var(--success-color,#43a047); }
+  .surf { border:1px solid var(--divider-color); border-left:5px solid var(--c); border-radius:8px; padding:10px; margin-top:8px; }
+  .surf.sel { box-shadow:0 0 0 2px var(--c) inset; }
+  .s-head { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .s-head input.name { flex:1 1 140px; font-weight:700; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:8px; margin-top:8px; }
+  label { display:block; font-size:12px; color:var(--secondary-text-color); margin-bottom:2px; }
+  input, select { font:inherit; font-size:14px; width:100%; box-sizing:border-box; min-height:34px; padding:4px 6px; border-radius:6px;
+    border:1px solid var(--divider-color); background:var(--secondary-background-color); color:var(--primary-text-color); }
+  .val { font-size:15px; font-weight:700; min-height:34px; display:flex; align-items:center; gap:6px; }
+  .val small { font-weight:400; color:var(--secondary-text-color); }
+  .s-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .hint { font-size:12px; color:var(--secondary-text-color); margin-top:4px; }
+`;
+
+class SmartifyEnergyPvCard extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._config = {};
+    this._data = null;        // Antwort von smartify_energy/pv_layout
+    this._surfaces = [];      // Arbeitskopie
+    this._dirty = false;
+    this._sel = null;
+    this._draw = null;        // {id, kind, points:[]}
+    this._view = null;        // viewBox in Weltpixeln
+    this._busy = "";
+    this._msg = null;         // {type:'ok'|'err', text}
+    this._autoMap = false;
+    this._loading = false;
+    this._tileUrls = [];      // Blob-URLs der gespeicherten Kacheln (nicht bei jedem Zeichnen neu einbetten)
+  }
+
+  _setMap(map) {
+    this._tileUrls.forEach(t => URL.revokeObjectURL(t.url));
+    this._tileUrls = [];
+    if (this._data) this._data.map = map || null;
+    for (const t of map?.tiles || []) {
+      try {
+        const bin = atob(t.data), bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        this._tileUrls.push({ x: t.x, y: t.y, url: URL.createObjectURL(new Blob([bytes], { type: "image/jpeg" })) });
+      } catch (err) { console.warn("smartify-energy-pv-card: Kachel defekt", err); }
+    }
+  }
+
+  static getStubConfig() { return { title: "PV-Flächen" }; }
+  setConfig(config) { this._config = { ...(config || {}) }; if (this._hass) this._render(); }
+  getCardSize() { return 12; }
+  getGridOptions() { return { columns: 12, rows: "auto" }; }
+
+  set hass(hass) {
+    // Darf nie werfen (sonst ersetzt HA die Karte durch „Konfigurationsfehler“).
+    try {
+      const first = !this._hass;
+      this._hass = hass;
+      if (first) { this._render(); this._load(); }
+    } catch (err) { console.error("smartify-energy-pv-card", err); }
+  }
+
+  get _admin() { return !!this._hass?.user?.is_admin; }
+  get _zoom() { return this._data?.map?.zoom ?? this._data?.zoom?.default ?? 19; }
+
+  async _ws(msg) {
+    const extra = this._config.entry_id ? { entry_id: this._config.entry_id } : {};
+    return this._hass.callWS({ ...msg, ...extra });
+  }
+
+  async _load() {
+    if (this._loading) return;
+    this._loading = true;
+    try {
+      this._data = await this._ws({ type: `${DOMAIN}/pv_layout` });
+      this._setMap(this._data.map);
+      this._surfaces = JSON.parse(JSON.stringify(this._data.surfaces || []));
+      this._dirty = false;
+      this._resetView();
+      if (!this._data.map && this._admin && !this._autoMap) {
+        this._autoMap = true;   // nur einmal automatisch, danach nur per Knopf
+        this._render();
+        await this._reloadMap(true);
+      }
+    } catch (err) {
+      this._msg = { type: "err", text: `PV-Flächen konnten nicht geladen werden: ${err?.message || err}` };
+    } finally {
+      this._loading = false;
+      this._render();
+    }
+  }
+
+  async _reloadMap(auto = false) {
+    if (!this._admin || this._busy) return;
+    if (!auto && this._data?.map && !confirm("Luftbild für den aktuellen Kartenmittelpunkt neu herunterladen?")) return;
+    const z = this._zoom;
+    const v = this._view;
+    const center = v ? { lat: pvY2lat(v.y + v.h / 2, z), lon: pvX2lon(v.x + v.w / 2, z) } : {};
+    this._busy = "map";
+    this._msg = { type: "ok", text: "Luftbild wird von basemap.at geladen …" };
+    this._render();
+    try {
+      const res = await this._ws({ type: `${DOMAIN}/pv_map/reload`, ...center, zoom: this._data?.zoom?.default ?? 19 });
+      this._setMap(res.map);
+      this._resetView();
+      this._msg = { type: "ok", text: "Luftbild gespeichert. Es wird erst beim nächsten „Luftbild neu laden“ wieder heruntergeladen." };
+    } catch (err) {
+      this._msg = { type: "err", text: err?.message || String(err) };
+    } finally {
+      this._busy = "";
+      this._render();
+    }
+  }
+
+  _resetView() {
+    const z = this._zoom, m = this._data?.map;
+    if (m?.tiles?.length) {
+      const xs = m.tiles.map(t => t.x), ys = m.tiles.map(t => t.y);
+      const x0 = Math.min(...xs) * PV_TILE, y0 = Math.min(...ys) * PV_TILE;
+      const w = (Math.max(...xs) + 1) * PV_TILE - x0, h = (Math.max(...ys) + 1) * PV_TILE - y0;
+      // Ausschnitt um den Mittelpunkt (Haus), nicht das ganze 5×5-Raster.
+      const cx = pvLon2x(m.lon, z), cy = pvLat2y(m.lat, z), vw = w * 0.55, vh = vw * 0.66;
+      this._view = { x: cx - vw / 2, y: cy - vh / 2, w: vw, h: vh, bounds: { x0, y0, w, h } };
+    } else if (this._data?.home) {
+      const cx = pvLon2x(this._data.home.lon, z), cy = pvLat2y(this._data.home.lat, z), vw = 700, vh = 460;
+      this._view = { x: cx - vw / 2, y: cy - vh / 2, w: vw, h: vh, bounds: null };
+    }
+  }
+
+  _setMsg(type, text) { this._msg = text ? { type, text } : null; }
+
+  _change(id, patch) {
+    const s = this._surfaces.find(x => x.id === id);
+    if (!s) return;
+    Object.assign(s, patch);
+    if (s.kind !== "manual") s.azimuth = pvSurfaceAzimuth(s, this._zoom);
+    this._dirty = true;
+    this._render();
+  }
+
+  _newId() {
+    let i = 1;
+    while (this._surfaces.some(s => s.id === `f${i}`)) i++;
+    return `f${i}`;
+  }
+
+  _startDraw(kind, id = null) {
+    if (!this._admin) return;
+    if (!id) {
+      if (this._surfaces.length >= (this._data?.max_surfaces ?? 4)) return;
+      id = this._newId();
+      this._surfaces.push({ id, name: `Fläche ${this._surfaces.length + 1}`, kind: "manual", points: [], edge: 0, flip: false,
+        tilt: kind === "line" ? 90 : 30, azimuth: 180, input: "kwp", kwp: 1, modules: 0, module_wp: 0, area_m2: null, _new: true });
+      this._dirty = true;
+    }
+    this._sel = id;
+    this._draw = { id, kind, points: [] };
+    this._setMsg("ok", kind === "area"
+      ? "Ecken der Dachfläche nacheinander antippen. Doppelklick oder „Fertig“ schließt die Fläche."
+      : "Anfang und Ende der Fassade/Kante antippen.");
+    this._render();
+  }
+
+  _finishDraw() {
+    const d = this._draw;
+    if (!d) return;
+    const need = d.kind === "area" ? 3 : 2;
+    if (d.points.length < need) { this._cancelDraw(); return; }
+    const s = this._surfaces.find(x => x.id === d.id);
+    const z = this._zoom;
+    s.kind = d.kind;
+    s.points = d.points;
+    s.edge = d.kind === "area" ? pvDefaultEdge(d.points, z) : 0;
+    s.flip = false;
+    s.area_m2 = d.kind === "area" ? pvAreaM2(d.points, z) : null;
+    s.azimuth = pvSurfaceAzimuth(s, z);
+    delete s._new;
+    this._draw = null;
+    this._dirty = true;
+    this._setMsg("ok", d.kind === "area"
+      ? "Traufkante (untere Dachkante) prüfen: Kante der markierten Fläche antippen, um sie zu ändern."
+      : "Ausrichtung prüfen, bei Bedarf „Richtung umdrehen“.");
+    this._render();
+  }
+
+  _cancelDraw() {
+    const d = this._draw;
+    this._draw = null;
+    if (d) {
+      const s = this._surfaces.find(x => x.id === d.id);
+      if (s?._new) this._surfaces = this._surfaces.filter(x => x.id !== d.id);
+    }
+    this._setMsg(null);
+    this._render();
+  }
+
+  async _save() {
+    if (!this._admin || this._busy) return;
+    this._busy = "save";
+    this._render();
+    try {
+      const surfaces = this._surfaces.map(({ _new, ...s }) => s);
+      const res = await this._ws({ type: `${DOMAIN}/pv_layout/save`, surfaces });
+      this._surfaces = JSON.parse(JSON.stringify(res.surfaces));
+      this._data.surfaces = res.surfaces;
+      this._dirty = false;
+      this._setMsg("ok", `Gespeichert (${pvFmt(res.total_kwp)} kWp). Der Energiemanager lädt neu und rechnet die Prognose mit diesen Flächen.`);
+    } catch (err) {
+      this._setMsg("err", `Speichern fehlgeschlagen: ${err?.message || err}`);
+    } finally {
+      this._busy = "";
+      this._render();
+    }
+  }
+
+  _discard() {
+    this._surfaces = JSON.parse(JSON.stringify(this._data?.surfaces || []));
+    this._dirty = false;
+    this._draw = null;
+    this._setMsg(null);
+    this._render();
+  }
+
+  // ── Darstellung ─────────────────────────────────────────────────────────
+  _svg() {
+    const v = this._view;
+    if (!v) return `<svg viewBox="0 0 10 10"></svg>`;
+    const z = this._zoom, m = this._data?.map;
+    const px = ([lat, lon]) => `${pvLon2x(lon, z).toFixed(2)},${pvLat2y(lat, z).toFixed(2)}`;
+    const scale = v.w / Math.max(1, this._svgWidth || 700);
+    const r = 6 * scale, fs = 13 * scale;
+    const tiles = this._tileUrls.map(t =>
+      `<image href="${t.url}" x="${t.x * PV_TILE}" y="${t.y * PV_TILE}" width="${PV_TILE}" height="${PV_TILE}" preserveAspectRatio="none"/>`).join("");
+    const grid = m ? "" : (() => {
+      const step = 64, x0 = Math.floor(v.x / step) * step, y0 = Math.floor(v.y / step) * step;
+      let g = "";
+      for (let x = x0; x < v.x + v.w; x += step) g += `<line x1="${x}" y1="${v.y}" x2="${x}" y2="${v.y + v.h}"/>`;
+      for (let y = y0; y < v.y + v.h; y += step) g += `<line x1="${v.x}" y1="${y}" x2="${v.x + v.w}" y2="${y}"/>`;
+      return `<g stroke="rgba(255,255,255,.12)" vector-effect="non-scaling-stroke">${g}</g>`;
+    })();
+    const shapes = this._surfaces.map((s, i) => {
+      if (s.kind === "manual" || !s.points?.length) return "";
+      const c = PV_COLORS[i % PV_COLORS.length], sel = s.id === this._sel;
+      const pts = s.points.map(px).join(" ");
+      const xy = s.points.map(([lat, lon]) => [pvLon2x(lon, z), pvLat2y(lat, z)]);
+      let shape, eave = "", edges = "", handles = "";
+      if (s.kind === "area") {
+        shape = `<polygon points="${pts}" data-surface="${esc(s.id)}" fill="${c}" fill-opacity="${sel ? .35 : .22}" stroke="${c}" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
+        const e = s.edge ?? 0, [a, b] = [xy[e], xy[(e + 1) % xy.length]];
+        eave = `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${c}" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke" pointer-events="none"/>`;
+        if (sel && !this._draw && this._admin) edges = xy.map((p, k) => { const q = xy[(k + 1) % xy.length];
+          return `<line class="edge" data-edge="${k}" x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="transparent" stroke-width="18" vector-effect="non-scaling-stroke" style="cursor:pointer"/>`; }).join("");
+      } else {
+        shape = `<polyline points="${pts}" data-surface="${esc(s.id)}" fill="none" stroke="${c}" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`;
+      }
+      // Pfeil in Ausrichtung ab Mitte der Traufkante / Linie
+      const e = s.kind === "area" ? (s.edge ?? 0) : 0, a = xy[e], b = xy[(e + 1) % xy.length];
+      const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, az = (Number(s.azimuth) || 0) * Math.PI / 180;
+      const L = 34 * scale, tx = mx + Math.sin(az) * L, ty = my - Math.cos(az) * L;
+      const arrow = `<line x1="${mx}" y1="${my}" x2="${tx}" y2="${ty}" stroke="#fff" stroke-width="2.5" vector-effect="non-scaling-stroke" marker-end="url(#pvArrow)" pointer-events="none"/>`;
+      const cx = xy.reduce((t, p) => t + p[0], 0) / xy.length, cy = xy.reduce((t, p) => t + p[1], 0) / xy.length;
+      const label = `<text x="${cx}" y="${cy}" font-size="${fs}" text-anchor="middle" dominant-baseline="middle" fill="#fff" stroke="#000" stroke-width="${3 * scale}" paint-order="stroke" pointer-events="none">${esc(s.name)} · ${pvFmt(Math.round(s.azimuth))}° ${pvDir(s.azimuth)}</text>`;
+      if (sel && !this._draw && this._admin) handles = xy.map((p, k) =>
+        `<circle class="vtx" data-vtx="${k}" cx="${p[0]}" cy="${p[1]}" r="${r}" fill="#fff" stroke="${c}" stroke-width="2" vector-effect="non-scaling-stroke" style="cursor:move"/>`).join("");
+      return `<g>${shape}${eave}${arrow}${edges}${label}${handles}</g>`;
+    }).join("");
+    let preview = "";
+    if (this._draw?.points.length) {
+      const pts = this._draw.points.map(px).join(" ");
+      preview = `<polyline points="${pts}" fill="none" stroke="#fff" stroke-dasharray="6 4" stroke-width="2" vector-effect="non-scaling-stroke" pointer-events="none"/>`
+        + this._draw.points.map(p => { const [x, y] = px(p).split(","); return `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" pointer-events="none"/>`; }).join("");
+    }
+    return `<svg class="${this._draw ? "drawing" : ""}" viewBox="${v.x} ${v.y} ${v.w} ${v.h}" preserveAspectRatio="xMidYMid slice">
+      <defs><marker id="pvArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#fff"/></marker></defs>
+      <rect x="${v.x - v.w}" y="${v.y - v.h}" width="${v.w * 3}" height="${v.h * 3}" fill="#30363b"/>
+      ${grid}<g>${tiles}</g>${shapes}${preview}</svg>`;
+  }
+
+  _surfaceForm(s, i) {
+    const c = PV_COLORS[i % PV_COLORS.length], ro = this._admin ? "" : "disabled";
+    const kwp = pvKwp(s), drawn = s.kind !== "manual";
+    const az = Number(s.azimuth) || 0;
+    return `<div class="surf ${s.id === this._sel ? "sel" : ""}" style="--c:${c}" data-id="${esc(s.id)}">
+      <div class="s-head">
+        <input class="name" data-f="name" value="${esc(s.name)}" maxlength="40" ${ro} aria-label="Name">
+        <span class="chip">${pvFmt(kwp)} kWp</span>
+        <span class="chip ${drawn ? "" : "warn"}">${s.kind === "area" ? "Dachfläche" : s.kind === "line" ? "Fassade/Linie" : "nicht eingezeichnet"}</span>
+      </div>
+      <div class="grid">
+        <div><label>Neigung (°)</label><input type="number" data-f="tilt" min="0" max="90" step="1" value="${esc(s.tilt)}" ${ro}>
+          <div class="hint">0° flach · 90° senkrecht</div></div>
+        <div><label>Ausrichtung</label>${drawn
+          ? `<div class="val">${pvFmt(Math.round(az))}° <small>${pvDir(az)}</small></div><div class="hint">aus der Zeichnung</div>`
+          : `<input type="number" data-f="azimuth" min="0" max="360" step="1" value="${esc(az)}" ${ro}><div class="hint">0° N · 90° O · 180° S · 270° W</div>`}</div>
+        <div><label>Leistung angeben als</label><select data-f="input" ${ro}>
+          <option value="kwp" ${s.input !== "modules" ? "selected" : ""}>kWp gesamt</option>
+          <option value="modules" ${s.input === "modules" ? "selected" : ""}>Module × Wp</option></select></div>
+        ${s.input === "modules"
+          ? `<div><label>Anzahl Module</label><input type="number" data-f="modules" min="1" max="500" step="1" value="${esc(s.modules || "")}" ${ro}></div>
+             <div><label>Wp je Modul</label><input type="number" data-f="module_wp" min="50" max="1000" step="5" value="${esc(s.module_wp || "")}" ${ro}></div>`
+          : `<div><label>Leistung (kWp)</label><input type="number" data-f="kwp" min="0.01" max="100" step="0.01" value="${esc(s.kwp || "")}" ${ro}></div>`}
+        ${s.kind === "area" ? `<div><label>Grundfläche</label><div class="val">${pvFmt(s.area_m2 ?? pvAreaM2(s.points, this._zoom), 1)} m²
+          <small>${Number(s.tilt) < 85 ? `≈ ${pvFmt((s.area_m2 ?? 0) / Math.cos(Number(s.tilt) * Math.PI / 180), 0)} m² Dach` : ""}</small></div></div>` : ""}
+      </div>
+      ${this._admin ? `<div class="s-actions">
+        <button data-act="sel">Auf Karte zeigen</button>
+        <button data-act="draw-area">${s.kind === "area" ? "Fläche neu zeichnen" : "Als Dachfläche zeichnen"}</button>
+        <button data-act="draw-line">${s.kind === "line" ? "Linie neu zeichnen" : "Als Fassade/Linie zeichnen"}</button>
+        ${drawn ? `<button data-act="flip">Richtung umdrehen</button>` : ""}
+        <button data-act="del">Löschen</button></div>` : ""}
+    </div>`;
+  }
+
+  _render() {
+    if (!this.shadowRoot) return;
+    const d = this._data, admin = this._admin;
+    const title = this._config.title || "PV-Flächen";
+    const total = this._surfaces.reduce((t, s) => t + pvKwp(s), 0);
+    const max = d?.max_surfaces ?? 4;
+    let body;
+    if (!this._hass || (!d && this._loading)) body = `<div class="msg">Lade PV-Flächen …</div>`;
+    else if (!d) body = "";
+    else body = `
+      <div class="map">${this._svg()}
+        ${this._draw ? `<div class="drawhint">${this._draw.kind === "area" ? "Ecken antippen · Doppelklick = fertig" : "Anfang und Ende antippen"}</div>` : ""}
+        <div class="tools"><button data-act="zin" title="Vergrößern">+</button><button data-act="zout" title="Verkleinern">−</button><button data-act="home" title="Ansicht zurücksetzen">⌂</button></div>
+        <div class="attr">${d.map ? esc(d.map.attribution || d.attribution) : "kein Luftbild – Raster 64 px"}</div>
+      </div>
+      <div class="bar">
+        ${this._draw ? `<button class="primary" data-act="finish">Fertig</button><button data-act="cancel">Abbrechen</button>` : admin ? `
+          <button data-act="add-area" ${this._surfaces.length >= max ? "disabled" : ""}>+ Dachfläche</button>
+          <button data-act="add-line" ${this._surfaces.length >= max ? "disabled" : ""}>+ Fassade/Linie</button>` : ""}
+        <span class="sp"></span>
+        ${admin ? `<button data-act="map" ${this._busy ? "disabled" : ""}>${d.map ? "Luftbild neu laden" : "Luftbild laden"}</button>` : ""}
+      </div>
+      ${this._msg ? `<div class="msg ${this._msg.type}">${esc(this._msg.text)}</div>` : ""}
+      ${d.map ? `<div class="hint">Luftbild vom ${esc(new Date(d.map.fetched).toLocaleDateString("de-AT"))}. „Luftbild neu laden“ lädt den aktuellen Kartenmittelpunkt neu.</div>` : ""}
+      ${this._surfaces.map((s, i) => this._surfaceForm(s, i)).join("")}
+      ${this._surfaces.length ? "" : `<div class="hint">Noch keine PV-Fläche. Mit „+ Dachfläche“ die Fläche auf dem Luftbild einzeichnen.</div>`}
+      <div class="hint">Höchstens ${max} Flächen. Dachfläche: Ecken einzeichnen und die untere Dachkante (Traufe) markieren – die Ausrichtung ist die Seite, zu der das Dach abfällt. Fassade: Linie entlang der Wand, Ausrichtung mit „Richtung umdrehen“ wählen.</div>
+      ${admin ? `<div class="bar"><span class="sp"></span>
+        <button data-act="discard" ${this._dirty ? "" : "disabled"}>Verwerfen</button>
+        <button class="primary" data-act="save" ${this._dirty && !this._busy && !this._draw ? "" : "disabled"}>Speichern</button></div>`
+        : `<div class="hint">Nur Administratoren können PV-Flächen ändern.</div>`}`;
+    this.shadowRoot.innerHTML = `<style>${PV_CSS}</style><ha-card>
+      <div class="hd"><h2>${esc(title)}</h2>
+        ${d ? `<span class="chip">${pvFmt(total)} kWp</span>` : ""}
+        ${d && d.solar_mode !== "calculated" ? `<span class="chip warn">Prognose-Modus: extern – Flächen werden nur bei „Eigene Berechnung“ verwendet</span>` : ""}
+        ${this._dirty ? `<span class="chip warn">nicht gespeichert</span>` : ""}</div>
+      ${this._msg && !d ? `<div class="msg ${this._msg.type}">${esc(this._msg.text)}</div>` : ""}
+      ${body}</ha-card>`;
+    this._bind();
+  }
+
+  _redrawMap() {
+    const svg = this.shadowRoot?.querySelector("svg");
+    if (!svg) return;
+    const tpl = document.createElement("template");
+    tpl.innerHTML = this._svg();
+    svg.replaceWith(tpl.content.firstElementChild);
+    this._bindSvg();
+  }
+
+  _bind() {
+    const root = this.shadowRoot;
+    root.querySelectorAll("button[data-act]").forEach(b => b.addEventListener("click", e => this._action(e.currentTarget.dataset.act, e.currentTarget.closest(".surf")?.dataset.id)));
+    root.querySelectorAll(".surf [data-f]").forEach(el => el.addEventListener("change", e => {
+      const id = e.target.closest(".surf").dataset.id, f = e.target.dataset.f;
+      const v = f === "name" || f === "input" ? e.target.value : Number(e.target.value);
+      const patch = { [f]: v };
+      if (f === "input" && v === "modules") { const s = this._surfaces.find(x => x.id === id); if (!s.module_wp) patch.module_wp = 400; if (!s.modules) patch.modules = Math.max(1, Math.round(pvKwp(s) * 1000 / 400)); }
+      if (f === "input" && v === "kwp") { const s = this._surfaces.find(x => x.id === id); patch.kwp = Math.round(pvKwp(s) * 1000) / 1000 || 1; }
+      this._change(id, patch);
+    }));
+    this._bindSvg();
+  }
+
+  _action(act, id) {
+    const s = id ? this._surfaces.find(x => x.id === id) : null;
+    switch (act) {
+      case "zin": case "zout": { const v = this._view, f = act === "zin" ? 0.7 : 1 / 0.7;
+        this._zoomAt(v.x + v.w / 2, v.y + v.h / 2, f); break; }
+      case "home": this._resetView(); this._redrawMap(); break;
+      case "map": this._reloadMap(); break;
+      case "add-area": this._startDraw("area"); break;
+      case "add-line": this._startDraw("line"); break;
+      case "finish": this._finishDraw(); break;
+      case "cancel": this._cancelDraw(); break;
+      case "save": this._save(); break;
+      case "discard": this._discard(); break;
+      case "sel": this._sel = id; this._focus(s); this._render(); break;
+      case "draw-area": this._startDraw("area", id); break;
+      case "draw-line": this._startDraw("line", id); break;
+      case "flip": this._change(id, { flip: !s.flip }); break;
+      case "del": if (confirm(`„${s.name}“ löschen?`)) { this._surfaces = this._surfaces.filter(x => x.id !== id); this._dirty = true; this._render(); } break;
+    }
+  }
+
+  _focus(s) {
+    if (!s?.points?.length) return;
+    const z = this._zoom, xs = s.points.map(p => pvLon2x(p[1], z)), ys = s.points.map(p => pvLat2y(p[0], z));
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    this._view = { ...this._view, x: cx - this._view.w / 2, y: cy - this._view.h / 2 };
+  }
+
+  _zoomAt(wx, wy, f) {
+    const v = this._view, w = Math.min(4000, Math.max(60, v.w * f)), k = w / v.w, h = v.h * k;
+    this._view = { ...v, x: wx - (wx - v.x) * k, y: wy - (wy - v.y) * k, w, h };
+    this._redrawMap();
+  }
+
+  _toWorld(svg, ev) {
+    const pt = svg.createSVGPoint();
+    pt.x = ev.clientX; pt.y = ev.clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return null;
+    const p = pt.matrixTransform(ctm.inverse());
+    return [p.x, p.y];
+  }
+
+  _bindSvg() {
+    const svg = this.shadowRoot?.querySelector("svg");
+    if (!svg || !this._view) return;
+    this._svgWidth = svg.clientWidth || this._svgWidth;
+    if (svg.clientWidth && svg.clientHeight) {
+      const h = this._view.w * svg.clientHeight / svg.clientWidth;
+      if (Math.abs(h - this._view.h) > 0.5) {
+        this._view = { ...this._view, y: this._view.y + (this._view.h - h) / 2, h };
+        svg.setAttribute("viewBox", `${this._view.x} ${this._view.y} ${this._view.w} ${this._view.h}`);
+      }
+    }
+    let start = null;
+    svg.addEventListener("pointerdown", ev => {
+      const vtx = ev.target.closest?.(".vtx");
+      start = { x: ev.clientX, y: ev.clientY, view: { ...this._view }, vtx: vtx ? Number(vtx.dataset.vtx) : null, moved: false, target: ev.target };
+      svg.setPointerCapture(ev.pointerId);
+    });
+    svg.addEventListener("pointermove", ev => {
+      if (!start) return;
+      const dx = ev.clientX - start.x, dy = ev.clientY - start.y;
+      if (!start.moved && Math.hypot(dx, dy) < 5) return;
+      start.moved = true;
+      if (start.vtx != null && this._admin) {
+        const w = this._toWorld(svg, ev), s = this._surfaces.find(x => x.id === this._sel), z = this._zoom;
+        if (!w || !s) return;
+        s.points[start.vtx] = [Math.round(pvY2lat(w[1], z) * 1e8) / 1e8, Math.round(pvX2lon(w[0], z) * 1e8) / 1e8];
+        if (s.kind === "area") s.area_m2 = pvAreaM2(s.points, z);
+        s.azimuth = pvSurfaceAzimuth(s, z);
+        this._dirty = true;
+        this._redrawMap();
+        return;
+      }
+      const k = start.view.w / (svg.clientWidth || 1);
+      this._view = { ...start.view, x: start.view.x - dx * k, y: start.view.y - dy * k };
+      svg.setAttribute("viewBox", `${this._view.x} ${this._view.y} ${this._view.w} ${this._view.h}`);
+    });
+    svg.addEventListener("pointerup", ev => {
+      const s0 = start; start = null;
+      if (!s0) return;
+      if (s0.moved) { if (s0.vtx != null) this._render(); else this._redrawMap(); return; }
+      this._click(svg, ev, s0.target);
+    });
+    svg.addEventListener("dblclick", ev => { if (this._draw) { ev.preventDefault(); this._finishDraw(); } });
+    svg.addEventListener("wheel", ev => {
+      ev.preventDefault();
+      const w = this._toWorld(svg, ev);
+      if (w) this._zoomAt(w[0], w[1], ev.deltaY > 0 ? 1.15 : 1 / 1.15);
+    }, { passive: false });
+  }
+
+  _click(svg, ev, target) {
+    const z = this._zoom;
+    if (this._draw) {
+      const w = this._toWorld(svg, ev);
+      if (!w) return;
+      const p = [Math.round(pvY2lat(w[1], z) * 1e8) / 1e8, Math.round(pvX2lon(w[0], z) * 1e8) / 1e8];
+      const last = this._draw.points[this._draw.points.length - 1];
+      const tol = 6 * this._view.w / Math.max(1, svg.clientWidth || 700);
+      if (last && Math.hypot(pvLon2x(last[1], z) - w[0], pvLat2y(last[0], z) - w[1]) < tol) return;   // Doppelklick → kein Doppelpunkt
+      this._draw.points.push(p);
+      if (this._draw.kind === "line" && this._draw.points.length === 2) this._finishDraw();
+      else this._redrawMap();
+      return;
+    }
+    const edge = target.closest?.(".edge");
+    if (edge && this._admin) {
+      this._change(this._sel, { edge: Number(edge.dataset.edge), flip: false });
+      return;
+    }
+    const surf = target.closest?.("[data-surface]");
+    this._sel = surf ? surf.dataset.surface : null;
+    this._render();
+  }
+}
+
+if (!customElements.get("smartify-energy-pv-card")) customElements.define("smartify-energy-pv-card", SmartifyEnergyPvCard);
+
 window.customCards = window.customCards || [];
 if (!window.customCards.some(c => c.type === "smartify-energy-plan-card")) window.customCards.push({
   type: "smartify-energy-plan-card",
   name: "smartify Energiemanager",
   description: "Überschuss, Prioritäten (Drag & Drop) und PV-Plan des smartify Energiemanagers.",
+  preview: false,
+});
+if (!window.customCards.some(c => c.type === "smartify-energy-pv-card")) window.customCards.push({
+  type: "smartify-energy-pv-card",
+  name: "SEP PV-Flächen",
+  description: "PV-Flächen des smartify Energiemanagers auf dem Luftbild einzeichnen (Ausrichtung, Neigung, Leistung).",
   preview: false,
 });
 console.info(`%c SMARTIFY-ENERGY-PLAN-CARD %c v${CARD_VERSION} `, "background:#00ACC1;color:#fff", "background:#333;color:#fff");

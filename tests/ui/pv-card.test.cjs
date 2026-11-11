@@ -1,0 +1,131 @@
+// PV surface editor card (custom:smartify-energy-pv-card)
+const {test} = require('node:test');
+const assert = require('node:assert/strict');
+const {JSDOM} = require('jsdom');
+const fs = require('node:fs');
+const source = fs.readFileSync('custom_components/smartify_energy/www/smartify-energy-plan-card.js', 'utf8');
+
+const LAT = 47.98, LON = 13.25, M_LAT = 1 / 111320, M_LON = M_LAT / 0.6692;
+const pt = (e, n) => [LAT + n * M_LAT, LON + e * M_LON];
+const RECT = [pt(0, 0), pt(10, 0), pt(10, 6), pt(0, 6)];
+
+function load() {
+  const dom = new JSDOM('<div id="root"></div>', {runScripts: 'outside-only', pretendToBeVisual: true});
+  let n = 0;
+  dom.window.URL.createObjectURL = () => `blob:tile-${++n}`;
+  dom.window.URL.revokeObjectURL = () => {};
+  dom.window.eval(source + '\nwindow.pv={pvSurfaceAzimuth,pvDefaultEdge,pvAreaM2,pvKwp};');
+  return dom;
+}
+const tick = () => new Promise(r => setTimeout(r, 0));
+
+test('azimuth from drawing matches the Python implementation', () => {
+  const {pv} = load().window;
+  const near = (a, b) => assert.ok(Math.abs(a - b) <= 0.5, `${a} != ${b}`);
+  near(pv.pvSurfaceAzimuth({kind: 'area', points: RECT, edge: 0}, 19), 180);
+  near(pv.pvSurfaceAzimuth({kind: 'area', points: RECT, edge: 1}, 19), 90);
+  near(pv.pvSurfaceAzimuth({kind: 'area', points: RECT, edge: 3}, 19), 270);
+  near(pv.pvSurfaceAzimuth({kind: 'area', points: RECT, edge: 0, flip: true}, 19), 0);
+  near(pv.pvSurfaceAzimuth({kind: 'area', points: [...RECT].reverse(), edge: 2}, 19), 180);
+  near(pv.pvSurfaceAzimuth({kind: 'line', points: [pt(0, 0), pt(10, 0)]}, 19), 180);
+  near(pv.pvSurfaceAzimuth({kind: 'line', points: [pt(0, 0), pt(10, 0)], flip: true}, 19), 0);
+  near(pv.pvSurfaceAzimuth({kind: 'area', points: [pt(0, 0), pt(7.07, 7.07), pt(2.83, 11.31), pt(-4.24, 4.24)], edge: 0}, 19), 135);
+  assert.equal(pv.pvSurfaceAzimuth({kind: 'manual', azimuth: 265}, 19), 265);
+  assert.equal(pv.pvDefaultEdge(RECT, 19), 0);
+  assert.ok(Math.abs(pv.pvAreaM2(RECT, 19) - 60) < 1.5);
+  assert.equal(pv.pvKwp({input: 'modules', modules: 8, module_wp: 380}), 3.04);
+  assert.equal(pv.pvKwp({input: 'kwp', kwp: 2.66}), 2.66);
+});
+
+function card(dom, {admin = true, map = null, surfaces} = {}) {
+  const calls = [];
+  const layout = {entry_id: 'e1', solar_mode: 'calculated', max_surfaces: 4, home: {lat: LAT, lon: LON},
+    zoom: {default: 19, min: 17, max: 20}, attribution: 'Luftbild: basemap.at (CC BY 4.0)', map,
+    surfaces: surfaces ?? [{id: 's1', name: 'Fläche 1', kind: 'manual', points: [], edge: 0, flip: false, tilt: 90,
+      azimuth: 190, input: 'kwp', kwp: 3.04, modules: 0, module_wp: 0, area_m2: null}]};
+  const hass = {user: {is_admin: admin}, callWS: async msg => {
+    calls.push(msg);
+    if (msg.type === 'smartify_energy/pv_layout') return JSON.parse(JSON.stringify(layout));
+    if (msg.type === 'smartify_energy/pv_layout/save') return {surfaces: msg.surfaces, total_kwp: 1};
+    if (msg.type === 'smartify_energy/pv_map/reload') throw new Error('offline');
+  }};
+  const el = dom.window.document.createElement('smartify-energy-pv-card');
+  dom.window.document.body.append(el);
+  el.setConfig({title: 'PV-Flächen'});
+  el.hass = hass;
+  return {el, calls};
+}
+
+test('legacy surfaces are editable, saving sends the edited surfaces', async () => {
+  const dom = load();
+  dom.window.confirm = () => true;
+  const {el, calls} = card(dom);
+  await tick(); await tick();
+  const root = el.shadowRoot;
+  assert.match(root.textContent, /nicht eingezeichnet/);
+  assert.equal(root.querySelector('[data-f="azimuth"]').value, '190');
+  // switch to modules × Wp
+  const sel = root.querySelector('[data-f="input"]');
+  sel.value = 'modules'; sel.dispatchEvent(new dom.window.Event('change'));
+  const mods = root.querySelector('[data-f="modules"]'), wp = root.querySelector('[data-f="module_wp"]');
+  assert.ok(mods && wp, 'modules and Wp inputs shown');
+  mods.value = '8'; mods.dispatchEvent(new dom.window.Event('change'));
+  root.querySelector('[data-f="module_wp"]').value = '380';
+  root.querySelector('[data-f="module_wp"]').dispatchEvent(new dom.window.Event('change'));
+  assert.match(root.querySelector('.surf .chip').textContent, /3,04 kWp/);
+  assert.match(root.textContent, /nicht gespeichert/);
+  root.querySelector('[data-act="save"]').click();
+  await tick(); await tick();
+  const save = calls.find(c => c.type === 'smartify_energy/pv_layout/save');
+  assert.deepEqual(JSON.parse(JSON.stringify(save.surfaces.map(s => [s.input, s.modules, s.module_wp, s.azimuth]))), [['modules', 8, 380, 190]]);
+  assert.match(root.textContent, /Gespeichert/);
+});
+
+test('first open without stored photo downloads it once, failure is shown and grid stays usable', async () => {
+  const dom = load();
+  const {el, calls} = card(dom);
+  await tick(); await tick(); await tick();
+  assert.equal(calls.filter(c => c.type === 'smartify_energy/pv_map/reload').length, 1);
+  assert.match(el.shadowRoot.textContent, /offline/);
+  assert.match(el.shadowRoot.textContent, /kein Luftbild/);
+  el.hass = el._hass;   // further hass updates never reload
+  await tick();
+  assert.equal(calls.filter(c => c.type === 'smartify_energy/pv_map/reload').length, 1);
+});
+
+test('stored photo is not downloaded again and drawn area shows azimuth arrow and eave', async () => {
+  const dom = load();
+  const map = {lat: LAT, lon: LON, zoom: 19, fetched: '2026-11-11T10:00:00Z', attribution: 'Luftbild: basemap.at (CC BY 4.0)',
+    tiles: [{x: 1, y: 1, data: '/9j/'}]};
+  const {el, calls} = card(dom, {map, surfaces: [{id: 'a', name: 'Süd', kind: 'area', points: RECT, edge: 0, flip: false,
+    tilt: 35, azimuth: 180, input: 'kwp', kwp: 5, modules: 0, module_wp: 0, area_m2: 60}]});
+  await tick(); await tick();
+  assert.equal(calls.filter(c => c.type === 'smartify_energy/pv_map/reload').length, 0);
+  const root = el.shadowRoot;
+  assert.ok(root.querySelector('polygon[data-surface="a"]'));
+  assert.equal(root.querySelector('svg image').getAttribute('href'), 'blob:tile-1');
+  assert.match(root.querySelector('svg text').textContent, /180° S/);
+  assert.match(root.textContent, /Luftbild neu laden/);
+  assert.match(root.textContent, /basemap\.at/);
+});
+
+test('non-admin users see the layout read-only', async () => {
+  const dom = load();
+  const {el, calls} = card(dom, {admin: false});
+  await tick(); await tick();
+  const root = el.shadowRoot;
+  assert.equal(calls.filter(c => c.type !== 'smartify_energy/pv_layout').length, 0);
+  assert.equal(root.querySelector('[data-act="save"]'), null);
+  assert.ok(root.querySelector('[data-f="tilt"]').disabled);
+  assert.match(root.textContent, /Nur Administratoren/);
+});
+
+test('hass setter never throws even if the backend is missing', async () => {
+  const dom = load();
+  const el = dom.window.document.createElement('smartify-energy-pv-card');
+  dom.window.document.body.append(el);
+  el.setConfig({});
+  assert.doesNotThrow(() => { el.hass = {user: {is_admin: true}, callWS: async () => { throw new Error('unknown command'); }}; });
+  await tick(); await tick();
+  assert.match(el.shadowRoot.textContent, /konnten nicht geladen werden/);
+});
