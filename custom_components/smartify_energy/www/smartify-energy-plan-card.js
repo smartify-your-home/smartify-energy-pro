@@ -28,7 +28,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.6.1";
+const CARD_VERSION = "1.6.2";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -621,6 +621,7 @@ const CARD_CSS = `
   .pv-compare-toggle span:last-child{margin-left:auto;color:var(--secondary-text-color);font-size:12px}
   .pv-compare-body{padding:10px 8px 14px;background:color-mix(in srgb,var(--row-bg) var(--sep-surface-opacity,100%),transparent);border-radius:var(--radius)}
   .pv-compare-totals{display:flex;gap:14px;flex-wrap:wrap;padding:5px 0 13px}
+  .pv-compare-selected-day{flex:0 0 100%;font-weight:600;font-size:13px;color:var(--primary-text-color)}
   .pv-compare-totals>div{min-width:75px;display:flex;flex-direction:column;gap:3px}
   .pv-compare-totals small{color:var(--secondary-text-color);font-size:11px}
   .pv-compare-totals strong{font-size:16px;font-variant-numeric:tabular-nums}
@@ -693,6 +694,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._grpClosed = new Set();  // geschlossene, standardmäßig offene Gruppen
     this._boostUntil = {};
     this._pvCompareOpen = false;
+    this._pvCompareDay = null;
   }
 
   static getConfigElement() { return document.createElement("smartify-energy-plan-card-editor"); }
@@ -1232,7 +1234,10 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const dayHead = days.map(day=>{
       const pct=day.compared && day.expected>0 ? (day.actual/day.expected-1)*100:null;
       const label=new Date(day.key+"T12:00:00").toLocaleDateString("de-AT",{weekday:"short",day:"2-digit",month:"2-digit"});
-      return `<div class="pv-compare-day" style="width:${day.count*unitWidth-5}px" title="${esc(day.key)} · ${day.compared} verglichene Stunden${day.incomplete ? " · unvollständig" : ""}">
+      return `<div class="pv-compare-day" data-day="${esc(day.key)}" data-expected-wh="${day.expected}"
+        data-actual-wh="${day.actual}" data-compared="${day.compared}" data-incomplete="${day.incomplete}"
+        data-start="${day.first}" data-count="${day.count}" style="width:${day.count*unitWidth-5}px"
+        title="${esc(day.key)} · ${day.compared} verglichene Stunden${day.incomplete ? " · unvollständig" : ""}">
         ${esc(label)} <small class="${pct===null?"":classify(pct)}">${pct===null?"–":esc(signed(pct))}${day.incomplete?" · bisher":""}</small></div>`;
     }).join("");
     const plotted = rows.map((x,i)=>{
@@ -1252,13 +1257,20 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const time=i%2===0 || starts.has(i) ? local.toLocaleTimeString("de-AT",{timeZone:data.zeitzone || undefined,hour:"2-digit"}) : "";
       return `<span>${esc(time)}</span>`;
     }).join("");
-    const pct=data.abweichung_pct;
-    const deviation=typeof pct==="number" ? signed(pct) : "–";
+    // Summary is always one local day, never the 14-day aggregate from pv_vergleich.
+    // On first expansion default to newest day; a scroll event changes the selected day.
+    const initialDay=days.find(x=>x.key===this._pvCompareDay) || days[days.length-1];
+    const totalPct=initialDay.compared && initialDay.expected > 0
+      ? (initialDay.actual/initialDay.expected-1)*100 : null;
+    const partial=initialDay.incomplete > 0 || initialDay.key===localDay(new Date().toISOString());
+    const labelDate=new Date(initialDay.key+"T12:00:00").toLocaleDateString("de-AT",
+      {weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"});
     return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
       <div class="pv-compare-totals">
-        <div><small>Prognose (vergleichbar)</small><strong>${fmt(data.prognose_kwh)}</strong></div>
-        <div><small>Ist-Erzeugung</small><strong>${fmt(data.ist_kwh)}</strong></div>
-        <div><small>Abweichung (vergleichbare Stunden)</small><strong>${esc(deviation)}</strong></div>
+        <div class="pv-compare-selected-day" data-pv-selected-date>${esc(labelDate)}${partial?" · bisher":""}</div>
+        <div><small>Prognose (vergleichbare Stunden)</small><strong data-pv-day-forecast>${initialDay.compared?fmt(initialDay.expected/1000):"–"}</strong></div>
+        <div><small>Ist-Erzeugung (vergleichbar)</small><strong data-pv-day-actual>${initialDay.compared?fmt(initialDay.actual/1000):"–"}</strong></div>
+        <div><small>Abweichung (Tag)</small><strong data-pv-day-deviation>${totalPct===null?"–":esc(signed(totalPct))}</strong></div>
       </div>
       <div class="sep-axis-layout">
         <div class="sep-y-axis compare" aria-label="PV-Energie je Stunde in kWh">${sepAxisLabels(axisMax,"kWh")}</div>
@@ -1272,9 +1284,10 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         <span><i style="background:var(--warning-color,#e5a21a)"></i>Ursprüngliche Prognose</span>
         <span><i style="background:var(--success-color,#22a06b)"></i>Gemessene Erzeugung</span>
       </div>
-      <div class="pv-compare-note">${Number(data.verglichene_stunden)||0} vollständig verglichene Stunden.
-      Tageswerte mit Messlücken sind als bisher gekennzeichnet. Nur vollständig gemessene Stunden zählen.
-      Fehlende Messzeiten bleiben offen; die Prognose wird rückwirkend nicht überschrieben.</div>
+      <div class="pv-compare-note">Die Werte oben gelten nur für den ausgewählten Tag.
+      Beim Wischen folgt die Tagesauswertung dem sichtbaren Datum. Nur Stunden mit gültigem
+      Ist-Wert und ursprünglicher Prognose werden verglichen. Fehlende Messzeiten bleiben
+      offen; die Prognose wird rückwirkend nicht überschrieben.</div>
     </div>`;
   }
 
@@ -1304,6 +1317,42 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     template.innerHTML = markup;
     patchChildren(this.shadowRoot, template.content);
     this._bind(d);
+    if (this._pvCompareOpen) this._updatePVSelectedDay();
+  }
+
+  _updatePVSelectedDay(scroll=this.shadowRoot.querySelector(".pv-compare-scroll")) {
+    if (!scroll) return;
+    const heads=[...scroll.querySelectorAll(".pv-compare-day[data-day]")];
+    if (!heads.length) return;
+    // Each hourly column occupies 45px. Choose the day at the viewport centre.
+    // Using data-start/count also works before layout sizes are available in jsdom.
+    const centre=scroll.scrollLeft+(scroll.clientWidth || scroll.offsetWidth || 0)/2;
+    const chosen=heads.find(h=>centre >= Number(h.dataset.start)*45 &&
+      centre < (Number(h.dataset.start)+Number(h.dataset.count))*45) ||
+      (centre < Number(heads[0].dataset.start)*45 ? heads[0] : heads[heads.length-1]);
+    if (!chosen) return;
+    const key=chosen.dataset.day;
+    this._pvCompareDay=key;
+    const expected=Number(chosen.dataset.expectedWh);
+    const actual=Number(chosen.dataset.actualWh);
+    const compared=Number(chosen.dataset.compared);
+    const incomplete=Number(chosen.dataset.incomplete);
+    const timeZone=this._st(this._boundData?.ents["sensor:plan"])?.attributes?.pv_vergleich?.zeitzone;
+    const today=new Date().toLocaleDateString("sv-SE",{timeZone:timeZone || undefined});
+    const partial=incomplete>0 || key===today;
+    const date=new Date(key+"T12:00:00").toLocaleDateString("de-AT",
+      {weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"});
+    const format=v=>v.toLocaleString("de-AT",
+      {minimumFractionDigits:2,maximumFractionDigits:2})+" kWh";
+    const forecast=this.shadowRoot.querySelector("[data-pv-day-forecast]");
+    const actualEl=this.shadowRoot.querySelector("[data-pv-day-actual]");
+    const deviation=this.shadowRoot.querySelector("[data-pv-day-deviation]");
+    const heading=this.shadowRoot.querySelector("[data-pv-selected-date]");
+    if (heading) heading.textContent=date+(partial?" · bisher":"");
+    if (forecast) forecast.textContent=compared?format(expected/1000):"–";
+    if (actualEl) actualEl.textContent=compared?format(actual/1000):"–";
+    if (deviation) deviation.textContent=compared && expected>0
+      ? (actual>expected?"+":"")+((actual/expected-1)*100).toFixed(1)+" %" : "–";
   }
 
   _bind(d) {
@@ -1321,7 +1370,10 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         this._render();
         if (this._pvCompareOpen) {
           const scroll = this.shadowRoot.querySelector(".pv-compare-scroll");
-          if (scroll) scroll.scrollLeft = scroll.scrollWidth;
+          if (scroll) {
+            scroll.scrollLeft = scroll.scrollWidth;
+            this._updatePVSelectedDay(scroll);
+          }
         }
       } else if (el.hasAttribute("data-log")) {
         e.stopPropagation();
@@ -1361,6 +1413,9 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         this._hass.callService("button", "press", {entity_id: el.dataset.press});
       } else this._moreInfo(el.dataset.more);
     });
+    root.addEventListener("scroll", e=>{
+      if (e.target?.classList?.contains("pv-compare-scroll")) this._updatePVSelectedDay(e.target);
+    }, true);
     root.addEventListener("change", e => {
       const el = e.target;
       if (el.dataset.select) this._hass.callService(el.dataset.select.split(".")[0], "select_option", {entity_id: el.dataset.select, option: el.value});
