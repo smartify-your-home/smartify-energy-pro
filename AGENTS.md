@@ -1,3 +1,14 @@
+## ⚠️ VERBINDLICH: Laden der Dashboard-Karte (Stand 11.11.2026) – nicht zurückbauen
+
+An den smartify-Repos wird parallel gearbeitet. Diese Regel gilt identisch in `smartify-energy-pro`, `smartify-flow-card`, `smartify-row-card` und `my-weather` und darf von keinem Agenten und keiner Person ohne ausdrückliche Freigabe des Repository-Eigentümers geändert oder „wiederhergestellt“ werden – auch nicht beim Mergen/Rebasen älterer Branches.
+
+1. **Die Karte wird ausschließlich als Lovelace-Ressource geladen** (Storage-Modus, `type: module`, automatisch angelegt/aktualisiert, eigene Duplikate entfernt, Ressourcen-Storage vorher laden).
+2. **Kein `add_extra_js_url` (und kein `extra_module_url`) als regulärer Ladeweg.** Grund: Extra-JS steht im `<head>` der index.html und läuft im Wettlauf mit dem Scoped-Custom-Element-Registry-Polyfill des HA-Frontends. Definiert die Karte ihre Elemente vor dem Polyfill, liefert `customElements.get()` danach nichts mehr und `whenDefined()` löst nie auf → dauerhaft **„Konfigurationsfehler / Custom element doesn't exist“** bis zum Reload. Auf HA 2026.10.4 nachgestellt. Auch eine zusätzliche Ressource mit identischer URL behebt das nicht (Modul wird nicht erneut ausgeführt). Zulässig ist Extra-JS nur als letzter Ersatz, wenn nachweislich keine Storage-Ressource angelegt werden kann (Lovelace-YAML-Modus), mit Log-Hinweis auf den manuellen Eintrag.
+3. **Ressourcen-URL immer versioniert** (`?v=<Version>` bzw. Version+Hash). Wird die Datei mit Cache-Headern ausgeliefert, braucht jede veröffentlichte JS-Änderung eine neue Version.
+4. **Registrierung nur im Event-Loop** (`@callback`/`async def`), bei spät startendem Lovelace wiederholen; fremde Ressourcen nie verändern oder löschen.
+5. `customElements.define` bleibt durch `customElements.get` abgesichert; der `hass`-Setter der Karte darf keine Exception werfen (HA ersetzt die Karte sonst durch „Konfigurationsfehler“).
+6. Vor jedem Push/Merge prüfen: `grep -rn "add_extra_js_url\|extra_module_url" custom_components/` zeigt höchstens den dokumentierten YAML-Fallback. Die zugehörigen Tests dürfen nicht entfernt oder abgeschwächt werden: `tests/ha/test_card_resource.py`.
+
 ## PV-Vergleich 14 Tage (0.3.61)
 - Die bestehende `PVComparison`-Historie und der bestehende Store sind die einzige Quelle für den Ist-/Prognosevergleich. Vorhersagen ausschließlich für Zukunftsstunden einfrieren; fehlende Leistungsmessungen nie als 0 Wh ergänzen. Für Vergleich weiterhin >= 95 % Abdeckung.
 - Die 14-tägige Verlaufsgrafik im `sensor:plan`-Attribut `pv_vergleich` enthält zusätzlich astronomische Sonnenaufgangs-/Sonnenuntergangszeiten pro lokalem Datum aus Home Assistant. UI zeigt die Stunde, wenn sie Tageslicht oder den Puffer von einer Stunde schneidet; andere Nachtstunden nur visuell entfernen.
