@@ -1609,6 +1609,12 @@ const PV_CSS = `
   .address-row input { flex:1 1 200px;width:auto;min-width:140px; }
   .address-row button { flex:0 0 auto }
   .address-hint {font-size:11px;color:var(--secondary-text-color);margin:0 0 6px}
+  .address-results {display:grid;gap:2px;margin:-4px 0 8px;max-height:220px;overflow-y:auto}
+  .address-results:empty {display:none}
+  .address-results button {font:inherit;font-size:13px;text-align:left;min-height:34px;padding:7px 10px;
+    border:1px solid var(--divider-color);border-radius:6px;background:var(--card-background-color);
+    color:var(--primary-text-color);cursor:pointer;overflow-wrap:anywhere}
+  .address-results button:hover,.address-results button:focus-visible {background:var(--secondary-background-color)}
   button.primary { background:var(--primary-color); color:var(--text-primary-color,#fff); border-color:var(--primary-color); }
   button:disabled { opacity:.5; cursor:default; }
   .attr { position:absolute; left:6px; bottom:4px; font-size:10px; color:#fff; text-shadow:0 0 3px #000; pointer-events:none; }
@@ -1650,7 +1656,10 @@ class SmartifyEnergyPvCard extends HTMLElement {
     this._open = new Set();   // aufgeklappte Flächen in der Liste
     this._tileUrls = [];      // Blob-URLs der gespeicherten Kacheln (nicht bei jedem Zeichnen neu einbetten)
     this._refreshTimer = null; // Debounced tile refresh after zoom / pan end.
-    this._address = "";        // User-typed address; no automatic geocoding.
+    this._address = "";
+    this._suggestions = [];
+    this._suggestTimer = null;
+    this._suggestRequest = 0;
     this._mapSource = "home";  // Persist explicit address selection via map metadata.
   }
 
@@ -1749,8 +1758,60 @@ class SmartifyEnergyPvCard extends HTMLElement {
     }
   }
 
+  _renumberDefaultSurfaces() {
+    this._surfaces.forEach((s, i) => {
+      if (/^Fläche [0-9]+$/.test(s.name || "")) s.name = `Fläche ${i + 1}`;
+    });
+  }
+
+  _showAddressSuggestions() {
+    const list = this.shadowRoot?.querySelector("[data-address-results]");
+    if (!list) return;
+    list.innerHTML = this._suggestions.map((s, i) =>
+      `<button type="button" data-suggest="${i}">${esc(s.display_name)}</button>`).join("");
+    list.querySelectorAll("[data-suggest]").forEach(button =>
+      button.addEventListener("click", () => this._chooseAddress(Number(button.dataset.suggest))));
+  }
+
+  _queueSuggestions() {
+    clearTimeout(this._suggestTimer);
+    const seq = ++this._suggestRequest;
+    this._suggestions = [];
+    this._showAddressSuggestions();
+    const query = this._address.trim();
+    if (!this._admin || query.length < 3) return;
+    this._suggestTimer = setTimeout(async () => {
+      if (seq !== this._suggestRequest || this._busy) return;
+      try {
+        const res = await this._ws({type:`${DOMAIN}/pv_map/suggest`,query});
+        if (seq !== this._suggestRequest || this._address.trim() !== query) return;
+        this._suggestions = Array.isArray(res?.results) ? res.results : [];
+        this._showAddressSuggestions();
+      } catch (err) {
+        if (seq === this._suggestRequest) { this._suggestions = []; this._showAddressSuggestions(); }
+      }
+    }, 700);
+  }
+
+  async _chooseAddress(index) {
+    const found = this._suggestions[index];
+    if (!found || this._busy) return;
+    clearTimeout(this._suggestTimer);
+    ++this._suggestRequest;
+    this._address = found.display_name;
+    this._suggestions = [];
+    await this._reloadMap(true, {lat:found.lat,lon:found.lon,
+      zoom:this._data?.zoom?.default ?? 19,source:"address"});
+    if (!this._msg || this._msg.type !== "err")
+      this._setMsg("ok", `Adresse gefunden: ${found.display_name}`);
+    this._render();
+  }
+
   async _searchAddress() {
     if (!this._admin || this._busy) return;
+    clearTimeout(this._suggestTimer);
+    ++this._suggestRequest;
+    this._suggestions = [];
     const address = this._address.trim();
     if (address.length < 4) {
       this._msg = {type:"err",text:"Bitte Straße, Hausnummer und Ort angeben."};
@@ -1850,6 +1911,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
     if (!id) {
       if (this._surfaces.length >= (this._data?.max_surfaces ?? 4)) return;
       id = this._newId();
+      this._renumberDefaultSurfaces();
       this._surfaces.push({ id, name: `Fläche ${this._surfaces.length + 1}`, kind: "manual", points: [], edge: 0, flip: false,
         tilt: kind === "line" ? 90 : 30, azimuth: 180, input: "kwp", kwp: 1, modules: 0, module_wp: 0, area_m2: null, _new: true });
       this._dirty = true;
@@ -1896,7 +1958,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
     this._draw = null;
     if (d) {
       const s = this._surfaces.find(x => x.id === d.id);
-      if (s?._new) this._surfaces = this._surfaces.filter(x => x.id !== d.id);
+      if (s?._new) { this._surfaces = this._surfaces.filter(x => x.id !== d.id); this._renumberDefaultSurfaces(); }
     }
     this._setMsg(null);
     this._render();
@@ -2051,7 +2113,9 @@ class SmartifyEnergyPvCard extends HTMLElement {
         <input type="search" data-map-address placeholder="Adresse, PLZ, Ort suchen"
           aria-label="Adresse für PV-Karte" value="${esc(this._address)}" maxlength="180">
         <button type="button" data-act="address" ${this._busy ? "disabled" : ""}>Adresse suchen</button>
-      </div><div class="address-hint">Adresssuche nur auf Klick (OpenStreetMap/Nominatim). PV-Flächen bleiben erhalten.</div>` : ""}
+      </div><div class="address-results" data-address-results role="listbox" aria-label="Adressvorschläge"></div>
+      <div class="address-hint">Vorschläge nach Tipp-Pause über Photon; manuelle Suche über Nominatim mit Klick/Enter.
+      Suchtext wird an den jeweiligen Anbieter übertragen. PV-Flächen bleiben erhalten.</div>` : ""}
       <div class="bar">
         ${this._draw ? `<button class="primary" data-act="finish">Fertig</button><button data-act="cancel">Abbrechen</button>` : admin ? `
           <button data-act="add-area" ${this._surfaces.length >= max ? "disabled" : ""}>+ Dachfläche</button>
@@ -2094,7 +2158,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
     root.querySelectorAll("button[data-act]").forEach(b => b.addEventListener("click", e => this._action(e.currentTarget.dataset.act, e.currentTarget.closest(".surf")?.dataset.id)));
     const addressInput=root.querySelector("[data-map-address]");
     if (addressInput) {
-      addressInput.addEventListener("input",e=>{this._address=e.target.value;});
+      addressInput.addEventListener("input",e=>{this._address=e.target.value;this._queueSuggestions();});
       addressInput.addEventListener("keydown",e=>{
         if(e.key==="Enter"){e.preventDefault();this._address=e.target.value;this._searchAddress();}
       });
@@ -2107,6 +2171,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
       if (f === "input" && v === "kwp") { const s = this._surfaces.find(x => x.id === id); patch.kwp = Math.round(pvKwp(s) * 1000) / 1000 || 1; }
       this._change(id, patch);
     }));
+    this._showAddressSuggestions();
     this._bindSvg();
   }
 
@@ -2130,7 +2195,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
       case "draw-area": this._startDraw("area", id); break;
       case "draw-line": this._startDraw("line", id); break;
       case "flip": this._change(id, { flip: !s.flip }); break;
-      case "del": if (confirm(`„${s.name}“ löschen?`)) { this._surfaces = this._surfaces.filter(x => x.id !== id); this._dirty = true; this._render(); } break;
+      case "del": if (confirm(`„${s.name}“ löschen?`)) { this._surfaces = this._surfaces.filter(x => x.id !== id); this._renumberDefaultSurfaces(); this._dirty = true; this._render(); } break;
     }
   }
 
