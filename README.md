@@ -233,3 +233,7 @@ PV-Flächeneditor (0.3.74): Beim Löschen Standardnamen fortlaufend neu nummerie
 
 
 Seit 0.3.75 nummeriert der PV-Flächeneditor auch ältere gespeicherte automatisch benannte Flächen beim Öffnen neu und sichert diese Namenskorrektur einmalig; individuelle Namen, Anlagenwerte und Geometrie bleiben unverändert.
+
+
+### Adaptive Live-PV-Prognose (optional, seit v0.3.77)
+Im Prognose-Schritt aktivierbar (Standard **Aus**), nur bei „Eigene Berechnung“ mit echter PV-Erzeugungsleistung für exakt dieselben modellierten PV-Flächen. SEP analysiert ohne externe API die tatsächliche Einstrahlung anhand der Wechselrichterleistung und des Klarhimmel-Modells. Nach mindestens 6 Messwerten über 5 Minuten passt es die nahe Prognose vorsichtig für rund zwei Stunden an. Bei veralteten oder ungültigen Sensorwerten bleibt die Prognose unverändert. Das Attribut `live_pv` des PV-Prognosesensors liefert Zustand, Einstrahlungsindex, Trend und Volatilität. Die historische Ist-/Prognosegrafik bleibt unverändert.
