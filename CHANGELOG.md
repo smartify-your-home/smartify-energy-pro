@@ -1,5 +1,13 @@
 ## Unreleased
 
+## 0.3.71 – 2026-11-11
+
+- PV-Prognose-/Ist-Grafik: Die drei Summenwerte oberhalb der 14-Tage-Grafik zeigen jetzt **ausschließlich den gerade angescrollten Kalendertag**, nicht mehr die Summe der gesamten Vergleichshistorie.
+- Datum mit Wochentag und Markierung „bisher“ bei laufenden oder unvollständig beobachteten Tagen; die Tagesauswertung folgt beim Wischen automatisch dem Datum in der Bildschirmmitte. Anfangsauswahl ist der neueste Tag.
+- Prognose, Ist und Abweichung werden nur aus denselben vollständig vergleichbaren Stunden des ausgewählten Tages gebildet. Bei fehlenden Messungen wird keine Nullproduktion erfunden; Tage ohne vergleichbare Stunden zeigen einen Strich statt irreführender Prozentwerte.
+- Die 14-Tage-Historie, festen kWp-Skalierung, Tagestrennlinien, Prognoseberechnung und Energieregelung bleiben unverändert.
+
+
 ## 0.3.70 – 2026-11-11
 
 - PV-Prognose-/Ist-Grafik: feste Y-Skala aus der **Summe der installierten PV-Peakleistungen** (kWp), unabhängig von einzelnen Stundenwerten der 14-Tage-Historie. 10 % Höhenreserve für Beschriftungen. Fehlende Peakleistung wird nicht durch zufällige historische Höchstwerte ersetzt.

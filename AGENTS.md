@@ -1,3 +1,9 @@
+## PV-Vergleich: Tagesauswertung beim Scrollen (0.3.71)
+- Die Zusammenfassung oberhalb der 14-Tage-Balkengrafik zeigt **nur den ausgewählten lokalen Kalendertag**, niemals `pv_vergleich.prognose_kwh` / `ist_kwh` / `abweichung_pct` (diese Attribute fassen weiterhin sämtliche vergleichbare Stunden der Historie zusammen).
+- Sichtbarer Tag wird beim Öffnen auf den jüngsten Tag gesetzt und beim horizontalen Scrollen anhand der Bildschirmmitte bestimmt. Eine HA-Neuzeichnung darf den Scrollstand nicht verlieren; der bereits vorhandene `patchChildren`-Mechanismus bleibt erhalten. Keine zeitliche Debounce-Verzögerung bei der Tagessumme.
+- Tageswerte verwenden nur Stunden mit vollständiger echter PV-Erzeugungsmessung UND eingefrorener ursprünglicher Stundenprognose. Bei Lücken „bisher“ und keine erfundene Istenergie; `Ist/Prognose-1` nur bei positivem Prognose-Nenner. Die Tagesgrafik bleibt 14 Tage horizontal scrollbar mit fester Peak-Skala.
+- Tests `tests/ui/card.test.cjs` prüfen Tagwechsel, aktuellen Tag, Lücken und Refresh.
+
 ## PV-Vergleich feste Skala und Tageswechsel (0.3.70)
 - Vergleichsgrafik nutzt **fixe Gesamt-PV-Peakleistung**, niemals das historische Maximum. `pv_vergleich.gesamt_peak_kwp` ist der explizit konfigurierbare Gesamtwert inkl. nicht modellierter/Balkon-PV, sonst die Summe der gezeichneten `solar_surfaces`. Eine fehlende Gesamtleistung nicht heimlich mit Messwerten auffüllen.
 - Die Skala ist installierte kWp × 1h (kWh) plus 10 % Textreserve; mit halben kWh aufrunden. `PVComparison`-Stundenwerte bleiben Wh. Prozentwerte befinden sich innerhalb ihrer Stunde direkt über dem höchsten Ist-/Prognosebalken, nicht in einer separaten Zeile.
