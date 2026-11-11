@@ -321,6 +321,12 @@ class EnergyManager:
     def _fc_kwh(self, day_offset: int) -> float | None:
         if not self.forecast.hours:
             return None
+        if day_offset == 0:
+            # Whole day incl. elapsed hours (frozen original forecast), not only
+            # the remaining hours the calculated model still covers.
+            now = dt_util.now()
+            total = self.pv_comparison.day_forecast_wh(self.forecast.hours, now, now.tzinfo)
+            return None if total is None else round(total / 1000, 2)
         day = (dt_util.now() + timedelta(days=day_offset)).date()
         return round(sum(v for k, v in self.forecast.hours.items() if k.date() == day) / 1000, 2)
 

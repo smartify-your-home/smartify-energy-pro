@@ -9,6 +9,9 @@ An den smartify-Repos wird parallel gearbeitet. Diese Regel gilt identisch in `s
 5. `customElements.define` bleibt durch `customElements.get` abgesichert; der `hass`-Setter der Karte darf keine Exception werfen (HA ersetzt die Karte sonst durch „Konfigurationsfehler“).
 6. Vor jedem Push/Merge prüfen: `grep -rn "add_extra_js_url\|extra_module_url" custom_components/` zeigt höchstens den dokumentierten YAML-Fallback. Die zugehörigen Tests dürfen nicht entfernt oder abgeschwächt werden: `tests/ha/test_card_resource.py`.
 
+## PV-Prognose heute = ganzer Tag (0.3.63)
+- `forecast_today` (Sensor „PV-Prognose heute“, Flow-Card „Prog.“) ist die Prognose für den GANZEN lokalen Tag: `PVComparison.day_forecast_wh` – aktuelle Prognosestunden plus eingefrorene Ursprungsprognose für vergangene Stunden, die in `forecast.hours` fehlen (berechneter Modus hat nur ab laufender Stunde Wolkendaten). Nicht wieder auf reine Summe von `forecast.hours` zurückbauen. Live-Werte haben Vorrang, nichts doppelt zählen, keine Werte erfinden. Test: `tests/test_pv_comparison.py` (`DayForecastTests`).
+
 ## PV-Vergleich 14 Tage (0.3.61)
 - Die bestehende `PVComparison`-Historie und der bestehende Store sind die einzige Quelle für den Ist-/Prognosevergleich. Vorhersagen ausschließlich für Zukunftsstunden einfrieren; fehlende Leistungsmessungen nie als 0 Wh ergänzen. Für Vergleich weiterhin >= 95 % Abdeckung.
 - Die 14-tägige Verlaufsgrafik im `sensor:plan`-Attribut `pv_vergleich` enthält zusätzlich astronomische Sonnenaufgangs-/Sonnenuntergangszeiten pro lokalem Datum aus Home Assistant. UI zeigt die Stunde, wenn sie Tageslicht oder den Puffer von einer Stunde schneidet; andere Nachtstunden nur visuell entfernen.

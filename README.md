@@ -48,7 +48,7 @@ type: custom:smartify-energy-plan-card
 
 **Aufbau**
 
-- **Kopf:** Netzsaldo und Steuerbudget (Mittelwert und aktuell), PV-Prognose heute mit Restertrag, Modus des Energiemanagers. Die Kachel „Verteilt“ ist optional (`show_allocated: true`).
+- **Kopf:** Netzsaldo und Steuerbudget (Mittelwert und aktuell), PV-Prognose heute (ganzer Tag: vergangene Stunden aus der ursprünglichen Prognose, ab jetzt aus der aktuellen) mit Restertrag, Modus des Energiemanagers. Die Kachel „Verteilt“ ist optional (`show_allocated: true`).
 - **Prioritätenliste:** je Gerät Status, Leistung und aktuelles Budget an seiner Prioritätsposition. Rechts stehen nur die Bedienelemente, die im aktuellen Zustand wirken:
   - Haushaltsgeräte: **Sofortstart**, **Nachladen**, **Fertig** (setzt die Programmerkennung zurück)
   - E-Auto: **Ladeziel**-Auswahl und Rakete für den **PV-Boost**, Akkustand mit „voll HH:MM“

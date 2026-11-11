@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 0.3.63 – 2026-11-11
+
+- Behoben: „PV-Prognose heute“ zeigte bei eigener Berechnung im Tagesverlauf nur noch die Prognose ab der laufenden Stunde, weil die vergangenen Stunden nicht mehr in der Wolkenprognose enthalten sind. Der Wert schrumpfte so bis zum Abend auf den Restertrag (z. B. 2,5 kWh Tagesprognose bei bereits 3,9 kWh Ertrag).
+- Jetzt: vergangene Stunden des Tages aus der eingefrorenen Ursprungsprognose (dieselbe Quelle wie der Ist-/Prognosevergleich), laufende und künftige Stunden aus der aktuellen Prognose. Fehlt beides, wird nichts ergänzt.
+- Externe Prognosen (Solcast, Forecast.Solar), die vergangene Stunden selbst liefern, bleiben unverändert. `rest_heute_kwh`, `morgen_kwh`, PV-Plan, Kalibrierung, Budget und Regelung unverändert.
+
 ## 0.3.62 – 2026-11-11
 
 - Behoben: Die SEP-Karte zeigte sporadisch dauerhaft „Konfigurationsfehler“ („Custom element doesn't exist: smartify-energy-plan-card“), bis die Seite neu geladen wurde. Ursache war die doppelte Einbindung: Zusätzlich zur Lovelace-Ressource wurde die Karte über `add_extra_js_url` bereits im Seitenkopf geladen. Lief sie dort vor dem Custom-Element-Polyfill des Home-Assistant-Frontends, kannte das Frontend die Karte anschließend nicht mehr.

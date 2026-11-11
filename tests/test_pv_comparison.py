@@ -136,5 +136,41 @@ class PVComparisonTests(unittest.TestCase):
         self.assertEqual(len(model.today(second+timedelta(hours=1),tz)["stunden"]),2)
 
 
+
+class DayForecastTests(unittest.TestCase):
+    """0.3.63: "PV-Prognose heute" covers the whole day, not only the rest."""
+    VIENNA = timezone(timedelta(hours=1))
+
+    def test_elapsed_hours_come_from_frozen_forecast(self):
+        model = PVComparison()
+        day = datetime(2026, 11, 11, 6, tzinfo=UTC)  # 07:00 local
+        model.capture(day - timedelta(hours=1), {day + timedelta(hours=h): w for h, w in
+                                                 enumerate([66.5, 308.1, 471.6, 1030.6, 1174.5])})
+        now = day + timedelta(hours=4, minutes=22)  # 11:22 local, current hour 10 UTC
+        # Live (calculated) forecast only from the current hour onwards, already lowered.
+        live = {day + timedelta(hours=4): 473.0, day + timedelta(hours=5): 499.0,
+                day + timedelta(days=1): 300.0}  # tomorrow must not count
+        total = model.day_forecast_wh(live, now, self.VIENNA)
+        self.assertAlmostEqual(total, 66.5 + 308.1 + 471.6 + 1030.6 + 473.0 + 499.0)
+
+    def test_live_hours_win_and_nothing_is_counted_twice(self):
+        model = PVComparison()
+        h = datetime(2026, 11, 11, 8, tzinfo=UTC)
+        model.capture(h - timedelta(hours=1), {h: 900.0})
+        # External providers deliver elapsed hours themselves: keep their value.
+        total = model.day_forecast_wh({h: 500.0}, h + timedelta(hours=2), self.VIENNA)
+        self.assertEqual(total, 500.0)
+
+    def test_frozen_hours_of_other_days_and_future_are_ignored(self):
+        model = PVComparison()
+        y = datetime(2026, 11, 10, 10, tzinfo=UTC)
+        model.capture(y - timedelta(hours=1), {y: 700.0})
+        now = datetime(2026, 11, 11, 9, 30, tzinfo=UTC)
+        model.capture(now - timedelta(minutes=40), {now.replace(minute=0) + timedelta(hours=1): 50.0})
+        self.assertEqual(model.day_forecast_wh({now.replace(minute=0): 10.0}, now, self.VIENNA), 10.0)
+
+    def test_no_live_forecast_returns_none(self):
+        self.assertIsNone(PVComparison().day_forecast_wh({}, datetime(2026, 11, 11, tzinfo=UTC), self.VIENNA))
+
 if __name__=="__main__":
     unittest.main()
