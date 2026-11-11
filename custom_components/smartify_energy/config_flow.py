@@ -59,6 +59,7 @@ from .const import (
     CONF_SINK_SENSORS,
     CONF_SOC_SENSOR,
     CONF_SOLAR_CALIBRATION_ENABLED,
+    CONF_SOLAR_LIVE_ADAPT_ENABLED,
     CONF_SOLAR_CLOUD_ENTITY,
     CONF_SOLAR_MODE,
     CONF_SOLAR_PV_POWER_ENTITY,
@@ -151,6 +152,7 @@ def _forecast_schema(d: dict, options: list[dict[str, str]]) -> vol.Schema:
     )
     fields[_opt(CONF_SOLAR_CLOUD_ENTITY, d)] = _ent("sensor")
     fields[_req(CONF_SOLAR_CALIBRATION_ENABLED, d, False)] = sel.BooleanSelector()
+    fields[_req(CONF_SOLAR_LIVE_ADAPT_ENABLED, d, False)] = sel.BooleanSelector()
     fields[_opt(CONF_SOLAR_PV_POWER_ENTITY, d)] = _ent("sensor", "power")
     fields[_opt(CONF_PV_TOTAL_PEAK_KWP, d)] = _num(0.1, 500, 0.1, "kWp")
     # PV surfaces are drawn in the dashboard (card "smartify-energy-pv-card"),
@@ -196,7 +198,8 @@ class _HubSteps:
                         errors={CONF_SOLAR_CLOUD_ENTITY: "required"},
                     )
             if (user_input.get(CONF_SOLAR_MODE) == "calculated"
-                    and user_input.get(CONF_SOLAR_CALIBRATION_ENABLED)
+                    and (user_input.get(CONF_SOLAR_CALIBRATION_ENABLED)
+                         or user_input.get(CONF_SOLAR_LIVE_ADAPT_ENABLED))
                     and not user_input.get(CONF_SOLAR_PV_POWER_ENTITY)):
                 return self.async_show_form(
                     step_id="forecast",
