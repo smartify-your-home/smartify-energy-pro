@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 0.3.67 – 2026-11-11
+
+- Behoben: Einzelne Luftbildkacheln wurden nur teilweise gespeichert und erschienen als graue Flächen. Ursache war das Lesen der Antwort (nur der bereits empfangene Teil statt der ganzen Datei), nicht basemap.at; die Erklärung in 0.3.66 war falsch. Jetzt wird die vollständige Datei gelesen und nur ein vollständiges JPEG gespeichert, sonst bleibt das alte Luftbild erhalten.
+- Bereits gespeicherte Luftbilder mit grauen Flecken über „Luftbild neu laden“ erneuern.
+
 ## 0.3.66 – 2026-11-11
 
 - Behoben: Beim Laden des Luftbilds lieferte basemap.at bei 25 gleichzeitigen Anfragen einzelne dunkle Ersatzkacheln. Die Kacheln werden jetzt höchstens zu zweit mit kurzer Pause abgerufen (Dauer einige Sekunden). Bereits geladene Luftbilder mit dunklen Flecken über „Luftbild neu laden“ erneuern.
