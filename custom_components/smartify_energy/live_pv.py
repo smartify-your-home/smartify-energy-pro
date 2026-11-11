@@ -7,7 +7,7 @@ persistent live samples. Never classifies fog vs overcast as a certainty.
 from __future__ import annotations
 
 from collections import deque
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from math import isfinite
 from statistics import median, pstdev
 
@@ -40,7 +40,7 @@ class LivePVEstimator:
             kwp = float(s.get("kwp") or 0)
             if kwp <= 0:
                 continue
-            tilt, az = float(s.get("tilt") or 0), float(s.get("azimuth") or 180)
+            tilt, az = float(s.get("tilt") or 0), float(s.get("azimuth", 180))
             poa = _clear_sky_poa(now, self.latitude, self.longitude, tilt, az)
             bifaciality = float(s.get("bifaciality") or 0)
             if 0 < bifaciality <= 1:
@@ -101,8 +101,6 @@ class LivePVEstimator:
                 or now - self.last_sample > MAX_SAMPLE_AGE or self.volatility is None
                 or self.volatility > 0.5):
             return result
-        from datetime import UTC
-
         hour_now = now.astimezone(UTC).replace(minute=0, second=0, microsecond=0)
         clear = pv_hours(now, self.latitude, self.longitude, self.surfaces,
                          {h: 0.0 for h in base_hours})
