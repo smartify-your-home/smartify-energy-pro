@@ -107,7 +107,7 @@ async def test_map_is_downloaded_once_and_kept_on_failure(hass, hass_ws_client, 
 
     client = await hass_ws_client(hass)
     with patch.object(pv_websocket, "_download_tile", counting), patch.object(pv_websocket, "TILE_PAUSE", 0):
-        await client.send_json_auto_id({"type": "smartify_energy/pv_map/reload"})
+        await client.send_json_auto_id({"type": "smartify_energy/pv_map/reload", "source": "address"})
         msg = await client.receive_json()
     assert peak <= pv_websocket.TILE_PARALLEL  # no burst of 25 parallel requests
     assert msg["success"], msg
@@ -119,6 +119,7 @@ async def test_map_is_downloaded_once_and_kept_on_failure(hass, hass_ws_client, 
     await client.send_json_auto_id({"type": "smartify_energy/pv_layout"})
     result = (await client.receive_json())["result"]
     assert len(result["map"]["tiles"]) == 25 and aioclient_mock.call_count == 25
+    assert result["map"]["source"] == "address", "explicit address choice survives reopening"
 
     # Failed reload (outside Austria / offline) keeps the stored photo.
     aioclient_mock._mocks.clear()
@@ -147,3 +148,23 @@ async def test_truncated_tile_is_rejected_and_old_photo_kept(hass, hass_ws_clien
     await client.send_json_auto_id({"type": "smartify_energy/pv_map/reload"})
     msg = await client.receive_json()
     assert not msg["success"] and "vollständige" in msg["error"]["message"]
+
+
+async def test_address_geocode_search_and_cache(hass, hass_ws_client, aioclient_mock):
+    """Search only on WS request and cache lookup to avoid repeated provider hits."""
+    import re
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    aioclient_mock.get(re.compile(r"https://nominatim\\.openstreetmap\\.org/search.*"),
+                       json=[{"lat": "48.208", "lon": "16.373", "display_name": "Wien, Österreich"}])
+    await client.send_json_auto_id({"type": "smartify_energy/pv_map/geocode",
+                                    "address": "Wien, Österreich"})
+    response = await client.receive_json()
+    assert response["success"], response
+    assert response["result"]["lat"] == 48.208
+    assert response["result"]["lon"] == 16.373
+    assert aioclient_mock.call_count == 1
+    await client.send_json_auto_id({"type": "smartify_energy/pv_map/geocode",
+                                    "address": "Wien, Österreich"})
+    assert (await client.receive_json())["success"]
+    assert aioclient_mock.call_count == 1, "cached query must not hit Nominatim again"
