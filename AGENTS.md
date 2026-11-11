@@ -83,7 +83,7 @@ Stand dieser Übergabe: Quellcode 0.3.34, 31.10.2026. Ausgangspunkt war main 87f
 - Optimistische Prioritätssortierung mit sofortiger Anzeige, zusammengefasster Backend-Übernahme und Fehler-Rollback. Sensor-Debounce bleibt für normale Messwertänderungen erhalten.
 
 ## Stand 0.3.38 – Card-Einbindung
-- Card wird zweifach mit identischer URL eingebunden: `add_extra_js_url` und Lovelace-Storage-Ressource (`_async_ensure_lovelace_resource`, nach `homeassistant_started`). Grund: Extra-JS steht fest in der beim Seitenaufruf geladenen index.html und fehlt, wenn das Dashboard vor SEP-Setup geladen wurde → „Konfigurationsfehler“. Beide Wege erhalten; `customElements.define` bleibt durch `customElements.get` abgesichert.
+- **Geändert in 0.3.62:** Card wird NUR noch als Lovelace-Storage-Ressource eingebunden (`_async_ensure_lovelace_resource`, nach `homeassistant_started`). `add_extra_js_url` NICHT wieder zusätzlich aktivieren: Extra-JS steht im `<head>` der index.html und läuft im Wettlauf mit dem Scoped-Custom-Element-Registry-Polyfill des HA-Frontends. Definiert die Card ihre Elemente vor dem Polyfill, liefert `customElements.get()` danach nichts mehr und `whenDefined()` löst nie auf → dauerhaft „Konfigurationsfehler / Custom element doesn't exist“ bis zum Reload (am 11.11.2026 auf HA 2026.10.4 nachgestellt). Die identische Ressourcen-URL hilft dann nicht, weil das Modul nicht erneut ausgeführt wird. Extra-JS ist nur noch Ersatz, wenn nach allen Versuchen keine Storage-Ressource möglich ist (YAML-Modus, `_async_extra_js_fallback`). Tests: `test_async_setup_registers_without_thread_errors` (kein Extra-JS), `test_yaml_mode_falls_back_to_extra_js`. `customElements.define` bleibt durch `customElements.get` abgesichert.
 - 0.3.44: Registrierung nur im Event-Loop. Event-Listener und Timer-Callbacks, die `hass.async_*` aufrufen, MÜSSEN `@callback` oder `async def` sein – eine normale `def`-Funktion führt HA im Executor-Thread aus (`RuntimeError` thread-safety). Wiederholungen über `asyncio.sleep` in einer `hass.async_create_background_task`. Test: tests/ha/test_card_resource.py.
 
 ## Kompakte Gerätezeilen (nach 0.3.38)
@@ -102,7 +102,7 @@ Stand dieser Übergabe: Quellcode 0.3.34, 31.10.2026. Ausgangspunkt war main 87f
 - Fehlende Lovelace-Ressource nach HA-Start nicht still ignorieren; bei später bereitgestelltem Lovelace mit begrenzten Wiederholungsversuchen nachregistrieren. Frühere Hash-URL sowie idempotente Ressourcen-Updates erhalten. Fehler protokollieren.
 
 ## Release 0.3.41
-- Lovelace-Registrierung beim Start bei temporärer Nichtverfügbarkeit erneut versuchen; beide bestehenden Ressourcenwege erhalten und Fehler protokollieren. Vor Veröffentlichung alle CI-Jobs prüfen.
+- Lovelace-Registrierung beim Start bei temporärer Nichtverfügbarkeit erneut versuchen und Fehler protokollieren (seit 0.3.62 nur noch Lovelace-Ressource, siehe „Stand 0.3.38 – Card-Einbindung“). Vor Veröffentlichung alle CI-Jobs prüfen.
 
 ## Responsive SEP-Karte (nach 0.3.41)
 - Auf iPhone/iPad bleiben Leistung, Budget, Zahnrad und Aktionen stets in Spalte 5 rechts; keinen mobilen `grid-row:2`-Umbruch für `.right` verwenden. Status und Geräbename links dürfen mehrzeilig umbrechen; Bedienelemente und Drag-Handle bleiben bedienbar.

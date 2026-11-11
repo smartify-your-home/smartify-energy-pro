@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 0.3.62 – 2026-11-11
+
+- Behoben: Die SEP-Karte zeigte sporadisch dauerhaft „Konfigurationsfehler“ („Custom element doesn't exist: smartify-energy-plan-card“), bis die Seite neu geladen wurde. Ursache war die doppelte Einbindung: Zusätzlich zur Lovelace-Ressource wurde die Karte über `add_extra_js_url` bereits im Seitenkopf geladen. Lief sie dort vor dem Custom-Element-Polyfill des Home-Assistant-Frontends, kannte das Frontend die Karte anschließend nicht mehr.
+- Die Karte wird jetzt ausschließlich als Lovelace-Ressource geladen (Storage-Modus, unverändert automatisch angelegt und aktualisiert). Nur wenn keine Ressource angelegt werden kann (Lovelace im YAML-Modus), bleibt die bisherige Frontend-Einbindung als Ersatz aktiv; das Log nennt dann die URL für einen manuellen Ressourceneintrag.
+- Nach dem Update Home Assistant neu starten und Dashboard/App einmal neu laden. Keine Änderung an Regelung, Prognose oder Kartenfunktionen.
+
 ## 0.3.61 – 2026-11-10
 
 - PV-Ist/Prognose-Vergleich: 14 Tage rückwirkende, nach Datum gegliederte Scrollgrafik statt 48 Stunden. Tagesabschnitte mit Datumsüberschriften und senkrechten Trennlinien.

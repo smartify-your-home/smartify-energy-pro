@@ -86,7 +86,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     if getattr(hass, "http", None) is None or "frontend" not in hass.config.components:
         return True
     try:
-        from homeassistant.components.frontend import add_extra_js_url
         from homeassistant.components.http import StaticPathConfig
 
         path = Path(__file__).parent / "www" / CARD_FILE
@@ -97,15 +96,19 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         version = (await async_get_integration(hass, DOMAIN)).version
         card_hash = await hass.async_add_executor_job(_file_hash, path)
         card_url = f"{CARD_URL}?v={version}-{card_hash}"
-        add_extra_js_url(hass, card_url)
     except Exception:  # noqa: BLE001
         _LOGGER.warning("Dashboard-Card konnte nicht registriert werden", exc_info=True)
         return True
 
-    # Additionally keep a Lovelace resource with the identical URL. The frontend
-    # fetches resources on every dashboard load, so the card is present even if
-    # the page was opened before SEP finished starting (extra JS URLs are baked
-    # into index.html at page load). Identical URL → the module executes once.
+    # The card is loaded ONLY as a Lovelace resource. Do not add it via
+    # add_extra_js_url as well: extra JS sits in the <head> of index.html and
+    # races with the frontend's scoped-custom-element-registry polyfill. If the
+    # card defines its elements first, the polyfilled registry never learns
+    # about them (customElements.get() is empty, whenDefined() never resolves)
+    # and the dashboard permanently shows "Konfigurationsfehler / Custom element
+    # doesn't exist" until the page is reloaded. Lovelace resources are loaded
+    # by the frontend itself, i.e. always after the polyfill. Extra JS remains
+    # only a last-resort fallback for Lovelace YAML mode (see retry function).
     # All of this runs in the event loop: listeners are @callback, retries use
     # asyncio.sleep inside one background task (no executor threads).
     if hass.state is CoreState.running:
@@ -141,8 +144,29 @@ async def _async_register_resource_with_retry(hass: HomeAssistant, card_url: str
                             attempt, RESOURCE_ATTEMPTS, exc_info=True)
         if attempt < RESOURCE_ATTEMPTS:
             await asyncio.sleep(delay * attempt)
-    _LOGGER.error("SEP-Card-Ressource nach %s Versuchen nicht registriert: %s", RESOURCE_ATTEMPTS, card_url)
+    _async_extra_js_fallback(hass, card_url)
     return False
+
+
+@callback
+def _async_extra_js_fallback(hass: HomeAssistant, card_url: str) -> None:
+    """No storage-mode resources (Lovelace YAML mode): fall back to extra JS.
+
+    Less robust than a resource (see async_setup); the reliable way in YAML mode
+    is a manual `lovelace: resources:` entry, which the log message points out.
+    """
+    try:
+        from homeassistant.components.frontend import add_extra_js_url
+
+        add_extra_js_url(hass, card_url)
+    except Exception:  # noqa: BLE001
+        _LOGGER.error("SEP-Card-Ressource nach %s Versuchen nicht registriert: %s",
+                      RESOURCE_ATTEMPTS, card_url, exc_info=True)
+        return
+    _LOGGER.warning(
+        "SEP-Card konnte nicht als Lovelace-Ressource registriert werden (YAML-Modus?). "
+        "Sie wird ersatzweise über das Frontend eingebunden; für zuverlässiges Laden bitte "
+        "manuell als Ressource eintragen: %s (type: module)", card_url)
 
 
 async def _async_ensure_lovelace_resource(hass: HomeAssistant, url: str) -> bool:
