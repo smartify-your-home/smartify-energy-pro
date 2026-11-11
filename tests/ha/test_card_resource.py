@@ -95,6 +95,20 @@ async def test_async_setup_registers_without_thread_errors(hass, caplog):
     hass.bus.async_fire(EVENT_HOMEASSISTANT_STARTED)
     await hass.async_block_till_done()
     urls = [i["url"] for i in _ours(res)]
-    assert urls == [extra.call_args.args[1]]
+    assert len(urls) == 1 and urls[0].startswith(f"{CARD_URL}?v=")
     assert "0.3.38-old" not in urls[0]
+    # Regression 0.3.38–0.3.61: extra JS in <head> raced with the frontend's
+    # scoped-registry polyfill → permanent "Konfigurationsfehler".
+    extra.assert_not_called()
     assert "thread other than the event loop" not in caplog.text
+
+
+async def test_yaml_mode_falls_back_to_extra_js(hass):
+    """Without storage-mode resources the card is still made available."""
+    from unittest.mock import patch
+    from custom_components.smartify_energy import _async_register_resource_with_retry
+
+    url = f"{CARD_URL}?v=yaml"
+    with patch("homeassistant.components.frontend.add_extra_js_url") as extra:
+        assert await _async_register_resource_with_retry(hass, url, delay=0) is False
+    extra.assert_called_once_with(hass, url)
