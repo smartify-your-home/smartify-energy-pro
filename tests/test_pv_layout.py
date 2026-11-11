@@ -83,6 +83,15 @@ class ValidationTests(unittest.TestCase):
             with self.subTest(bad=bad), self.assertRaises(ValueError):
                 pv.normalize_surface(bad)
 
+    def test_closing_click_on_start_point_is_not_a_corner(self):
+        closing = [*RECT, pt(0.05, 0.1)]  # 11 cm from the first point
+        s = pv.normalize_surface(self.base(points=closing, edge=4))
+        self.assertEqual(len(s["points"]), 4)
+        self.assertEqual(s["edge"], 0)  # edge 4 no longer exists → default (south)
+        self.assertAlmostEqual(s["azimuth"], 180, delta=0.5)
+        far = [*RECT, pt(-1, 3)]  # a real fifth corner stays
+        self.assertEqual(len(pv.normalize_surface(self.base(points=far))["points"]), 5)
+
     def test_max_four_and_unique_ids(self):
         many = [self.base(id=f"s{i}") for i in range(5)]
         with self.assertRaises(ValueError):

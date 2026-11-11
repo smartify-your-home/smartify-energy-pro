@@ -16,6 +16,7 @@ from typing import Any
 
 CONF_SOLAR_SURFACES = "solar_surfaces"
 MAX_SURFACES = 4  # solar_model uses at most four surfaces
+CLOSE_TOLERANCE_M = 0.3  # last area point this close to the first = closing click
 EARTH_RADIUS = 6378137.0
 KINDS = ("area", "line", "manual")
 INPUTS = ("kwp", "modules")
@@ -219,6 +220,9 @@ def normalize_surface(raw: Any) -> dict[str, Any]:
         if len({tuple(p) for p in points}) != len(points):
             raise ValueError("points: doppelte Punkte")
         xy = _local_xy(points)
+        if kind == "area" and len(points) > 3 and hypot(*xy[-1]) < CLOSE_TOLERANCE_M:
+            # Clicked the start point again to close the polygon: not a corner.
+            points, xy = points[:-1], xy[:-1]
         if max(hypot(x, y) for x, y in xy[1:]) > 2000:
             raise ValueError("points: Fläche größer als 2 km")
         if kind == "area":

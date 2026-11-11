@@ -111,6 +111,11 @@ test('stored photo is not downloaded again and drawn area shows azimuth arrow an
   assert.ok(coords.length && coords.every(v => Math.abs(v) < 1e6), 'svg uses local coordinates');
   assert.ok(root.querySelector('svg').getAttribute('viewBox').split(' ').every(v => Math.abs(Number(v)) < 1e6));
   assert.match(root.querySelector('svg text').textContent, /180° S/);
+  // label sits outside at the arrow tip (south → below the eave), not on the area centroid
+  const label = root.querySelector('svg text.pv-label'), poly = root.querySelector('polygon[data-surface="a"]');
+  const ys = poly.getAttribute('points').split(' ').map(p => Number(p.split(',')[1]));
+  assert.ok(Number(label.getAttribute('y')) > Math.max(...ys), 'south label below the polygon');
+  assert.equal(label.getAttribute('dominant-baseline'), 'hanging');
   assert.match(root.textContent, /Luftbild neu laden/);
   assert.match(root.textContent, /basemap\.at/);
 });
