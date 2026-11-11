@@ -25,6 +25,7 @@ async def test_numeric_total_peak_does_not_register_as_entity(hass):
     entry = await _setup(hass, {
         "solar_mode": "calculated",
         "pv_total_peak_kwp": 10.5,
+        "solar_pv_power_entity": "sensor.pv_power_total",
         "solar_1_kwp": 9.0,
         "solar_2_kwp": 1.5,
     })
