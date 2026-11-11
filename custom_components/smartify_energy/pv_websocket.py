@@ -44,6 +44,10 @@ from .pv_layout import (
 _LOGGER = logging.getLogger(__name__)
 MAX_TILE_BYTES = 600_000
 TILE_TIMEOUT = 15
+# basemap.at answers bursts of parallel requests partly with dark placeholder
+# tiles (observed 11.11.2026: 6 of 25 tiles). Few requests at a time, short pause.
+TILE_PARALLEL = 2
+TILE_PAUSE = 0.15
 
 
 def _map_dir(hass: HomeAssistant, entry_id: str) -> Path:
@@ -186,8 +190,15 @@ async def ws_reload_map(hass: HomeAssistant, connection, msg: dict) -> None:
     zoom = msg.get("zoom", MAP_ZOOM_DEFAULT)
     session = async_get_clientsession(hass)
     grid = tile_grid(lat, lon, zoom, MAP_GRID)
-    results = await asyncio.gather(*(_download_tile(session, zoom, x, y) for x, y in grid),
-                                   return_exceptions=True)
+    limit = asyncio.Semaphore(TILE_PARALLEL)
+
+    async def _limited(x: int, y: int) -> bytes:
+        async with limit:
+            data = await _download_tile(session, zoom, x, y)
+            await asyncio.sleep(TILE_PAUSE)
+            return data
+
+    results = await asyncio.gather(*(_limited(x, y) for x, y in grid), return_exceptions=True)
     failed = [r for r in results if isinstance(r, Exception)]
     if failed:
         _LOGGER.warning("Luftbild: %s von %s Kacheln nicht geladen (%s)", len(failed), len(grid), failed[0])
