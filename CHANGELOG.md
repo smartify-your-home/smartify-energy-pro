@@ -1,5 +1,13 @@
 ## Unreleased
 
+## 0.3.74 – 2026-11-11
+
+- PV-Flächen: Automatische Flächennamen nach Löschen bzw. Zeichnungsabbruch lückenlos neu nummeriert, eigene Namen und stabile IDs bleiben erhalten.
+- Photon-Adressvorschläge ab 3 Zeichen nach 700 ms Tipp-Pause, maximal 5 Treffer, Backend-Cache und mindestens 1,1 Sekunden Anfrageabstand. Explizite Nominatim-Suche bleibt erhalten; kein Nominatim-Autocomplete.
+- Keine Änderungen an Prognose, Steuerung oder Lovelace-Ressourcen.
+
+
+
 ## 0.3.73 – 2026-11-11
 
 - PV-Flächen-Editor: gespeicherte alte Luftbilder mit falschem Mittelpunkt werden beim Öffnen am Home-Assistant-Standort neu geladen. Eine ausdrücklich ausgewählte Adresse oder verschobene Kartenposition bleibt beim erneuten Öffnen erhalten.
