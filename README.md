@@ -197,3 +197,6 @@ Unter dem PV-Plan öffnet die Vergleichsgrafik die letzten 14 Tage. Prognose und
 - [Fehler melden oder Funktionen vorschlagen](https://github.com/smartify-your-home/smartify-energy-pro/issues)
 
 Die Bilder in dieser README zeigen die echte Karte mit Beispieldaten; neu erzeugen mit `npm i --no-save @mdi/js@7.4.47 @fontsource/roboto@5.1.0 && node scripts/readme_images.cjs . docs/images`.
+
+
+PV-Flächeneditor (0.3.74): Beim Löschen Standardnamen fortlaufend neu nummerieren; eigene Namen bleiben erhalten. Photon-Adressvorschläge nach 700 ms Tipp-Pause, alternativ Nominatim-Suche über Klick/Enter. Suchtext wird an den jeweiligen Anbieter übermittelt.
