@@ -158,3 +158,6 @@ Die Messhistorie wird gespeichert und nach einem kurzen Neustart wiederverwendet
 
 
 PV-Flächeneditor (0.3.74): Automatische Flächennamen werden beim Löschen fortlaufend neu nummeriert, eigene Namen und stabile IDs bleiben. Photon-Adressvorschläge mit Tipp-Pause (bis zu fünf Treffer); Nominatim-Suche nur auf explizite Aktion.
+
+
+0.3.75: PV-Flächeneditor migriert automatisch benannte Bestandsflächen beim Laden und speichert nur bei tatsächlicher Änderung. Peakleistung und PV-Prognosegrafik bleiben unverändert.
