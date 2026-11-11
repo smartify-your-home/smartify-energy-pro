@@ -44,10 +44,9 @@ from .pv_layout import (
 _LOGGER = logging.getLogger(__name__)
 MAX_TILE_BYTES = 600_000
 TILE_TIMEOUT = 15
-# basemap.at answers bursts of parallel requests partly with dark placeholder
-# tiles (observed 11.11.2026: 6 of 25 tiles). Few requests at a time, short pause.
-TILE_PARALLEL = 2
-TILE_PAUSE = 0.15
+# Be polite to the public tile server: a few requests at a time, short pause.
+TILE_PARALLEL = 4
+TILE_PAUSE = 0.05
 
 
 def _map_dir(hass: HomeAssistant, entry_id: str) -> Path:
@@ -93,15 +92,22 @@ async def _download_tile(session, zoom: int, x: int, y: int) -> bytes:
                     if resp.status != 200:
                         last_error = f"HTTP {resp.status}"
                         continue
-                    data = await resp.content.read(MAX_TILE_BYTES + 1)
+                    length = resp.headers.get("Content-Length")
+                    if length and length.isdigit() and int(length) > MAX_TILE_BYTES:
+                        last_error = "Kachel zu groß"
+                        continue
+                    # resp.read() reads the WHOLE body. content.read(n) returns only what is
+                    # buffered and truncated tiles in 0.3.64–0.3.66 (grey patches in the photo).
+                    data = await resp.read()
         except (TimeoutError, OSError) as err:
             last_error = type(err).__name__
             continue
         except Exception as err:  # noqa: BLE001 - aiohttp client errors
             last_error = type(err).__name__
             continue
-        if len(data) > MAX_TILE_BYTES or not data.startswith(b"\xff\xd8"):
-            last_error = "keine gültige Bilddatei"
+        if (len(data) > MAX_TILE_BYTES or not data.startswith(b"\xff\xd8")
+                or not data.rstrip(b"\x00").endswith(b"\xff\xd9")):
+            last_error = "keine vollständige Bilddatei"
             continue
         return data
     raise ValueError(last_error)

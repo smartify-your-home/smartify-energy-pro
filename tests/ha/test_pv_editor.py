@@ -6,7 +6,7 @@ from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 LAT, LON = 47.98, 13.25
-JPEG = b"\xff\xd8\xff\xe0" + b"0" * 100
+JPEG = b"\xff\xd8\xff\xe0" + b"0" * 100 + b"\xff\xd9"
 RECT = [[LAT, LON], [LAT, LON + 0.000134], [LAT + 0.000054, LON + 0.000134], [LAT + 0.000054, LON]]
 
 
@@ -116,3 +116,17 @@ async def test_map_is_downloaded_once_and_kept_on_failure(hass, hass_ws_client, 
     assert await hass.config_entries.async_remove(entry.entry_id)
     await hass.async_block_till_done()
     assert not folder.exists()
+
+
+async def test_truncated_tile_is_rejected_and_old_photo_kept(hass, hass_ws_client, aioclient_mock):
+    """Regression 0.3.64–0.3.66: incomplete tiles were stored and showed as grey patches."""
+    from custom_components.smartify_energy.pv_layout import tile_grid
+    await _setup(hass)
+    for x, y in tile_grid(LAT, LON, 19):
+        for host in ("https://mapsneu.wien.gv.at", "https://maps.wien.gv.at"):
+            aioclient_mock.get(f"{host}/basemap/bmaporthofoto30cm/normal/google3857/19/{y}/{x}.jpeg",
+                               content=JPEG[:60])  # JPEG start but no end marker
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": "smartify_energy/pv_map/reload"})
+    msg = await client.receive_json()
+    assert not msg["success"] and "vollständige" in msg["error"]["message"]
