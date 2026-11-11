@@ -1,5 +1,12 @@
 ## Unreleased
 
+## 0.3.72 – 2026-11-11
+
+- Kritischer Startfehler behoben: Die numerische Gesamt-Peakleistung `pv_total_peak_kwp` war fälschlich in `HUB_ENTITY_FIELDS` eingetragen. Das führte bei Home Assistants Entitätsüberwachung zu `AttributeError: 'float' object has no attribute 'lower'`.
+- Peakleistung bleibt als Zahl für die feste Y-Skala verfügbar, wird aber nicht als Entität überwacht. Integrationstest mit numerischer Peakleistung ergänzt.
+- Keine Änderung an PV-Historie, Prognoseberechnung, Regelung oder Kartenregistrierung.
+
+
 ## 0.3.71 – 2026-11-11
 
 - PV-Prognose-/Ist-Grafik: Die drei Summenwerte oberhalb der 14-Tage-Grafik zeigen jetzt **ausschließlich den gerade angescrollten Kalendertag**, nicht mehr die Summe der gesamten Vergleichshistorie.
