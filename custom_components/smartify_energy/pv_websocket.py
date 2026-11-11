@@ -281,6 +281,73 @@ async def ws_geocode_map(hass: HomeAssistant, connection, msg: dict) -> None:
     connection.send_result(msg["id"], location)
 
 
+
+@websocket_api.websocket_command({
+    vol.Required("type"): f"{DOMAIN}/pv_map/suggest",
+    vol.Optional("entry_id"): str,
+    vol.Required("query"): vol.All(str, vol.Length(min=3, max=180)),
+})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_suggest_map(hass: HomeAssistant, connection, msg: dict) -> None:
+    """Debounced address suggestions via Photon; never autocomplete on Nominatim."""
+    if _entry(hass, msg.get("entry_id")) is None:
+        connection.send_error(msg["id"], "not_found", "Kein geladener Energiemanager gefunden")
+        return
+    query = " ".join(msg["query"].split())
+    if len(query) < 3:
+        connection.send_result(msg["id"], {"results": []})
+        return
+    key = query.casefold()
+    cache = hass.data.setdefault(f"{DOMAIN}_pv_suggest_cache", {})
+    if key in cache:
+        connection.send_result(msg["id"], {"results": cache[key]})
+        return
+    lock = hass.data.setdefault(f"{DOMAIN}_pv_suggest_lock", asyncio.Lock())
+    async with lock:
+        if key in cache:
+            connection.send_result(msg["id"], {"results": cache[key]})
+            return
+        stamp_key = f"{DOMAIN}_pv_suggest_last"
+        elapsed = time.monotonic() - hass.data.get(stamp_key, 0)
+        if elapsed < 1.1:
+            await asyncio.sleep(1.1 - elapsed)
+        hass.data[stamp_key] = time.monotonic()
+        try:
+            async with asyncio.timeout(10):
+                async with async_get_clientsession(hass).get(
+                    "https://photon.komoot.io/api/",
+                    params={"q": query, "limit": 5, "lang": "de",
+                            "lat": hass.config.latitude, "lon": hass.config.longitude},
+                    headers={"User-Agent": "SmartifyEnergyPro/1.0 (https://github.com/smartify-your-home/smartify-energy-pro)"},
+                ) as response:
+                    if response.status != 200:
+                        raise ValueError(f"Photon HTTP {response.status}")
+                    payload = await response.json()
+            suggestions = []
+            for feature in payload.get("features", [])[:5]:
+                props = feature.get("properties", {})
+                coords = feature.get("geometry", {}).get("coordinates", [])
+                if len(coords) < 2:
+                    continue
+                lon, lat = float(coords[0]), float(coords[1])
+                if not (-85 <= lat <= 85 and -180 <= lon <= 180):
+                    continue
+                label = ", ".join(str(props[k]) for k in
+                                  ("name", "housenumber", "street", "postcode", "city", "state", "country")
+                                  if props.get(k))
+                if label:
+                    suggestions.append({"lat": lat, "lon": lon, "display_name": label[:240]})
+        except Exception as err:  # noqa: BLE001 - optional search
+            _LOGGER.warning("Photon-Adressvorschläge nicht verfügbar (%s)", type(err).__name__)
+            connection.send_result(msg["id"], {"results": []})
+            return
+        if len(cache) >= 100:
+            cache.clear()
+        cache[key] = suggestions
+        connection.send_result(msg["id"], {"results": suggestions})
+
+
 @callback
 def async_register(hass: HomeAssistant) -> None:
     """Register once per Home Assistant instance."""
@@ -292,6 +359,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_save_layout)
     websocket_api.async_register_command(hass, ws_reload_map)
     websocket_api.async_register_command(hass, ws_geocode_map)
+    websocket_api.async_register_command(hass, ws_suggest_map)
 
 
 def remove_map(hass: HomeAssistant, entry_id: str) -> None:
