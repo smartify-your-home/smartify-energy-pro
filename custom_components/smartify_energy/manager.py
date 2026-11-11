@@ -42,6 +42,7 @@ from .const import (
     CONF_PV_TOTAL_PEAK_KWP,
     CONF_SINK_SENSORS,
     CONF_SOLAR_CALIBRATION_ENABLED,
+    CONF_SOLAR_LIVE_ADAPT_ENABLED,
     CONF_SOLAR_CLOUD_ENTITY,
     CONF_SOLAR_MODE,
     CONF_SOLAR_PV_POWER_ENTITY,
@@ -56,6 +57,7 @@ from .devices import DEVICE_CLASSES, BaseDevice, Context
 from .devices.base import Decision
 from .forecast import ForecastProvider
 from .helpers import ButtonSpec, ParamSpec, SensorSpec, in_window, power_w, state_float, time_from_str
+from .live_pv import LivePVEstimator
 from .pv_comparison import PVComparison
 from .pv_layout import model_surfaces, surfaces_from_config
 
@@ -97,6 +99,10 @@ class EnergyManager:
         )
         self._store = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}")
         self.pv_comparison = PVComparison()
+        self.live_pv = (LivePVEstimator(float(hass.config.latitude), float(hass.config.longitude),
+                                      self.forecast.solar_config["surfaces"])
+                        if self.cfg.get(CONF_SOLAR_MODE) == "calculated"
+                        and self.cfg.get(CONF_SOLAR_LIVE_ADAPT_ENABLED, False) else None)
         self._history: deque[tuple[datetime, float]] = deque()
         self.trend_delta = 0.0
         self.trend_ready = False
@@ -257,6 +263,8 @@ class EnergyManager:
                            "fehler": self.forecast.error,
                            "prognose_quelle": self.forecast.source_label,
                            "prognose_modus": self.cfg.get(CONF_SOLAR_MODE, "external"),
+                           "live_pv_aktiv": self.live_pv is not None,
+                           "live_pv": self.live_pv.diagnostics(dt_util.now()) if self.live_pv else None,
                            "kalibrierung_aktiv": bool(self.cfg.get(CONF_SOLAR_MODE) == "calculated"
                                                        and self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED)),
                            "kalibrierung": self.forecast.calibration.diagnostics(dt_util.now())
@@ -815,10 +823,29 @@ class EnergyManager:
         if pv_entity:
             # Snapshot before observation; never retrospectively replace forecasts.
             if forecast_due:
-                self.pv_comparison.capture(now, self.forecast.hours)
+                self.pv_comparison.capture(now, self.forecast.base_hours)
             actual_pv_w = power_w(self.hass, pv_entity)
             self.pv_comparison.observe(now, actual_pv_w)
         self._observe_pv_calibration(now)
+        if self.live_pv is not None:
+            # Invalid generation meter disables the correction immediately.
+            actual_live_w = power_w(self.hass, pv_entity) if pv_entity else None
+            if actual_live_w is None:
+                self.live_pv.samples.clear()
+                self.live_pv.index = None
+                self.live_pv.state = "insufficient_data"
+            else:
+                self.live_pv.observe(now, actual_live_w)
+            corrected = self.live_pv.corrected(now, self.forecast.base_hours)
+            if corrected != self.forecast.hours:
+                previous = self.forecast.hours
+                self.forecast.hours = corrected
+                # Replan only on material forecast changes.
+                change = max((abs(corrected[k] - previous.get(k, 0.0))
+                              / max(300.0, previous.get(k, 0.0))
+                              for k in corrected), default=0.0)
+                if change >= 0.05:
+                    plan_due = True
         self._battery_strategy(now)
         bat_discharge = max(-self.battery_power, 0.0)
         # A battery that SEP cannot command is not reclaimable. External
