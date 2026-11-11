@@ -1,3 +1,6 @@
+## PV-Flächennamen – Bestandsdaten (0.3.75)
+Automatische Standardnamen wie „Fläche 3“ und „Fläche 4“ werden bereits beim Öffnen der PV-Karte anhand der aktuellen Reihenfolge automatisch zu „Fläche 1“ und „Fläche 2“. Einmaliges Speichern erfolgt nur bei tatsächlich geänderten Namen. Selbst vergebene Bezeichnungen, Flächen-IDs, PV-Peakleistung und Zeichnungskoordinaten bleiben erhalten.
+
 ## PV-Flächen und Adresssuche (0.3.74)
 Nach dem Löschen werden Standardnamen automatisch fortlaufend neu nummeriert; individuelle Namen und interne IDs bleiben erhalten. Nach mindestens drei Zeichen und kurzer Tipp-Pause zeigt Photon bis zu fünf Adressvorschläge. Auswahl lädt das Luftbild am gewählten Ort. Alternativ bleibt die manuelle Nominatim-Suche per Klick/Enter. Eingegebener Suchtext wird an den jeweiligen Anbieter übertragen.
 
