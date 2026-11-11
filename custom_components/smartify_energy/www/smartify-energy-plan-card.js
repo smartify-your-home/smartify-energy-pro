@@ -1700,14 +1700,14 @@ class SmartifyEnergyPvCard extends HTMLElement {
     this._loading = true;
     try {
       this._data = await this._ws({ type: `${DOMAIN}/pv_layout` });
-      this._mapSource = this._data.map?.source === "address" ? "address" : "home";
+      this._mapSource = ["address","browse"].includes(this._data.map?.source) ? this._data.map.source : "home";
       this._setMap(this._data.map);
       this._surfaces = JSON.parse(JSON.stringify(this._data.surfaces || []));
       this._dirty = false;
       this._resetView();
       const old = this._data.map;
       const home = this._data.home;
-      const mismatched = old && home && old.source !== "address" &&
+      const mismatched = old && home && !["address","browse"].includes(old.source) &&
         (Math.abs(Number(old.lat)-Number(home.lat)) > 0.002 ||
          Math.abs(Number(old.lon)-Number(home.lon)) > 0.002);
       if ((!old || mismatched) && this._admin && !this._autoMap) {
@@ -1800,7 +1800,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
        v.y+v.h > bounds.y0+bounds.h-margin);
     if (requestedZoom===z && !outside) return;
     const center={lat:this._lat(v.y+v.h/2),lon:this._lon(v.x+v.w/2)};
-    this._reloadMap(true,{...center,zoom:requestedZoom,source:this._mapSource});
+    this._reloadMap(true,{...center,zoom:requestedZoom,source:outside ? "browse" : this._mapSource});
   }
 
   _goHome() {
