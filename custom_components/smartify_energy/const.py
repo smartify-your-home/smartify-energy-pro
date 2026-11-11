@@ -18,6 +18,7 @@ CONF_FORECAST_ENTRIES = "forecast_entries"  # Config-Entries mit Energie-Plattfo
 CONF_SOLAR_MODE = "solar_mode"  # external or calculated (My-Weather + roof geometry)
 CONF_SOLAR_CLOUD_ENTITY = "solar_cloud_entity"
 CONF_SOLAR_CALIBRATION_ENABLED = "solar_calibration_enabled"
+CONF_SOLAR_LIVE_ADAPT_ENABLED = "solar_live_adapt_enabled"  # opt-in live irradiance feedback
 CONF_SOLAR_PV_POWER_ENTITY = "solar_pv_power_entity"
 CONF_PV_TOTAL_PEAK_KWP = "pv_total_peak_kwp"  # Optional installed total; includes unmodelled PV installations
 CONF_FORECAST_SENSORS = "forecast_sensors"  # Fallback: Sensoren mit Prognose-Attributen
