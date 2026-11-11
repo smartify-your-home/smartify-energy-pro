@@ -16,7 +16,8 @@ class DryerDevice(LoadDevice):
         if self.cfg.get("dryer_resume", "never") == "yes":
             return specs
         return [s for s in specs if s.key in {
-            "nominal_power", "finish_threshold", "finish_minutes", "duration"
+            "nominal_power", "finish_threshold", "finish_minutes", "duration",
+            "announce_finished", "announce_reminder",
         }]
 
     def button_specs(self):

@@ -10,7 +10,8 @@
           "grid_sign": "[Pflicht] Vorzeichen Netzleistung",
           "sink_sensors": "[Optional] Überschuss-Senken (z. B. Ohmpilot, Heizstab)",
           "interval": "[Pflicht] Regelintervall",
-          "grid_export_sensor": "[Optional] Einspeisung (nur bei getrennten Sensoren)"
+          "grid_export_sensor": "[Optional] Einspeisung (nur bei getrennten Sensoren)",
+          "announce_script": "[Optional] Script für Ansagen"
         },
         "data_description": {
           "name": "**Pflicht:** Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
@@ -18,7 +19,8 @@
           "grid_sign": "**Pflicht:** Welche Zahl zeigt Ihr Netzsensor beim Einspeisen? Positive Zahl: „Einspeisung positiv“. Minuszeichen: „Bezug positiv“. Eine falsche Auswahl vertauscht Überschuss und Netzbezug.",
           "sink_sensors": "**Optional:** Externe Überschuss-Senken wie Ohmpilot oder Heizstab, die sich selbst auf den Überschuss regeln. Ihre Leistung zählt standardmäßig zum Budget der SEP-Geräte (Schalter „Überschuss-Senken weichen aus“); die Senke nimmt nur den Rest. Keine normalen Verbraucher oder doppelte Sensoren eintragen.",
           "interval": "**Pflicht:** Abstand der regelmäßigen Prüfungen in Sekunden. Standard: 30 Sekunden. Sensoränderungen lösen zusätzlich nach etwa 2 Sekunden eine gebündelte Prüfung aus. Mindestlaufzeiten und Pausen gelten trotzdem.",
-          "grid_export_sensor": "**Optional:** Nur bei getrennten Messwerten für Bezug und Einspeisung ausfüllen. Hier kommt die Einspeiseleistung hinein; beide Sensoren müssen positive Werte liefern. Die Vorzeichenauswahl wird dann ignoriert."
+          "grid_export_sensor": "**Optional:** Nur bei getrennten Messwerten für Bezug und Einspeisung ausfüllen. Hier kommt die Einspeiseleistung hinein; beide Sensoren müssen positive Werte liefern. Die Vorzeichenauswahl wird dann ignoriert.",
+          "announce_script": "**Optional:** Script, das Ansagen ausgibt, zum Beispiel wenn ein Haushaltsgerät fertig ist. SEP ruft es mit der Variable „message“ auf; wo und wie angesagt wird, legt das Script fest. Leer lassen = keine Ansagen."
         }
       },
       "forecast": {
@@ -74,7 +76,8 @@
           "grid_sign": "[Pflicht] Vorzeichen Netzleistung",
           "sink_sensors": "[Optional] Überschuss-Senken (z. B. Ohmpilot, Heizstab)",
           "interval": "[Pflicht] Regelintervall",
-          "grid_export_sensor": "[Optional] Einspeisung (nur bei getrennten Sensoren)"
+          "grid_export_sensor": "[Optional] Einspeisung (nur bei getrennten Sensoren)",
+          "announce_script": "[Optional] Script für Ansagen"
         },
         "data_description": {
           "name": "**Optional:** Frei wählbarer Anzeigename, zum Beispiel „Haus“, „Waschmaschine“ oder „Warmwasser“. Verwenden Sie eindeutige Namen, damit Sie die Geräte leicht unterscheiden können.",
@@ -82,7 +85,8 @@
           "grid_sign": "**Pflicht:** Welche Zahl zeigt Ihr Netzsensor beim Einspeisen? Positive Zahl: „Einspeisung positiv“. Minuszeichen: „Bezug positiv“. Eine falsche Auswahl vertauscht Überschuss und Netzbezug.",
           "sink_sensors": "**Optional:** Externe Überschuss-Senken wie Ohmpilot oder Heizstab, die sich selbst auf den Überschuss regeln. Ihre Leistung zählt standardmäßig zum Budget der SEP-Geräte (Schalter „Überschuss-Senken weichen aus“); die Senke nimmt nur den Rest. Keine normalen Verbraucher oder doppelte Sensoren eintragen.",
           "interval": "**Pflicht:** Abstand der regelmäßigen Prüfungen in Sekunden. Standard: 30 Sekunden. Sensoränderungen lösen zusätzlich nach etwa 2 Sekunden eine gebündelte Prüfung aus. Mindestlaufzeiten und Pausen gelten trotzdem.",
-          "grid_export_sensor": "**Optional:** Nur bei getrennten Messwerten für Bezug und Einspeisung ausfüllen. Hier kommt die Einspeiseleistung hinein; beide Sensoren müssen positive Werte liefern. Die Vorzeichenauswahl wird dann ignoriert."
+          "grid_export_sensor": "**Optional:** Nur bei getrennten Messwerten für Bezug und Einspeisung ausfüllen. Hier kommt die Einspeiseleistung hinein; beide Sensoren müssen positive Werte liefern. Die Vorzeichenauswahl wird dann ignoriert.",
+          "announce_script": "**Optional:** Script, das Ansagen ausgibt, zum Beispiel wenn ein Haushaltsgerät fertig ist. SEP ruft es mit der Variable „message“ auf; wo und wie angesagt wird, legt das Script fest. Leer lassen = keine Ansagen."
         }
       },
       "forecast": {
@@ -761,6 +765,12 @@
       },
       "heater_earliest_start": {
         "name": "Heizstab frühester Start"
+      },
+      "announce_start": {
+        "name": "Ansagen ab"
+      },
+      "announce_end": {
+        "name": "Ansagen bis"
       }
     },
     "switch": {
@@ -781,6 +791,12 @@
       },
       "boost": {
         "name": "PV-Boost"
+      },
+      "announce_finished": {
+        "name": "Ansage bei Fertig"
+      },
+      "announce_reminder": {
+        "name": "Erinnerung alle 30 Minuten"
       }
     },
     "sensor": {

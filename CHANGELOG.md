@@ -1,5 +1,12 @@
 ## Unreleased
 
+## 0.3.76 – 2026-11-11
+
+- **Ansage für Haushaltsgeräte:** Waschmaschine, Trockner, Geschirrspüler und sonstige Haushaltsgeräte können ansagen, wenn das Programm fertig ist. Je Gerät gibt es die Schalter **Ansage bei Fertig** und **Erinnerung alle 30 Minuten** (beide standardmäßig aus). Die Erinnerung endet mit der Fertig-Taste bzw. einem neuen Programmstart.
+- SEP spricht nicht selbst: In den SEP-Einstellungen (Schritt Netz) wird optional ein **Script für Ansagen** gewählt. SEP ruft es mit der Variable `message` auf, zum Beispiel „Waschmaschine ist fertig.“ Lautsprecher, Sprachausgabe und Lautstärke legt das Script fest.
+- Mit gewähltem Script erscheinen am Hub **Ansagen ab** / **Ansagen bis** (Standard 07:00–22:00; gleiche Zeiten = rund um die Uhr). Wird ein Gerät außerhalb fertig, folgt die Ansage zu Beginn des nächsten Zeitraums, falls es dann noch auf „Fertig“ steht.
+- Die Ansage läuft unabhängig von der Regelung: SEP wartet nicht auf das Script, ein Fehler dort wird nur protokolliert. Keine Änderungen an Programmerkennung, Freigabe, Budget oder Steckdosensteuerung.
+
 ## 0.3.75 – 2026-11-11
 
 - PV-Flächen-Editor: Bereits gespeicherte automatisch benannte Flächen (z. B. „Fläche 3“ und „Fläche 4“) werden beim Öffnen einmalig in die fortlaufende Reihenfolge 1/2 umbenannt und über den bestehenden Speichern-WebSocket persistiert. Nutzerdefinierte Namen, interne IDs, Geometrie und Peakleistung bleiben unverändert.

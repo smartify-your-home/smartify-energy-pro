@@ -93,9 +93,39 @@ Alle Optionen sind auch im grafischen Karteneditor einstellbar.
 6. Ist die **späteste Startzeit** erreicht, gibt SEP das Programm auch ohne PV frei (Pflichtstart, Anzeige „Pflichtstart HH:MM“). Eine bereits eingeschaltete Steckdose bleibt dabei eingeschaltet.
 7. Unterschreitet die Leistung die Fertig-Schwelle lange genug (Standard: unter 5 W für 2 min), gilt das Programm als beendet.
 
+8. Optional sagt SEP das Programmende an (siehe [Ansage bei Programmende](#ansage-bei-programmende)).
+
 **Startschwelle:** mindestens der höhere Wert aus **Nennleistung** und **Mindestüberschuss**.
 
 **Heizpausen-Reservierung:** Nach der ersten abgeschlossenen Heizphase kann ein Teil der Nennleistung für spätere Heizphasen freigegeben werden (**Budgetfreigabe nach Heizphase**, 0 % = volle Reservierung). Der gemessene Verbrauch zählt immer; bei fehlendem Leistungssensor wird die volle Nennleistung reserviert. Mehr Freigabe lässt nachrangige Geräte früher starten, kann aber zu gleichzeitigem Heizen und Netzbezug führen.
+
+### Ansage bei Programmende
+
+Waschmaschine, Trockner, Geschirrspüler und sonstige Haushaltsgeräte können ansagen, wenn sie fertig sind.
+
+1. **Einmalig:** In den SEP-Einstellungen (Zahnrad der Integration, Schritt **Netz**) unter **Script für Ansagen** ein Home-Assistant-Script wählen. SEP ruft es mit der Variable `message` auf, zum Beispiel „Waschmaschine ist fertig.“ Wo und wie laut angesagt wird (Lautsprecher, Sprachausgabe), legt dieses Script fest. Ohne Script gibt es keine Ansagen.
+2. **Je Gerät** im Zahnrad, Gruppe **Ansage**:
+   - **Ansage bei Fertig** – eine Ansage, sobald das Programm fertig ist. Standard: aus.
+   - **Erinnerung alle 30 Minuten** – wiederholt die Ansage („… ist fertig – bitte ausräumen.“), solange das Gerät auf „Fertig“ steht. Endet mit der **Fertig**-Taste oder sobald ein neues Programm erkannt wird. Standard: aus.
+3. **Am Hub:** **Ansagen ab** / **Ansagen bis** (Standard 07:00–22:00) begrenzen die Uhrzeit. Sind beide Zeiten gleich, wird rund um die Uhr angesagt. Wird ein Gerät außerhalb des Zeitraums fertig, folgt die Ansage zu Beginn des nächsten Zeitraums, falls es dann noch auf „Fertig“ steht.
+
+Ein minimales Script, das den Text entgegennimmt:
+
+```yaml
+ansage:
+  fields:
+    message:
+      required: true
+  sequence:
+    - action: tts.speak
+      target:
+        entity_id: tts.piper
+      data:
+        media_player_entity_id: media_player.wohnzimmer
+        message: "{{ message }}"
+```
+
+Die Ansage ist unabhängig von der Regelung: SEP wartet nicht auf das Script, und ein Fehler im Script beeinflusst die Steuerung nicht.
 
 ## E-Auto / Wallbox
 
