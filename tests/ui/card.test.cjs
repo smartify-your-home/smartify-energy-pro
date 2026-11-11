@@ -307,7 +307,7 @@ test('PV plan has an initially collapsed, clickable actual-vs-forecast chart',()
   const entities={plan:{platform:'smartify_energy',translation_key:'plan',device_id:hub,entity_id:'sensor.plan'}};
   const first=new Date().toISOString();
   const states={'sensor.plan':{state:'–',last_updated:first,attributes:{
-    stunden:[],pv_vergleich:{konfiguriert:true,verglichene_stunden:1,
+    stunden:[],pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:2.5,verglichene_stunden:1,
       prognose_kwh:1,ist_kwh:0.8,abweichung_pct:-20,
       stunden:[{zeit:'2026-11-08T08:00:00+00:00',prognose_wh:1000,ist_wh:800},
                {zeit:'2026-11-08T09:00:00+00:00',prognose_wh:1100,ist_wh:null}]}
@@ -361,7 +361,7 @@ test('PV comparison supports a 48h scrollback including missing hours',()=>{
   }));
   card.hass={
     entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
-    states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:true,
+    states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:2.5,
       stunden:slots,prognose_kwh:10,ist_kwh:9,abweichung_pct:-10,verglichene_stunden:35}}}},
     devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}
   };
@@ -410,7 +410,7 @@ test('PV actual-forecast comparison uses fixed left kWh axis while scrolling 48h
   const slots=Array.from({length:48},(_,i)=>({zeit:new Date(start+i*3600000).toISOString(),
     prognose_wh:2500,ist_wh:i<40?2000:null}));
   card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
-    states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:true,
+    states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:2.5,
       stunden:slots,prognose_kwh:90,ist_kwh:72,abweichung_pct:-20,verglichene_stunden:40}}}},
     devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
   card.shadowRoot.querySelector('[data-pvcompare]').click();
@@ -421,9 +421,11 @@ test('PV actual-forecast comparison uses fixed left kWh axis while scrolling 48h
   assert.ok(!scroll.contains(axis),'labels stay visible while chart scrolls');
   assert.equal(root.querySelectorAll('.pv-compare-plot .sep-chart-grid i').length,4);
   assert.equal(axis.querySelectorAll('span').length,5);
-  assert.equal(axis.querySelector('span').textContent,'2,5 kWh');
+  assert.equal(axis.querySelector('span').textContent,'3 kWh');
   assert.equal(axis.querySelector('span:last-child').textContent,'0 kWh');
-  assert.match(root.querySelector('.pv-compare-forecast').getAttribute('style'),/100%/);
+  assert.ok(Math.abs(parseFloat(root.querySelector('.pv-compare-forecast').getAttribute('style').split(':')[1])-83.3333)<0.01);
+  assert.equal(root.querySelectorAll('.pv-compare-day-divider').length,1);
+  assert.equal(root.querySelector('.sep-y-axis.compare').getAttribute('class'),'sep-y-axis compare');
 });
 
 test('PV comparison hides night hours using HA sunrise/sunset, keeps edge hours and day headings',()=>{
@@ -439,7 +441,7 @@ test('PV comparison hides night hours using HA sunrise/sunset, keeps edge hours 
     sonnenaufgang:`2026-11-${String(day).padStart(2,'0')}T07:00:00+01:00`,
     sonnenuntergang:`2026-11-${String(day).padStart(2,'0')}T16:00:00+01:00`}));
   card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
-    states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:true,
+    states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:2.5,
       stunden:slots,tageslicht:sunlight,zeitzone:"Europe/Vienna",prognose_kwh:20,ist_kwh:16,abweichung_pct:-20,verglichene_stunden:20}}}},
     devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
   card.shadowRoot.querySelector('[data-pvcompare]').click();
@@ -447,7 +449,32 @@ test('PV comparison hides night hours using HA sunrise/sunset, keeps edge hours 
   assert.equal(root.querySelectorAll('.pv-compare-col').length,22);
   assert.equal(root.querySelectorAll('.pv-compare-day').length,2);
   assert.equal(root.querySelectorAll('.pv-compare-hour-pct').length,22);
+  assert.equal(root.querySelectorAll('.pv-compare-day-divider').length,1,'each local day switch has a full-height divider');
+  assert.ok(root.querySelector('.pv-compare-col .pv-compare-hour-pct').getAttribute('style').includes('bottom:calc('));
   assert.match(root.querySelector('.pv-compare-hour-pct').textContent,/-20.0 %/);
   assert.match(root.querySelector('.pv-compare-day').textContent,/-20.0 %/);
   assert.equal(root.querySelectorAll('.pv-compare-col.day-start').length,2);
+});
+
+
+test('PV chart uses installed total peak rather than a 14-day historical outlier',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
+  dom.window.document.body.append(card);
+  const hours=[0,1,2].map(i=>({zeit:new Date(Date.parse('2026-11-09T09:00:00+01:00')+i*3600000).toISOString(),
+    prognose_wh:i===2?8000:2000,ist_wh:1200}));
+  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
+    states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:true,
+      gesamt_peak_kwp:10.6,stunden:hours,prognose_kwh:4,ist_kwh:3,abweichung_pct:-25,verglichene_stunden:3}}}},
+    devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  card.shadowRoot.querySelector('[data-pvcompare]').click();
+  const root=card.shadowRoot;
+  assert.equal(root.querySelector('.pv-compare-body .sep-y-axis span').textContent,'12 kWh',
+    '10.6 kWp plus 10% margin rounds to 12 kWh, independent of 8 kWh historical value');
+  assert.equal(root.querySelectorAll('.pv-compare-percentages').length,0);
+  const deviation=root.querySelector('.pv-compare-col .pv-compare-hour-pct');
+  assert.ok(deviation && deviation.getAttribute('style').includes('bottom:calc('));
+  assert.equal(root.querySelectorAll('.pv-compare-col').length,3);
 });

@@ -29,7 +29,8 @@
           "solar_mode": "Prognoseart",
           "solar_cloud_entity": "My-Weather Bewölkungsprognose (bis 48 h)",
           "solar_calibration_enabled": "PV-Prognose automatisch kalibrieren (optional)",
-          "solar_pv_power_entity": "PV-Erzeugungsleistung (W) – echter Wechselrichter-/Erzeugungssensor"
+          "solar_pv_power_entity": "PV-Erzeugungsleistung (W) – echter Wechselrichter-/Erzeugungssensor",
+          "pv_total_peak_kwp": "Installierte PV-Gesamtpeakleistung (alle Anlagen, kWp)"
         },
         "data_description": {
           "forecast_entries": "**Optional:** Wählen Sie die Sonnenstrom-Prognose für Ihre PV-Anlage. Mehrere Dachflächen werden addiert. Jede Fläche nur einmal auswählen, damit der erwartete Ertrag nicht doppelt gezählt wird.",
@@ -37,7 +38,8 @@
           "solar_mode": "Externe Prognose oder Eigenberechnung aus Bewölkung und Geometrie.",
           "solar_cloud_entity": "My-Weather Bewölkungssensor (8 h oder bis zu 48 h) auswählen, kein PV-Energiesensor. Für längere Planung den neuen 48h-Sensor verwenden.",
           "solar_calibration_enabled": "Nur bei eigener PV-Prognose wirksam. Lernt aus echten PV-Messwerten und bleibt standardmäßig aus.",
-          "solar_pv_power_entity": "Echte gesamte PV-Erzeugungsleistung (W), nicht Netzsaldo, Hausverbrauch oder Akkuleistung. Optional für Prognose-Ist-Vergleich unter dem PV-Plan; bei aktivierter Eigenprognose-Kalibrierung erforderlich."
+          "solar_pv_power_entity": "Echte gesamte PV-Erzeugungsleistung (W), nicht Netzsaldo, Hausverbrauch oder Akkuleistung. Optional für Prognose-Ist-Vergleich unter dem PV-Plan; bei aktivierter Eigenprognose-Kalibrierung erforderlich.",
+          "pv_total_peak_kwp": "Optional Summe aller PV-Anlagen einschließlich Balkon-PV. Die Y-Achse bleibt damit unabhängig vom höchsten Stundenwert der 14 Tage. Ohne Eingabe werden die eingezeichneten PV-Flächen summiert."
         },
         "description": "PV-Flächen (Leistung, Neigung, Ausrichtung) für die eigene Berechnung werden im Dashboard eingezeichnet: Karte „SEP PV-Flächen“ (custom:smartify-energy-pv-card)."
       },

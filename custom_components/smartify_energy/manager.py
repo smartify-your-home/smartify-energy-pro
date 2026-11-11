@@ -37,6 +37,7 @@ from .const import (
     CONF_GRID_SENSOR,
     CONF_GRID_SIGN,
     CONF_INTERVAL,
+    CONF_PV_TOTAL_PEAK_KWP,
     CONF_SINK_SENSORS,
     CONF_SOLAR_CALIBRATION_ENABLED,
     CONF_SOLAR_CLOUD_ENTITY,
@@ -64,7 +65,8 @@ HISTORY_SAMPLE_SECONDS = 15
 HISTORY_MAX_GAP = timedelta(seconds=120)
 HUB_ENTITY_FIELDS = (CONF_GRID_SENSOR, CONF_GRID_EXPORT_SENSOR, CONF_BAT_POWER,
                      CONF_BAT_SOC, CONF_SINK_SENSORS, CONF_FORECAST_SENSORS,
-                     CONF_SOLAR_CLOUD_ENTITY, CONF_SOLAR_PV_POWER_ENTITY)
+                     CONF_SOLAR_CLOUD_ENTITY, CONF_SOLAR_PV_POWER_ENTITY,
+                     CONF_PV_TOTAL_PEAK_KWP)
 
 
 class EnergyManager:
@@ -269,7 +271,13 @@ class EnergyManager:
         if not self.cfg.get(CONF_SOLAR_PV_POWER_ENTITY):
             return {"konfiguriert": False, "stunden": [],
                     "hinweis": "Für den Vergleich PV-Erzeugungsleistungssensor in SEP → Prognose auswählen."}
+        # Fixed chart scale from installed STC power (all installations), not a 14-day maximum.
+        # An explicit total also covers balcony arrays or external-forecast systems.
+        surfaces_kwp = sum(float(s.get("kwp") or 0) for s in self.forecast.solar_config.get("surfaces", []))
+        configured_kwp = self.cfg.get(CONF_PV_TOTAL_PEAK_KWP)
+        total_kwp = float(configured_kwp) if configured_kwp else surfaces_kwp
         return {"konfiguriert": True,
+                "gesamt_peak_kwp": round(total_kwp, 3) if total_kwp > 0 else None,
                 **self.pv_comparison.recent(dt_util.utcnow(), 14 * 24),
                 "tageslicht": self._pv_daylight_windows(),
                 "zeitzone": self.hass.config.time_zone}
