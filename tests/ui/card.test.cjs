@@ -423,7 +423,7 @@ test('PV actual-forecast comparison uses fixed left kWh axis while scrolling 48h
   assert.equal(axis.querySelectorAll('span').length,5);
   assert.equal(axis.querySelector('span').textContent,'3 kWh');
   assert.equal(axis.querySelector('span:last-child').textContent,'0 kWh');
-  assert.match(root.querySelector('.pv-compare-forecast').getAttribute('style'),/83\\.33/);
+  assert.ok(Math.abs(parseFloat(root.querySelector('.pv-compare-forecast').getAttribute('style').split(':')[1])-83.3333)<0.01);
   assert.equal(root.querySelectorAll('.pv-compare-day-divider').length,1);
   assert.equal(root.querySelector('.sep-y-axis.compare').getAttribute('class'),'sep-y-axis compare');
 });
