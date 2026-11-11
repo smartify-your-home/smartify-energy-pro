@@ -1,5 +1,14 @@
 ## Unreleased
 
+## 0.3.70 – 2026-11-11
+
+- PV-Prognose-/Ist-Grafik: feste Y-Skala aus der **Summe der installierten PV-Peakleistungen** (kWp), unabhängig von einzelnen Stundenwerten der 14-Tage-Historie. 10 % Höhenreserve für Beschriftungen. Fehlende Peakleistung wird nicht durch zufällige historische Höchstwerte ersetzt.
+- Neue optionale Angabe „Installierte PV-Gesamtpeakleistung“ (alle PV-Anlagen inkl. Balkon-PV) unter SEP → Konfigurieren → Prognose. Ohne Angabe verwendet SEP die Summe der eingezeichneten PV-Flächen.
+- Stundenabweichung direkt über dem höheren der beiden Balken (Ist oder Prognose), mit Abstand. Y-Achse jetzt bündig zur tatsächlichen Balkenfläche; Tag/Datum darüber haben keinen Einfluss auf die Skalierung.
+- Durchgehende, kontrastreichere vertikale Tagestrennlinien auf Höhe von Datum, Balken und Stundenbeschriftung.
+- Keine Änderung an PV-Prognoseberechnung, Kalibrierung, Budget oder Gerätesteuerung.
+
+
 ## 0.3.69 – 2026-11-11
 
 - Neu: **Bifaziale Module** je PV-Fläche („bifazial“ + Bifazialfaktor, Standard 0,7). Die eigene Prognose rechnet die Rückseite mit (Gegenrichtung: direkte Sonne von hinten, Himmel, Bodenreflexion) mal Faktor. Wirkt vor allem bei senkrechten Zäunen/Fassaden; bei einem Westzaun liefert die Rückseite die Morgensonne. Ohne Haken bleibt die Berechnung unverändert. Eine bifaziale Fläche kann mehr als ihre Nennleistung liefern; die Kalibrierung bleibt unverändert.
