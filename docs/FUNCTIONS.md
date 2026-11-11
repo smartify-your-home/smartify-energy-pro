@@ -128,6 +128,7 @@ Nur Haushaltsgeräte und WP-Boost zeigen unter dem Status die Zeit des langen Mi
 
 ## Haushaltsgeräte – SEM v3
 
+- **Ansage bei Programmende (optional):** Beim Wechsel auf „fertig“ ruft SEP das am Hub gewählte Script mit der Variable `message` auf (`script.turn_on`, nicht blockierend). Schalter je Gerät: „Ansage bei Fertig“ und „Erinnerung alle 30 Minuten“. Erinnerungen laufen nur im Zustand „fertig“ und enden mit Reset oder neuem Programm. Hub-Zeiten „Ansagen ab/bis“ (Standard 07:00–22:00, gleiche Zeiten = immer); außerhalb wird nichts als angesagt vermerkt, die Ansage wird später nachgeholt. Texte: Deutsch bei deutscher HA-Sprache, sonst Englisch. Gilt auch für Trockner ohne Wiederanlauf; die Steckdose wird dafür nie geschaltet.
 - Einschalten/Programmstart wird erst nach fünf Sekunden stabiler Erkennung (>9 W oder eingeschaltete Steckdose ohne Sensor) übernommen.
 - Bei >100 W wird die erstmalige Überschuss-Freigabe geprüft. Bei Ablehnung wird abgeschaltet und auf Überschuss, Spätstart oder Sofortfenster gewartet.
 - Heizphasen: > max(200 W, 8 % Nennleistung) während zehn Sekunden; Ende bei <100 W. **Keine starre Sperre anderer Geräte mehr**: Aktuelles und gemitteltes Steuerbudget müssen für die erwartete Heizlast des nächsten Geräts reichen.

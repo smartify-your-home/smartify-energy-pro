@@ -28,6 +28,7 @@ BAT_SIGN_CHARGE_POSITIVE = "charge_positive"
 BAT_SIGN_DISCHARGE_POSITIVE = "discharge_positive"
 CONF_BAT_CAPACITY = "battery_capacity"
 CONF_INTERVAL = "interval"
+CONF_ANNOUNCE_SCRIPT = "announce_script"  # Optional: script.* called with variable "message"
 
 # ── Gerätetypen (Subentries) ─────────────────────────────────────────────────
 TYPE_LOAD = "load"

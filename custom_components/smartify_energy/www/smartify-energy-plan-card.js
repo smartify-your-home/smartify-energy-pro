@@ -92,6 +92,10 @@ const SETTING_HELP = {
   "sinks_yield": "Ein: Die Leistung von Ohmpilot/Heizstab steht den SEP-Geräten zur Verfügung, die Senke nimmt nur den restlichen Überschuss. Voraussetzung: Die Senke regelt sich selbst schnell zurück, sobald Netzbezug droht. Aus: Senken werden nur angezeigt.",
   "nachladen": "Gibt bei einem wartenden Haushaltsgerät die Steckdose frei, damit Sie zum Beispiel Wäsche nachlegen können. Nach dem Ausschalten entscheidet SEP wieder nach Überschuss und Uhrzeit; das Programm kann dann auch sofort freigegeben werden.",
   "latest_start": "Ab dieser Uhrzeit wird ein wartendes Programm auch ohne genügend Solarstrom freigegeben. Es kann dann Netzstrom verbrauchen. Das ist eine Startzeit, keine Fertigzeit.",
+  "announce_finished": "Sagt an, sobald das Programm fertig ist, zum Beispiel „Waschmaschine ist fertig.“ Voraussetzung: In den SEP-Einstellungen (Schritt Netz) ist ein Script für Ansagen gewählt. Wo und wie laut angesagt wird, legt dieses Script fest.",
+  "announce_reminder": "Wiederholt die Ansage alle 30 Minuten, solange das Gerät auf „Fertig“ steht. Endet mit „Fertig“-Taste oder sobald ein neues Programm erkannt wird. Nur wirksam, wenn „Ansage bei Fertig“ eingeschaltet ist.",
+  "announce_start": "Ab dieser Uhrzeit darf SEP ansagen. Wird ein Gerät außerhalb des Zeitraums fertig, folgt die Ansage zu Beginn des nächsten Zeitraums, falls es dann noch auf „Fertig“ steht. Standard 07:00.",
+  "announce_end": "Ab dieser Uhrzeit bleibt SEP still, auch Erinnerungen entfallen. Standard 22:00. Sind beide Zeiten gleich, wird rund um die Uhr angesagt.",
   "night_start": "Beginn des Sofortfensters für Haushaltsgeräte. In diesem Fenster dürfen Programme ohne genügend Solarstrom starten. Beispiel: 22:00 bis 05:00 geht über Mitternacht.",
   "night_end": "Ende des Sofortfensters. Bereits freigegebene Programme laufen weiter. Sind Beginn und Ende gleich, ist das Fenster deaktiviert.",
   "fixed_runtime": "Tägliche Soll-Laufzeit der Poolpumpe, wenn keine Wassertemperatur verfügbar ist. Beispiel: 6 Stunden. Mit gültigem Temperatursensor wird die Laufzeit aus der Temperatur berechnet.",
@@ -166,6 +170,8 @@ const SETTING_SHORT = {
   heater_max_temp: "sofort aus ab", heater_hysteresis: "wieder ein unter Max − Wert", heater_start_surplus: "Überschuss für EIN", heater_stop_surplus: "AUS unter",
   heater_earliest_start: "nicht vor dieser Zeit", heater_min_on: "Mindestlaufzeit", heater_min_off: "Mindestpause",
   avg_window: "Mittelwert über", trend_window: "Trend über", trend_tolerance: "Toleranz für Trend", grid_reserve: "Puffer zum Netz", base_load: "Grundlast im Haus",
+  announce_finished: "bei Programmende ansagen", announce_reminder: "alle 30 min wiederholen",
+  announce_start: "Ansagen ab", announce_end: "Ansagen bis",
   night_start: "Nachtfenster ab", night_end: "Nachtfenster bis", sinks_yield: "Heizstab/Pool weichen Geräten",
   battery_strategy: "wer zuerst PV bekommt", battery_min_soc: "Speicher mindestens", battery_target_soc: "Speicher-Ziel", battery_safety: "Sicherheitsfaktor Prognose",
 };
@@ -180,6 +186,7 @@ const SETTING_GROUPS = [
   { id: "runtime", title: "Laufzeit", keys: ["fixed_runtime", "temp_factor", "runtime_min", "runtime_max", "max_runtime", "winter_temp", "vm_share", "max_per_day", "duration"] },
   { id: "power", title: "Leistung & PV", keys: ["nominal_power", "min_surplus", "heater_start_surplus", "heater_stop_surplus", "grid_reserve", "base_load", "sinks_yield", "pause_budget_release_pct"] },
   { id: "times", title: "Zeiten", keys: ["earliest_start", "latest_start", "heater_earliest_start", "vm_deadline", "lock_enabled", "lock_start", "lock_end", "night_start", "night_end"] },
+  { id: "announce", title: "Ansage", keys: ["announce_finished", "announce_reminder", "announce_start", "announce_end"] },
   { id: "battery", title: "Speicher", keys: ["battery_min_soc", "battery_target_soc", "battery_safety"] },
   { id: "detection", title: "Programm- & Fertigerkennung", collapsed: true, keys: ["detect_threshold", "detect_seconds", "finish_threshold", "finish_minutes"] },
   { id: "weather", title: "Wetterfilter", collapsed: true, keys: ["boost_start_filter", "boost_forecast_hours", "boost_forecast_min_kwh", "cloud_now_max", "cloud_next_max", "sun_filter_active", "sun_angle_min"] },
@@ -195,6 +202,7 @@ const SETTING_LABELS = {
 // Nur anzeigen, wenn die Einstellung im aktuellen Zustand wirkt.
 // state(key) liefert den aktuellen Zustand einer anderen Einstellung desselben Geräts.
 const SETTING_VISIBLE = {
+  announce_reminder: st => st("announce_finished") !== "off",
   deadline: st => st("goal") == null || st("goal") === "km_until",
   target_km: st => st("goal") == null || st("goal") === "km_until",
   lock_start: st => st("lock_enabled") !== "off",

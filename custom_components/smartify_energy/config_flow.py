@@ -22,6 +22,7 @@ from .const import (
     BOOST_NUMBER,
     BOOST_SWITCH,
     CONF_ABSENCE_ENTITY,
+    CONF_ANNOUNCE_SCRIPT,
     CONF_BAT_CAPACITY,
     CONF_BAT_POWER,
     CONF_BAT_SIGN,
@@ -128,6 +129,7 @@ def _grid_schema(d: dict, with_name: bool) -> vol.Schema:
         _opt(CONF_GRID_EXPORT_SENSOR, d): _ent("sensor", "power"),
         _opt(CONF_SINK_SENSORS, d): _ent("sensor", "power", multiple=True),
         _req(CONF_INTERVAL, d, 30): _num(10, 120, 5, "s"),
+        _opt(CONF_ANNOUNCE_SCRIPT, d): _ent("script"),
     })
     return vol.Schema(fields)
 
@@ -268,6 +270,7 @@ class SmartifyEnergyOptionsFlow(_HubSteps, OptionsFlow):
         if user_input is not None:
             self.data.pop(CONF_SINK_SENSORS, None)
             self.data.pop(CONF_GRID_EXPORT_SENSOR, None)
+            self.data.pop(CONF_ANNOUNCE_SCRIPT, None)
             self.data.update(_clean(user_input))
             return await self.async_step_forecast()
         return self.async_show_form(step_id="init", data_schema=_grid_schema(self.data, False))

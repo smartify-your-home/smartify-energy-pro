@@ -20,6 +20,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.sun import get_astral_event_date
 from homeassistant.util import dt as dt_util
 
+from .announce import announce_text, announce_window_open
 from .budget import additional_reservation, battery_priority_credit, control_budget
 from .const import (
     BAT_SIGN_DISCHARGE_POSITIVE,
@@ -27,6 +28,7 @@ from .const import (
     BAT_STRATEGY_BATTERY,
     BAT_STRATEGY_DEVICES,
     BAT_STRATEGY_FORECAST,
+    CONF_ANNOUNCE_SCRIPT,
     CONF_BAT_CAPACITY,
     CONF_BAT_POWER,
     CONF_BAT_SIGN,
@@ -149,6 +151,11 @@ class EnergyManager:
             ParamSpec("night_start", "time", "00:00", "mdi:weather-night"),
             ParamSpec("night_end", "time", "00:00", "mdi:weather-sunset-up"),
         ]
+        if self.cfg.get(CONF_ANNOUNCE_SCRIPT):
+            specs += [
+                ParamSpec("announce_start", "time", "07:00", "mdi:bullhorn-outline"),
+                ParamSpec("announce_end", "time", "22:00", "mdi:bullhorn-variant-outline"),
+            ]
         if self.cfg.get(CONF_SINK_SENSORS):
             specs.append(ParamSpec("sinks_yield", "switch", True, "mdi:water-boiler-auto"))
         if self.has_battery:
@@ -163,6 +170,35 @@ class EnergyManager:
 
     def p(self, key: str) -> Any:
         return self.params.get(key)
+
+    # ── Ansagen ──────────────────────────────────────────────────────────────
+    def announce(self, device: BaseDevice, kind: str, now: datetime) -> bool:
+        """Fertig-Ansage eines Haushaltsgeräts an das konfigurierte Script geben.
+
+        Liefert True, wenn die Ansage abgeschickt wurde. Ohne Script oder
+        außerhalb des Ansage-Zeitfensters passiert nichts (False); das Gerät
+        versucht es im nächsten Zyklus erneut. Die Regelung wartet nie auf
+        das Script, Fehler dort werden nur protokolliert.
+        """
+        script = self.cfg.get(CONF_ANNOUNCE_SCRIPT)
+        if not isinstance(script, str) or not script.startswith("script."):
+            return False
+        if not announce_window_open(now, time_from_str(self.p("announce_start"), time(7)),
+                                    time_from_str(self.p("announce_end"), time(22))):
+            return False
+        message = announce_text(kind, device.name, getattr(self.hass.config, "language", "de"))
+        self.hass.async_create_background_task(
+            self._async_announce(script, message), f"{DOMAIN}_announce_{device.id}")
+        return True
+
+    async def _async_announce(self, script: str, message: str) -> None:
+        try:
+            await self.hass.services.async_call(
+                "script", "turn_on",
+                {"entity_id": script, "variables": {"message": message}}, blocking=False)
+            _LOGGER.info("Ansage über %s: %s", script, message)
+        except Exception:  # noqa: BLE001 - announcements must never affect control
+            _LOGGER.warning("Ansage über %s fehlgeschlagen: %s", script, message, exc_info=True)
 
     def set_param(self, key: str, value: Any) -> None:
         if key == "mode" and value != self.params.get(key):

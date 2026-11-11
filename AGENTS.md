@@ -1,3 +1,9 @@
+## Ansage für Haushaltsgeräte (unreleased)
+- SEP spricht nicht selbst. Hub-Option `announce_script` (`CONF_ANNOUNCE_SCRIPT`, Schritt Netz, optional) wird über `EnergyManager.announce()` mit `script.turn_on` und `variables: {message}` aufgerufen, nicht blockierend als Background-Task; Fehler nur protokollieren. `announce_script` NICHT in `HUB_ENTITY_FIELDS` aufnehmen (keine Zustandsüberwachung eines Scripts).
+- Je Haushaltsgerät (`load` und `dryer`, auch Trockner ohne Wiederanlauf) Schalter `announce_finished` und `announce_reminder`, Standard aus. Logik in `LoadDevice._announce` am Ende von `pre_update`: nur im Zustand „fertig“, Erstansage einmal, Erinnerung alle `REMINDER_SECONDS` (30 min). Zustand `announced`/`announce_at` liegt in `state` (persistiert) und wird in `_reset()` gelöscht.
+- Hub-Zeiten `announce_start`/`announce_end` existieren nur mit gewähltem Script; gleiche Zeiten = rund um die Uhr. Lehnt `announce()` ab (kein Script, außerhalb des Zeitraums), darf das Gerät nichts als angesagt vermerken – die Ansage wird im nächsten Zyklus erneut versucht.
+- Keine Änderung an Programmerkennung, Freigabe, Budget oder Steckdosensteuerung. Tests: `tests/test_announce.py`, `tests/ha/test_announce.py`; Karte: Gruppe „Ansage“ in `SETTING_GROUPS`, `announce_reminder` nur sichtbar bei eingeschalteter Ansage.
+
 ## Bestandsflächen automatisch neu nummerieren (0.3.75)
 - Beim Laden des PV-Editors auch bereits gespeicherte automatische Namen ("Fläche N") auf ihre aktuelle Listenposition korrigieren; ausschließlich bei tatsächlich geänderten Namen über den vorhandenen admin-only Save-WebSocket persistieren.
 - Bestehende individuelle Namen und stabile IDs, alle Koordinaten, Leistung (kWp), Neigung, Azimut und sämtliche Prognosewerte unverändert lassen.

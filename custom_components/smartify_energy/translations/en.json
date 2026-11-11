@@ -10,7 +10,8 @@
           "grid_sign": "Grid power sign",
           "sink_sensors": "Surplus sinks (e.g. Ohmpilot, heating rod)",
           "interval": "Control interval",
-          "grid_export_sensor": "Export power (separate sensors only)"
+          "grid_export_sensor": "Export power (separate sensors only)",
+          "announce_script": "Announcement script (optional)"
         },
         "data_description": {
           "grid_sensor": "Power at the grid connection point.",
@@ -18,7 +19,8 @@
           "grid_export_sensor": "Optional. If set: grid sensor = import, this sensor = export (both positive); sign is ignored.",
           "name": "Choose a distinct display name so you can identify this device easily.",
           "grid_sign": "Select which sign your grid sensor shows while exporting. A wrong choice reverses import and export.",
-          "interval": "Regular control interval in seconds, default 30. Relevant sensor events also request a faster coalesced evaluation. Minimum run and pause times still apply."
+          "interval": "Regular control interval in seconds, default 30. Relevant sensor events also request a faster coalesced evaluation. Minimum run and pause times still apply.",
+          "announce_script": "Optional script that speaks announcements, for example when a household appliance has finished. SEP calls it with the variable \"message\"; the script decides where and how it is spoken. Leave empty to disable announcements."
         }
       },
       "forecast": {
@@ -74,7 +76,8 @@
           "grid_sign": "Grid power sign",
           "sink_sensors": "Surplus sinks (e.g. Ohmpilot, heating rod)",
           "interval": "Control interval",
-          "grid_export_sensor": "Export power (separate sensors only)"
+          "grid_export_sensor": "Export power (separate sensors only)",
+          "announce_script": "Announcement script (optional)"
         },
         "data_description": {
           "grid_sensor": "Power at the grid connection point.",
@@ -82,7 +85,8 @@
           "grid_export_sensor": "Optional. If set: grid sensor = import, this sensor = export (both positive); sign is ignored.",
           "name": "Choose a distinct display name so you can identify this device easily.",
           "grid_sign": "Select which sign your grid sensor shows while exporting. A wrong choice reverses import and export.",
-          "interval": "Regular control interval in seconds, default 30. Relevant sensor events also request a faster coalesced evaluation. Minimum run and pause times still apply."
+          "interval": "Regular control interval in seconds, default 30. Relevant sensor events also request a faster coalesced evaluation. Minimum run and pause times still apply.",
+          "announce_script": "Optional script that speaks announcements, for example when a household appliance has finished. SEP calls it with the variable \"message\"; the script decides where and how it is spoken. Leave empty to disable announcements."
         }
       },
       "forecast": {
@@ -761,6 +765,12 @@
       },
       "heater_earliest_start": {
         "name": "Heater earliest start"
+      },
+      "announce_start": {
+        "name": "Announcements from"
+      },
+      "announce_end": {
+        "name": "Announcements until"
       }
     },
     "switch": {
@@ -781,6 +791,12 @@
       },
       "boost": {
         "name": "PV boost"
+      },
+      "announce_finished": {
+        "name": "Announce when finished"
+      },
+      "announce_reminder": {
+        "name": "Reminder every 30 minutes"
       }
     },
     "sensor": {

@@ -19,6 +19,7 @@ from datetime import datetime, time, timedelta
 
 from homeassistant.util import dt as dt_util
 
+from ..announce import KIND_FINISHED, KIND_REMINDER, REMINDER_SECONDS
 from ..budget import pv_start_remaining
 from ..const import CONF_POWER_SENSOR, CONF_SWITCH
 from ..helpers import BinarySpec, ButtonSpec, ParamSpec, SensorSpec, is_on, power_w, time_from_str
@@ -104,6 +105,8 @@ class LoadDevice(BaseDevice):
             ParamSpec("duration", "number", float(self.cfg.get("duration", 2.0)),
                       "mdi:timer-outline", 0.5, 6, 0.25, "h"),
             ParamSpec("nachladen", "switch", False, "mdi:washing-machine-alert", config=False),
+            ParamSpec("announce_finished", "switch", False, "mdi:bullhorn-outline"),
+            ParamSpec("announce_reminder", "switch", False, "mdi:bell-ring-outline"),
         ]
 
     def load(self, data: dict) -> None:
@@ -202,7 +205,8 @@ class LoadDevice(BaseDevice):
                 f"< benötigt {self.pv_start_need:.0f} W")
 
     def _reset(self) -> None:
-        self.state.update(sm=IDLE, approved=False, forced_start=False, hp_active=False, hp_done=False, since=None)
+        self.state.update(sm=IDLE, approved=False, forced_start=False, hp_active=False, hp_done=False, since=None,
+                          announced=False, announce_at=None)
         self._detected_since = None
         self._hp_since = None
         self._low_since = None
@@ -238,6 +242,35 @@ class LoadDevice(BaseDevice):
                     self.reason = "Fertig"
             else:
                 self._low_since = None
+        self._announce(ctx)
+
+    def _announce(self, ctx: Context) -> None:
+        """Fertig-Ansage und optionale Erinnerung alle 30 Minuten.
+
+        Gilt nur im Zustand „fertig“ und endet mit Reset oder neuem
+        Programmstart. Der Hub entscheidet über Script und Zeitfenster; lehnt
+        er ab, bleibt die Ansage offen und wird im nächsten Zyklus versucht.
+        """
+        if self.state.get("sm") != FINISHED or not self.p("announce_finished"):
+            return
+        send = getattr(self.manager, "announce", None)
+        if send is None:
+            return
+        now_ts = ctx.now.timestamp()
+        if not self.state.get("announced"):
+            kind = KIND_FINISHED
+        elif not self.p("announce_reminder"):
+            return
+        else:
+            last = self.state.get("announce_at")
+            if last is None:
+                self.state["announce_at"] = now_ts
+                return
+            if now_ts - float(last) < REMINDER_SECONDS:
+                return
+            kind = KIND_REMINDER
+        if send(self, kind, ctx.now):
+            self.state.update(announced=True, announce_at=now_ts)
 
     def _check_heating(self, p: float, now: datetime) -> None:
         threshold = max(200.0, self.nominal * 0.08)

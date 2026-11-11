@@ -11,6 +11,7 @@ Diese Übersicht unterscheidet **Formular-Pflichtfelder** und **Funktionsvorauss
 | Netzleistung/Netzbezug | Pflicht | Leistungssensor (W/kW) |
 | Vorzeichen der Netzleistung | Pflicht | Richtige Interpretation von Bezug/Einspeisung |
 | Regelintervall | Pflicht, voreingestellt | Regulärer Zyklus; Sensorereignisse können schneller reagieren |
+| Script für Ansagen | Optional | Script, das SEP mit der Variable `message` aufruft, z. B. „Waschmaschine ist fertig.“ Leer = keine Ansagen |
 | Getrennter Einspeisungssensor | Bedingt | Nur bei getrennten positiven Bezugs-/Einspeisungssensoren; Vorzeichenwahl wird dann ignoriert |
 | Überschuss-Senken | Optional | Selbstständig geregelte zusätzliche Senken |
 
