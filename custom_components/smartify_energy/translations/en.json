@@ -29,7 +29,8 @@
           "solar_mode": "Solar forecast mode",
           "solar_cloud_entity": "My-Weather cloud forecast 8–48h",
           "solar_calibration_enabled": "Automatically calibrate PV forecast (optional)",
-          "solar_pv_power_entity": "Measured PV generation power (W) – actual inverter/production sensor"
+          "solar_pv_power_entity": "Measured PV generation power (W) – actual inverter/production sensor",
+          "pv_total_peak_kwp": "Total installed PV peak power (all arrays, kWp)"
         },
         "data_description": {
           "forecast_entries": "Preselected from the energy dashboard. Selected entries are summed – choose one source per array.",
@@ -37,7 +38,8 @@
           "solar_mode": "External forecast or calculated from cloud and PV geometry.",
           "solar_cloud_entity": "Select the My-Weather 8h or 48h cloud forecast sensor, not a PV energy sensor. Choose the 48h sensor for extended planning.",
           "solar_calibration_enabled": "Only used for calculated PV forecast. Learns from measured PV generation; off by default.",
-          "solar_pv_power_entity": "Actual total PV generation (W), not grid balance, house load or battery power. Optional for the forecast-versus-actual chart below the PV plan; required if self-calibration is enabled."
+          "solar_pv_power_entity": "Actual total PV generation (W), not grid balance, house load or battery power. Optional for the forecast-versus-actual chart below the PV plan; required if self-calibration is enabled.",
+          "pv_total_peak_kwp": "Optional sum of all installed arrays, including balcony PV. Sets a stable chart Y-axis from installed peak, not from the highest hourly value in 14 days. If empty, the drawn PV surfaces are summed."
         },
         "description": "PV arrays (power, tilt, orientation) for the calculated forecast are drawn in the dashboard: card “SEP PV arrays” (custom:smartify-energy-pv-card)."
       },
