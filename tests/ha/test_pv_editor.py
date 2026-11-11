@@ -20,6 +20,18 @@ async def _setup(hass, options=None):
     return entry
 
 
+async def test_numeric_total_peak_does_not_register_as_entity(hass):
+    """Numeric PV rating is not an entity ID; integration must start normally."""
+    entry = await _setup(hass, {
+        "solar_mode": "calculated",
+        "pv_total_peak_kwp": 10.5,
+        "solar_1_kwp": 9.0,
+        "solar_2_kwp": 1.5,
+    })
+    assert entry.state is ConfigEntryState.LOADED
+    assert entry.runtime_data._pv_comparison_attrs()["gesamt_peak_kwp"] == 10.5
+
+
 async def test_legacy_fields_are_shown_as_manual_surfaces(hass, hass_ws_client):
     entry = await _setup(hass, {"solar_mode": "calculated", "solar_1_kwp": 3.04, "solar_1_tilt": 90,
                                 "solar_1_azimuth": 190, "solar_3_kwp": 2.66, "solar_3_tilt": 35,
