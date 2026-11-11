@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.3.65 – 2026-11-11
+
+- Behoben: Im PV-Flächen-Editor blieb das Luftbild grau, obwohl es geladen war. SVG rechnet mit einfacher Genauigkeit; die absoluten Kartenkoordinaten (rund 70 Millionen Pixel bei Zoom 19) waren dafür zu groß. Die Karte wird jetzt relativ zum Luftbildausschnitt gezeichnet. Gespeicherte Flächen und Berechnung unverändert.
+
 ## 0.3.64 – 2026-11-11
 
 - Neu: Karte **SEP PV-Flächen** (`custom:smartify-energy-pv-card`) zum Einzeichnen der PV-Flächen auf einem Luftbild. Dachflächen als Polygon mit Traufkante, Fassaden als Linie; die Ausrichtung wird aus der Zeichnung berechnet und als Pfeil angezeigt. Neigung je Fläche eingeben, Leistung wahlweise als kWp oder Module × Wp. Ecken verschiebbar, Karte verschieb- und zoombar.
