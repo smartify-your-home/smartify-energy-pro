@@ -626,23 +626,24 @@ const CARD_CSS = `
   .pv-compare-totals strong{font-size:16px;font-variant-numeric:tabular-nums}
   .pv-compare-scroll{overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
   .pv-compare-days{display:flex;gap:5px;min-width:100%;height:28px;box-sizing:border-box;font-variant-numeric:tabular-nums}
-  .pv-compare-day{flex:none;min-width:0;border-left:1px dashed var(--divider-color);box-sizing:border-box;
+  .pv-compare-day{flex:none;min-width:0;box-sizing:border-box;
     color:var(--primary-text-color);font-size:11px;font-weight:600;padding:4px 4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pv-compare-day small{font-size:10px;font-weight:400;margin-left:5px}
   .pv-compare-hour-pct{position:absolute;left:50%;transform:translateX(-50%);font-size:9px;text-align:center;white-space:nowrap;line-height:1;z-index:3}
   .pv-compare-hour-pct.good,.pv-compare-day .good{color:var(--success-color,#22a06b)}
   .pv-compare-hour-pct.medium,.pv-compare-day .medium{color:var(--warning-color,#e5a21a)}
   .pv-compare-hour-pct.bad,.pv-compare-day .bad{color:var(--error-color,#e53935)}
-  .pv-compare-col.day-start:before{content:"";position:absolute;z-index:2;left:-3px;top:0;bottom:0;border-left:1px dashed var(--divider-color);pointer-events:none}
+  .pv-compare-day-dividers{position:absolute;inset:0;pointer-events:none;z-index:3}
+  .pv-compare-day-divider{position:absolute;top:0;bottom:0;border-left:2px dashed color-mix(in srgb,var(--primary-text-color) 55%,transparent)}
   .pv-compare-plot{min-width:max(100%,580px);height:186px;display:flex;align-items:end;gap:5px;position:relative;box-sizing:border-box;
     padding:30px 0 0;border-bottom:1px solid var(--divider-color)}
   .pv-compare-plot .sep-chart-grid{top:30px}
-  .pv-compare-col{flex:1;min-width:19px;height:100%;display:flex;align-items:end;justify-content:center;gap:2px;position:relative;z-index:1}
+  .pv-compare-col{flex:0 0 40px;min-width:40px;height:100%;display:flex;align-items:end;justify-content:center;gap:2px;position:relative;z-index:1}
   .pv-compare-bar{width:42%;min-height:0;border-radius:3px 3px 0 0}
   .pv-compare-forecast{background:var(--warning-color,#e5a21a);opacity:.82}
   .pv-compare-actual{background:var(--success-color,#22a06b)}
   .pv-compare-labels{min-width:max(100%,580px);display:flex;gap:5px}
-  .pv-compare-labels span{flex:1;min-width:19px;text-align:center;color:var(--secondary-text-color);font-size:10px}
+  .pv-compare-labels span{flex:0 0 40px;min-width:40px;text-align:center;color:var(--secondary-text-color);font-size:10px}
   .pv-compare-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--secondary-text-color)}
   .pv-compare-legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:middle}
   .pv-compare-note{font-size:11px;color:var(--secondary-text-color);margin-top:8px}
@@ -1196,9 +1197,14 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     if (!rows.length) return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
       <div class="pv-compare-note">Noch keine Tageslichtstunden mit gespeicherter Prognose verfügbar.
       Der Vergleich beginnt mit der nächsten vollständig gemessenen Stunde.</div></div>`;
-    const max = Math.max(1,...rows.map(x=>Math.max(Number(x.prognose_wh)||0,
-      typeof x.ist_wh === "number" ? x.ist_wh : 0)));
-    const axisMax = sepNiceAxisMax(max * 1.15); // Hourly total PV energy plus 15 % headroom.
+    // Fixed physical scale: summed installed PV STC peak (kWp) is the maximum
+    // possible kWh for a one-hour bucket. Never infer the scale from history.
+    const peakKwp = Number(data.gesamt_peak_kwp);
+    const peakWh = Number.isFinite(peakKwp) && peakKwp > 0 ? peakKwp * 1000 : null;
+    const axisMax = peakWh ? sepNiceAxisMax(peakWh) : null;
+    if (!axisMax) return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
+      <div class="pv-compare-note">Für die feste Y-Achse die gesamte installierte PV-Peakleistung
+      in SEP → Konfigurieren → Prognose hinterlegen (oder PV-Flächen einzeichnen).</div></div>`;
     const fmt = v => typeof v === "number" && Number.isFinite(v)
       ? v.toLocaleString("de-AT",{minimumFractionDigits:2,maximumFractionDigits:2})+" kWh" : "–";
     const bar = (wh,cls) => wh === null || wh === undefined ? "" :
@@ -1219,6 +1225,8 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       } else day.incomplete++;
     });
     const starts = new Set(days.map(x=>x.first));
+    const dayDividers = days.slice(1).map(day =>
+      `<span class="pv-compare-day-divider" style="left:${day.first*45-3}px" aria-hidden="true"></span>`).join("");
     const unitWidth = 45;
     const totalWidth = Math.max(580, rows.length*unitWidth);
     const dayHead = days.map(day=>{
@@ -1254,10 +1262,11 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       </div>
       <div class="sep-axis-layout">
         <div class="sep-y-axis compare" aria-label="PV-Energie je Stunde in kWh">${sepAxisLabels(axisMax,"kWh")}</div>
-        <div class="pv-compare-scroll"><div style="width:${totalWidth}px">
+        <div class="pv-compare-scroll"><div class="pv-compare-chart-content" style="width:${totalWidth}px;position:relative">
           <div class="pv-compare-days">${dayHead}</div>
           <div class="pv-compare-plot" style="min-width:100%">${SEP_GRID}${plotted}</div>
-          <div class="pv-compare-labels" style="min-width:100%">${labels}</div></div></div>
+          <div class="pv-compare-labels" style="min-width:100%">${labels}</div>
+          <div class="pv-compare-day-dividers">${dayDividers}</div></div></div>
       </div>
       <div class="pv-compare-legend">
         <span><i style="background:var(--warning-color,#e5a21a)"></i>Ursprüngliche Prognose</span>
