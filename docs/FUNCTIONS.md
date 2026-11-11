@@ -162,3 +162,7 @@ PV-Flächeneditor (0.3.74): Automatische Flächennamen werden beim Löschen fort
 
 
 0.3.75: PV-Flächeneditor migriert automatisch benannte Bestandsflächen beim Laden und speichert nur bei tatsächlicher Änderung. Peakleistung und PV-Prognosegrafik bleiben unverändert.
+
+
+### Adaptive Live-PV-Prognose (0.3.77)
+Optionaler standardmäßig ausgeschalteter Modus für berechnete Prognosen. Verwendet echten PV-Erzeugungssensor und Klarhimmelreferenz aus allen gezeichneten Flächen; mindestens sechs Werte über fünf Minuten. Passt maximal ca. zwei Stunden des Vorhersagehorizonts an (begrenzter Faktor 0,55–1,8), konservativer bei wechselhaftem Wetter. Bei Datenverlust, Nacht oder möglicher Abregelung kein Eingriff. Diagnose im Sensorattribut `live_pv`; bestehende langfristige Kalibrierung und historische Baseline bleiben getrennt.
