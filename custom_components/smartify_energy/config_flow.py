@@ -60,6 +60,7 @@ from .const import (
     CONF_SOLAR_CLOUD_ENTITY,
     CONF_SOLAR_MODE,
     CONF_SOLAR_PV_POWER_ENTITY,
+    CONF_PV_TOTAL_PEAK_KWP,
     CONF_SWITCH,
     CONF_TEMP_SENSOR,
     CONF_VOLTAGE,
@@ -149,6 +150,7 @@ def _forecast_schema(d: dict, options: list[dict[str, str]]) -> vol.Schema:
     fields[_opt(CONF_SOLAR_CLOUD_ENTITY, d)] = _ent("sensor")
     fields[_req(CONF_SOLAR_CALIBRATION_ENABLED, d, False)] = sel.BooleanSelector()
     fields[_opt(CONF_SOLAR_PV_POWER_ENTITY, d)] = _ent("sensor", "power")
+    fields[_opt(CONF_PV_TOTAL_PEAK_KWP, d)] = _num(0.1, 500, 0.1, "kWp")
     # PV surfaces are drawn in the dashboard (card "smartify-energy-pv-card"),
     # not entered here; see pv_layout.py / pv_websocket.py.
     return vol.Schema(fields)
@@ -180,6 +182,7 @@ class _HubSteps:
             self.data.pop(CONF_FORECAST_SENSORS, None)
             self.data.pop(CONF_SOLAR_CLOUD_ENTITY, None)
             self.data.pop(CONF_SOLAR_PV_POWER_ENTITY, None)
+            self.data.pop(CONF_PV_TOTAL_PEAK_KWP, None)
             if user_input.get(CONF_SOLAR_MODE) == "calculated":
                 if not user_input.get(CONF_SOLAR_CLOUD_ENTITY):
                     return self.async_show_form(
