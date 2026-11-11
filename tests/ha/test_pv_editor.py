@@ -155,7 +155,7 @@ async def test_address_geocode_search_and_cache(hass, hass_ws_client, aioclient_
     import re
     await _setup(hass)
     client = await hass_ws_client(hass)
-    aioclient_mock.get(re.compile(r"https://nominatim\\.openstreetmap\\.org/search.*"),
+    aioclient_mock.get(re.compile(r"https://nominatim[.]openstreetmap[.]org/search.*"),
                        json=[{"lat": "48.208", "lon": "16.373", "display_name": "Wien, Österreich"}])
     await client.send_json_auto_id({"type": "smartify_energy/pv_map/geocode",
                                     "address": "Wien, Österreich"})
