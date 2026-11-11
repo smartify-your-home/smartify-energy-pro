@@ -96,7 +96,8 @@ test('first open without stored photo downloads it once, failure is shown and gr
 test('stored photo is not downloaded again and drawn area shows azimuth arrow and eave', async () => {
   const dom = load();
   const map = {lat: LAT, lon: LON, zoom: 19, fetched: '2026-11-11T10:00:00Z', attribution: 'Luftbild: basemap.at (CC BY 4.0)',
-    tiles: [{x: 1, y: 1, data: '/9j/'}]};
+    tiles: [{x: Math.floor((LON + 180) / 360 * 2 ** 19),
+      y: Math.floor((1 - Math.log(Math.tan(LAT * Math.PI / 180) + 1 / Math.cos(LAT * Math.PI / 180)) / Math.PI) / 2 * 2 ** 19), data: '/9j/'}]};
   const {el, calls} = card(dom, {map, surfaces: [{id: 'a', name: 'Süd', kind: 'area', points: RECT, edge: 0, flip: false,
     tilt: 35, azimuth: 180, input: 'kwp', kwp: 5, modules: 0, module_wp: 0, area_m2: 60}]});
   await tick(); await tick();
@@ -104,6 +105,11 @@ test('stored photo is not downloaded again and drawn area shows azimuth arrow an
   const root = el.shadowRoot;
   assert.ok(root.querySelector('polygon[data-surface="a"]'));
   assert.equal(root.querySelector('svg image').getAttribute('href'), 'blob:tile-1');
+  // Regression 0.3.64: absolute Web-Mercator pixels (~7e7) exceed SVG float32 precision → empty map.
+  const coords = [...root.querySelectorAll('svg image, svg polygon')].flatMap(n =>
+    [n.getAttribute('x'), n.getAttribute('y'), ...(n.getAttribute('points') || '').split(/[ ,]/)].filter(Boolean).map(Number));
+  assert.ok(coords.length && coords.every(v => Math.abs(v) < 1e6), 'svg uses local coordinates');
+  assert.ok(root.querySelector('svg').getAttribute('viewBox').split(' ').every(v => Math.abs(Number(v)) < 1e6));
   assert.match(root.querySelector('svg text').textContent, /180° S/);
   assert.match(root.textContent, /Luftbild neu laden/);
   assert.match(root.textContent, /basemap\.at/);

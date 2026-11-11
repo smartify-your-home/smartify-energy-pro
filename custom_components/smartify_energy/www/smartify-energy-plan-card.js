@@ -28,7 +28,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.5.0";
+const CARD_VERSION = "1.5.1";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -1598,6 +1598,12 @@ class SmartifyEnergyPvCard extends HTMLElement {
   }
 
   get _admin() { return !!this._hass?.user?.is_admin; }
+  // SVG rechnet in float32: absolute Web-Mercator-Pixel (~7·10⁷ bei Zoom 19) verlieren
+  // Genauigkeit und Kacheln verschwinden. Darum relativ zu einem Ursprung zeichnen.
+  _lx(lon) { return pvLon2x(lon, this._zoom) - (this._origin?.x || 0); }
+  _ly(lat) { return pvLat2y(lat, this._zoom) - (this._origin?.y || 0); }
+  _lon(lx) { return pvX2lon(lx + (this._origin?.x || 0), this._zoom); }
+  _lat(ly) { return pvY2lat(ly + (this._origin?.y || 0), this._zoom); }
   get _zoom() { return this._data?.map?.zoom ?? this._data?.zoom?.default ?? 19; }
 
   async _ws(msg) {
@@ -1632,7 +1638,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
     if (!auto && this._data?.map && !confirm("Luftbild für den aktuellen Kartenmittelpunkt neu herunterladen?")) return;
     const z = this._zoom;
     const v = this._view;
-    const center = v ? { lat: pvY2lat(v.y + v.h / 2, z), lon: pvX2lon(v.x + v.w / 2, z) } : {};
+    const center = v ? { lat: this._lat(v.y + v.h / 2), lon: this._lon(v.x + v.w / 2) } : {};
     this._busy = "map";
     this._msg = { type: "ok", text: "Luftbild wird von basemap.at geladen …" };
     this._render();
@@ -1656,10 +1662,12 @@ class SmartifyEnergyPvCard extends HTMLElement {
       const x0 = Math.min(...xs) * PV_TILE, y0 = Math.min(...ys) * PV_TILE;
       const w = (Math.max(...xs) + 1) * PV_TILE - x0, h = (Math.max(...ys) + 1) * PV_TILE - y0;
       // Ausschnitt um den Mittelpunkt (Haus), nicht das ganze 5×5-Raster.
-      const cx = pvLon2x(m.lon, z), cy = pvLat2y(m.lat, z), vw = w * 0.55, vh = vw * 0.66;
-      this._view = { x: cx - vw / 2, y: cy - vh / 2, w: vw, h: vh, bounds: { x0, y0, w, h } };
+      this._origin = { x: x0, y: y0 };
+      const cx = this._lx(m.lon), cy = this._ly(m.lat), vw = w * 0.55, vh = vw * 0.66;
+      this._view = { x: cx - vw / 2, y: cy - vh / 2, w: vw, h: vh, bounds: { x0: 0, y0: 0, w, h } };
     } else if (this._data?.home) {
-      const cx = pvLon2x(this._data.home.lon, z), cy = pvLat2y(this._data.home.lat, z), vw = 700, vh = 460;
+      this._origin = { x: Math.floor(pvLon2x(this._data.home.lon, z)), y: Math.floor(pvLat2y(this._data.home.lat, z)) };
+      const cx = this._lx(this._data.home.lon), cy = this._ly(this._data.home.lat), vw = 700, vh = 460;
       this._view = { x: cx - vw / 2, y: cy - vh / 2, w: vw, h: vh, bounds: null };
     }
   }
@@ -1763,11 +1771,11 @@ class SmartifyEnergyPvCard extends HTMLElement {
     const v = this._view;
     if (!v) return `<svg viewBox="0 0 10 10"></svg>`;
     const z = this._zoom, m = this._data?.map;
-    const px = ([lat, lon]) => `${pvLon2x(lon, z).toFixed(2)},${pvLat2y(lat, z).toFixed(2)}`;
+    const px = ([lat, lon]) => `${this._lx(lon).toFixed(2)},${this._ly(lat).toFixed(2)}`;
     const scale = v.w / Math.max(1, this._svgWidth || 700);
     const r = 6 * scale, fs = 13 * scale;
     const tiles = this._tileUrls.map(t =>
-      `<image href="${t.url}" x="${t.x * PV_TILE}" y="${t.y * PV_TILE}" width="${PV_TILE}" height="${PV_TILE}" preserveAspectRatio="none"/>`).join("");
+      `<image href="${t.url}" x="${t.x * PV_TILE - (this._origin?.x || 0)}" y="${t.y * PV_TILE - (this._origin?.y || 0)}" width="${PV_TILE}" height="${PV_TILE}" preserveAspectRatio="none"/>`).join("");
     const grid = m ? "" : (() => {
       const step = 64, x0 = Math.floor(v.x / step) * step, y0 = Math.floor(v.y / step) * step;
       let g = "";
@@ -1779,7 +1787,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
       if (s.kind === "manual" || !s.points?.length) return "";
       const c = PV_COLORS[i % PV_COLORS.length], sel = s.id === this._sel;
       const pts = s.points.map(px).join(" ");
-      const xy = s.points.map(([lat, lon]) => [pvLon2x(lon, z), pvLat2y(lat, z)]);
+      const xy = s.points.map(([lat, lon]) => [this._lx(lon), this._ly(lat)]);
       let shape, eave = "", edges = "", handles = "";
       if (s.kind === "area") {
         shape = `<polygon points="${pts}" data-surface="${esc(s.id)}" fill="${c}" fill-opacity="${sel ? .35 : .22}" stroke="${c}" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
@@ -1935,7 +1943,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
 
   _focus(s) {
     if (!s?.points?.length) return;
-    const z = this._zoom, xs = s.points.map(p => pvLon2x(p[1], z)), ys = s.points.map(p => pvLat2y(p[0], z));
+    const xs = s.points.map(p => this._lx(p[1])), ys = s.points.map(p => this._ly(p[0]));
     const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
     this._view = { ...this._view, x: cx - this._view.w / 2, y: cy - this._view.h / 2 };
   }
@@ -1980,7 +1988,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
       if (start.vtx != null && this._admin) {
         const w = this._toWorld(svg, ev), s = this._surfaces.find(x => x.id === this._sel), z = this._zoom;
         if (!w || !s) return;
-        s.points[start.vtx] = [Math.round(pvY2lat(w[1], z) * 1e8) / 1e8, Math.round(pvX2lon(w[0], z) * 1e8) / 1e8];
+        s.points[start.vtx] = [Math.round(this._lat(w[1]) * 1e8) / 1e8, Math.round(this._lon(w[0]) * 1e8) / 1e8];
         if (s.kind === "area") s.area_m2 = pvAreaM2(s.points, z);
         s.azimuth = pvSurfaceAzimuth(s, z);
         this._dirty = true;
@@ -2010,10 +2018,10 @@ class SmartifyEnergyPvCard extends HTMLElement {
     if (this._draw) {
       const w = this._toWorld(svg, ev);
       if (!w) return;
-      const p = [Math.round(pvY2lat(w[1], z) * 1e8) / 1e8, Math.round(pvX2lon(w[0], z) * 1e8) / 1e8];
+      const p = [Math.round(this._lat(w[1]) * 1e8) / 1e8, Math.round(this._lon(w[0]) * 1e8) / 1e8];
       const last = this._draw.points[this._draw.points.length - 1];
       const tol = 6 * this._view.w / Math.max(1, svg.clientWidth || 700);
-      if (last && Math.hypot(pvLon2x(last[1], z) - w[0], pvLat2y(last[0], z) - w[1]) < tol) return;   // Doppelklick → kein Doppelpunkt
+      if (last && Math.hypot(this._lx(last[1]) - w[0], this._ly(last[0]) - w[1]) < tol) return;   // Doppelklick → kein Doppelpunkt
       this._draw.points.push(p);
       if (this._draw.kind === "line" && this._draw.points.length === 2) this._finishDraw();
       else this._redrawMap();
