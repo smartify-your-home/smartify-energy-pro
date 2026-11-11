@@ -28,7 +28,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.6.2";
+const CARD_VERSION = "1.6.3";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -1605,6 +1605,10 @@ const PV_CSS = `
   .tools button, .bar button, .s-actions button { font:inherit; font-size:13px; min-height:34px; padding:6px 10px; border-radius:8px; cursor:pointer;
     border:1px solid var(--divider-color); background:var(--card-background-color); color:var(--primary-text-color); }
   .tools button { width:36px; padding:0; font-size:18px; font-weight:700; }
+  .address-row {display:flex;align-items:center;gap:6px;margin:8px 0;flex-wrap:wrap}
+  .address-row input { flex:1 1 200px;width:auto;min-width:140px; }
+  .address-row button { flex:0 0 auto }
+  .address-hint {font-size:11px;color:var(--secondary-text-color);margin:0 0 6px}
   button.primary { background:var(--primary-color); color:var(--text-primary-color,#fff); border-color:var(--primary-color); }
   button:disabled { opacity:.5; cursor:default; }
   .attr { position:absolute; left:6px; bottom:4px; font-size:10px; color:#fff; text-shadow:0 0 3px #000; pointer-events:none; }
@@ -1645,6 +1649,9 @@ class SmartifyEnergyPvCard extends HTMLElement {
     this._loading = false;
     this._open = new Set();   // aufgeklappte Flächen in der Liste
     this._tileUrls = [];      // Blob-URLs der gespeicherten Kacheln (nicht bei jedem Zeichnen neu einbetten)
+    this._refreshTimer = null; // Debounced tile refresh after zoom / pan end.
+    this._address = "";        // User-typed address; no automatic geocoding.
+    this._mapSource = "home";  // Persist explicit address selection via map metadata.
   }
 
   _setMap(map) {
@@ -1693,14 +1700,21 @@ class SmartifyEnergyPvCard extends HTMLElement {
     this._loading = true;
     try {
       this._data = await this._ws({ type: `${DOMAIN}/pv_layout` });
+      this._mapSource = this._data.map?.source === "address" ? "address" : "home";
       this._setMap(this._data.map);
       this._surfaces = JSON.parse(JSON.stringify(this._data.surfaces || []));
       this._dirty = false;
       this._resetView();
-      if (!this._data.map && this._admin && !this._autoMap) {
+      const old = this._data.map;
+      const home = this._data.home;
+      const mismatched = old && home && old.source !== "address" &&
+        (Math.abs(Number(old.lat)-Number(home.lat)) > 0.002 ||
+         Math.abs(Number(old.lon)-Number(home.lon)) > 0.002);
+      if ((!old || mismatched) && this._admin && !this._autoMap) {
         this._autoMap = true;   // nur einmal automatisch, danach nur per Knopf
         this._render();
-        await this._reloadMap(true);
+        await this._reloadMap(true, {lat:home.lat, lon:home.lon,
+          zoom:this._data.zoom.default, source:"home"});
       }
     } catch (err) {
       this._msg = { type: "err", text: `PV-Flächen konnten nicht geladen werden: ${err?.message || err}` };
@@ -1710,26 +1724,91 @@ class SmartifyEnergyPvCard extends HTMLElement {
     }
   }
 
-  async _reloadMap(auto = false) {
+  async _reloadMap(auto = false, target = null) {
     if (!this._admin || this._busy) return;
     if (!auto && this._data?.map && !confirm("Luftbild für den aktuellen Kartenmittelpunkt neu herunterladen?")) return;
-    const z = this._zoom;
     const v = this._view;
-    const center = v ? { lat: this._lat(v.y + v.h / 2), lon: this._lon(v.x + v.w / 2) } : {};
+    const center = target || (v ? {lat:this._lat(v.y+v.h/2),lon:this._lon(v.x+v.w/2)} : this._data?.home);
+    if (!center) return;
     this._busy = "map";
-    this._msg = { type: "ok", text: "Luftbild wird von basemap.at geladen …" };
+    this._msg = {type:"ok",text:"Luftbild wird von basemap.at geladen …"};
     this._render();
     try {
-      const res = await this._ws({ type: `${DOMAIN}/pv_map/reload`, ...center, zoom: this._data?.zoom?.default ?? 19 });
-      this._setMap(res.map);
+      const response = await this._ws({type:`${DOMAIN}/pv_map/reload`,
+        lat:center.lat,lon:center.lon,zoom:target?.zoom ?? this._zoom,
+        source:target?.source ?? this._mapSource});
+      this._setMap(response.map);
+      this._mapSource = response.map.source;
       this._resetView();
-      this._msg = { type: "ok", text: "Luftbild gespeichert. Es wird erst beim nächsten „Luftbild neu laden“ wieder heruntergeladen." };
+      this._msg = null;
     } catch (err) {
-      this._msg = { type: "err", text: err?.message || String(err) };
+      this._msg = {type:"err",text:`Luftbild konnte nicht geladen werden: ${err?.message || err}`};
     } finally {
       this._busy = "";
       this._render();
     }
+  }
+
+  async _searchAddress() {
+    if (!this._admin || this._busy) return;
+    const address = this._address.trim();
+    if (address.length < 4) {
+      this._msg = {type:"err",text:"Bitte Straße, Hausnummer und Ort angeben."};
+      this._render(); return;
+    }
+    this._busy = "geocode";
+    this._msg = {type:"ok",text:"Adresse wird gesucht …"};
+    this._render();
+    try {
+      const found = await this._ws({type:`${DOMAIN}/pv_map/geocode`,address});
+      this._busy = "";
+      // The lookup is performed only on explicit button press. Download imagery
+      // for that result without modifying or deleting any PV surface.
+      await this._reloadMap(true, {lat:found.lat,lon:found.lon,
+        zoom:this._data?.zoom?.default ?? 19,source:"address"});
+      if (!this._msg || this._msg.type !== "err")
+        this._msg = {type:"ok",text:`Adresse gefunden: ${found.display_name}`};
+    } catch (err) {
+      this._msg = {type:"err",text:`Adresse nicht gefunden: ${err?.message || err}`};
+    } finally {
+      this._busy = "";
+      this._render();
+    }
+  }
+
+  _scheduleMapRefresh() {
+    if (this._refreshTimer) clearTimeout(this._refreshTimer);
+    this._refreshTimer = setTimeout(() => {
+      this._refreshTimer = null;
+      this._maybeRefreshMap();
+    }, 550);
+  }
+
+  _maybeRefreshMap() {
+    if (!this._admin || this._busy || !this._view || !this._data?.map || this._draw) return;
+    const v=this._view, z=this._zoom;
+    const minZoom=this._data?.zoom?.min ?? 17, maxZoom=this._data?.zoom?.max ?? 20;
+    // One level up/down when the visible world width crosses the image-native
+    // scale threshold. Browser zooming remains smooth between tile levels.
+    const requestedZoom = v.w < 360 && z < maxZoom ? z+1
+      : v.w > 1250 && z > minZoom ? z-1 : z;
+    const bounds=v.bounds;
+    const margin=90;
+    const outside = bounds &&
+      (v.x < bounds.x0+margin || v.y < bounds.y0+margin ||
+       v.x+v.w > bounds.x0+bounds.w-margin ||
+       v.y+v.h > bounds.y0+bounds.h-margin);
+    if (requestedZoom===z && !outside) return;
+    const center={lat:this._lat(v.y+v.h/2),lon:this._lon(v.x+v.w/2)};
+    this._reloadMap(true,{...center,zoom:requestedZoom,source:this._mapSource});
+  }
+
+  _goHome() {
+    const home=this._data?.home;
+    if (!home || !this._admin) return;
+    this._mapSource="home";
+    this._reloadMap(true,{lat:home.lat,lon:home.lon,
+      zoom:this._data?.zoom?.default ?? 19,source:"home"});
   }
 
   _resetView() {
@@ -1965,9 +2044,14 @@ class SmartifyEnergyPvCard extends HTMLElement {
     else body = `<div class="layout"><div class="main">
       <div class="map">${this._svg()}
         ${this._draw ? `<div class="drawhint">${this._draw.kind === "area" ? "Ecken antippen · Startpunkt oder Doppelklick = fertig" : "Anfang und Ende antippen"}</div>` : ""}
-        <div class="tools"><button data-act="zin" title="Vergrößern">+</button><button data-act="zout" title="Verkleinern">−</button><button data-act="home" title="Ansicht zurücksetzen">⌂</button></div>
+        <div class="tools"><button data-act="zin" title="Vergrößern">+</button><button data-act="zout" title="Verkleinern">−</button><button data-act="reset" title="Gespeicherte Kartenansicht zurücksetzen">⤢</button><button data-act="home" title="Zum Home-Assistant-Standort">⌂</button></div>
         <div class="attr">${d.map ? esc(d.map.attribution || d.attribution) : "kein Luftbild – Raster 64 px"}</div>
       </div>
+      ${admin ? `<div class="address-row">
+        <input type="search" data-map-address placeholder="Adresse, PLZ, Ort suchen"
+          aria-label="Adresse für PV-Karte" value="${esc(this._address)}" maxlength="180">
+        <button type="button" data-act="address" ${this._busy ? "disabled" : ""}>Adresse suchen</button>
+      </div><div class="address-hint">Adresssuche nur auf Klick (OpenStreetMap/Nominatim). PV-Flächen bleiben erhalten.</div>` : ""}
       <div class="bar">
         ${this._draw ? `<button class="primary" data-act="finish">Fertig</button><button data-act="cancel">Abbrechen</button>` : admin ? `
           <button data-act="add-area" ${this._surfaces.length >= max ? "disabled" : ""}>+ Dachfläche</button>
@@ -2008,6 +2092,13 @@ class SmartifyEnergyPvCard extends HTMLElement {
     const root = this.shadowRoot;
     root.querySelectorAll(".s-head .nm[data-act]").forEach(b => b.addEventListener("click", e => this._action("toggle", e.currentTarget.closest(".surf")?.dataset.id)));
     root.querySelectorAll("button[data-act]").forEach(b => b.addEventListener("click", e => this._action(e.currentTarget.dataset.act, e.currentTarget.closest(".surf")?.dataset.id)));
+    const addressInput=root.querySelector("[data-map-address]");
+    if (addressInput) {
+      addressInput.addEventListener("input",e=>{this._address=e.target.value;});
+      addressInput.addEventListener("keydown",e=>{
+        if(e.key==="Enter"){e.preventDefault();this._address=e.target.value;this._searchAddress();}
+      });
+    }
     root.querySelectorAll(".surf [data-f]").forEach(el => el.addEventListener("change", e => {
       const id = e.target.closest(".surf").dataset.id, f = e.target.dataset.f;
       const v = f === "name" || f === "input" ? e.target.value : f === "bifacial" ? e.target.checked : Number(e.target.value);
@@ -2024,7 +2115,9 @@ class SmartifyEnergyPvCard extends HTMLElement {
     switch (act) {
       case "zin": case "zout": { const v = this._view, f = act === "zin" ? 0.7 : 1 / 0.7;
         this._zoomAt(v.x + v.w / 2, v.y + v.h / 2, f); break; }
-      case "home": this._resetView(); this._redrawMap(); break;
+      case "home": this._goHome(); break;
+      case "reset": this._resetView(); this._redrawMap(); break;
+      case "address": this._searchAddress(); break;
       case "map": this._reloadMap(); break;
       case "add-area": this._startDraw("area"); break;
       case "add-line": this._startDraw("line"); break;
@@ -2052,6 +2145,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
     const v = this._view, w = Math.min(4000, Math.max(60, v.w * f)), k = w / v.w, h = v.h * k;
     this._view = { ...v, x: wx - (wx - v.x) * k, y: wy - (wy - v.y) * k, w, h };
     this._redrawMap();
+    this._scheduleMapRefresh();
   }
 
   _toWorld(svg, ev) {
@@ -2102,7 +2196,10 @@ class SmartifyEnergyPvCard extends HTMLElement {
     svg.addEventListener("pointerup", ev => {
       const s0 = start; start = null;
       if (!s0) return;
-      if (s0.moved) { if (s0.vtx != null) this._render(); else this._redrawMap(); return; }
+      if (s0.moved) {
+        if (s0.vtx != null) this._render(); else { this._redrawMap(); this._scheduleMapRefresh(); }
+        return;
+      }
       this._click(svg, ev, s0.target);
     });
     svg.addEventListener("dblclick", ev => { if (this._draw) { ev.preventDefault(); this._finishDraw(); } });
