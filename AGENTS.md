@@ -1,3 +1,9 @@
+## Adaptive Live-PV-Prognose (0.3.77)
+- Nur bei `solar_mode=calculated` mit ausdrücklicher Option `solar_live_adapt_enabled=true`, Standard AUS. Echter PV-Erzeugungsleistungssensor zwingend; Messung muss dieselben Flächen umfassen wie das Modell, weder Netzsaldo noch Batterie/Hauslast.
+- `live_pv.LivePVEstimator`: lokale 30-min-Historie, mindestens 6 Messwerte über 5 Minuten, normale Sample-Distanz >=25 s, letzte gültige Messung maximal 4 Minuten alt. Klarhimmel-Referenz anhand bereits eingetragener Flächen und Sonnenstand. Nicht nachts oder bei begrenztem Wechselrichterausgang.
+- Prognose nur für aktuellen/kommende rund 2 Stunden zwischen baseline und momentaner Strahlungsannahme mischen, abklingend und eng begrenzt. Nie vergangene Stunden, eingefrorene Prognose des PV-Vergleichs, externe Prognosen, Gerätesicherheiten oder direkte Aktorsteuerung ändern.
+- Baseline liegt in `forecast.base_hours`; die Grafik friert diese Baseline ein, während `forecast.hours` Live-Anpassungen für Planung enthält. Diagnosedaten in `forecast_today.live_pv` ausgeben. Regressionen `tests/test_live_pv.py`.
+
 ## Ansage für Haushaltsgeräte (0.3.76)
 - SEP spricht nicht selbst. Hub-Option `announce_script` (`CONF_ANNOUNCE_SCRIPT`, Schritt Netz, optional) wird über `EnergyManager.announce()` mit `script.turn_on` und `variables: {message}` aufgerufen, nicht blockierend als Background-Task; Fehler nur protokollieren. `announce_script` NICHT in `HUB_ENTITY_FIELDS` aufnehmen (keine Zustandsüberwachung eines Scripts).
 - Je Haushaltsgerät (`load` und `dryer`, auch Trockner ohne Wiederanlauf) Schalter `announce_finished` und `announce_reminder`, Standard aus. Logik in `LoadDevice._announce` am Ende von `pre_update`: nur im Zustand „fertig“, Erstansage einmal, Erinnerung alle `REMINDER_SECONDS` (30 min). Zustand `announced`/`announce_at` liegt in `state` (persistiert) und wird in `_reset()` gelöscht.
