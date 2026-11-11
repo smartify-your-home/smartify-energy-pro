@@ -478,3 +478,68 @@ test('PV chart uses installed total peak rather than a 14-day historical outlier
   assert.ok(deviation && deviation.getAttribute('style').includes('bottom:calc('));
   assert.equal(root.querySelectorAll('.pv-compare-col').length,3);
 });
+
+
+test('PV summary follows horizontally visible day; no 14-day aggregate displayed',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
+  dom.window.document.body.append(card);
+  const base=Date.parse('2026-11-08T00:00:00+01:00');
+  const slots=Array.from({length:48},(_,i)=>{
+    const day=i<24?8:9;
+    const hour=i%24;
+    return {zeit:new Date(base+i*3600000).toISOString(),
+      prognose_wh: hour>=7&&hour<=17 ? 1000:null,
+      ist_wh: hour>=7&&hour<=17 ? (day===8?800:1200):null};
+  });
+  const sunlight=[8,9].map(day=>({datum:`2026-11-${String(day).padStart(2,'0')}`,
+    sonnenaufgang:`2026-11-${String(day).padStart(2,'0')}T07:00:00+01:00`,
+    sonnenuntergang:`2026-11-${String(day).padStart(2,'0')}T16:00:00+01:00`}));
+  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
+    states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{
+      konfiguriert:true,gesamt_peak_kwp:10,zeitzone:'Europe/Vienna',tageslicht:sunlight,
+      stunden:slots,prognose_kwh:22,ist_kwh:22,abweichung_pct:0,verglichene_stunden:22}}}},
+    devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  card.shadowRoot.querySelector('[data-pvcompare]').click();
+  const root=card.shadowRoot, scroll=root.querySelector('.pv-compare-scroll');
+  assert.equal(root.querySelectorAll('.pv-compare-day').length,2);
+  assert.match(root.querySelector('[data-pv-selected-date]').textContent,/09.11.2026/);
+  assert.equal(root.querySelector('[data-pv-day-forecast]').textContent,'11,00 kWh');
+  assert.equal(root.querySelector('[data-pv-day-actual]').textContent,'13,20 kWh');
+  assert.equal(root.querySelector('[data-pv-day-deviation]').textContent,'+20.0 %');
+  assert.doesNotMatch(root.querySelector('.pv-compare-totals').textContent,/22,00 kWh/);
+  scroll.scrollLeft=0;
+  scroll.dispatchEvent(new dom.window.Event('scroll',{bubbles:false}));
+  assert.match(root.querySelector('[data-pv-selected-date]').textContent,/08.11.2026/);
+  assert.equal(root.querySelector('[data-pv-day-forecast]').textContent,'11,00 kWh');
+  assert.equal(root.querySelector('[data-pv-day-actual]').textContent,'8,80 kWh');
+  assert.equal(root.querySelector('[data-pv-day-deviation]').textContent,'-20.0 %');
+  scroll.scrollLeft=1000;
+  scroll.dispatchEvent(new dom.window.Event('scroll',{bubbles:false}));
+  assert.equal(root.querySelector('[data-pv-day-deviation]').textContent,'+20.0 %');
+  // New sensor events must keep the selected calendar day, not reset to 14-day totals.
+  card.hass={...card._hass,states:{...card._hass.states,
+    'sensor.plan':{...card._hass.states['sensor.plan'],last_updated:new Date().toISOString()}}};
+  assert.equal(root.querySelector('[data-pv-day-deviation]').textContent,'+20.0 %');
+});
+
+test('PV selected-day summary shows incomplete hours as missing rather than zero',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
+  dom.window.document.body.append(card);
+  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
+    states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:true,
+      gesamt_peak_kwp:5,stunden:[{zeit:'2026-11-09T09:00:00+01:00',prognose_wh:1200,ist_wh:null}],
+      prognose_kwh:null,ist_kwh:null,abweichung_pct:null,verglichene_stunden:0}}}},
+    devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  card.shadowRoot.querySelector('[data-pvcompare]').click();
+  const root=card.shadowRoot;
+  assert.equal(root.querySelector('[data-pv-day-actual]').textContent,'–');
+  assert.equal(root.querySelector('[data-pv-day-forecast]').textContent,'–');
+  assert.equal(root.querySelector('[data-pv-day-deviation]').textContent,'–');
+  assert.match(root.querySelector('[data-pv-selected-date]').textContent,/bisher/);
+});
