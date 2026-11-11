@@ -1714,6 +1714,12 @@ class SmartifyEnergyPvCard extends HTMLElement {
       this._surfaces = JSON.parse(JSON.stringify(this._data.surfaces || []));
       this._dirty = false;
       this._resetView();
+      // Migrate already-saved default labels (e.g. 3/4 -> 1/2) once on load.
+      // Keep IDs, geometry, user-defined names and every other field untouched.
+      if (this._admin && this._renumberDefaultSurfaces()) {
+        this._dirty = true;
+        await this._save();  // persist through the existing validated WebSocket path
+      }
       const old = this._data.map;
       const home = this._data.home;
       const mismatched = old && home && !["address","browse"].includes(old.source) &&
@@ -1759,9 +1765,15 @@ class SmartifyEnergyPvCard extends HTMLElement {
   }
 
   _renumberDefaultSurfaces() {
+    let changed = false;
     this._surfaces.forEach((s, i) => {
-      if (/^Fläche [0-9]+$/.test(s.name || "")) s.name = `Fläche ${i + 1}`;
+      const name = `Fläche ${i + 1}`;
+      if (/^Fläche [0-9]+$/.test(s.name || "") && s.name !== name) {
+        s.name = name;
+        changed = true;
+      }
     });
+    return changed;
   }
 
   _showAddressSuggestions() {

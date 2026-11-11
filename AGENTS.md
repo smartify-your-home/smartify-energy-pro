@@ -1,3 +1,8 @@
+## Bestandsflächen automatisch neu nummerieren (0.3.75)
+- Beim Laden des PV-Editors auch bereits gespeicherte automatische Namen ("Fläche N") auf ihre aktuelle Listenposition korrigieren; ausschließlich bei tatsächlich geänderten Namen über den vorhandenen admin-only Save-WebSocket persistieren.
+- Bestehende individuelle Namen und stabile IDs, alle Koordinaten, Leistung (kWp), Neigung, Azimut und sämtliche Prognosewerte unverändert lassen.
+- Regression: tests/ui/pv-card.test.cjs prüft Wiederherstellung von Fläche 3/4 zu 1/2, eine automatische Speicherung und keine Speicherung bei unveränderten/individuellen Namen.
+
 ## PV-Flächennamen und Photon-Suche (0.3.74)
 - Nur automatische Namen nach dem Löschen/Abbrechen fortlaufend neu nummerieren; eigene Namen, IDs, Geometrien, Leistungen erhalten.
 - Photon nach mindestens 3 Zeichen und 700-ms-Tipp-Pause, maximal 5 Treffer, Backend-Cache und Lock mit mindestens 1,1 Sekunden zwischen Requests. Kein Autocomplete über Nominatim; manuelle Suche per Klick/Enter weiterhin.

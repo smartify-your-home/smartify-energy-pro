@@ -1,5 +1,12 @@
 ## Unreleased
 
+## 0.3.75 – 2026-11-11
+
+- PV-Flächen-Editor: Bereits gespeicherte automatisch benannte Flächen (z. B. „Fläche 3“ und „Fläche 4“) werden beim Öffnen einmalig in die fortlaufende Reihenfolge 1/2 umbenannt und über den bestehenden Speichern-WebSocket persistiert. Nutzerdefinierte Namen, interne IDs, Geometrie und Peakleistung bleiben unverändert.
+- Bereits korrekt nummerierte Flächen lösen keinen Speichervorgang aus; Regressionstests für Bestandsdaten ergänzt.
+
+
+
 ## 0.3.74 – 2026-11-11
 
 - PV-Flächen: Automatische Flächennamen nach Löschen bzw. Zeichnungsabbruch lückenlos neu nummeriert, eigene Namen und stabile IDs bleiben erhalten.

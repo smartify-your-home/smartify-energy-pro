@@ -278,3 +278,27 @@ test('Photon suggestions choose coordinates without Nominatim lookup', async () 
   assert.equal(calls.filter(x=>x.type==='smartify_energy/pv_map/geocode').length,0);
   assert.equal(calls.findLast(x=>x.type==='smartify_energy/pv_map/reload').lat,48.21);
 });
+
+
+test('previously saved Fläche 3 and 4 renumber on load and persist exactly once', async () => {
+  const dom=load();
+  const surface=(id,name,kwp)=>({id,name,kind:'manual',points:[],azimuth:180,tilt:30,input:'kwp',kwp});
+  const {el,calls}=card(dom,{surfaces:[surface('f3','Fläche 3',2),surface('f4','Fläche 4',4)]});
+  await tick(); await tick(); await tick();
+  assert.deepEqual(Array.from(el._surfaces,s=>s.name),['Fläche 1','Fläche 2']);
+  assert.deepEqual(Array.from(el._surfaces,s=>s.id),['f3','f4']);
+  assert.deepEqual(Array.from(el._surfaces,s=>s.kwp),[2,4]);
+  const saves=calls.filter(c=>c.type==='smartify_energy/pv_layout/save');
+  assert.equal(saves.length,1,'legacy names automatically persisted');
+  assert.deepEqual(Array.from(saves[0].surfaces,s=>s.name),['Fläche 1','Fläche 2']);
+  assert.equal(el._dirty,false);
+});
+
+test('already sequential and custom names do not cause automatic save', async () => {
+  const dom=load();
+  const surface=(id,name)=>({id,name,kind:'manual',points:[],azimuth:180,tilt:30,input:'kwp',kwp:1});
+  const {el,calls}=card(dom,{surfaces:[surface('f1','Fläche 1'),surface('f2','Garage')]});
+  await tick();await tick();
+  assert.deepEqual(Array.from(el._surfaces,s=>s.name),['Fläche 1','Garage']);
+  assert.equal(calls.filter(c=>c.type==='smartify_energy/pv_layout/save').length,0);
+});

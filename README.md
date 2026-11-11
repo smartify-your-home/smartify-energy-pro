@@ -200,3 +200,6 @@ Die Bilder in dieser README zeigen die echte Karte mit Beispieldaten; neu erzeug
 
 
 PV-Flächeneditor (0.3.74): Beim Löschen Standardnamen fortlaufend neu nummerieren; eigene Namen bleiben erhalten. Photon-Adressvorschläge nach 700 ms Tipp-Pause, alternativ Nominatim-Suche über Klick/Enter. Suchtext wird an den jeweiligen Anbieter übermittelt.
+
+
+Seit 0.3.75 nummeriert der PV-Flächeneditor auch ältere gespeicherte automatisch benannte Flächen beim Öffnen neu und sichert diese Namenskorrektur einmalig; individuelle Namen, Anlagenwerte und Geometrie bleiben unverändert.
