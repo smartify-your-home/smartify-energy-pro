@@ -28,7 +28,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.5.2";
+const CARD_VERSION = "1.6.0";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -1517,7 +1517,19 @@ const PV_COLORS = ["#FFB300", "#29B6F6", "#66BB6A", "#EC407A"];
 
 const PV_CSS = `
   :host { display:block; }
-  ha-card { padding:14px; color:var(--primary-text-color); }
+  ha-card { padding:14px; color:var(--primary-text-color); container-type:inline-size; }
+  .layout { display:block; }
+  @container (min-width: 860px) {
+    .layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(300px,380px); gap:14px; align-items:start; }
+    .side { max-height:calc(min(62vh,520px) + 90px); overflow:auto; padding-right:2px; }
+    .side .surf:first-child { margin-top:0; }
+  }
+  .s-head .tog { font:inherit; border:0; background:none; color:inherit; cursor:pointer; padding:2px 4px; font-size:16px; min-height:30px;
+    transition:transform .15s; }
+  .s-head .tog[aria-expanded="true"] { transform:rotate(90deg); }
+  .s-head .nm { flex:1 1 120px; font-weight:700; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chk { display:flex; align-items:center; gap:6px; min-height:34px; font-size:14px; color:var(--primary-text-color); }
+  .chk input { width:auto; min-height:0; }
   .hd { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
   .hd h2 { margin:0; font-size:1.1em; font-weight:700; flex:1 1 auto; }
   .chip { font-size:12px; padding:2px 8px; border-radius:10px; background:var(--secondary-background-color); }
@@ -1567,6 +1579,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
     this._msg = null;         // {type:'ok'|'err', text}
     this._autoMap = false;
     this._loading = false;
+    this._open = new Set();   // aufgeklappte Flächen in der Liste
     this._tileUrls = [];      // Blob-URLs der gespeicherten Kacheln (nicht bei jedem Zeichnen neu einbetten)
   }
 
@@ -1699,6 +1712,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
       this._dirty = true;
     }
     this._sel = id;
+    this._open.add(id);
     this._draw = { id, kind, points: [] };
     this._setMsg("ok", kind === "area"
       ? "Ecken der Dachfläche nacheinander antippen. Startpunkt erneut antippen, Doppelklick oder „Fertig“ schließt die Fläche."
@@ -1835,13 +1849,18 @@ class SmartifyEnergyPvCard extends HTMLElement {
     const c = PV_COLORS[i % PV_COLORS.length], ro = this._admin ? "" : "disabled";
     const kwp = pvKwp(s), drawn = s.kind !== "manual";
     const az = Number(s.azimuth) || 0;
+    const open = this._open.has(s.id);
     return `<div class="surf ${s.id === this._sel ? "sel" : ""}" style="--c:${c}" data-id="${esc(s.id)}">
       <div class="s-head">
-        <input class="name" data-f="name" value="${esc(s.name)}" maxlength="40" ${ro} aria-label="Name">
+        <button class="tog" data-act="toggle" aria-expanded="${open}" title="${open ? "Zuklappen" : "Aufklappen"}">▸</button>
+        ${open ? `<input class="name" data-f="name" value="${esc(s.name)}" maxlength="40" ${ro} aria-label="Name">`
+          : `<span class="nm" data-act="toggle">${esc(s.name)}</span>`}
         <span class="chip">${pvFmt(kwp)} kWp</span>
-        <span class="chip ${drawn ? "" : "warn"}">${s.kind === "area" ? "Dachfläche" : s.kind === "line" ? "Fassade/Linie" : "nicht eingezeichnet"}</span>
+        <span class="chip">${pvFmt(Math.round(az))}° ${pvDir(az)} · ${pvFmt(Number(s.tilt))}°</span>
+        ${s.bifacial ? `<span class="chip">bifazial</span>` : ""}
+        ${drawn ? "" : `<span class="chip warn">nicht eingezeichnet</span>`}
       </div>
-      <div class="grid">
+      ${open ? `<div class="grid">
         <div><label>Neigung (°)</label><input type="number" data-f="tilt" min="0" max="90" step="1" value="${esc(s.tilt)}" ${ro}>
           <div class="hint">0° flach · 90° senkrecht</div></div>
         <div><label>Ausrichtung</label>${drawn
@@ -1856,13 +1875,17 @@ class SmartifyEnergyPvCard extends HTMLElement {
           : `<div><label>Leistung (kWp)</label><input type="number" data-f="kwp" min="0.01" max="100" step="0.01" value="${esc(s.kwp || "")}" ${ro}></div>`}
         ${s.kind === "area" ? `<div><label>Grundfläche</label><div class="val">${pvFmt(s.area_m2 ?? pvAreaM2(s.points, this._zoom), 1)} m²
           <small>${Number(s.tilt) < 85 ? `≈ ${pvFmt((s.area_m2 ?? 0) / Math.cos(Number(s.tilt) * Math.PI / 180), 0)} m² Dach` : ""}</small></div></div>` : ""}
+        <div><label>Module</label><label class="chk"><input type="checkbox" data-f="bifacial" ${s.bifacial ? "checked" : ""} ${ro}> bifazial</label>
+          <div class="hint">Rückseite erzeugt mit (z. B. Zaun, Fassade, aufgeständert)</div></div>
+        ${s.bifacial ? `<div><label>Bifazialfaktor</label><input type="number" data-f="bifaciality" min="0.5" max="1" step="0.05" value="${esc(s.bifaciality ?? 0.7)}" ${ro}>
+          <div class="hint">Rückseite/Vorderseite laut Datenblatt, meist 0,65–0,8</div></div>` : ""}
       </div>
       ${this._admin ? `<div class="s-actions">
         <button data-act="sel">Auf Karte zeigen</button>
         <button data-act="draw-area">${s.kind === "area" ? "Fläche neu zeichnen" : "Als Dachfläche zeichnen"}</button>
         <button data-act="draw-line">${s.kind === "line" ? "Linie neu zeichnen" : "Als Fassade/Linie zeichnen"}</button>
         ${drawn ? `<button data-act="flip">Richtung umdrehen</button>` : ""}
-        <button data-act="del">Löschen</button></div>` : ""}
+        <button data-act="del">Löschen</button></div>` : ""}` : ""}
     </div>`;
   }
 
@@ -1875,7 +1898,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
     let body;
     if (!this._hass || (!d && this._loading)) body = `<div class="msg">Lade PV-Flächen …</div>`;
     else if (!d) body = "";
-    else body = `
+    else body = `<div class="layout"><div class="main">
       <div class="map">${this._svg()}
         ${this._draw ? `<div class="drawhint">${this._draw.kind === "area" ? "Ecken antippen · Startpunkt oder Doppelklick = fertig" : "Anfang und Ende antippen"}</div>` : ""}
         <div class="tools"><button data-act="zin" title="Vergrößern">+</button><button data-act="zout" title="Verkleinern">−</button><button data-act="home" title="Ansicht zurücksetzen">⌂</button></div>
@@ -1890,13 +1913,14 @@ class SmartifyEnergyPvCard extends HTMLElement {
       </div>
       ${this._msg ? `<div class="msg ${this._msg.type}">${esc(this._msg.text)}</div>` : ""}
       ${d.map ? `<div class="hint">Luftbild vom ${esc(new Date(d.map.fetched).toLocaleDateString("de-AT"))}. „Luftbild neu laden“ lädt den aktuellen Kartenmittelpunkt neu.</div>` : ""}
+      </div><div class="side">
       ${this._surfaces.map((s, i) => this._surfaceForm(s, i)).join("")}
       ${this._surfaces.length ? "" : `<div class="hint">Noch keine PV-Fläche. Mit „+ Dachfläche“ die Fläche auf dem Luftbild einzeichnen.</div>`}
       <div class="hint">Höchstens ${max} Flächen. Dachfläche: Ecken einzeichnen und die untere Dachkante (Traufe) markieren – die Ausrichtung ist die Seite, zu der das Dach abfällt. Fassade: Linie entlang der Wand, Ausrichtung mit „Richtung umdrehen“ wählen.</div>
       ${admin ? `<div class="bar"><span class="sp"></span>
         <button data-act="discard" ${this._dirty ? "" : "disabled"}>Verwerfen</button>
         <button class="primary" data-act="save" ${this._dirty && !this._busy && !this._draw ? "" : "disabled"}>Speichern</button></div>`
-        : `<div class="hint">Nur Administratoren können PV-Flächen ändern.</div>`}`;
+        : `<div class="hint">Nur Administratoren können PV-Flächen ändern.</div>`}</div></div>`;
     this.shadowRoot.innerHTML = `<style>${PV_CSS}</style><ha-card>
       <div class="hd"><h2>${esc(title)}</h2>
         ${d ? `<span class="chip">${pvFmt(total)} kWp</span>` : ""}
@@ -1918,10 +1942,11 @@ class SmartifyEnergyPvCard extends HTMLElement {
 
   _bind() {
     const root = this.shadowRoot;
+    root.querySelectorAll(".s-head .nm[data-act]").forEach(b => b.addEventListener("click", e => this._action("toggle", e.currentTarget.closest(".surf")?.dataset.id)));
     root.querySelectorAll("button[data-act]").forEach(b => b.addEventListener("click", e => this._action(e.currentTarget.dataset.act, e.currentTarget.closest(".surf")?.dataset.id)));
     root.querySelectorAll(".surf [data-f]").forEach(el => el.addEventListener("change", e => {
       const id = e.target.closest(".surf").dataset.id, f = e.target.dataset.f;
-      const v = f === "name" || f === "input" ? e.target.value : Number(e.target.value);
+      const v = f === "name" || f === "input" ? e.target.value : f === "bifacial" ? e.target.checked : Number(e.target.value);
       const patch = { [f]: v };
       if (f === "input" && v === "modules") { const s = this._surfaces.find(x => x.id === id); if (!s.module_wp) patch.module_wp = 400; if (!s.modules) patch.modules = Math.max(1, Math.round(pvKwp(s) * 1000 / 400)); }
       if (f === "input" && v === "kwp") { const s = this._surfaces.find(x => x.id === id); patch.kwp = Math.round(pvKwp(s) * 1000) / 1000 || 1; }
@@ -1944,6 +1969,7 @@ class SmartifyEnergyPvCard extends HTMLElement {
       case "save": this._save(); break;
       case "discard": this._discard(); break;
       case "sel": this._sel = id; this._focus(s); this._render(); break;
+      case "toggle": if (this._open.has(id)) this._open.delete(id); else this._open.add(id); this._render(); break;
       case "draw-area": this._startDraw("area", id); break;
       case "draw-line": this._startDraw("line", id); break;
       case "flip": this._change(id, { flip: !s.flip }); break;
@@ -2047,7 +2073,9 @@ class SmartifyEnergyPvCard extends HTMLElement {
     }
     const surf = target.closest?.("[data-surface]");
     this._sel = surf ? surf.dataset.surface : null;
+    if (this._sel) this._open.add(this._sel);
     this._render();
+    this.shadowRoot.querySelector(`.surf[data-id="${CSS.escape(this._sel || "")}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
 }
 

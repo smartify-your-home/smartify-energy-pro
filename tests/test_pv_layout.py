@@ -92,6 +92,19 @@ class ValidationTests(unittest.TestCase):
         far = [*RECT, pt(-1, 3)]  # a real fifth corner stays
         self.assertEqual(len(pv.normalize_surface(self.base(points=far))["points"]), 5)
 
+    def test_bifacial_is_passed_to_the_model(self):
+        s = pv.normalize_surface(self.base(kind="line", points=[pt(0, 0), pt(10, 0)], tilt=90,
+                                           bifacial=True, bifaciality=0.75))
+        self.assertEqual((s["bifacial"], s["bifaciality"]), (True, 0.75))
+        self.assertEqual(pv.model_surfaces([s])[0]["bifaciality"], 0.75)
+        plain = pv.normalize_surface(self.base())
+        self.assertFalse(plain["bifacial"])
+        self.assertNotIn("bifaciality", pv.model_surfaces([plain])[0])
+        with self.assertRaises(ValueError):
+            pv.normalize_surface(self.base(bifacial=True, bifaciality=1.3))
+        default = pv.normalize_surface(self.base(bifacial=True))
+        self.assertEqual(pv.model_surfaces([default])[0]["bifaciality"], 0.7)
+
     def test_max_four_and_unique_ids(self):
         many = [self.base(id=f"s{i}") for i in range(5)]
         with self.assertRaises(ValueError):

@@ -16,6 +16,7 @@ from typing import Any
 
 CONF_SOLAR_SURFACES = "solar_surfaces"
 MAX_SURFACES = 4  # solar_model uses at most four surfaces
+BIFACIALITY_DEFAULT = 0.7  # typical rear/front ratio of bifacial modules
 CLOSE_TOLERANCE_M = 0.3  # last area point this close to the first = closing click
 EARTH_RADIUS = 6378137.0
 KINDS = ("area", "line", "manual")
@@ -50,6 +51,7 @@ def legacy_surfaces(cfg: dict[str, Any]) -> list[dict[str, Any]]:
             "tilt": float(cfg.get(f"solar_{i}_tilt", 30) or 0),
             "azimuth": float(cfg.get(f"solar_{i}_azimuth", 180) or 0) % 360,
             "input": "kwp", "kwp": kwp, "modules": 0, "module_wp": 0.0, "area_m2": None,
+            "bifacial": False, "bifaciality": BIFACIALITY_DEFAULT,
         })
     return out
 
@@ -92,11 +94,16 @@ def effective_kwp(surface: dict[str, Any] | None) -> float:
 
 
 def model_surfaces(surfaces: list[dict[str, Any]]) -> list[dict[str, float]]:
-    """What the solar model needs: kWp, tilt, azimuth (kWp > 0 only)."""
-    return [
-        {"kwp": round(effective_kwp(s), 3), "tilt": float(s["tilt"]), "azimuth": float(s["azimuth"])}
-        for s in surfaces[:MAX_SURFACES] if effective_kwp(s) > 0
-    ]
+    """What the solar model needs: kWp, tilt, azimuth, bifaciality (kWp > 0 only)."""
+    out = []
+    for s in surfaces[:MAX_SURFACES]:
+        if effective_kwp(s) <= 0:
+            continue
+        item = {"kwp": round(effective_kwp(s), 3), "tilt": float(s["tilt"]), "azimuth": float(s["azimuth"])}
+        if s.get("bifacial"):
+            item["bifaciality"] = float(s.get("bifaciality") or BIFACIALITY_DEFAULT)
+        out.append(item)
+    return out
 
 
 # ── Geometry ─────────────────────────────────────────────────────────────────
@@ -196,6 +203,8 @@ def normalize_surface(raw: Any) -> dict[str, Any]:
         raise ValueError("id: ungültig")
     flip = bool(raw.get("flip", False))
     tilt = _num(raw, "tilt", 0, 90, 30)
+    bifacial = bool(raw.get("bifacial", False))
+    bifaciality = _num(raw, "bifaciality", 0.5, 1.0, BIFACIALITY_DEFAULT) if bifacial else BIFACIALITY_DEFAULT
     mode = raw.get("input", "kwp")
     if mode not in INPUTS:
         raise ValueError("input: kwp oder modules")
@@ -242,7 +251,7 @@ def normalize_surface(raw: Any) -> dict[str, Any]:
         "id": sid, "name": name, "kind": kind, "points": points, "edge": edge, "flip": flip,
         "tilt": round(tilt, 1), "azimuth": round(azimuth, 1), "input": mode,
         "kwp": round(kwp, 3), "modules": int(modules), "module_wp": round(module_wp, 1),
-        "area_m2": area,
+        "area_m2": area, "bifacial": bifacial, "bifaciality": round(bifaciality, 2),
     }
 
 

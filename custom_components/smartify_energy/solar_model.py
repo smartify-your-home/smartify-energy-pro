@@ -2,7 +2,8 @@
 
 Uses HA location, STC kWp, tilt (0=flat) and azimuth (0=N, 90=E,
 180=S, 270=W). A lightweight clear-sky plane-of-array approximation is
-attenuated by the Meteonomiqs hourly cloud cover; this is not a bankable
+attenuated by the Meteonomiqs hourly cloud cover; bifacial modules add their
+rear side (opposite normal) weighted with the bifaciality. This is not a bankable
 irradiance simulation and requires measured PV feedback for calibration.
 """
 from __future__ import annotations
@@ -96,6 +97,15 @@ def pv_hours(now: datetime, latitude: float, longitude: float,
                 continue
             poa = (_clear_sky_poa(hour + timedelta(minutes=15), latitude, longitude, tilt, azimuth)
                    + _clear_sky_poa(hour + timedelta(minutes=45), latitude, longitude, tilt, azimuth)) / 2
+            bifaciality = float(surface.get("bifaciality") or 0)
+            if 0 < bifaciality <= 1:
+                # Rear side of a bifacial module: normal points the opposite way
+                # (tilt 180°−tilt, azimuth +180°) – direct sun from behind, sky
+                # diffuse and ground reflection – weighted with the bifaciality.
+                rear_tilt, rear_az = 180 - tilt, (azimuth + 180) % 360
+                rear = (_clear_sky_poa(hour + timedelta(minutes=15), latitude, longitude, rear_tilt, rear_az)
+                        + _clear_sky_poa(hour + timedelta(minutes=45), latitude, longitude, rear_tilt, rear_az)) / 2
+                poa += bifaciality * rear
             value += peak * 1000 * (poa / 1000) * 0.85 * factor
         out[hour] = round(value, 2)
     return out

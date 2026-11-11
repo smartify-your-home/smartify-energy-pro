@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 0.3.69 – 2026-11-11
+
+- Neu: **Bifaziale Module** je PV-Fläche („bifazial“ + Bifazialfaktor, Standard 0,7). Die eigene Prognose rechnet die Rückseite mit (Gegenrichtung: direkte Sonne von hinten, Himmel, Bodenreflexion) mal Faktor. Wirkt vor allem bei senkrechten Zäunen/Fassaden; bei einem Westzaun liefert die Rückseite die Morgensonne. Ohne Haken bleibt die Berechnung unverändert. Eine bifaziale Fläche kann mehr als ihre Nennleistung liefern; die Kalibrierung bleibt unverändert.
+- PV-Flächen-Editor: Auf breiten Karten (ab ca. 860 px) steht die Flächenliste rechts neben dem Luftbild. Jede Fläche ist auf- und zuklappbar; die Kopfzeile zeigt kWp, Ausrichtung, Neigung und „bifazial“. Antippen einer Fläche auf der Karte klappt sie in der Liste auf.
+- Hinweis: Bei einem Downgrade auf eine ältere Version geht die Bifazial-Angabe verloren (alte Felder kennen sie nicht).
+
 ## 0.3.68 – 2026-11-11
 
 - PV-Flächen-Editor: Beschriftung steht außen an der Pfeilspitze statt in der Flächenmitte, schmale Nachbarflächen überdecken sich nicht mehr.

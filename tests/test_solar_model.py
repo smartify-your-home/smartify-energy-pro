@@ -68,5 +68,36 @@ class SolarModelTests(unittest.TestCase):
         ]}, self.t), {})
 
 
+
+class BifacialTests(unittest.TestCase):
+    """0.3.69: bifacial modules add their rear side (opposite normal × bifaciality)."""
+    LAT, LON = 47.98, 13.29
+
+    def day(self, surfaces, date):
+        start = datetime(date.year, date.month, date.day, tzinfo=timezone.utc)
+        clouds = {start + timedelta(hours=h): 0 for h in range(24)}
+        return solar.pv_hours(start, self.LAT, self.LON, surfaces, clouds)
+
+    def test_west_fence_gets_morning_sun_on_rear(self):
+        mono = [{"kwp": 1.14, "tilt": 90, "azimuth": 280}]
+        bi = [{**mono[0], "bifaciality": 0.7}]
+        d = datetime(2026, 3, 21)
+        m, b = self.day(mono, d), self.day(bi, d)
+        morning = datetime(2026, 3, 21, 7, tzinfo=timezone.utc)  # 08:00 local, sun in the east
+        self.assertGreater(b[morning], 3 * max(m[morning], 1))
+        self.assertGreater(sum(b.values()), 1.5 * sum(m.values()))
+
+    def test_south_fence_gain_is_small_in_winter(self):
+        mono = [{"kwp": 3.04, "tilt": 90, "azimuth": 193}]
+        bi = [{**mono[0], "bifaciality": 0.7}]
+        d = datetime(2026, 11, 11)
+        ratio = sum(self.day(bi, d).values()) / sum(self.day(mono, d).values())
+        self.assertTrue(1.0 < ratio < 1.15, ratio)
+
+    def test_monofacial_unchanged(self):
+        surfaces = [{"kwp": 10, "tilt": 20, "azimuth": 180}]
+        d = datetime(2026, 6, 21)
+        self.assertEqual(self.day(surfaces, d), self.day([{**surfaces[0], "bifaciality": 0}], d))
+
 if __name__ == "__main__":
     unittest.main()
