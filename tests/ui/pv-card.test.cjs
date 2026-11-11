@@ -251,8 +251,8 @@ test('deleting surfaces renumbers default names but keeps ids and custom names',
   const {el}=card(dom,{surfaces:[surface('f1','Fläche 1'),surface('f2','Fläche 2'),surface('f3','Fläche 3'),surface('f4','Fläche 4')]});
   await tick();await tick();
   el._action('del','f1');el._action('del','f2');
-  assert.deepEqual(el._surfaces.map(x=>x.name),['Fläche 1','Fläche 2']);
-  assert.deepEqual(el._surfaces.map(x=>x.id),['f3','f4']);
+  assert.deepEqual(Array.from(el._surfaces,x=>x.name),['Fläche 1','Fläche 2']);
+  assert.deepEqual(Array.from(el._surfaces,x=>x.id),['f3','f4']);
   el._change('f3',{name:'Garage'});el._action('del','f4');
   assert.equal(el._surfaces[0].name,'Garage');
 });
