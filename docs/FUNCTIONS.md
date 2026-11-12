@@ -1,3 +1,8 @@
+## PV-Plan-Zukunft und Actions-Prüfungen (0.3.80)
+- `manager._plan`: `prognose_verfuegbar` bei jedem Stundenpunkt; fehlende Prognosen als `pv_w=null` und `frei_w=null` veröffentlichen, interne Planung weiterhin konservativ mit 0 rechnen. Sensorattribute `prognose_bis`, `prognose_stunden`, `wetter_sensor` zur Diagnose.
+- `smartify-energy-plan-card.js`: bei fehlenden vollständig gültigen Übermorgen-Werten einen 216px großen Hinweis im scrollbaren Chart statt Nullbalken zeichnen. Tagesüberschrift bleibt navigierbar; Desktoppfeile `data-pvplan`, touch overflow-x und feste linke kW-Skala. Bei 8h-Sensor auf Auswahl des 48h-Cloudsensors hinweisen.
+- Workflow `.github/workflows/validation.yml`: PR-Überschneidungen abbrechen; main-Validation nur über Publish SEP bei Manifestversionserhöhung, oder manuell. Die vollständige Validierung wird **nicht** abgeschwächt. GitHub-Email-Kontoeinstellungen bleiben außerhalb der Integrationskontrolle.
+
 ## PV-Plan: Alltagstipps und Zukunftsscrollen (0.3.79)
 - `pv_advice.py` wertet vollständige lokale 08–16h-Forecastfenster pro Tag aus. Mindestens 25 % und 3 kWh Mehrertrag; nicht vorhandene Stunden werden nie als Nullwerte aufgefüllt. 06:00-Uhr-Trigger und Refresh im normalen Forecast-Intervall.
 - `manager.py` ergänzt die `plan_hours` für die UI nur um tatsächlich vorhandene Zukunftsstunden bis maximal 72h; dispositive Geräteplanung bleibt bis morgen. Sensor `pv_tipp` listet Tipps und Tageserträge; `pv_waschtipp` liefert eigenständigen Wasch-Hinweis. Weitere Tipps basieren auf konfigurierten, nicht deaktivierten Geräten, PV-only-E-Auto, Speicher und optionaler Live-PV-Analyse.

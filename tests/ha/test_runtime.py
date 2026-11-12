@@ -613,3 +613,25 @@ async def test_absence_resets_active_number_ww_boost(hass):
         await wp.async_run(Context(dt_util.now(), 0, 3000, 3000, 3000, True, False), 3000)
         set_boost.assert_awaited_once_with(False)
     assert not wp.state["active"]
+
+
+async def test_plan_marks_missing_forecast_hours_without_inventing_zero_and_displays_future(hass):
+    """A 24-hour weather feed cannot create real overmorgen forecast bars."""
+    m = manager(hass)
+    now = dt_util.now()
+    start = now.replace(minute=0, second=0, microsecond=0)
+    future = (now + timedelta(days=2)).replace(hour=12, minute=0, second=0, microsecond=0)
+    m.forecast.hours = {start: 1500.0, future: 3300.0}
+    m._plan(now)
+    rows = {r["zeit"]: r for r in m.plan_hours}
+    assert rows[start.isoformat()]["pv_w"] == 1500
+    assert rows[start.isoformat()]["prognose_verfuegbar"] is True
+    tomorrow = (now + timedelta(days=1)).replace(hour=12, minute=0, second=0, microsecond=0)
+    assert rows[tomorrow.isoformat()]["pv_w"] is None
+    assert rows[tomorrow.isoformat()]["prognose_verfuegbar"] is False
+    assert rows[future.isoformat()]["pv_w"] == 3300
+    assert rows[future.isoformat()]["prognose_verfuegbar"] is True
+    plan_spec = next(s for s in m.sensor_specs() if s.key == "plan")
+    attributes = plan_spec.attrs()
+    assert attributes["prognose_stunden"] == 2
+    assert attributes["prognose_bis"] == future.isoformat()

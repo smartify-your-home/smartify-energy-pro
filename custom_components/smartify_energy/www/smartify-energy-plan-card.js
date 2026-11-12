@@ -636,7 +636,26 @@ const CARD_CSS = `
   .pv-compare-totals small{color:var(--secondary-text-color);font-size:11px}
   .pv-compare-totals strong{font-size:16px;font-variant-numeric:tabular-nums}
   .pv-compare-scroll{overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
-  .pv-plan-scroll{overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x pan-y;min-width:0}
+  .pv-plan-scroll{overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x pan-y;min-width:0;
+    scrollbar-width:thin;scrollbar-color:var(--secondary-text-color) transparent}
+  .pv-plan-controls{display:flex;align-items:center;justify-content:space-between;gap:6px;
+    color:var(--secondary-text-color);font-size:11px;margin:0 1px 4px;min-height:23px}
+  .pv-plan-controls>span{overflow-wrap:anywhere}
+  .pv-plan-day-nav{display:flex;align-items:center;gap:4px;flex:none}
+  .pv-plan-day-nav button{background:transparent;color:var(--secondary-text-color);
+    border:1px solid var(--divider-color);border-radius:5px;min-height:26px;min-width:30px;
+    font:inherit;font-size:16px;cursor:pointer;padding:0 6px}
+  .pv-plan-day-nav button:hover{color:var(--primary-text-color);border-color:var(--primary-color)}
+  .pv-plan-day-nav button:focus-visible{outline:2px solid var(--primary-color);outline-offset:1px}
+  .pv-plan-missing{flex:none;box-sizing:border-box;height:96px;width:216px;
+    display:flex;justify-content:center;align-items:center;text-align:center;
+    border:1px dashed var(--divider-color);border-radius:4px;padding:10px;
+    background:color-mix(in srgb,var(--secondary-text-color) 7%,transparent);
+    color:var(--secondary-text-color);font-size:11px;line-height:1.4;white-space:normal}
+  .pv-plan-coverage{font-size:11px;color:var(--secondary-text-color);padding:5px 2px 1px;
+    overflow-wrap:anywhere}
+  .pv-plan-missing-label{flex:none;width:216px;text-align:center;color:var(--secondary-text-color);
+    font-size:10px}
   .pv-plan-days{display:flex;height:24px;box-sizing:border-box}
   .pv-plan-day{box-sizing:border-box;font-size:11px;font-weight:600;padding:3px 4px 5px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--primary-text-color)}
@@ -1144,9 +1163,25 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const visible = hours.filter(h => Date.parse(h.zeit) + 3600e3 > now);
     // Do not draw zero-PV hours as full-width columns. Preserve a visible
     // separator for each consecutive gap, including the overnight interval.
-    const cols = visible.filter(h => (Number(h.pv_w) || 0) > 0 ||
+    const cols = visible.filter(h => (h.pv_w !== null && Number(h.pv_w) > 0) ||
       Object.values(h.geraete || {}).some(w => Number(w) > 0));
-    if (!cols.length) return `<div class="timeline"><div class="empty">Kein PV-Ertrag im Zeitraum.</div></div>`;
+    // Keep overmorgen reachable even when the weather service has no full
+    // forecast yet. A placeholder is NOT a guessed zero-production forecast.
+    const dayAfter = new Date();
+    dayAfter.setHours(12, 0, 0, 0);
+    dayAfter.setDate(dayAfter.getDate() + 2);
+    const dayAfterKey = dayAfter.toLocaleDateString("sv-SE");
+    const dayKey = h => new Date(Date.parse(h.zeit)).toLocaleDateString("sv-SE");
+    const completeDayAfter = Array.from({length:8}, (_,i) => i + 8).every(hour =>
+      visible.some(h => dayKey(h) === dayAfterKey &&
+        new Date(Date.parse(h.zeit)).getHours() === hour &&
+        h.prognose_verfuegbar !== false && h.pv_w !== null &&
+        Number.isFinite(Number(h.pv_w))));
+    if (!cols.some(h => dayKey(h) === dayAfterKey)) {
+      cols.push({zeit:dayAfter.toISOString(), _missingDay:!completeDayAfter,
+        _dayMarker:true, pv_w:0, frei_w:0, geraete:{}});
+    }
+    cols.sort((a,b)=>Date.parse(a.zeit)-Date.parse(b.zeit));
     const colorOf = name => name === "Speicher" ? BATTERY_GRADIENT : (d.devices.find(x => x.name === name)?.color || PALETTE[6]);
     const max = Math.max(...cols.map(h => Math.max(h.pv_w || 0, Object.values(h.geraete || {}).reduce((a, b) => a + b, 0))), 1);
     const axisMax = sepNiceAxisMax(max);
@@ -1178,6 +1213,15 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         lastDay = localDay;
       }
       offsetPx += 42;
+      if (h._dayMarker) {
+        const message = h._missingDay
+          ? "Für übermorgen liegt noch keine vollständige Stundenprognose vor."
+          : "Für übermorgen ist kein PV-Ertrag prognostiziert.";
+        bars.push(`<div class="pv-plan-missing" title="${esc(message)}">${esc(message)}</div>`);
+        labels.push('<div class="pv-plan-missing-label">08–16 Uhr</div>');
+        offsetPx += 176; // 216 px marker instead of a 40 px hour
+        return;
+      }
       const isNow = t <= now && now < t + 3600e3;
       const segs = Object.entries(h.geraete || {}).map(([name, w]) => {
         used.add(name);
@@ -1209,11 +1253,31 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       {weekday:"short",day:"2-digit",month:"2-digit"});
     const headings = dayStarts.map((day,i) => {
       const left = day.start, right = i + 1 < dayStarts.length ? dayStarts[i+1].start : offsetPx;
-      return `<div class="pv-plan-day" style="width:${right-left}px">${esc(dateFmt(day.key))}</div>`;
+      return `<div class="pv-plan-day" data-day="${esc(day.key)}" data-start="${left}"
+        style="width:${right-left}px">${esc(dateFmt(day.key))}</div>`;
     }).join("");
     const separators = dayStarts.slice(1).map(day =>
       `<div class="pv-compare-day-divider" style="left:${day.start}px" aria-hidden="true"></div>`).join("");
-    return `<div class="timeline">${tipOverlay}<div class="sep-axis-layout">
+    const horizon = plan?.attributes?.prognose_bis;
+    const knownUntil = horizon && Number.isFinite(Date.parse(horizon))
+      ? new Date(horizon).toLocaleString("de-AT",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})
+      : "unbekannt";
+    const cloudSensor = String(plan?.attributes?.wetter_sensor || "");
+    const sourceHint = /8h/i.test(cloudSensor)
+      ? " Unter SEP → Konfigurieren → Prognose den Sensor „Meteonomiqs Cloud Forecast 48h“ auswählen."
+      : "";
+    const coverageNote = !completeDayAfter
+      ? `<div class="pv-plan-coverage">Übermorgen, 08–16 Uhr: Stundenprognose unvollständig
+         (verfügbar bis ${esc(knownUntil)}).${esc(sourceHint)}</div>` : "";
+    return `<div class="timeline">${tipOverlay}
+      <div class="pv-plan-controls"><span>PV-Prognose · Tage horizontal scrollen</span>
+        <div class="pv-plan-day-nav">
+          <button type="button" data-pvplan="-1" aria-label="Vorheriger Prognosetag"
+            title="Vorheriger Prognosetag">‹</button>
+          <button type="button" data-pvplan="1" aria-label="Nächster Prognosetag"
+            title="Nächster Prognosetag">›</button>
+        </div>
+      </div><div class="sep-axis-layout">
       <div class="sep-y-axis" aria-label="PV-Leistung in kW" style="margin-top:24px">${sepAxisLabels(axisMax,"kW")}</div>
       <div class="pv-plan-scroll" aria-label="PV-Plan horizontal scrollen">
         <div class="pv-plan-inner" style="min-width:max(100%,${offsetPx}px);position:relative">
@@ -1223,7 +1287,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
           <div class="pv-compare-day-dividers">${separators}</div>
         </div>
       </div>
-      </div><div class="legend">${legend}</div></div>${next}`;
+      </div><div class="legend">${legend}</div>${coverageNote}</div>${next}`;
   }
 
   _pvComparison(d) {
@@ -1422,10 +1486,23 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._eventsBound = true;
     const root = this.shadowRoot;
     root.addEventListener("click", e => {
-      const el = e.target.closest?.("[data-pvtip], [data-pvcompare], [data-log], [data-gear], [data-more], [data-press], [data-toggle], [data-info], [data-grp], [data-setmode], select");
+      const el = e.target.closest?.("[data-pvplan], [data-pvtip], [data-pvcompare], [data-log], [data-gear], [data-more], [data-press], [data-toggle], [data-info], [data-grp], [data-setmode], select");
       if (!el) return;
       if (el.matches("select")) { e.stopPropagation(); return; }
-      if (el.hasAttribute("data-pvtip")) {
+      if (el.hasAttribute("data-pvplan")) {
+        e.stopPropagation();
+        const scroll = root.querySelector(".pv-plan-scroll");
+        const days = [...root.querySelectorAll(".pv-plan-day[data-start]")];
+        if (scroll && days.length) {
+          let current = 0;
+          for (let i = 0; i < days.length; i++) {
+            if (Number(days[i].dataset.start) <= scroll.scrollLeft + 15) current = i;
+          }
+          const target = Math.max(0, Math.min(days.length-1,
+            current + Number(el.dataset.pvplan)));
+          scroll.scrollLeft = Number(days[target].dataset.start);
+        }
+      } else if (el.hasAttribute("data-pvtip")) {
         e.stopPropagation();
         const tips = this._st(d.ents["sensor:pv_tipp"])?.attributes?.tipps || [];
         if (tips.length > 1) {

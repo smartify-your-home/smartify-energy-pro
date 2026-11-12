@@ -1,5 +1,15 @@
 ## Unreleased
 
+## 0.3.80 – 2026-11-12
+
+- PV-Plan: Übermorgen auch dann mit einer Tagesüberschrift erreichbar, wenn die stündliche Wetterprognose noch nicht so weit reicht. Fehlende Werte erscheinen ausdrücklich als „keine vollständige Stundenprognose“ statt als erfundene Nullerträge. Die reale kW-Grafik und die Verbraucherbalken bleiben erhalten.
+- Im PV-Plan deutliche Links-/Rechts-Pfeile zur Tagesnavigation zusätzlich zu Touch-/Horizontal-Scrolling, sichtbare schmale Scrollbar und Hinweis, bis wann echte Prognosewerte vorhanden sind. Beim gewählten 8h-Cloud-Sensor erscheint ein Hinweis auf den in My-Weather vorhandenen 48h-Sensor.
+- Plan-/Prognosesensor: Attribute `prognose_bis`, `prognose_stunden`, `wetter_sensor`. Geplante, aber nicht vom Prognoseanbieter abgedeckte Stunden werden mit `prognose_verfuegbar=false` und `pv_w=null` gekennzeichnet; echte Nullwerte bleiben Nullwerte.
+- GitHub Actions: Überholte PR-Prüfläufe werden automatisch abgebrochen; doppelter Standalone-Validierungslauf auf main entfällt. Die veröffentlichende Pipeline führt **unverändert alle** Python-/JS-, HA-, HACS- und Hassfest-Prüfungen vor dem Release aus. E-Mail-Benachrichtigungen selbst sind im GitHub-Konto unter Einstellungen → Notifications → System → Actions abwählbar.
+- Regressionstests für erreichbares Übermorgen, gültige Zukunftsbalken, fehlende Stunden und CI-Workflow-Konfiguration.
+
+
+
 ## 0.3.79 – 2026-11-12
 
 - PV-Plan horizontal scrollbar mit Tagesüberschriften wie die Prognose-Ist-Balkengrafik, feststehender kW-Achse und gleicher Gerätebalken-Farbpalette; übermorgen nur bei tatsächlich vorhandenen Forecast-Stunden. Geplante Gerätestarts bleiben auf den bisherigen Plan-Horizont begrenzt.
