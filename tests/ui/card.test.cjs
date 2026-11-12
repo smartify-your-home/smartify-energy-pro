@@ -634,10 +634,9 @@ test('PV plan can navigate to overmorgen when weather hours are missing, without
   assert.match(root.querySelector('.pv-plan-missing').textContent,/keine vollständige Stundenprognose/);
   assert.match(root.querySelector('.pv-plan-coverage').textContent,/48h/);
   assert.equal(root.querySelectorAll('.bars > .col').length,3,'no invented overmorgen PV columns');
-  assert.equal(root.querySelectorAll('.pv-plan-day-nav button').length,2);
-  const scroller=root.querySelector('.pv-plan-scroll');
-  root.querySelector('[data-pvplan="1"]').click();
-  assert.ok(scroller.scrollLeft>0,'desktop arrow navigates to day after tomorrow');
+  assert.equal(root.querySelector('.pv-plan-day-nav'),null,'day navigation buttons are hidden');
+  assert.equal(root.querySelector('.pv-plan-controls'),null,'no redundant scroll instruction');
+  assert.ok(root.querySelector('.pv-plan-scroll'),'horizontal scroll remains available');
 });
 
 test('PV plan shows real übermorgen bars without missing marker when full forecast exists',()=>{
@@ -665,4 +664,13 @@ test('PV plan shows real übermorgen bars without missing marker when full forec
   assert.equal(root.querySelectorAll('.bars > .col').length,16);
   assert.equal(root.querySelector('.pv-plan-missing'),null);
   assert.equal(root.querySelector('.pv-plan-coverage'),null);
+});
+
+test('PV tip stays above bars with 16px headline and 14px detail, without scroll toolbar',()=>{
+  assert.match(source,/\.pv-tip-title\{font-size:16px;/);
+  assert.match(source,/\.pv-tip-detail\{font-size:14px;/);
+  assert.doesNotMatch(source,/data-pvplan/);
+  assert.doesNotMatch(source,/pv-plan-controls/);
+  assert.match(source,/\.pv-plan-scroll\{overflow-x:auto/);
+  assert.match(source,/data-pvtip/,'tip carousel arrows remain usable');
 });

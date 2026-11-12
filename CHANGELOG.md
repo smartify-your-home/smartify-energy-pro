@@ -1,5 +1,13 @@
 ## Unreleased
 
+## 0.3.81 – 2026-11-12
+
+- SEP-PV-Plan-Karte: Redundante Zeile „PV-Prognose · Tage horizontal scrollen“ samt Tagwechsel-Pfeilbuttons vollständig entfernt. Horizontales Wischen mit dem Finger und die Tagesüberschriften bleiben erhalten; Pfeile zum Blättern durch unterschiedliche PV-Alltagstipps bleiben verfügbar.
+- Tipp-Overlay im PV-Plan besser lesbar: Überschrift 16 px (statt 12 px), Detailzeile 14 px (statt 11 px), Zeilenabstand und vertikale Luft angepasst; bestehende SEP-Schriftfamilie und Home-Assistant-Farbvariablen beibehalten.
+- UI-Regressionstests für unverändertes Touchscrolling, entfernte Tagwechsel-Bedienelemente und vergrößerte Tipptypografie.
+
+
+
 ## 0.3.80 – 2026-11-12
 
 - PV-Plan: Übermorgen auch dann mit einer Tagesüberschrift erreichbar, wenn die stündliche Wetterprognose noch nicht so weit reicht. Fehlende Werte erscheinen ausdrücklich als „keine vollständige Stundenprognose“ statt als erfundene Nullerträge. Die reale kW-Grafik und die Verbraucherbalken bleiben erhalten.
