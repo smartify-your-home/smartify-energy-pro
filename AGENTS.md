@@ -1,3 +1,8 @@
+## PV-Plan-Karte: kompakte Bedienung und größere Tipps (0.3.81)
+- Keine eigene Zeile „PV-Prognose · Tage horizontal scrollen“, **keine** Tagwechsel-Buttons `data-pvplan`; horizontales Touchscrolling über `.pv-plan-scroll`, Tagesüberschriften, feste kW-Achse und Übermorgen-Prognoseabdeckung bleiben erhalten.
+- Tipp-Bereich **über** den Balken mit SEP-Standardfont: `.pv-tip-title` 16px / halbfett, `.pv-tip-detail` 14px / sekundäre Farbe. Pfeile `data-pvtip` zum Wechseln zwischen mehreren Tipps bleiben ausdrücklich bestehen. Kartenoption `show_pv_tips` bleibt erhalten.
+- Bei UI-Änderungen Tests in `tests/ui/card.test.cjs`, Dokumentation und Release-Notes aktualisieren; Release nur nach grüner CI veröffentlichen.
+
 ## Release 0.3.80 – Prognoseabdeckung / fehlende Stunden / CI-Flut
 - Datenverfügbarkeit strikt von 0 W unterscheiden: `plan.stunden[*].prognose_verfuegbar` und bei fehlenden Prognosewerten `pv_w=null`; `forecast_today/plan` zeigen `prognose_bis`, `prognose_stunden` und bei berechneter Prognose `wetter_sensor`. Ohne gültigen Anbieterwert keine erfundenen Balken oder Waschtipps.
 - Übermorgen muss im PV-Plan navigierbar bleiben, auch wenn echte Prognose bis dahin nicht reicht: Tagesüberschrift plus expliziter „Prognose fehlt“-Block. Tagespfeile für Desktop und horizontales Wischen für Touch, linke kW-Skala fest. Volle 08–16-Uhr-Prognose für übermorgen um 06:00 erfordert mehr als 48h Forecast (58h); My-Weather 48h gibt nur tatsächlich gelieferte Stunden aus. Alternative 8h-Sensorauswahl nicht stillschweigend verändern.
