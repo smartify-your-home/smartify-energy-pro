@@ -822,6 +822,12 @@
       "forecast_today": {
         "name": "PV forecast today"
       },
+      "pv_tipp": {
+        "name": "PV tip"
+      },
+      "pv_waschtipp": {
+        "name": "PV laundry tip"
+      },
       "plan": {
         "name": "Plan"
       },
