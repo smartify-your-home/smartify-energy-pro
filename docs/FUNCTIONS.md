@@ -1,3 +1,8 @@
+## Verschiebbare PV-Plan-Anordnung (0.3.83)
+- `pv_plan_first` in der Lovelace-Kartenkonfiguration (Standard false) wird durch den Karteneditor per Drag-and-drop und `config-changed` gespeichert. Touch-Fallback via Grip-Pointergesten, alternativ zugängliche Pfeile.
+- `_render()` bildet aus Prioritäten und PV-Plan (inklusive `_pvComparison()`) zwei gemeinsame `.sep-order-block`-Container und rendert je nach Option umsortiert. Im normalen Kartenzustand kann eine Ziehbewegung an `data-section-grip` kurzfristig/local-browser eine andere Reihenfolge wählen; das Prioritätenschloss bleibt unabhängig, `set_priority_order` wird dafür nicht benutzt.
+- Unabhängig vom Layout bleiben PV-Tipp, Scrollposition, Zeitplanung und Sensorwerte unangetastet.
+
 ## Prioritätenschloss und PV-Tagestrenner (0.3.83)
 - Die SEP-Karte stellt das Schlosssymbol links in der Prioritätenüberschrift dar; `_priorityLocked` ist pro Karteninstanz standardmäßig `true`. Das Schloss sperrt alle Drag-&-Drop-Ziehpunkte, auch den Batteriespeicher. Nach Entsperren ist die gewohnte optimistische Prioritätensortierung verfügbar. Eine gesperrte Karte kann über `set_priority_order` keine Aufträge senden; bei `pointercancel` wird nichts gespeichert. Sperre ist bewusst UI-lokal und wird beim Neuladen automatisch wieder geschlossen.
 - Im horizontalen PV-Plan wird eine Nacht-/Tageslücke lediglich als transparenter 12px-Trenner mit Tooltip dargestellt. Weder „Nacht“ noch „PV-Pause“ wird als vertikale Beschriftung gerendert. Tagesüberschriften und Prognosebalken bleiben erhalten.
