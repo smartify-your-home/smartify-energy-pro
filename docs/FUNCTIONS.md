@@ -1,3 +1,6 @@
+## v0.3.84 – Abschnittsgriff und Prioritätenschloss
+In der Prioritätenüberschrift sind die Elemente von links nach rechts data-section-grip, data-priority-lock, danach der Labeltext „Prioritäten“. Die zwei Drag-Modi sind voneinander getrennt; keine Änderung der Serviceaufrufe oder Sperrlogik.
+
 ## Verschiebbare PV-Plan-Anordnung (0.3.83)
 - `pv_plan_first` in der Lovelace-Kartenkonfiguration (Standard false) wird durch den Karteneditor per Drag-and-drop und `config-changed` gespeichert. Touch-Fallback via Grip-Pointergesten, alternativ zugängliche Pfeile.
 - `_render()` bildet aus Prioritäten und PV-Plan (inklusive `_pvComparison()`) zwei gemeinsame `.sep-order-block`-Container und rendert je nach Option umsortiert. Im normalen Kartenzustand kann eine Ziehbewegung an `data-section-grip` kurzfristig/local-browser eine andere Reihenfolge wählen; das Prioritätenschloss bleibt unabhängig, `set_priority_order` wird dafür nicht benutzt.
