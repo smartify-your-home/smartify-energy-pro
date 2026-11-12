@@ -428,6 +428,17 @@ const CARD_CSS = `
   .section { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
              color:var(--secondary-text-color); margin:14px 2px 6px; display:flex; justify-content:space-between; }
   .section span:last-child { text-transform:none; letter-spacing:0; font-weight:400; }
+  .priority-heading { display:inline-flex;align-items:center;gap:7px;min-width:0; }
+  .priority-lock { display:inline-flex;align-items:center;justify-content:center;
+    width:27px;height:27px;flex:none;margin:-6px 0 -5px -2px;
+    border:1px solid var(--divider-color);border-radius:6px;
+    background:transparent;color:var(--secondary-text-color);cursor:pointer;padding:2px; }
+  .priority-lock ha-icon { --mdc-icon-size:18px; }
+  .priority-lock.unlocked { color:var(--primary-color);border-color:var(--primary-color); }
+  .priority-lock:disabled { cursor:wait;opacity:.5; }
+  .priority-lock:focus-visible { outline:2px solid var(--primary-color);outline-offset:2px; }
+  .priority-hint { text-align:right; }
+
 
   .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:4px; }
   .tile { min-width:0; container-type:inline-size; background:var(--row-bg); border-radius:var(--radius); padding:8px 4px 6px;
@@ -473,6 +484,8 @@ const CARD_CSS = `
   .dev.dragging { transition:none; z-index:5; box-shadow:0 8px 24px rgba(0,0,0,.35); opacity:.95; }
   .handle { cursor:grab; color:var(--secondary-text-color); font-size:18px; text-align:center; touch-action:none; }
   .handle:active { cursor:grabbing; }
+  .handle.locked { cursor:default;touch-action:pan-y;opacity:.35; }
+  .handle.locked:active { cursor:default; }
   .badge { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center;
            font-size:12px; font-weight:700; color:#000; }
   .dev ha-icon { --mdc-icon-size:24px; cursor:pointer; }
@@ -572,7 +585,10 @@ const CARD_CSS = `
   .col .pv { position:absolute; left:0; right:0; bottom:0; border-radius:3px 3px 0 0; opacity:.22; background:${grad(PV_GRADIENT).replace("to right", "to top")}; }
   .col .seg { position:relative; width:100%; }
   .col .seg:last-child { border-radius:3px 3px 0 0; }
-  .pv-break { flex:0 0 30px; min-width:30px; height:100%; border-left:1px dashed var(--divider-color); border-right:1px dashed var(--divider-color); display:flex; align-items:center; justify-content:center; color:var(--secondary-text-color); font-size:9px; writing-mode:vertical-rl; box-sizing:border-box; background:var(--secondary-background-color,transparent); opacity:.8; }\n  .pv-break-label { flex:0 0 30px !important; min-width:30px !important; }\n  .col.gap { margin-left:8px; }
+  .pv-break { flex:0 0 12px;min-width:12px;height:100%;border-left:1px dashed var(--divider-color);
+    box-sizing:border-box;background:transparent;opacity:.6; }
+  .pv-break-label { flex:0 0 12px !important;min-width:12px !important; }
+  .col.gap { margin-left:8px; }
   .col.gap::before { content:""; position:absolute; left:-6px; top:20%; bottom:0; border-left:1px dotted var(--divider-color); }
   .col.now::after { content:""; position:absolute; top:-2px; bottom:0; left:-1px; border-left:2px dashed var(--primary-color); }
   .labels { display:flex; gap:2px; margin-top:3px; }
@@ -652,7 +668,7 @@ const CARD_CSS = `
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--primary-text-color)}
   .pv-plan-scroll .bars>.col,.pv-plan-scroll .labels>.pv-hour-label{
     flex:0 0 40px;min-width:40px;box-sizing:border-box}
-  .pv-plan-scroll .pv-break,.pv-plan-scroll .pv-break-label{flex:0 0 30px;min-width:30px}
+  .pv-plan-scroll .pv-break,.pv-plan-scroll .pv-break-label{flex:0 0 12px;min-width:12px}
   .pv-plan-scroll .labels{width:100%}
   .pv-tip{display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;
     padding:4px 0 10px;color:var(--primary-text-color);font:inherit}
@@ -722,6 +738,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._config = {};
     this._sig = "";
     this._drag = null;
+    this._priorityLocked = true; // Fail-safe default on reload: prevents accidental mobile reordering.
     this._priorityOrder = null;
     this._prioritySaving = false;
     this._priorityError = "";
@@ -981,7 +998,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         const soc = num(this._st(dev.status)?.attributes?.soc);
         return `<div class="dev-wrap" data-wrap="__battery__">
           <div class="dev" data-dev="__battery__" style="border-image-source:linear-gradient(var(--divider-color),var(--divider-color))">
-            <div class="handle" title="PV-Akku per Drag & Drop priorisieren">⠿</div>
+            <div class="handle ${this._priorityLocked ? "locked" : ""}" title="${this._priorityLocked ? "Prioritäten gesperrt – oben entsperren" : "PV-Akku per Drag & Drop priorisieren"}">⠿</div>
             <div class="badge" style="background:${grad(BATTERY_GRADIENT)}">${Math.round(prio)}</div>
             <ha-icon icon="mdi:home-battery" style="color:var(--primary-text-color)"></ha-icon>
             <div class="main"><div class="name"><span class="t">PV-Akku</span></div>
@@ -1108,7 +1125,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       return `
         <div class="dev-wrap" data-wrap="${dev.id}">
         <div class="dev" data-dev="${dev.id}" style="${border ? `border-image-source:${grad(border)}` : "border-image-source:linear-gradient(var(--divider-color),var(--divider-color))"}">
-          <div class="handle" title="Halten und ziehen, um die Priorität zu ändern">⠿</div>
+          <div class="handle ${this._priorityLocked ? "locked" : ""}" title="${this._priorityLocked ? "Prioritäten gesperrt – oben entsperren" : "Halten und ziehen, um die Priorität zu ändern"}">⠿</div>
           <div class="badge" style="background:${grad(dev.color)}">${Math.round(prio)}</div>
           <ha-icon icon="${esc(icon)}" data-more="${dev.status}" style="color:${on ? dev.color[1] : "var(--secondary-text-color)"}"></ha-icon>
           <div class="main" data-more="${dev.status}">
@@ -1190,13 +1207,11 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         const omitted = elapsedHours - 1;
         const from = new Date(Date.parse(cols[i - 1].zeit) + 3600e3);
         const to = new Date(t);
-        const night = from.toDateString() !== to.toDateString() ||
-          (from.getHours() >= 18 || to.getHours() <= 7);
-        const label = night ? "Nacht" : "PV-Pause";
         const tooltip = `${omitted} h ohne PV-Ertrag (${from.toLocaleString("de-AT")} – ${to.toLocaleString("de-AT")})`;
-        bars.push(`<div class="pv-break" title="${esc(tooltip)}"><span>${label}</span></div>`);
-        labels.push(`<div class="pv-break-label">⋯</div>`);
-        offsetPx += 32;
+        // A slim transparent separator is enough: day headings already show the new date.
+        bars.push(`<div class="pv-break" title="${esc(tooltip)}"></div>`);
+        labels.push('<div class="pv-break-label"></div>');
+        offsetPx += 14;
       }
       const localDay = new Date(t).toLocaleDateString("sv-SE");
       if (localDay !== lastDay) {
@@ -1417,7 +1432,16 @@ class SmartifyEnergyPlanCard extends HTMLElement {
           ${c.show_settings !== false && d.hubSettings.length ? `<button class="gear ${this._open.has("hub") ? "open" : ""}" data-gear="hub" title="Einstellungen Energiemanager"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}</div>` : ""}
         ${this._open.has("hub") ? this._settings(d.hubSettings, d.name, "hub", "hub") : ""}
         ${c.show_header ? this._header(d) : ""}
-        ${c.show_priorities ? `<div class="section"><span>Prioritäten</span><span>1 = hoher Vorrang · ziehen zum Sortieren</span></div>${this._devices(d)}` : ""}
+        ${c.show_priorities ? `<div class="section priority-section">
+          <span class="priority-heading">
+            <button type="button" class="priority-lock ${this._priorityLocked ? "locked" : "unlocked"}"
+              data-priority-lock aria-label="${this._priorityLocked ? "Prioritäten entsperren" : "Prioritäten sperren"}"
+              aria-pressed="${!this._priorityLocked}" title="${this._priorityLocked ? "Zum Sortieren entsperren" : "Sortierung wieder sperren"}"
+              ${this._prioritySaving ? "disabled" : ""}>
+              <ha-icon icon="${this._priorityLocked ? "mdi:lock" : "mdi:lock-open-variant"}"></ha-icon>
+            </button>Prioritäten</span>
+          <span class="priority-hint">${this._priorityLocked ? "Sortierung gesperrt" : "Ziehen zum Sortieren"}</span>
+        </div>${this._devices(d)}` : ""}
         ${c.show_timeline ? `<div class="section"><span>PV-Plan</span><span>Zukunft scrollen${this._st(d.ents["sensor:forecast_today"])?.attributes?.prognose_quelle ? ` · ${esc(this._st(d.ents["sensor:forecast_today"]).attributes.prognose_quelle)}` : ""}</span></div>${this._timeline(d)}${this._pvComparison(d)}` : ""}
       </ha-card>`;
     const template = document.createElement("template");
@@ -1468,10 +1492,15 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._eventsBound = true;
     const root = this.shadowRoot;
     root.addEventListener("click", e => {
-      const el = e.target.closest?.("[data-pvtip], [data-pvcompare], [data-log], [data-gear], [data-more], [data-press], [data-toggle], [data-info], [data-grp], [data-setmode], select");
+      const el = e.target.closest?.("[data-priority-lock], [data-pvtip], [data-pvcompare], [data-log], [data-gear], [data-more], [data-press], [data-toggle], [data-info], [data-grp], [data-setmode], select");
       if (!el) return;
       if (el.matches("select")) { e.stopPropagation(); return; }
-      if (el.hasAttribute("data-pvtip")) {
+      if (el.hasAttribute("data-priority-lock")) {
+        e.stopPropagation();
+        if (this._prioritySaving || this._drag) return;
+        this._priorityLocked = !this._priorityLocked;
+        this._render();
+      } else if (el.hasAttribute("data-pvtip")) {
         e.stopPropagation();
         const tips = this._st(d.ents["sensor:pv_tipp"])?.attributes?.tipps || [];
         if (tips.length > 1) {
@@ -1538,7 +1567,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       else if (el.dataset.time && el.value) this._hass.callService("time", "set_value", {entity_id: el.dataset.time, time: `${el.value}:00`});
     });
     root.addEventListener("pointerdown", e => {
-      if (e.target.closest?.(".handle")) this._dragStart(e, this._boundData);
+      if (!this._priorityLocked && e.target.closest?.(".handle")) this._dragStart(e, this._boundData);
     });
   }
 
@@ -1546,7 +1575,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
   _dragStart(e, d) {
     const row = e.target.closest(".dev-wrap");
     const list = row?.parentElement;
-    if (!row || !list || this._prioritySaving) return;
+    if (!row || !list || this._priorityLocked || this._prioritySaving) return;
     e.preventDefault();
     const rows = [...list.querySelectorAll(":scope > .dev-wrap")];
     const rects = rows.map(r => r.getBoundingClientRect());
@@ -1560,7 +1589,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       row.removeEventListener("pointermove", move);
       row.removeEventListener("pointerup", end);
       row.removeEventListener("pointercancel", end);
-      this._dragEnd(ev);
+      this._dragEnd(ev.type === "pointercancel");
     };
     row.addEventListener("pointermove", move);
     row.addEventListener("pointerup", end);
@@ -1569,7 +1598,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
 
   _dragMove(e) {
     const g = this._drag;
-    if (!g) return;
+    if (!g || this._priorityLocked) return;
     const dy = e.clientY - g.startY;
     g.row.style.transform = `translateY(${dy}px)`;
     const to = Math.max(0, Math.min(g.rows.length - 1, g.from + Math.round(dy / g.step)));
@@ -1583,7 +1612,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     });
   }
 
-  async _dragEnd() {
+  async _dragEnd(cancelled = false) {
     const g = this._drag;
     if (!g) return;
     const order = g.rows.map(r => r.dataset.wrap);
@@ -1591,7 +1620,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     order.splice(g.to, 0, moved);
     g.rows.forEach(r => { r.style.transform = ""; r.classList.remove("dragging"); });
     this._drag = null;
-    if (g.to === g.from) return;
+    if (cancelled || this._priorityLocked || g.to === g.from) return;
     this._priorityOrder = order;
     this._prioritySaving = true;
     this._priorityError = "";
