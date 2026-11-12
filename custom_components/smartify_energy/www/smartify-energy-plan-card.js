@@ -1531,11 +1531,11 @@ class SmartifyEnergyPlanCard extends HTMLElement {
              aria-pressed="${!this._priorityLocked}" title="${this._priorityLocked ? "Zum Sortieren entsperren" : "Sortierung wieder sperren"}"
              ${this._prioritySaving ? "disabled" : ""}>
              <ha-icon icon="${this._priorityLocked ? "mdi:lock" : "mdi:lock-open-variant"}"></ha-icon>
-           </button>Prioritäten
+           </button>
            <button type="button" class="section-move-grip" data-section-grip="priorities"
              aria-label="Prioritäten-Abschnitt verschieben" title="Abschnitt verschieben">
              <ha-icon icon="mdi:drag-vertical"></ha-icon>
-           </button></span>
+           </button>Prioritäten</span>
          <span class="priority-hint">${this._priorityLocked ? "Sortierung gesperrt" : "Ziehen zum Sortieren"}</span>
        </div>${this._devices(d)}</div>` : "";
     const pvBlock = c.show_timeline ? `<div class="sep-order-block" data-order-block="pv">
