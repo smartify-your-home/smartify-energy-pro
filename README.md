@@ -255,3 +255,7 @@ GitHub Actions: überholte PR-Testläufe werden abgebrochen, doppelte Validierun
 
 ### Kompakte PV-Plan-Anzeige (v0.3.81)
 Der PV-Plan lässt sich weiterhin direkt mit dem Finger horizontal durch Prognosetage bewegen. Die zusätzliche Hinweisspalte „PV-Prognose · Tage horizontal scrollen“ und die Tageswechsel-Pfeiltasten entfallen zugunsten eines ruhigeren Layouts. Der PV-Alltagstipp bleibt darüber eingeblendet, jetzt mit größerer Überschrift (16 px) und Detailzeile (14 px); die Pfeile zum Wechseln zwischen verschiedenen Tipps bleiben erhalten. Die Anzeige kann weiterhin ausschließlich in den Kartenoptionen vollständig ausgeblendet werden.
+
+
+### Starre PV-Vergleichsskala (v0.3.82)
+Der Prognose-Ist-Vergleich für 14 Tage verwendet als feste Y-Obergrenze **genau 1,0 × konfigurierte PV-Gesamt-Peakleistung**: bei 10 kWp also 10 kWh je Stunde. Anders als bisher gibt es keine 10-%-Reserve und keine Rundung auf 500 Wh. Oberhalb des festen Maximums liegende Messwerte bleiben als Tooltip und HA-Sensordaten erhalten, auch wenn ihr Balken visuell auf 100 % begrenzt wird.
