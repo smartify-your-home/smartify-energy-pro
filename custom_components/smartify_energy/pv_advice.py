@@ -100,9 +100,11 @@ def build_advice(hours: dict[datetime, float], now: datetime, devices: list[dict
     if first:
         if comparison:
             wanted = comparison["tag"]
-            title = "Wäsche " + ("heute waschen" if wanted == "heute" else
-                                  "besser morgen waschen" if wanted == "morgen" else
-                                  "besser übermorgen waschen")
+            title = "Wäsche " + (
+                "heute waschen" if wanted == "heute" else
+                ("besser " if comparison["base_tag"] == "heute" else "") +
+                ("morgen waschen" if wanted == "morgen" else "übermorgen waschen")
+            )
             details = ("08–16 Uhr · " + 
                        (f"+{comparison['mehrertrag_kwh']:.1f} kWh"
                         if comparison["mehrertrag_kwh"] else "kein deutlicher Vorteil"))
