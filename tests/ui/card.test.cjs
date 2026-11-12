@@ -605,3 +605,64 @@ test('PV advice visibility lives only in the Lovelace card editor',()=>{
   check.dispatchEvent(new dom.window.Event('change'));
   assert.equal(conf.show_pv_tips,false);
 });
+
+
+test('PV plan can navigate to overmorgen when weather hours are missing, without fake bars',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
+  dom.window.document.body.append(card);
+  const tomorrow=new Date();
+  tomorrow.setHours(10,0,0,0);
+  tomorrow.setDate(tomorrow.getDate()+1);
+  const entries=[0,1,2].map(i=>{
+    const hour=new Date(tomorrow);hour.setHours(10+i);
+    return {zeit:hour.toISOString(),pv_w:2400,frei_w:1600,geraete:{},
+      prognose_verfuegbar:true};
+  });
+  const e={plan:{platform:'smartify_energy',translation_key:'plan',
+    device_id:'hub',entity_id:'sensor.sep_plan'}};
+  card.hass={entities:e,devices:{hub:{name:'SEP'}},
+    states:{'sensor.sep_plan':{state:'–',last_updated:new Date().toISOString(),
+      attributes:{stunden:entries,prognose_bis:entries.at(-1).zeit,
+        wetter_sensor:'sensor.meteonomiqs_cloud_forecast_8h'}}},
+    callService(){return Promise.resolve()}};
+  const root=card.shadowRoot;
+  const days=[...root.querySelectorAll('.pv-plan-day')];
+  assert.equal(days.length,2,'morgen plus missing übermorgen are both displayed');
+  assert.match(root.querySelector('.pv-plan-missing').textContent,/keine vollständige Stundenprognose/);
+  assert.match(root.querySelector('.pv-plan-coverage').textContent,/48h/);
+  assert.equal(root.querySelectorAll('.bars > .col').length,3,'no invented overmorgen PV columns');
+  assert.equal(root.querySelectorAll('.pv-plan-day-nav button').length,2);
+  const scroller=root.querySelector('.pv-plan-scroll');
+  root.querySelector('[data-pvplan="1"]').click();
+  assert.ok(scroller.scrollLeft>0,'desktop arrow navigates to day after tomorrow');
+});
+
+test('PV plan shows real übermorgen bars without missing marker when full forecast exists',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false,show_pv_tips:false});
+  dom.window.document.body.append(card);
+  const entries=[];
+  for(let offset=1;offset<=2;offset++){
+    const day=new Date();day.setDate(day.getDate()+offset);
+    for(let hour=8;hour<16;hour++){
+      const stamp=new Date(day);stamp.setHours(hour,0,0,0);
+      entries.push({zeit:stamp.toISOString(),pv_w:offset*1100,frei_w:offset*800,geraete:{},
+        prognose_verfuegbar:true});
+    }
+  }
+  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',
+    device_id:'hub',entity_id:'sensor.sep_plan'}},devices:{hub:{name:'SEP'}},
+    states:{'sensor.sep_plan':{state:'–',last_updated:new Date().toISOString(),
+      attributes:{stunden:entries,prognose_bis:entries.at(-1).zeit}}},
+    callService(){return Promise.resolve()}};
+  const root=card.shadowRoot;
+  assert.equal(root.querySelectorAll('.pv-plan-day').length,2);
+  assert.equal(root.querySelectorAll('.bars > .col').length,16);
+  assert.equal(root.querySelector('.pv-plan-missing'),null);
+  assert.equal(root.querySelector('.pv-plan-coverage'),null);
+});
