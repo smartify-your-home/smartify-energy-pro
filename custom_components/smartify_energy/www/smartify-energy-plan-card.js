@@ -1422,10 +1422,17 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._eventsBound = true;
     const root = this.shadowRoot;
     root.addEventListener("click", e => {
-      const el = e.target.closest?.("[data-pvcompare], [data-log], [data-gear], [data-more], [data-press], [data-toggle], [data-info], [data-grp], [data-setmode], select");
+      const el = e.target.closest?.("[data-pvtip], [data-pvcompare], [data-log], [data-gear], [data-more], [data-press], [data-toggle], [data-info], [data-grp], [data-setmode], select");
       if (!el) return;
       if (el.matches("select")) { e.stopPropagation(); return; }
-      if (el.hasAttribute("data-pvcompare")) {
+      if (el.hasAttribute("data-pvtip")) {
+        e.stopPropagation();
+        const tips = this._st(d.ents["sensor:pv_tipp"])?.attributes?.tipps || [];
+        if (tips.length > 1) {
+          this._pvTipIndex = (this._pvTipIndex + Number(el.dataset.pvtip) + tips.length) % tips.length;
+          this._render();
+        }
+      } else if (el.hasAttribute("data-pvcompare")) {
         e.stopPropagation();
         this._pvCompareOpen = !this._pvCompareOpen;
         this._render();
