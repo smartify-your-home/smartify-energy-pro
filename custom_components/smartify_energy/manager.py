@@ -15,6 +15,7 @@ from homeassistant.helpers.event import (
     async_call_later,
     async_track_state_change_event,
     async_track_time_interval,
+    async_track_time_change,
 )
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.sun import get_astral_event_date
@@ -58,6 +59,7 @@ from .devices.base import Decision
 from .forecast import ForecastProvider
 from .helpers import ButtonSpec, ParamSpec, SensorSpec, in_window, power_w, state_float, time_from_str
 from .live_pv import LivePVEstimator
+from .pv_advice import build_advice
 from .pv_comparison import PVComparison
 from .pv_layout import model_surfaces, surfaces_from_config
 
@@ -143,6 +145,7 @@ class EnergyManager:
         self.allocated = 0.0
         self.plan_hours: list[dict] = []
         self.next_action = ""
+        self.pv_advice: dict = {"state": "Ab 06:00 Uhr", "tips": [], "waschtipp": None, "tage": []}
 
     # ── Hub-Parameter ────────────────────────────────────────────────────────
     def param_specs(self) -> list[ParamSpec]:
@@ -419,7 +422,13 @@ class EnergyManager:
                 dev.observe_power(dt_util.now())
         interval = timedelta(seconds=int(self.cfg.get(CONF_INTERVAL, 30)))
         self._unsubs.append(async_track_time_interval(self.hass, self._async_tick, interval))
+        self._unsubs.append(async_track_time_change(self.hass, self._morning_pv_advice, hour=6, minute=0, second=0))
         self._unsubs.append(async_call_later(self.hass, 10, self._async_first_run))
+
+    @callback
+    def _morning_pv_advice(self, _now) -> None:
+        self._last_plan = None  # Refresh weather and recalculate from 06:00 local.
+        self._schedule_run(0.0)
 
     @callback
     def _input_changed(self, event) -> None:
