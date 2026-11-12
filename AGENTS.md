@@ -1,3 +1,10 @@
+## PV-Plan-Abschnitt vor Prioritäten verschieben (0.3.83)
+- **PV-Plan inklusive „PV-Prognose / Ist-Erzeugung (14 Tage)“ als zusammenhängenden Block** verschieben. Der PV-Block kann vor bzw. hinter dem Prioritätenblock stehen; der HA-Header mit Saldo/Budget bleibt an seiner Position. Geräte-Prioritäten unverändert.
+- Standard ist bisherige Reihenfolge `pv_plan_first=false`; Karteneditor stellt die zwei Bereiche als per Maus-/Touch-Drag-&-Drop vertauschbare Zeilen bereit und speichert `pv_plan_first` mit `config-changed` in Lovelace (geräteübergreifend). Pfeile sind barrierearme Alternative.
+- Die Karte selbst hat `data-section-grip`-Handles und tauscht Bereiche nach zielgerichtetem Pointer-Drag, bei `pointercancel`/kurzen Bewegungen unverändert. Der normale Kartenbetrieb speichert die Ansicht lokal im Browser; zum geräteübergreifenden Speichern Card-Editor nutzen. Nie den `set_priority_order`-Service für Abschnittsverschiebung verwenden.
+- Die Prioritäten-Sperre muss weiterhin **ganz links neben der Überschrift** stehen und ausschließlich Geräte-/Akku-Drag sperren. Abschnittsverschiebung vom Schloss unabhängig; PV-Stunden, Tagesvergleich, Tipps, Touchscroll, Geräte-Aktoren unverändert.
+- Tests in `tests/ui/card.test.cjs`, Doku und Release-Notes pflegen; CI vor Veröffentlichung prüfen.
+
 ## Priority-Drag-Sperre und kompakter Tagestrenner (0.3.83)
 - In der SEP-Lovelace-Karte über der ersten Gerätezeile **links** neben dem Wort `Prioritäten` einen Schlossschalter `data-priority-lock` anzeigen. Default in jeder Karteninstanz `_priorityLocked=true`, auch nach Neuladen. Nur nach bewusstem Entsperren Drag & Drop zulassen (auch Akku); gesperrte Handles optisch dimmen und mit `touch-action:pan-y` normales Touchscrollen erlauben.
 - Vor jedem `_dragStart`, bei Bewegung und vor Senden von `set_priority_order` Sperrzustand prüfen. `pointercancel` verwirft den Sortierversuch. Keine Änderung am Backend-Prioritätsservice oder an der optimistischen Sortierung, wenn entsperrt. Während `_prioritySaving` Sperrschalter deaktivieren.
