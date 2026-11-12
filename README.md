@@ -251,3 +251,7 @@ Ab 06:00 Uhr vergleicht SEP das Zeitfenster 08–16 Uhr über heute, morgen und,
 Mit den neuen Tagespfeilen kann der PV-Plan auch am Desktop weitergeschaltet werden. Übermorgen bleibt als Tag erreichbar, selbst wenn die Wetterquelle nicht weit genug reicht. Statt fiktiver Nullbalken erscheint dann ein Hinweis, bis wann echte Prognosestunden vorhanden sind. Bei My-Weather für längere Vorschau in SEP → Konfigurieren → Prognose die **Meteonomiqs Cloud Forecast 48h**-Entität auswählen; der bisherige 8h-Sensor wurde aus Kompatibilitätsgründen nicht automatisch ersetzt. Auch 48h reichen morgens um 06:00 nicht für übermorgen bis 16:00 (dafür wären mindestens 58h nötig).
 
 GitHub Actions: überholte PR-Testläufe werden abgebrochen, doppelte Validierung beim Release entfernt; die komplette Prüfung vor der Veröffentlichung bleibt bestehen. Um Actions-E-Mails abzustellen: [GitHub → Settings → Notifications](https://github.com/settings/notifications) → System → Actions → Don't notify (oder Email abwählen).
+
+
+### Kompakte PV-Plan-Anzeige (v0.3.81)
+Der PV-Plan lässt sich weiterhin direkt mit dem Finger horizontal durch Prognosetage bewegen. Die zusätzliche Hinweisspalte „PV-Prognose · Tage horizontal scrollen“ und die Tageswechsel-Pfeiltasten entfallen zugunsten eines ruhigeren Layouts. Der PV-Alltagstipp bleibt darüber eingeblendet, jetzt mit größerer Überschrift (16 px) und Detailzeile (14 px); die Pfeile zum Wechseln zwischen verschiedenen Tipps bleiben erhalten. Die Anzeige kann weiterhin ausschließlich in den Kartenoptionen vollständig ausgeblendet werden.
