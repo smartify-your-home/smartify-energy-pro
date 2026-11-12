@@ -825,8 +825,32 @@ class SmartifyEnergyPlanCard extends HTMLElement {
   setConfig(config) {
     this._config = { show_header: true, show_priorities: true, show_timeline: true, show_pv_tips: true, show_mode: true, timeline_hours: 24, pv_plan_first: false, ...config };
     this._pvPlanFirstOverride = null;
+    // A saved Lovelace card option takes priority. Otherwise remember in-card
+    // drag changes for this browser until the user saves a global card setting.
+    if (!Object.prototype.hasOwnProperty.call(config, "pv_plan_first")) {
+      try {
+        const value = window.localStorage?.getItem(this._pvOrderKey());
+        if (value === "1" || value === "0") this._pvPlanFirstOverride = value === "1";
+      } catch (_) { /* Private-mode storage may be unavailable. */ }
+    }
     this._sig = "";
     if (this._hass) this._render();
+  }
+
+  _pvOrderKey() {
+    return "smartify-energy:pv-plan-first:" + (this._config.hub || "auto") + ":" + (this._config.title || "");
+  }
+
+  _changeSectionOrder(next) {
+    if (this._config.pv_plan_first === next && this._pvPlanFirstOverride === next) return;
+    this._pvPlanFirstOverride = next;
+    try { window.localStorage?.setItem(this._pvOrderKey(), next ? "1" : "0"); } catch (_) { }
+    // Lovelace card editor persists this option globally; normal card view
+    // remembers the gesture locally and exposes an editable configuration.
+    this.dispatchEvent(new CustomEvent("config-changed", {
+      detail: { config: { ...this._config, pv_plan_first: next } }, bubbles: true, composed: true,
+    }));
+    this._render();
   }
 
   set hass(hass) {
@@ -1498,16 +1522,16 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const priorityBlock = c.show_priorities ? `<div class="sep-order-block" data-order-block="priorities">
        <div class="section priority-section">
          <span class="priority-heading">
-           <button type="button" class="section-move-grip" data-section-grip="priorities"
-             aria-label="Prioritäten-Abschnitt verschieben" title="Abschnitt verschieben">
-             <ha-icon icon="mdi:drag-vertical"></ha-icon>
-           </button>
            <button type="button" class="priority-lock ${this._priorityLocked ? "locked" : "unlocked"}"
              data-priority-lock aria-label="${this._priorityLocked ? "Prioritäten entsperren" : "Prioritäten sperren"}"
              aria-pressed="${!this._priorityLocked}" title="${this._priorityLocked ? "Zum Sortieren entsperren" : "Sortierung wieder sperren"}"
              ${this._prioritySaving ? "disabled" : ""}>
              <ha-icon icon="${this._priorityLocked ? "mdi:lock" : "mdi:lock-open-variant"}"></ha-icon>
-           </button>Prioritäten</span>
+           </button>Prioritäten
+           <button type="button" class="section-move-grip" data-section-grip="priorities"
+             aria-label="Prioritäten-Abschnitt verschieben" title="Abschnitt verschieben">
+             <ha-icon icon="mdi:drag-vertical"></ha-icon>
+           </button></span>
          <span class="priority-hint">${this._priorityLocked ? "Sortierung gesperrt" : "Ziehen zum Sortieren"}</span>
        </div>${this._devices(d)}</div>` : "";
     const pvBlock = c.show_timeline ? `<div class="sep-order-block" data-order-block="pv">
@@ -1652,8 +1676,41 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       else if (el.dataset.time && el.value) this._hass.callService("time", "set_value", {entity_id: el.dataset.time, time: `${el.value}:00`});
     });
     root.addEventListener("pointerdown", e => {
-      if (!this._priorityLocked && e.target.closest?.(".handle")) this._dragStart(e, this._boundData);
+      if (e.target.closest?.("[data-section-grip]")) this._sectionDragStart(e);
+      else if (!this._priorityLocked && e.target.closest?.(".handle")) this._dragStart(e, this._boundData);
     });
+  }
+
+  _sectionDragStart(e) {
+    if (!this._config.show_priorities || !this._config.show_timeline || this._drag || this._sectionMove) return;
+    const grip = e.target.closest("[data-section-grip]");
+    const block = grip?.closest("[data-order-block]");
+    if (!grip || !block) return;
+    const from = grip.dataset.sectionGrip;
+    const startY = e.clientY;
+    const isFirst = this._pvPlanFirstOverride ?? this._config.pv_plan_first;
+    this._sectionMove = { grip, block, from, startY };
+    e.preventDefault();
+    grip.setPointerCapture?.(e.pointerId);
+    const move = ev => {
+      if (Math.abs(ev.clientY - startY) > 8) block.classList.add("section-moving");
+    };
+    const finish = ev => {
+      grip.removeEventListener("pointermove", move);
+      grip.removeEventListener("pointerup", finish);
+      grip.removeEventListener("pointercancel", finish);
+      block.classList.remove("section-moving");
+      this._sectionMove = null;
+      if (ev.type === "pointercancel") return;
+      const dy = ev.clientY - startY;
+      if (Math.abs(dy) < 40) return;
+      // Drag PV above priorities, or priorities below PV. Reverse works too.
+      const next = from === "pv" ? dy < 0 : dy > 0;
+      if (next !== isFirst) this._changeSectionOrder(next);
+    };
+    grip.addEventListener("pointermove", move);
+    grip.addEventListener("pointerup", finish);
+    grip.addEventListener("pointercancel", finish);
   }
 
   // ── Drag & Drop (Maus + Touch, ohne externe Bibliothek) ──────────────────
