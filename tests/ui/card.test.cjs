@@ -548,3 +548,60 @@ test('PV selected-day summary shows incomplete hours as missing rather than zero
   assert.equal(root.querySelector('[data-pv-day-deviation]').textContent,'–');
   assert.match(root.querySelector('[data-pv-selected-date]').textContent,/bisher/);
 });
+
+
+test('PV plan scrolls into tomorrow and day after with pinned kW scale and tip carousel',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false,show_pv_tips:true});
+  dom.window.document.body.append(card);
+  const now=new Date(),hour=new Date(now);hour.setMinutes(0,0,0);hour.setHours(hour.getHours()+1);
+  const entries=[];
+  for(let i=0;i<3;i++){
+    const d=new Date(hour);d.setDate(d.getDate()+i);
+    for(let h=0;h<3;h++){
+      const ts=new Date(d);ts.setHours(d.getHours()+h);
+      entries.push({zeit:ts.toISOString(),pv_w:1600+i*1000,frei_w:700+i*1000,geraete:{Waschmaschine:500}});
+    }
+  }
+  const entities={
+    plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'},
+    tip:{platform:'smartify_energy',translation_key:'pv_tipp',device_id:'hub',entity_id:'sensor.tip'},
+  };
+  const stamp=now.toISOString();
+  const states={
+    'sensor.plan':{state:'–',last_updated:stamp,attributes:{stunden:entries}},
+    'sensor.tip':{state:'Wäsche besser morgen',last_updated:stamp,attributes:{tipps:[
+      {text:'Wäsche besser morgen',detail:'08–16 Uhr · +4,8 kWh (+38 %)',icon:'mdi:washing-machine'},
+      {text:'E-Auto morgen laden',detail:'PV-Fenster',icon:'mdi:ev-station'},
+    ]}},
+  };
+  card.hass={entities,states,devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  const root=card.shadowRoot;
+  const scroll=root.querySelector('.pv-plan-scroll');
+  assert.ok(scroll,'timeline has horizontal scroll container');
+  assert.ok(root.querySelectorAll('.pv-plan-day').length>=2,'day headings across forecast');
+  assert.ok(!scroll.contains(root.querySelector('.sep-y-axis')),'kW scale fixed outside scroller');
+  assert.match(root.querySelector('.pv-tip').textContent,/Wäsche besser morgen/);
+  root.querySelector('[data-pvtip="1"]').click();
+  assert.match(root.querySelector('.pv-tip').textContent,/E-Auto morgen laden/);
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false,show_pv_tips:false});
+  assert.equal(root.querySelector('.pv-tip'),null,'per-card toggle hides overlay entirely');
+  assert.equal(states['sensor.tip'].state,'Wäsche besser morgen','tip sensor is independent');
+});
+
+test('PV advice visibility lives only in the Lovelace card editor',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const editor=dom.window.document.createElement('smartify-energy-plan-card-editor');
+  editor.setConfig({show_timeline:true});
+  dom.window.document.body.append(editor);
+  const check=editor.shadowRoot.getElementById('show_pv_tips');
+  assert.ok(check && check.checked,'visible by default');
+  let conf;
+  editor.addEventListener('config-changed',e=>{conf=e.detail.config;});
+  check.checked=false;
+  check.dispatchEvent(new dom.window.Event('change'));
+  assert.equal(conf.show_pv_tips,false);
+});

@@ -1,5 +1,16 @@
 ## Unreleased
 
+## 0.3.79 – 2026-11-12
+
+- PV-Plan horizontal scrollbar mit Tagesüberschriften wie die Prognose-Ist-Balkengrafik, feststehender kW-Achse und gleicher Gerätebalken-Farbpalette; übermorgen nur bei tatsächlich vorhandenen Forecast-Stunden. Geplante Gerätestarts bleiben auf den bisherigen Plan-Horizont begrenzt.
+- Neues read-only PV-Tipp-System (06:00-Lokalzeit-Start und Neuberechnung bei Prognoseaktualisierung) mit Vergleich vollständig vorhergesagter PV-Stunden 08–16 Uhr für heute, morgen, übermorgen. Empfehlung für später erst bei mindestens 25 % UND 3 kWh Mehrertrag; fehlende Stunden nie mit 0 ergänzen.
+- Zusätzliche Hinweise nur für konfigurierte Geräte: Waschmaschine, Trockner, Geschirrspüler, E-Auto (Nur-PV-Modus), Warmwasser, Speicher; optionale Live-Wetterlage aus adaptiver PV-Analyse.
+- Zwei neue HA-Sensoren: „PV-Tipp“ mit Tipp-Liste und Tageswerten sowie „PV-Waschtipp“ mit eigenem Status und vollständigen Tageswerten.
+- Kompakte zweizeilige Tippanzeige über den Balken, Pfeile zum Durchblättern. Neue Einstellung **PV-Alltagstipps über den Balken anzeigen** ausschließlich in der Lovelace-Kartenkonfiguration, Standard EIN. Ausblenden verändert weder Sensoren noch Regelung.
+- Tests für Prognosevollständigkeit, Schwellen, DST, Gerätetypen, Kartenoption, Tipprotation und Scroll-Achse.
+
+
+
 ## 0.3.78 – 2026-11-12
 
 - Wallbox: Bei Ladeziel „km bis Uhrzeit“ und „Tage-Konfigurator“ wird eine laufende Ladung nicht mehr per PV-Stopp abgeschaltet, solange für das Ziel noch Energie fehlt. Bei zu wenig Überschuss lädt sie mit Mindeststrom weiter (Netzbezug möglich) statt abzuschalten und später zum Pflichtstart erneut zu starten. Nach Erreichen des Ziels gilt die normale Stopp-Verzögerung; „Nur PV“ und Boost unverändert. Tests in `tests/test_ev_stop_delay.py`.

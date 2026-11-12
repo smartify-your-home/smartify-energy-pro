@@ -1,3 +1,10 @@
+## PV-Alltagstipps und scrollbarer PV-Plan (0.3.79)
+- Reine **Anzeige-/Sensorfunktion**, keine neue Gerätesteuerung. `pv_advice.build_advice` vergleicht nur **vollständige** stündliche Prognosewerte 08:00–16:00 Lokalzeit für heute/morgen/übermorgen. Eine Verschiebung braucht gleichzeitig mindestens +25 % und +3 kWh gegenüber dem frühesten vollständig vergleichbaren Tag; Übermorgen nur bei zusätzlichem klaren Vorteil. Fehlende Stunden nie als Nullertrag interpretieren; vor 06:00 keine Empfehlung.
+- 06:00-Uhr-Lokalauslösung per `async_track_time_change`, danach Forecast-Aktualisierung im bisherigen Intervall; keine Eingriffe in Gerätestarts/Stopps. Geräte-Tipps nur für konfigurierte aktive Gerätetypen, E-Auto nur für PV-only, Wetterstatus nur bei aktiver Live-PV-Analyse. Sensoren `pv_tipp` und `pv_waschtipp` immer verfügbar.
+- PV-Plan 08–16-Tipps **über** der horizontal scrollbaren Balkenanzeige; tageweise Überschriften, feste kW-Achse, bisherige Legenden/Belegungen. Zusätzliche Prognosestunden für übermorgen sind ausschließlich Display-Daten und werden nicht für neue Plandisposition verwendet. Keine künstlichen Zukunftswerte.
+- Lovelace-Card-Option **`show_pv_tips`** ausschließlich im Karteneditor (Standard true). Bei false Einblendung vollständig entfernen, **HA-Sensoren bleiben aktiv**. Nicht in die Integrationskonfiguration verschieben.
+- Regressionen `tests/test_pv_advice.py` und `tests/ui/card.test.cjs`; README/docs/CHANGELOG pflegen. Für release vollständige CI abwarten.
+
 ## Adaptive Live-PV-Prognose (0.3.77)
 - Nur bei `solar_mode=calculated` mit ausdrücklicher Option `solar_live_adapt_enabled=true`, Standard AUS. Echter PV-Erzeugungsleistungssensor zwingend; Messung muss dieselben Flächen umfassen wie das Modell, weder Netzsaldo noch Batterie/Hauslast.
 - `live_pv.LivePVEstimator`: lokale 30-min-Historie, mindestens 6 Messwerte über 5 Minuten, normale Sample-Distanz >=25 s, letzte gültige Messung maximal 4 Minuten alt. Klarhimmel-Referenz anhand bereits eingetragener Flächen und Sonnenstand. Nicht nachts oder bei begrenztem Wechselrichterausgang.

@@ -14,6 +14,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import (
     async_call_later,
     async_track_state_change_event,
+    async_track_time_change,
     async_track_time_interval,
 )
 from homeassistant.helpers.storage import Store
@@ -58,6 +59,7 @@ from .devices.base import Decision
 from .forecast import ForecastProvider
 from .helpers import ButtonSpec, ParamSpec, SensorSpec, in_window, power_w, state_float, time_from_str
 from .live_pv import LivePVEstimator
+from .pv_advice import build_advice
 from .pv_comparison import PVComparison
 from .pv_layout import model_surfaces, surfaces_from_config
 
@@ -143,6 +145,7 @@ class EnergyManager:
         self.allocated = 0.0
         self.plan_hours: list[dict] = []
         self.next_action = ""
+        self.pv_advice: dict = {"state": "Ab 06:00 Uhr", "tips": [], "waschtipp": None, "tage": []}
 
     # ── Hub-Parameter ────────────────────────────────────────────────────────
     def param_specs(self) -> list[ParamSpec]:
@@ -269,6 +272,29 @@ class EnergyManager:
                                                        and self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED)),
                            "kalibrierung": self.forecast.calibration.diagnostics(dt_util.now())
                            if self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED) else None,
+                       }),
+
+            SensorSpec("pv_tipp", lambda: self.pv_advice.get("state", "Kein PV-Tipp verfügbar"),
+                       icon="mdi:lightbulb-on-outline",
+                       attrs=lambda: {
+                           "tipps": self.pv_advice.get("tips", []),
+                           "tage": self.pv_advice.get("tage", []),
+                           "zeitfenster": self.pv_advice.get("zeitfenster", "08:00–16:00"),
+                           "aktualisiert": self.pv_advice.get("aktualisiert"),
+                       }),
+            SensorSpec("pv_waschtipp",
+                       lambda: (self.pv_advice.get("waschtipp") or {}).get(
+                           "text", "Keine Waschmaschine konfiguriert"
+                           if not any(d.TYPE == "load" and
+                                      d.cfg.get("appliance_type", "washing_machine") == "washing_machine"
+                                      for d in self.devices.values()) else "Prognose unvollständig"),
+                       icon="mdi:washing-machine",
+                       attrs=lambda: {
+                           "empfehlung": (self.pv_advice.get("waschtipp") or {}).get("empfehlung"),
+                           "begruendung": (self.pv_advice.get("waschtipp") or {}).get("detail"),
+                           "zeitfenster": self.pv_advice.get("zeitfenster", "08:00–16:00"),
+                           "tage": self.pv_advice.get("tage", []),
+                           "aktualisiert": self.pv_advice.get("aktualisiert"),
                        }),
             SensorSpec("plan", lambda: self.next_action or "–", icon="mdi:calendar-clock",
                        attrs=lambda: {"stunden": self.plan_hours,
@@ -419,7 +445,13 @@ class EnergyManager:
                 dev.observe_power(dt_util.now())
         interval = timedelta(seconds=int(self.cfg.get(CONF_INTERVAL, 30)))
         self._unsubs.append(async_track_time_interval(self.hass, self._async_tick, interval))
+        self._unsubs.append(async_track_time_change(self.hass, self._morning_pv_advice, hour=6, minute=0, second=0))
         self._unsubs.append(async_call_later(self.hass, 10, self._async_first_run))
+
+    @callback
+    def _morning_pv_advice(self, _now) -> None:
+        self._last_plan = None  # Refresh weather and recalculate from 06:00 local.
+        self._schedule_run(0.0)
 
     @callback
     def _input_changed(self, event) -> None:
@@ -1087,6 +1119,41 @@ class EnergyManager:
             {"zeit": h.isoformat(), "pv_w": round(pv[h]), "frei_w": round(rem[h]), "geraete": alloc[h]}
             for h in hours
         ]
+        # Display-only extension. Do not schedule loads into the extra days.
+        display_end = now + timedelta(hours=72)
+        already = set(hours)
+        for h, wh in sorted(self.forecast.hours.items()):
+            if h not in already and end <= h < display_end and math.isfinite(wh) and wh >= 0:
+                self.plan_hours.append({
+                    "zeit": h.isoformat(), "pv_w": round(wh),
+                    "frei_w": round(max(0.0, wh - base)), "geraete": {},
+                })
+        day_devices = []
+        for dev in self.devices.values():
+            if dev.mode == "off":
+                continue
+            kind = (dev.cfg.get("appliance_type", "washing_machine")
+                    if dev.TYPE == "load" else dev.TYPE)
+            if kind not in {"washing_machine", "dishwasher", "dryer", "ev", "heater", "heatpump"}:
+                continue
+            duration = 2.0
+            if kind in {"washing_machine", "dishwasher", "dryer"}:
+                try:
+                    duration = float(dev.p("duration"))
+                except (TypeError, ValueError):
+                    pass
+            day_devices.append({
+                "kind": kind, "mode": dev.mode,
+                "duration": duration, "power": float(dev.nominal),
+                "pv_only": dev.p("goal") == "pv_only" if kind == "ev" else True,
+            })
+        self.pv_advice = build_advice(
+            self.forecast.hours, dt_util.as_local(now), day_devices,
+            base_load_w=base,
+            live_state=self.live_pv.diagnostics(now).get("state") if self.live_pv else None,
+            battery_soc=self.battery_soc if self.has_battery else None,
+            battery_capacity_kwh=float(self.cfg.get(CONF_BAT_CAPACITY) or 0),
+        )
         actions.sort()
         self.next_action = " · ".join(a for _, a in actions[:3])
 

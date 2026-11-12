@@ -822,6 +822,12 @@
       "forecast_today": {
         "name": "PV-Prognose heute"
       },
+      "pv_tipp": {
+        "name": "PV-Tipp"
+      },
+      "pv_waschtipp": {
+        "name": "PV-Waschtipp"
+      },
       "plan": {
         "name": "Plan"
       },
