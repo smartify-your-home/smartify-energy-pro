@@ -269,3 +269,7 @@ Im PV-Plan ist die graue Nachtfläche samt vertikaler „Nacht“-Beschriftung e
 
 ### PV-Plan oberhalb der Prioritäten anordnen (v0.3.83)
 Der ganze PV-Plan mit Prognose-Ist-Vergleich kann per Ziehgriff an der Abschnittsüberschrift oberhalb von **Prioritäten** angeordnet werden. Die Ziehgriffe verändern nur die Ansicht; das Schloss links neben „Prioritäten“ schützt weiterhin ausschließlich die Geräte-Reihenfolge. Für eine **dauerhaft für alle Geräte gespeicherte Reihenfolge** in der Lovelace-Kartenkonfiguration unter **Reihenfolge der Bereiche** die zwei Abschnitte mit Drag & Drop (oder den Pfeilen) vertauschen und die Karte speichern. Die Drag-Geste direkt in der Karte merkt sich die Anordnung zusätzlich lokal im jeweiligen Browser.
+
+
+### Prioritätenüberschrift (v0.3.84)
+Die Bedienelemente stehen ab sofort ganz links in der Reihenfolge **Ziehgriff · Schloss · PRIORITÄTEN**. Der Griff verschiebt den gesamten Bereich, das Schloss schützt das Verschieben einzelner Geräte.

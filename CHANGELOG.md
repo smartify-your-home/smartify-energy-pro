@@ -1,5 +1,12 @@
 ## Unreleased
 
+## 0.3.84 – 2026-11-12
+
+- Prioritäten-Überschrift optisch korrigiert: **Ziehgriff · Schloss · PRIORITÄTEN**, beide Bedienelemente stehen links vor der Überschrift. Der Ziehgriff verschiebt den gesamten Abschnitt, das Schloss sperrt weiterhin ausschließlich das Geräte-Drag-&-Drop.
+- Neuer UI-Regressionstest sichert die DOM-Reihenfolge vor und nach dem Entsperren; keine Änderung an PV-Berechnung oder Steuerung.
+
+
+
 ## 0.3.83 – 2026-11-12
 
 - PV-Plan samt Prognose-Ist-Vergleich als ganzer Bereich **oberhalb oder unterhalb der Prioritäten** positionierbar. Abschnitts-Ziehgriffe an den Überschriften und eigene Drag-&-Drop-Sortierung im Karteneditor. `pv_plan_first` speichert die Ansicht dauerhaft in der Lovelace-Kartenkonfiguration; direkt in der Karte geänderte Reihenfolge wird lokal im Browser gemerkt. Der Prioritätenschloss-Schalter bleibt unabhängig.

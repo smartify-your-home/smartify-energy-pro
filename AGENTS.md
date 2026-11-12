@@ -1,3 +1,7 @@
+## Überschrift-Prioritäten: Bedienelemente links in Reihenfolge (0.3.84)
+- In der Kopfzeile des Prioritätenabschnitts **exakt Ziehgriff · Schloss · „Prioritäten“** von links nach rechts anzeigen, im mobilen und Desktop-Layout. data-section-grip="priorities" steuert nur die Verschiebung des ganzen Abschnitts; data-priority-lock entsperrt nur die Reihenfolge einzelner Geräte. Tooltip/ARIA und Sperrschutz erhalten.
+- UI-Test in tests/ui/card.test.cjs überprüft die tatsächliche DOM-Reihenfolge, auch nach Änderung des Sperrstatus. Versionierung, Changelog und CI beachten.
+
 ## PV-Plan-Abschnitt vor Prioritäten verschieben (0.3.83)
 - **PV-Plan inklusive „PV-Prognose / Ist-Erzeugung (14 Tage)“ als zusammenhängenden Block** verschieben. Der PV-Block kann vor bzw. hinter dem Prioritätenblock stehen; der HA-Header mit Saldo/Budget bleibt an seiner Position. Geräte-Prioritäten unverändert.
 - Standard ist bisherige Reihenfolge `pv_plan_first=false`; Karteneditor stellt die zwei Bereiche als per Maus-/Touch-Drag-&-Drop vertauschbare Zeilen bereit und speichert `pv_plan_first` mit `config-changed` in Lovelace (geräteübergreifend). Pfeile sind barrierearme Alternative.
