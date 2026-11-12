@@ -638,15 +638,6 @@ const CARD_CSS = `
   .pv-compare-scroll{overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
   .pv-plan-scroll{overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x pan-y;min-width:0;
     scrollbar-width:thin;scrollbar-color:var(--secondary-text-color) transparent}
-  .pv-plan-controls{display:flex;align-items:center;justify-content:space-between;gap:6px;
-    color:var(--secondary-text-color);font-size:11px;margin:0 1px 4px;min-height:23px}
-  .pv-plan-controls>span{overflow-wrap:anywhere}
-  .pv-plan-day-nav{display:flex;align-items:center;gap:4px;flex:none}
-  .pv-plan-day-nav button{background:transparent;color:var(--secondary-text-color);
-    border:1px solid var(--divider-color);border-radius:5px;min-height:26px;min-width:30px;
-    font:inherit;font-size:16px;cursor:pointer;padding:0 6px}
-  .pv-plan-day-nav button:hover{color:var(--primary-text-color);border-color:var(--primary-color)}
-  .pv-plan-day-nav button:focus-visible{outline:2px solid var(--primary-color);outline-offset:1px}
   .pv-plan-missing{flex:none;box-sizing:border-box;height:96px;width:216px;
     display:flex;justify-content:center;align-items:center;text-align:center;
     border:1px dashed var(--divider-color);border-radius:4px;padding:10px;
@@ -663,11 +654,11 @@ const CARD_CSS = `
     flex:0 0 40px;min-width:40px;box-sizing:border-box}
   .pv-plan-scroll .pv-break,.pv-plan-scroll .pv-break-label{flex:0 0 30px;min-width:30px}
   .pv-plan-scroll .labels{width:100%}
-  .pv-tip{display:flex;align-items:center;justify-content:center;gap:6px;min-height:38px;
-    padding:2px 0 7px;color:var(--primary-text-color);font:inherit}
-  .pv-tip-content{min-width:0;text-align:center;line-height:1.3}
-  .pv-tip-title{font-size:12px;font-weight:600;overflow-wrap:anywhere}
-  .pv-tip-detail{font-size:11px;color:var(--secondary-text-color);overflow-wrap:anywhere}
+  .pv-tip{display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;
+    padding:4px 0 10px;color:var(--primary-text-color);font:inherit}
+  .pv-tip-content{min-width:0;text-align:center;line-height:1.35}
+  .pv-tip-title{font-size:16px;font-weight:600;overflow-wrap:anywhere}
+  .pv-tip-detail{font-size:14px;color:var(--secondary-text-color);overflow-wrap:anywhere}
   .pv-tip-nav{flex:none;border:0;background:transparent;color:var(--secondary-text-color);
     font:inherit;font-size:15px;cursor:pointer;padding:5px;min-width:27px}
   .pv-tip-nav:focus-visible{outline:2px solid var(--primary-color);border-radius:4px}
@@ -1269,15 +1260,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const coverageNote = !completeDayAfter
       ? `<div class="pv-plan-coverage">Übermorgen, 08–16 Uhr: Stundenprognose unvollständig
          (verfügbar bis ${esc(knownUntil)}).${esc(sourceHint)}</div>` : "";
-    return `<div class="timeline">${tipOverlay}
-      <div class="pv-plan-controls"><span>PV-Prognose · Tage horizontal scrollen</span>
-        <div class="pv-plan-day-nav">
-          <button type="button" data-pvplan="-1" aria-label="Vorheriger Prognosetag"
-            title="Vorheriger Prognosetag">‹</button>
-          <button type="button" data-pvplan="1" aria-label="Nächster Prognosetag"
-            title="Nächster Prognosetag">›</button>
-        </div>
-      </div><div class="sep-axis-layout">
+    return `<div class="timeline">${tipOverlay}<div class="sep-axis-layout">
       <div class="sep-y-axis" aria-label="PV-Leistung in kW" style="margin-top:24px">${sepAxisLabels(axisMax,"kW")}</div>
       <div class="pv-plan-scroll" aria-label="PV-Plan horizontal scrollen">
         <div class="pv-plan-inner" style="min-width:max(100%,${offsetPx}px);position:relative">
@@ -1486,23 +1469,10 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._eventsBound = true;
     const root = this.shadowRoot;
     root.addEventListener("click", e => {
-      const el = e.target.closest?.("[data-pvplan], [data-pvtip], [data-pvcompare], [data-log], [data-gear], [data-more], [data-press], [data-toggle], [data-info], [data-grp], [data-setmode], select");
+      const el = e.target.closest?.("[data-pvtip], [data-pvcompare], [data-log], [data-gear], [data-more], [data-press], [data-toggle], [data-info], [data-grp], [data-setmode], select");
       if (!el) return;
       if (el.matches("select")) { e.stopPropagation(); return; }
-      if (el.hasAttribute("data-pvplan")) {
-        e.stopPropagation();
-        const scroll = root.querySelector(".pv-plan-scroll");
-        const days = [...root.querySelectorAll(".pv-plan-day[data-start]")];
-        if (scroll && days.length) {
-          let current = 0;
-          for (let i = 0; i < days.length; i++) {
-            if (Number(days[i].dataset.start) <= scroll.scrollLeft + 15) current = i;
-          }
-          const target = Math.max(0, Math.min(days.length-1,
-            current + Number(el.dataset.pvplan)));
-          scroll.scrollLeft = Number(days[target].dataset.start);
-        }
-      } else if (el.hasAttribute("data-pvtip")) {
+      if (el.hasAttribute("data-pvtip")) {
         e.stopPropagation();
         const tips = this._st(d.ents["sensor:pv_tipp"])?.attributes?.tipps || [];
         if (tips.length > 1) {
