@@ -772,6 +772,7 @@ test('PV plan shows a narrow unlabelled day gap instead of grey Nacht block',()=
 test('PV plan and forecast/actual comparison move together above priorities',()=>{
   const root=settingsCard();
   const card=root.host;
+  card.setConfig({show_timeline:true,show_priorities:true});
   const order=()=>[...root.querySelectorAll('[data-order-block]')].map(x=>x.dataset.orderBlock);
   assert.deepEqual(order(),['priorities','pv'],'legacy order is the default');
   assert.equal(root.querySelector('[data-order-block="pv"] [data-pvcompare]')!=null,true,
@@ -789,6 +790,7 @@ test('PV plan and forecast/actual comparison move together above priorities',()=
 test('live section grip pointer gesture reorders, but short tap or cancellation does not',()=>{
   const root=settingsCard();
   const card=root.host;
+  card.setConfig({show_timeline:true,show_priorities:true});
   assert.equal(card._pvPlanFirstOverride,null);
   const grip=root.querySelector('[data-section-grip="pv"]');
   const win=grip.ownerDocument.defaultView;
