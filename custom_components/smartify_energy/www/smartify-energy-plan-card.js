@@ -441,10 +441,11 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
       item.addEventListener("drop", e => {
         e.preventDefault();
         const from = dragged || e.dataTransfer?.getData("text/plain");
-        if (from && from !== item.dataset.orderItem) saveOrder(from);
+        if (from && from !== item.dataset.orderItem)
+          saveOrder(c.pv_plan_first ? "priorities" : "pv");
       });
       item.querySelector("[data-order-swap]").addEventListener("click", () =>
-        saveOrder(item.dataset.orderItem === "pv" ? "priorities" : "pv"));
+        saveOrder(c.pv_plan_first ? "priorities" : "pv"));
       const grip = item.querySelector(".sort-grip");
       grip.addEventListener("pointerdown", e => {
         if (e.pointerType === "mouse") return;
@@ -454,7 +455,10 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
         const finish = up => {
           grip.removeEventListener("pointerup", finish);
           grip.removeEventListener("pointercancel", cancel);
-          if (Math.abs(up.clientY-y) > 25) saveOrder(item.dataset.orderItem);
+          const dy = up.clientY - y;
+          const first = item.dataset.orderItem === (c.pv_plan_first ? "pv" : "priorities");
+          if ((first && dy > 25) || (!first && dy < -25))
+            saveOrder(c.pv_plan_first ? "priorities" : "pv");
         };
         const cancel = () => {
           grip.removeEventListener("pointerup", finish);
