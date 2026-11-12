@@ -1,3 +1,6 @@
+## PV-Plan-Typografie und Touch-Bedienung (0.3.81)
+Der eigenständige `pv-plan-controls`-Toolbar mit `data-pvplan`-Buttons wird nicht mehr gerendert; die Scrollgrafik `.pv-plan-scroll` bleibt `overflow-x:auto` mit Touch-Panning. Tipp-Carousel `data-pvtip` bleibt. Tipp-Schriftgrößen: `.pv-tip-title` 16px, `.pv-tip-detail` 14px. Keine Auswirkungen auf Prognoseberechnung, Home-Assistant-Sensoren oder Gerätesteuerung.
+
 ## PV-Plan-Zukunft und Actions-Prüfungen (0.3.80)
 - `manager._plan`: `prognose_verfuegbar` bei jedem Stundenpunkt; fehlende Prognosen als `pv_w=null` und `frei_w=null` veröffentlichen, interne Planung weiterhin konservativ mit 0 rechnen. Sensorattribute `prognose_bis`, `prognose_stunden`, `wetter_sensor` zur Diagnose.
 - `smartify-energy-plan-card.js`: bei fehlenden vollständig gültigen Übermorgen-Werten einen 216px großen Hinweis im scrollbaren Chart statt Nullbalken zeichnen. Tagesüberschrift bleibt navigierbar; Desktoppfeile `data-pvplan`, touch overflow-x und feste linke kW-Skala. Bei 8h-Sensor auf Auswahl des 48h-Cloudsensors hinweisen.
