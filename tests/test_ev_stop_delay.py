@@ -79,5 +79,32 @@ class EVStopDelayTests(unittest.TestCase):
         self.assertIsNone(self.ev.status_attrs()["pv_stopp_um"])
 
 
+    def _km_goal(self, km):
+        self.ev.params.update(goal="km_until", target_km=km, deadline="18:00", consumption=18)
+        self.ev.state["charged_wh"] = 0.0
+
+    def test_km_goal_open_never_pv_stops(self):
+        self._km_goal(20)
+        for minute in (0, 1, 31, 120):
+            self.ev._update_need(T0 + timedelta(minutes=minute))
+            d = self.decide(minute, 200)
+            self.assertTrue(d.on, f"km-Ziel offen: kein PV-Stopp (min {minute})")
+            self.assertEqual(d.setpoint["current"], 6)
+            self.assertIsNone(self.ev.status_attrs()["pv_stopp_um"])
+
+    def test_km_goal_reached_uses_normal_stop_delay(self):
+        self._km_goal(0)
+        self.ev._update_need(T0)
+        self.decide(0, 200)
+        self.assertEqual(self.ev.status_attrs()["pv_stopp_um"], (T0 + timedelta(minutes=30)).isoformat())
+        self.assertFalse(self.decide(30, 200).on)
+
+    def test_km_goal_does_not_start_without_surplus_before_forced_start(self):
+        self._km_goal(20)
+        self.values["switch.charge"] = "off"
+        self.ev._update_need(T0)
+        self.assertFalse(self.decide(0, 200).on)
+
+
 if __name__ == "__main__":
     unittest.main()

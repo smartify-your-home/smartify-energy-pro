@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.3.78 – 2026-11-12
+
+- Wallbox: Bei Ladeziel „km bis Uhrzeit“ und „Tage-Konfigurator“ wird eine laufende Ladung nicht mehr per PV-Stopp abgeschaltet, solange für das Ziel noch Energie fehlt. Bei zu wenig Überschuss lädt sie mit Mindeststrom weiter (Netzbezug möglich) statt abzuschalten und später zum Pflichtstart erneut zu starten. Nach Erreichen des Ziels gilt die normale Stopp-Verzögerung; „Nur PV“ und Boost unverändert. Tests in `tests/test_ev_stop_delay.py`.
+
 ## 0.3.77 – 2026-11-11
 
 - Optionale „Adaptive Live-PV-Prognose“ für den Modus „Eigene Berechnung“ (Standard AUS). Nutzt vorhandene PV-Erzeugungsleistung, Dachflächen und Astronomie; keine weitere Wetter-API.

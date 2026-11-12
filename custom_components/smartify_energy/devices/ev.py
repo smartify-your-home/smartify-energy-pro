@@ -466,6 +466,14 @@ class EvDevice(BaseDevice):
             "min_w": round(p_min), "pv_anteil": round(share * 100)}
 
         if on:
+            if goal in (EV_GOAL_KM, EV_GOAL_DAYS) and self._need_wh > 0:
+                # Energy for the goal is still missing: it will be charged
+                # anyway (latest at the forced start), so never stop a running
+                # charge – keep at least the minimum current (grid allowed).
+                self._deficit_since = None
+                amps = clamp(math.floor(max(avail, p_min) / (self.voltage * phases)), self.min_a, self.max_a)
+                self.status = "laedt_pv"
+                return self._charge(amps, phases, f"PV-Laden {amps:.0f} A × {phases} · Ziel offen, kein PV-Stopp")
             if avail >= threshold:
                 self._deficit_since = None
             else:
