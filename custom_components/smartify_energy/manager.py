@@ -265,6 +265,11 @@ class EnergyManager:
                            if self.forecast.last_update else None,
                            "fehler": self.forecast.error,
                            "prognose_quelle": self.forecast.source_label,
+                           "prognose_bis": max(self.forecast.hours).isoformat()
+                           if self.forecast.hours else None,
+                           "prognose_stunden": len(self.forecast.hours),
+                           "wetter_sensor": self.cfg.get(CONF_SOLAR_CLOUD_ENTITY)
+                           if self.cfg.get(CONF_SOLAR_MODE) == "calculated" else None,
                            "prognose_modus": self.cfg.get(CONF_SOLAR_MODE, "external"),
                            "live_pv_aktiv": self.live_pv is not None,
                            "live_pv": self.live_pv.diagnostics(dt_util.now()) if self.live_pv else None,
@@ -299,6 +304,11 @@ class EnergyManager:
             SensorSpec("plan", lambda: self.next_action or "–", icon="mdi:calendar-clock",
                        attrs=lambda: {"stunden": self.plan_hours,
                                       "prognose_quelle": self.forecast.source_label,
+                                      "prognose_bis": max(self.forecast.hours).isoformat()
+                                      if self.forecast.hours else None,
+                                      "prognose_stunden": len(self.forecast.hours),
+                                      "wetter_sensor": self.cfg.get(CONF_SOLAR_CLOUD_ENTITY)
+                                      if self.cfg.get(CONF_SOLAR_MODE) == "calculated" else None,
                                       "pv_vergleich": self._pv_comparison_attrs()}),
         ]
         if self.has_battery:
@@ -1116,7 +1126,13 @@ class EnergyManager:
                 actions.append((start_dt, f"{dev.name} {start_dt:%H:%M} ({share} % PV)"))
 
         self.plan_hours = [
-            {"zeit": h.isoformat(), "pv_w": round(pv[h]), "frei_w": round(rem[h]), "geraete": alloc[h]}
+            {
+                "zeit": h.isoformat(),
+                "pv_w": round(pv[h]) if h in self.forecast.hours else None,
+                "frei_w": round(rem[h]) if h in self.forecast.hours else None,
+                "geraete": alloc[h],
+                "prognose_verfuegbar": h in self.forecast.hours,
+            }
             for h in hours
         ]
         # Display-only extension. Do not schedule loads into the extra days.
@@ -1127,6 +1143,7 @@ class EnergyManager:
                 self.plan_hours.append({
                     "zeit": h.isoformat(), "pv_w": round(wh),
                     "frei_w": round(max(0.0, wh - base)), "geraete": {},
+                    "prognose_verfuegbar": True,
                 })
         day_devices = []
         for dev in self.devices.values():
