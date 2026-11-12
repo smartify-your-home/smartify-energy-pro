@@ -393,8 +393,10 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
       <div class="row"><input type="checkbox" id="show_settings" ${chk("show_settings")}><label for="show_settings">Einstellungen (Zahnrad) erlauben</label></div>
       <div class="hint">Zeigt das Zahnrad mit Einstellungen und Erklärungen. Ausblenden verändert keine Regelung und ist keine Zugriffssperre.</div>
       <div class="row"><input type="checkbox" id="show_timeline" ${chk("show_timeline")}><label for="show_timeline">PV-Plan (Zeitleiste)</label></div>
+      <div class="row"><input type="checkbox" id="show_pv_tips" ${chk("show_pv_tips")}><label for="show_pv_tips">PV-Alltagstipps über den Balken anzeigen</label></div>
+      <div class="hint">Nur Anzeige in dieser Karte: Ausblenden deaktiviert keine PV-Tipp-Sensoren und ändert keine Regelung.</div>
       <div class="hint">Zeigt die Prognose und die empfohlenen Zeiträume. Der Plan ist eine Empfehlung, keine feste Startzusage.</div>
-      <div class="hint">Zeigt den restlichen heutigen Tag und den gesamten morgigen Tag (00:00–24:00 Uhr), einschließlich Stunden ohne PV-Ertrag.</div>
+      <div class="hint">Horizontal bis zum Ende der verfügbaren Prognose scrollen, auch übermorgen falls vorhanden. Nächte werden kompakt dargestellt.</div>
     `;
     const set = (k, v) => { this._config = { ...this._config, [k]: v }; if (v === "" || v == null) delete this._config[k]; this._emit(); };
     const $ = id => this.shadowRoot.getElementById(id);
@@ -404,7 +406,7 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
       $("background_transparency_value").textContent = `${e.target.value} %`;
       set("background_transparency", Number(e.target.value));
     });
-    ["show_header", "show_allocated", "show_priorities", "show_mode", "show_settings", "show_timeline"].forEach(k =>
+    ["show_header", "show_allocated", "show_priorities", "show_mode", "show_settings", "show_timeline", "show_pv_tips"].forEach(k =>
       $(k).addEventListener("change", e => set(k, e.target.checked)));
 
   }
@@ -634,6 +636,24 @@ const CARD_CSS = `
   .pv-compare-totals small{color:var(--secondary-text-color);font-size:11px}
   .pv-compare-totals strong{font-size:16px;font-variant-numeric:tabular-nums}
   .pv-compare-scroll{overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
+  .pv-plan-scroll{overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x pan-y;min-width:0}
+  .pv-plan-days{display:flex;height:24px;box-sizing:border-box}
+  .pv-plan-day{box-sizing:border-box;font-size:11px;font-weight:600;padding:3px 4px 5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--primary-text-color)}
+  .pv-plan-scroll .bars>.col,.pv-plan-scroll .labels>.pv-hour-label{
+    flex:0 0 40px;min-width:40px;box-sizing:border-box}
+  .pv-plan-scroll .pv-break,.pv-plan-scroll .pv-break-label{flex:0 0 30px;min-width:30px}
+  .pv-plan-scroll .labels{width:100%}
+  .pv-tip{display:flex;align-items:center;justify-content:center;gap:6px;min-height:38px;
+    padding:2px 0 7px;color:var(--primary-text-color);font:inherit}
+  .pv-tip-content{min-width:0;text-align:center;line-height:1.3}
+  .pv-tip-title{font-size:12px;font-weight:600;overflow-wrap:anywhere}
+  .pv-tip-detail{font-size:11px;color:var(--secondary-text-color);overflow-wrap:anywhere}
+  .pv-tip-nav{flex:none;border:0;background:transparent;color:var(--secondary-text-color);
+    font:inherit;font-size:15px;cursor:pointer;padding:5px;min-width:27px}
+  .pv-tip-nav:focus-visible{outline:2px solid var(--primary-color);border-radius:4px}
+  .pv-tip-count{font-size:10px;color:var(--secondary-text-color);margin-left:5px}
+
   .pv-compare-days{display:flex;gap:5px;min-width:100%;height:28px;box-sizing:border-box;font-variant-numeric:tabular-nums}
   .pv-compare-day{flex:none;min-width:0;box-sizing:border-box;
     color:var(--primary-text-color);font-size:11px;font-weight:600;padding:4px 4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -703,13 +723,14 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._boostUntil = {};
     this._pvCompareOpen = false;
     this._pvCompareDay = null;
+    this._pvTipIndex = 0;
   }
 
   static getConfigElement() { return document.createElement("smartify-energy-plan-card-editor"); }
   static getStubConfig() { return { show_header: true, show_priorities: true, show_timeline: true, timeline_hours: 24 }; }
 
   setConfig(config) {
-    this._config = { show_header: true, show_priorities: true, show_timeline: true, show_mode: true, timeline_hours: 24, ...config };
+    this._config = { show_header: true, show_priorities: true, show_timeline: true, show_pv_tips: true, show_mode: true, timeline_hours: 24, ...config };
     this._sig = "";
     if (this._hass) this._render();
   }
