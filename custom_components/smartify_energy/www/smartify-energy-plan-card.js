@@ -494,6 +494,14 @@ const CARD_CSS = `
   .priority-lock:disabled { cursor:wait;opacity:.5; }
   .priority-lock:focus-visible { outline:2px solid var(--primary-color);outline-offset:2px; }
   .priority-hint { text-align:right; }
+  .section-move-grip{display:inline-flex;align-items:center;justify-content:center;
+    width:22px;height:24px;flex:none;border:0;background:transparent;color:var(--secondary-text-color);
+    border-radius:4px;cursor:grab;touch-action:none;padding:0;margin:-4px 2px -4px -1px}
+  .section-move-grip:focus-visible{outline:2px solid var(--primary-color)}
+  .section-move-grip ha-icon{--mdc-icon-size:18px;pointer-events:none}
+  .sep-order-block{position:relative}
+  .sep-order-block.section-moving{outline:1px dashed var(--primary-color);border-radius:6px}
+
 
 
   .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:4px; }
@@ -795,6 +803,8 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._sig = "";
     this._drag = null;
     this._priorityLocked = true; // Fail-safe default on reload: prevents accidental mobile reordering.
+    this._sectionMove = null;
+    this._pvPlanFirstOverride = null;
     this._priorityOrder = null;
     this._prioritySaving = false;
     this._priorityError = "";
@@ -813,7 +823,8 @@ class SmartifyEnergyPlanCard extends HTMLElement {
   static getStubConfig() { return { show_header: true, show_priorities: true, show_timeline: true, timeline_hours: 24 }; }
 
   setConfig(config) {
-    this._config = { show_header: true, show_priorities: true, show_timeline: true, show_pv_tips: true, show_mode: true, timeline_hours: 24, ...config };
+    this._config = { show_header: true, show_priorities: true, show_timeline: true, show_pv_tips: true, show_mode: true, timeline_hours: 24, pv_plan_first: false, ...config };
+    this._pvPlanFirstOverride = null;
     this._sig = "";
     if (this._hass) this._render();
   }
@@ -1481,6 +1492,34 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       return;
     }
     const title = c.title ?? d.name;
+    // The PV timeline and its 14-day forecast/actual comparison move together.
+    // The editor persists pv_plan_first to the Lovelace card configuration.
+    const pvFirst = this._pvPlanFirstOverride ?? c.pv_plan_first;
+    const priorityBlock = c.show_priorities ? `<div class="sep-order-block" data-order-block="priorities">
+       <div class="section priority-section">
+         <span class="priority-heading">
+           <button type="button" class="section-move-grip" data-section-grip="priorities"
+             aria-label="Prioritäten-Abschnitt verschieben" title="Abschnitt verschieben">
+             <ha-icon icon="mdi:drag-vertical"></ha-icon>
+           </button>
+           <button type="button" class="priority-lock ${this._priorityLocked ? "locked" : "unlocked"}"
+             data-priority-lock aria-label="${this._priorityLocked ? "Prioritäten entsperren" : "Prioritäten sperren"}"
+             aria-pressed="${!this._priorityLocked}" title="${this._priorityLocked ? "Zum Sortieren entsperren" : "Sortierung wieder sperren"}"
+             ${this._prioritySaving ? "disabled" : ""}>
+             <ha-icon icon="${this._priorityLocked ? "mdi:lock" : "mdi:lock-open-variant"}"></ha-icon>
+           </button>Prioritäten</span>
+         <span class="priority-hint">${this._priorityLocked ? "Sortierung gesperrt" : "Ziehen zum Sortieren"}</span>
+       </div>${this._devices(d)}</div>` : "";
+    const pvBlock = c.show_timeline ? `<div class="sep-order-block" data-order-block="pv">
+      <div class="section"><span class="priority-heading">
+        <button type="button" class="section-move-grip" data-section-grip="pv"
+          aria-label="PV-Plan-Abschnitt verschieben" title="PV-Plan und Prognose-Ist-Vergleich verschieben">
+          <ha-icon icon="mdi:drag-vertical"></ha-icon>
+        </button>PV-Plan</span>
+        <span>Zukunft scrollen${this._st(d.ents["sensor:forecast_today"])?.attributes?.prognose_quelle ?
+          ` · ${esc(this._st(d.ents["sensor:forecast_today"]).attributes.prognose_quelle)}` : ""}</span>
+      </div>${this._timeline(d)}${this._pvComparison(d)}</div>` : "";
+    const orderedBlocks = pvFirst ? pvBlock + priorityBlock : priorityBlock + pvBlock;
     const markup = `
       <style>${CARD_CSS}</style>
       <ha-card style="--sep-surface-opacity:${surfaceOpacity}%">
@@ -1488,17 +1527,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
           ${c.show_settings !== false && d.hubSettings.length ? `<button class="gear ${this._open.has("hub") ? "open" : ""}" data-gear="hub" title="Einstellungen Energiemanager"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}</div>` : ""}
         ${this._open.has("hub") ? this._settings(d.hubSettings, d.name, "hub", "hub") : ""}
         ${c.show_header ? this._header(d) : ""}
-        ${c.show_priorities ? `<div class="section priority-section">
-          <span class="priority-heading">
-            <button type="button" class="priority-lock ${this._priorityLocked ? "locked" : "unlocked"}"
-              data-priority-lock aria-label="${this._priorityLocked ? "Prioritäten entsperren" : "Prioritäten sperren"}"
-              aria-pressed="${!this._priorityLocked}" title="${this._priorityLocked ? "Zum Sortieren entsperren" : "Sortierung wieder sperren"}"
-              ${this._prioritySaving ? "disabled" : ""}>
-              <ha-icon icon="${this._priorityLocked ? "mdi:lock" : "mdi:lock-open-variant"}"></ha-icon>
-            </button>Prioritäten</span>
-          <span class="priority-hint">${this._priorityLocked ? "Sortierung gesperrt" : "Ziehen zum Sortieren"}</span>
-        </div>${this._devices(d)}` : ""}
-        ${c.show_timeline ? `<div class="section"><span>PV-Plan</span><span>Zukunft scrollen${this._st(d.ents["sensor:forecast_today"])?.attributes?.prognose_quelle ? ` · ${esc(this._st(d.ents["sensor:forecast_today"]).attributes.prognose_quelle)}` : ""}</span></div>${this._timeline(d)}${this._pvComparison(d)}` : ""}
+        ${orderedBlocks}
       </ha-card>`;
     const template = document.createElement("template");
     template.innerHTML = markup;
