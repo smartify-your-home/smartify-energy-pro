@@ -1,3 +1,6 @@
+## 0.3.84 – Reihenfolge der Bedienelemente in der Prioritätenüberschrift
+Die Überschrift zeigt von links nach rechts **Ziehgriff · Schloss · PRIORITÄTEN**. Der Ziehgriff verschiebt den ganzen Bereich, das Schloss schützt die Geräteprioritäten. Dies gilt auf Smartphones, Tablets und Desktop unverändert.
+
 ## PV-Plan-Abschnitt verschieben (0.3.83)
 Die Reihenfolge der Abschnitte „Prioritäten“ und „PV-Plan“ ist jetzt veränderbar. Der PV-Plan **und alles darunter bis einschließlich Prognose-Ist-Vergleich** wechseln gemeinsam oberhalb oder unterhalb der Prioritäten. Am Abschnittstitel gibt es Ziehgriffe; mit Pointer-Drag wird die Ansicht unmittelbar neu angeordnet. Zum dauerhaften Speichern über mehrere Geräte den Lovelace-Karteneditor öffnen und unter „Reihenfolge der Bereiche“ per Drag & Drop oder Pfeilen `pv_plan_first` in der Kartenkonfiguration speichern. Der direkte Kartendrag merkt die Position lokal im Browser. Der Schlossschalter bleibt links in der Prioritätenüberschrift und schützt nur die Gerätereihenfolge, nicht die Abschnittsposition. Keine Änderung an der Energiesteuerung.
 
