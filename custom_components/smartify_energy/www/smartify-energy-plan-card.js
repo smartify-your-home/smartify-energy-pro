@@ -1140,13 +1140,8 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const hours = (plan?.attributes?.stunden || []).slice();
     if (!hours.length) return `<div class="timeline"><div class="empty">Keine Prognose verfügbar.</div></div>`;
     const now = Date.now();
-    const horizon = new Date();
-    horizon.setDate(horizon.getDate() + 2);
-    horizon.setHours(0, 0, 0, 0);
-    const visible = hours.filter(h => {
-      const t = Date.parse(h.zeit);
-      return t + 3600e3 > now && t < horizon.getTime();
-    });
+    // Backend limits display hours to real forecast coverage (up to 72 hours).
+    const visible = hours.filter(h => Date.parse(h.zeit) + 3600e3 > now);
     // Do not draw zero-PV hours as full-width columns. Preserve a visible
     // separator for each consecutive gap, including the overnight interval.
     const cols = visible.filter(h => (Number(h.pv_w) || 0) > 0 ||
@@ -1159,6 +1154,9 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const bars = [];
     const labels = [];
     const step = cols.length > 16 ? 3 : cols.length > 8 ? 2 : 1;
+    const dayStarts = [];
+    let offsetPx = 0;
+    let lastDay = null;
     cols.forEach((h, i) => {
       const t = Date.parse(h.zeit);
       const elapsedHours = i ? Math.round((t - Date.parse(cols[i - 1].zeit)) / 3600e3) : 1;
@@ -1172,7 +1170,14 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         const tooltip = `${omitted} h ohne PV-Ertrag (${from.toLocaleString("de-AT")} – ${to.toLocaleString("de-AT")})`;
         bars.push(`<div class="pv-break" title="${esc(tooltip)}"><span>${label}</span></div>`);
         labels.push(`<div class="pv-break-label">⋯</div>`);
+        offsetPx += 32;
       }
+      const localDay = new Date(t).toLocaleDateString("sv-SE");
+      if (localDay !== lastDay) {
+        dayStarts.push({key:localDay,start:offsetPx});
+        lastDay = localDay;
+      }
+      offsetPx += 42;
       const isNow = t <= now && now < t + 3600e3;
       const segs = Object.entries(h.geraete || {}).map(([name, w]) => {
         used.add(name);
@@ -1182,15 +1187,42 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const hour = new Date(t).toLocaleTimeString("de-AT", { hour: "2-digit" });
       bars.push(`<div class="col ${isNow ? "now" : ""}" title="${hour} Uhr – PV ${fmtW(h.pv_w)}, frei ${fmtW(h.frei_w)}">
           <div class="pv" style="height:${((h.pv_w || 0) / axisMax) * 100}%"></div>${segs}</div>`);
-      labels.push(`<div>${i % step === 0 || elapsedHours > 1 ? new Date(t).getHours() : ""}</div>`);
+      labels.push(`<div class="pv-hour-label">${i % step === 0 || elapsedHours > 1 ? new Date(t).getHours() : ""}</div>`);
     });
     const legend = [`<span><i style="background:${grad(PV_GRADIENT)};opacity:.5"></i>PV-Prognose</span>`]
       .concat([...used].map(n => `<span><i style="background:${grad(colorOf(n))}"></i>${esc(n)}</span>`)).join("");
     const next = plan?.state && plan.state !== "–" ? `<div class="next">Als Nächstes: ${esc(plan.state)}</div>` : "";
-    return `<div class="timeline"><div class="sep-axis-layout">
-      <div class="sep-y-axis" aria-label="PV-Leistung in kW">${sepAxisLabels(axisMax,"kW")}</div>
-      <div class="sep-axis-content"><div class="bars">${SEP_GRID}${bars.join("")}</div>
-        <div class="labels">${labels.join("")}</div></div>
+    const advice = this._st(d.ents["sensor:pv_tipp"]);
+    const tips = Array.isArray(advice?.attributes?.tipps) ? advice.attributes.tipps : [];
+    const activeTip = tips.length ? tips[((this._pvTipIndex % tips.length) + tips.length) % tips.length] : null;
+    const tipOverlay = this._config.show_pv_tips !== false && activeTip ? `
+      <div class="pv-tip" aria-label="PV-Alltagstipp">
+        ${tips.length > 1 ? '<button type="button" class="pv-tip-nav" data-pvtip="-1" aria-label="Vorheriger Tipp">‹</button>' : ""}
+        <div class="pv-tip-content">
+          <div class="pv-tip-title"><ha-icon icon="${esc(activeTip.icon || "mdi:lightbulb-outline")}" style="--mdc-icon-size:15px;vertical-align:middle"></ha-icon> ${esc(activeTip.text)}
+            ${tips.length > 1 ? `<span class="pv-tip-count">${((this._pvTipIndex % tips.length) + tips.length) % tips.length + 1}/${tips.length}</span>` : ""}</div>
+          <div class="pv-tip-detail">${esc(activeTip.detail || "")}</div>
+        </div>
+        ${tips.length > 1 ? '<button type="button" class="pv-tip-nav" data-pvtip="1" aria-label="Nächster Tipp">›</button>' : ""}
+      </div>` : "";
+    const dateFmt = key => new Date(key + "T12:00:00").toLocaleDateString("de-AT",
+      {weekday:"short",day:"2-digit",month:"2-digit"});
+    const headings = dayStarts.map((day,i) => {
+      const left = day.start, right = i + 1 < dayStarts.length ? dayStarts[i+1].start : offsetPx;
+      return `<div class="pv-plan-day" style="width:${right-left}px">${esc(dateFmt(day.key))}</div>`;
+    }).join("");
+    const separators = dayStarts.slice(1).map(day =>
+      `<div class="pv-compare-day-divider" style="left:${day.start}px" aria-hidden="true"></div>`).join("");
+    return `<div class="timeline">${tipOverlay}<div class="sep-axis-layout">
+      <div class="sep-y-axis" aria-label="PV-Leistung in kW" style="margin-top:24px">${sepAxisLabels(axisMax,"kW")}</div>
+      <div class="pv-plan-scroll" aria-label="PV-Plan horizontal scrollen">
+        <div class="pv-plan-inner" style="min-width:max(100%,${offsetPx}px);position:relative">
+          <div class="pv-plan-days">${headings}</div>
+          <div class="bars">${SEP_GRID}${bars.join("")}</div>
+          <div class="labels">${labels.join("")}</div>
+          <div class="pv-compare-day-dividers">${separators}</div>
+        </div>
+      </div>
       </div><div class="legend">${legend}</div></div>${next}`;
   }
 
@@ -1340,7 +1372,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         ${this._open.has("hub") ? this._settings(d.hubSettings, d.name, "hub", "hub") : ""}
         ${c.show_header ? this._header(d) : ""}
         ${c.show_priorities ? `<div class="section"><span>Prioritäten</span><span>1 = hoher Vorrang · ziehen zum Sortieren</span></div>${this._devices(d)}` : ""}
-        ${c.show_timeline ? `<div class="section"><span>PV-Plan</span><span>Heute + morgen${this._st(d.ents["sensor:forecast_today"])?.attributes?.prognose_quelle ? ` · ${esc(this._st(d.ents["sensor:forecast_today"]).attributes.prognose_quelle)}` : ""}</span></div>${this._timeline(d)}${this._pvComparison(d)}` : ""}
+        ${c.show_timeline ? `<div class="section"><span>PV-Plan</span><span>Zukunft scrollen${this._st(d.ents["sensor:forecast_today"])?.attributes?.prognose_quelle ? ` · ${esc(this._st(d.ents["sensor:forecast_today"]).attributes.prognose_quelle)}` : ""}</span></div>${this._timeline(d)}${this._pvComparison(d)}` : ""}
       </ha-card>`;
     const template = document.createElement("template");
     template.innerHTML = markup;
