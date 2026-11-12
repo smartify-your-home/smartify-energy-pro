@@ -1307,11 +1307,10 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     if (!rows.length) return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
       <div class="pv-compare-note">Noch keine Tageslichtstunden mit gespeicherter Prognose verfügbar.
       Der Vergleich beginnt mit der nächsten vollständig gemessenen Stunde.</div></div>`;
-    // Fixed physical scale: summed installed PV STC peak (kWp) is the maximum
-    // possible kWh for a one-hour bucket. Never infer the scale from history.
+    // Strict fixed chart scale: installed STC kWp equals the top kWh tick
+    // for a one-hour bucket. No headroom, rounding, or history-based expansion.
     const peakKwp = Number(data.gesamt_peak_kwp);
-    const peakWh = Number.isFinite(peakKwp) && peakKwp > 0 ? peakKwp * 1000 : null;
-    const axisMax = peakWh ? Math.ceil(peakWh * 1.10 / 500) * 500 : null; // Fixed installed peak plus 10% label space.
+    const axisMax = Number.isFinite(peakKwp) && peakKwp > 0 ? peakKwp * 1000 : null;
     if (!axisMax) return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
       <div class="pv-compare-note">Für die feste Y-Achse die gesamte installierte PV-Peakleistung
       in SEP → Konfigurieren → Prognose hinterlegen (oder PV-Flächen einzeichnen).</div></div>`;

@@ -1,5 +1,13 @@
 ## Unreleased
 
+## 0.3.82 – 2026-11-12
+
+- PV-Prognose-/Ist-Vergleich (14 Tage): feste Y-Obergrenze jetzt **exakt 1,0 × konfigurierte gesamte PV-Peakleistung** (kWp → kWh je Stunde), ohne bisherigen 10-%-Zuschlag und ohne Aufrundung auf 0,5 kWh. Beispiel 10 kWp → 10 kWh.
+- Keine dynamische Skalierung durch historische Höchstwerte. Messwerte über der festen Obergrenze bleiben in den Daten und Tooltips unverändert; nur die Balkenhöhe wird wie bisher auf die verfügbare Diagrammhöhe begrenzt.
+- Tests für exakte Achsenbeschriftung, Grenzen und visuelle Begrenzung oberhalb der Peakleistung aktualisiert.
+
+
+
 ## 0.3.81 – 2026-11-12
 
 - SEP-PV-Plan-Karte: Redundante Zeile „PV-Prognose · Tage horizontal scrollen“ samt Tagwechsel-Pfeilbuttons vollständig entfernt. Horizontales Wischen mit dem Finger und die Tagesüberschriften bleiben erhalten; Pfeile zum Blättern durch unterschiedliche PV-Alltagstipps bleiben verfügbar.

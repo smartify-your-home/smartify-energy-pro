@@ -1,3 +1,6 @@
+## PV-Prognose-Ist-Vergleich: fixe Skala (0.3.82)
+Die Y-Achse des 14-Tage-Prognose-Ist-Vergleichs endet jetzt exakt bei der konfigurierten gesamten PV-Peakleistung in kWh pro Stunde (z. B. 10 kWp → 10 kWh). Es gibt weder Reserve noch Rundung oder automatische Vergrößerung für Ausreißer. Einzelne höhere Messwerte werden grafisch bei 100 % gekappt; die Messwerte und Tooltips bleiben unverändert. Die Einstellung `pv_total_peak_kwp` bleibt die vollständige Anlagenleistung inklusive weiterer PV-Flächen, falls explizit eingetragen.
+
 ## 0.3.81 – PV-Plan ohne Scroll-Hinweis, Tipps besser lesbar
 Die Zeile „PV-Prognose · Tage horizontal scrollen“ und die Tagwechsel-Pfeile entfallen vollständig. Weiterhin per Finger horizontal über den PV-Plan wischen; die feste kW-Achse, Tagesüberschriften sowie Datenlückenhinweise bleiben bestehen. Die PV-Tipp-Hauptzeile erscheint in 16 px, der Zusatztext in 14 px, mit bestehender Karten-Schriftfamilie. Tipp-Wechsel-Pfeile und die Kartenoption `show_pv_tips` bleiben bestehen.
 
