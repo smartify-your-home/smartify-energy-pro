@@ -421,9 +421,9 @@ test('PV actual-forecast comparison uses fixed left kWh axis while scrolling 48h
   assert.ok(!scroll.contains(axis),'labels stay visible while chart scrolls');
   assert.equal(root.querySelectorAll('.pv-compare-plot .sep-chart-grid i').length,4);
   assert.equal(axis.querySelectorAll('span').length,5);
-  assert.equal(axis.querySelector('span').textContent,'3 kWh');
+  assert.equal(axis.querySelector('span').textContent,'2,5 kWh');
   assert.equal(axis.querySelector('span:last-child').textContent,'0 kWh');
-  assert.ok(Math.abs(parseFloat(root.querySelector('.pv-compare-forecast').getAttribute('style').split(':')[1])-83.3333)<0.01);
+  assert.equal(root.querySelector('.pv-compare-forecast').getAttribute('style'),'height:100%');
   assert.equal(root.querySelectorAll('.pv-compare-day-divider').length,1);
   assert.equal(root.querySelector('.sep-y-axis.compare').getAttribute('class'),'sep-y-axis compare');
 });
@@ -673,4 +673,31 @@ test('PV tip stays above bars with 16px headline and 14px detail, without scroll
   assert.doesNotMatch(source,/pv-plan-controls/);
   assert.match(source,/\.pv-plan-scroll\{overflow-x:auto/);
   assert.match(source,/data-pvtip/,'tip carousel arrows remain usable');
+});
+
+
+test('PV comparison exact peak scale stays at 10 kWh even with larger historic values',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
+  dom.window.document.body.append(card);
+  const slots=[{zeit:'2026-11-11T12:00:00+01:00',prognose_wh:8400,ist_wh:11000}];
+  card.hass={
+    entities:{plan:{platform:'smartify_energy',translation_key:'plan',
+      device_id:'hub',entity_id:'sensor.plan'}},
+    states:{'sensor.plan':{state:'–',attributes:{stunden:[],
+      pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:10,stunden:slots}}}},
+    devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}
+  };
+  card.shadowRoot.querySelector('[data-pvcompare]').click();
+  const root=card.shadowRoot;
+  const axis=root.querySelector('.pv-compare-body .sep-y-axis');
+  assert.equal(axis.querySelector('span').textContent,'10 kWh');
+  assert.equal(axis.querySelector('span:last-child').textContent,'0 kWh');
+  assert.equal(root.querySelector('.pv-compare-forecast').getAttribute('style'),'height:84%');
+  assert.equal(root.querySelector('.pv-compare-actual').getAttribute('style'),'height:100%',
+    'above peak measurement is visually capped, not rescaled');
+  assert.match(root.querySelector('.pv-compare-col').getAttribute('title'),/11.00 kWh/,
+    'the real above-peak value remains accessible in the tooltip');
 });
