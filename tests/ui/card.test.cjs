@@ -767,3 +767,65 @@ test('PV plan shows a narrow unlabelled day gap instead of grey Nacht block',()=
   assert.match(source,/background:transparent;opacity:\.6/);
   assert.ok(root.querySelectorAll('.pv-plan-day').length>=2,'day headings still mark the new day');
 });
+
+
+test('PV plan and forecast/actual comparison move together above priorities',()=>{
+  const root=settingsCard();
+  const card=root.host;
+  const order=()=>[...root.querySelectorAll('[data-order-block]')].map(x=>x.dataset.orderBlock);
+  assert.deepEqual(order(),['priorities','pv'],'legacy order is the default');
+  assert.equal(root.querySelector('[data-order-block="pv"] [data-pvcompare]')!=null,true,
+    'forecast/actual comparison remains inside the PV block');
+  assert.ok(root.querySelector('[data-priority-lock]'),'lock remains in priorities header');
+  card._changeSectionOrder(true);
+  assert.deepEqual(order(),['pv','priorities'],'drag moves the complete PV block above priorities');
+  assert.ok(root.querySelector('[data-order-block="pv"] [data-pvcompare]'),
+    'comparison remains with PV timeline after reordering');
+  assert.equal(card._priorityLocked,true,'section rearrangement does not unlock device priorities');
+  card._changeSectionOrder(false);
+  assert.deepEqual(order(),['priorities','pv'],'both directions supported');
+});
+
+test('live section grip pointer gesture reorders, but short tap or cancellation does not',()=>{
+  const root=settingsCard();
+  const card=root.host;
+  assert.equal(card._pvPlanFirstOverride,null);
+  const grip=root.querySelector('[data-section-grip="pv"]');
+  const win=grip.ownerDocument.defaultView;
+  const pointer=(name,y)=>new win.MouseEvent(name,{bubbles:true,clientY:y});
+  grip.dispatchEvent(pointer('pointerdown',200));
+  grip.dispatchEvent(pointer('pointerup',190));
+  assert.equal(card._pvPlanFirstOverride,null,'short tap does not modify config');
+  grip.dispatchEvent(pointer('pointerdown',200));
+  grip.dispatchEvent(pointer('pointercancel',100));
+  assert.equal(card._pvPlanFirstOverride,null,'cancelled gesture cannot reorder');
+  grip.dispatchEvent(pointer('pointerdown',200));
+  grip.dispatchEvent(pointer('pointermove',100));
+  grip.dispatchEvent(pointer('pointerup',100));
+  assert.equal(card._pvPlanFirstOverride,true,'upward drag brings PV above priorities');
+  assert.equal(root.querySelector('[data-order-block]').dataset.orderBlock,'pv');
+  const newGrip=root.querySelector('[data-section-grip="pv"]');
+  newGrip.dispatchEvent(pointer('pointerdown',100));
+  newGrip.dispatchEvent(pointer('pointerup',200));
+  assert.equal(card._pvPlanFirstOverride,false,'downward drag reverses order');
+});
+
+test('editor saves order in Lovelace card configuration and offers touch-safe fallback',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const editor=dom.window.document.createElement('smartify-energy-plan-card-editor');
+  editor.setConfig({});
+  dom.window.document.body.append(editor);
+  const names=()=>[...editor.shadowRoot.querySelectorAll('[data-order-item]')].map(x=>x.dataset.orderItem);
+  assert.deepEqual(names(),['priorities','pv']);
+  let saved;
+  editor.addEventListener('config-changed',e=>{saved=e.detail.config;});
+  editor.shadowRoot.querySelector('[data-order-item="pv"] [data-order-swap]').click();
+  assert.equal(saved.pv_plan_first,true,'editor emitted durable configuration value');
+  assert.deepEqual(names(),['pv','priorities']);
+  editor.shadowRoot.querySelector('[data-order-item="pv"] [data-order-swap]').click();
+  assert.equal(saved.pv_plan_first,false);
+  assert.deepEqual(names(),['priorities','pv']);
+  editor.setConfig({pv_plan_first:true});
+  assert.deepEqual(names(),['pv','priorities'],'saved order restored on editor reload');
+});
