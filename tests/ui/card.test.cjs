@@ -471,8 +471,8 @@ test('PV chart uses installed total peak rather than a 14-day historical outlier
     devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
   card.shadowRoot.querySelector('[data-pvcompare]').click();
   const root=card.shadowRoot;
-  assert.equal(root.querySelector('.pv-compare-body .sep-y-axis span').textContent,'12 kWh',
-    '10.6 kWp plus 10% margin rounds to 12 kWh, independent of 8 kWh historical value');
+  assert.equal(root.querySelector('.pv-compare-body .sep-y-axis span').textContent,'10,6 kWh',
+    '10.6 kWp is exactly 10.6 kWh on the fixed scale, independent of 8 kWh historical value');
   assert.equal(root.querySelectorAll('.pv-compare-percentages').length,0);
   const deviation=root.querySelector('.pv-compare-col .pv-compare-hour-pct');
   assert.ok(deviation && deviation.getAttribute('style').includes('bottom:calc('));
