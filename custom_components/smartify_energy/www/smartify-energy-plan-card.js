@@ -1526,15 +1526,15 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const priorityBlock = c.show_priorities ? `<div class="sep-order-block" data-order-block="priorities">
        <div class="section priority-section">
          <span class="priority-heading">
+           <button type="button" class="section-move-grip" data-section-grip="priorities"
+             aria-label="Prioritäten-Abschnitt verschieben" title="Abschnitt verschieben">
+             <ha-icon icon="mdi:drag-vertical"></ha-icon>
+           </button>
            <button type="button" class="priority-lock ${this._priorityLocked ? "locked" : "unlocked"}"
              data-priority-lock aria-label="${this._priorityLocked ? "Prioritäten entsperren" : "Prioritäten sperren"}"
              aria-pressed="${!this._priorityLocked}" title="${this._priorityLocked ? "Zum Sortieren entsperren" : "Sortierung wieder sperren"}"
              ${this._prioritySaving ? "disabled" : ""}>
              <ha-icon icon="${this._priorityLocked ? "mdi:lock" : "mdi:lock-open-variant"}"></ha-icon>
-           </button>
-           <button type="button" class="section-move-grip" data-section-grip="priorities"
-             aria-label="Prioritäten-Abschnitt verschieben" title="Abschnitt verschieben">
-             <ha-icon icon="mdi:drag-vertical"></ha-icon>
            </button>Prioritäten</span>
          <span class="priority-hint">${this._priorityLocked ? "Sortierung gesperrt" : "Ziehen zum Sortieren"}</span>
        </div>${this._devices(d)}</div>` : "";
