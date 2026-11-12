@@ -259,3 +259,9 @@ Der PV-Plan lässt sich weiterhin direkt mit dem Finger horizontal durch Prognos
 
 ### Starre PV-Vergleichsskala (v0.3.82)
 Der Prognose-Ist-Vergleich für 14 Tage verwendet als feste Y-Obergrenze **genau 1,0 × konfigurierte PV-Gesamt-Peakleistung**: bei 10 kWp also 10 kWh je Stunde. Anders als bisher gibt es keine 10-%-Reserve und keine Rundung auf 500 Wh. Oberhalb des festen Maximums liegende Messwerte bleiben als Tooltip und HA-Sensordaten erhalten, auch wenn ihr Balken visuell auf 100 % begrenzt wird.
+
+
+### SEP 0.3.83 – Prioritäten per Schloss schützen
+In der Kartenüberschrift **links über der ersten Prioritätszeile** gibt es ein Schloss zum Sperren/Entsperren der Drag-&-Drop-Reihenfolge. Standardmäßig ist die Sortierung gesperrt, auch nach Neuladen. Zum Bearbeiten Schloss öffnen, Geräte/Batterie wie gewohnt ziehen und anschließend wieder schließen. Gesperrte Ziehpunkte sind gedimmt; normales Scrollen am Handy bleibt erhalten.
+
+Im PV-Plan ist die graue Nachtfläche samt vertikaler „Nacht“-Beschriftung entfallen. Ein schmaler transparenter Trenner und die Tagesüberschriften zeigen weiterhin den Tageswechsel.
