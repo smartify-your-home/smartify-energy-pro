@@ -831,3 +831,20 @@ test('editor saves order in Lovelace card configuration and offers touch-safe fa
   editor.setConfig({pv_plan_first:true});
   assert.deepEqual(names(),['pv','priorities'],'saved order restored on editor reload');
 });
+
+test('priority heading orders section grip, lock, then label on narrow and wide cards',()=>{
+  const root=settingsCard();
+  const head=root.querySelector('.priority-section .priority-heading');
+  assert.ok(head);
+  const buttons=[...head.querySelectorAll(':scope > button')];
+  assert.deepEqual(buttons.map(b=>b.hasAttribute('data-section-grip')?'grip':
+    b.hasAttribute('data-priority-lock')?'lock':'unknown'),['grip','lock']);
+  assert.equal(head.lastChild.textContent.trim(),'Prioritäten');
+  assert.equal(buttons[0].getAttribute('data-section-grip'),'priorities');
+  assert.equal(buttons[1].getAttribute('aria-label'),'Prioritäten entsperren');
+  buttons[1].click();
+  const changed=root.querySelector('.priority-section .priority-heading');
+  assert.deepEqual([...changed.querySelectorAll(':scope > button')].map(b=>
+    b.hasAttribute('data-section-grip')?'grip':'lock'),['grip','lock']);
+  assert.equal(changed.querySelector('[data-priority-lock]').getAttribute('aria-label'),'Prioritäten sperren');
+});
