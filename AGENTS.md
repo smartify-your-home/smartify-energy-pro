@@ -1,3 +1,8 @@
+## PV-Prognose-Ist-Vergleich: starre Peak-Skala (0.3.82)
+- Diagramm-Y-Maximum **streng 1,0 × `pv_vergleich.gesamt_peak_kwp` × 1000 Wh**, nicht aufrunden und keinen 10-%-Puffer hinzufügen. Beispiel 10 kWp → 10 kWh/Stunde. `sepAxisLabels` teilt das feste Maximum in vier gleiche Achsenintervalle.
+- Historische Messspitzen dürfen das Maximum **nicht** ändern. Bei beobachteten Leistungen über STC-Peak bleiben Sensorwerte/Tooltip vollständig erhalten; nur die Balken werden bei 100 % abgeschnitten. Das gilt ausschließlich für den 14-Tage-Prognose-Ist-Vergleich, nicht für die andere PV-Plan-Skala oder Regelungen.
+- UI-Tests für kWp=2,5 und 10 inklusive gemessenem Ausreißer > 10 kWh; Dokumentation und Changelog aktualisieren.
+
 ## PV-Plan-Karte: kompakte Bedienung und größere Tipps (0.3.81)
 - Keine eigene Zeile „PV-Prognose · Tage horizontal scrollen“, **keine** Tagwechsel-Buttons `data-pvplan`; horizontales Touchscrolling über `.pv-plan-scroll`, Tagesüberschriften, feste kW-Achse und Übermorgen-Prognoseabdeckung bleiben erhalten.
 - Tipp-Bereich **über** den Balken mit SEP-Standardfont: `.pv-tip-title` 16px / halbfett, `.pv-tip-detail` 14px / sekundäre Farbe. Pfeile `data-pvtip` zum Wechseln zwischen mehreren Tipps bleiben ausdrücklich bestehen. Kartenoption `show_pv_tips` bleibt erhalten.
