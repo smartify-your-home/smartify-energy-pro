@@ -701,3 +701,133 @@ test('PV comparison exact peak scale stays at 10 kWh even with larger historic v
   assert.match(root.querySelector('.pv-compare-col').getAttribute('title'),/11.00 kWh/,
     'the real above-peak value remains accessible in the tooltip');
 });
+
+
+test('priority lock sits top-left above first row and blocks mobile drag until unlocked',async()=>{
+  const root=settingsCard();
+  const card=root.host;
+  const lock=root.querySelector('.priority-section .priority-lock');
+  const row=root.querySelector('.list > .dev-wrap');
+  const handle=row.querySelector('.handle');
+  assert.ok(lock && row,'lock is placed in priority header above the first device row');
+  assert.equal(lock.getAttribute('aria-label'),'Prioritäten entsperren');
+  assert.equal(lock.getAttribute('aria-pressed'),'false');
+  assert.equal(lock.querySelector('ha-icon').getAttribute('icon'),'mdi:lock');
+  assert.ok(handle.classList.contains('locked'),'drag handles muted and touch scroll allowed while locked');
+  const services=[];
+  card._hass.callService=async (...args)=>{services.push(args);};
+  const down=()=>root.querySelector('.list .handle').dispatchEvent(new root.host.ownerDocument.defaultView.MouseEvent('pointerdown',{
+    bubbles:true,clientY:20}));
+  down();
+  assert.equal(card._drag,null,'pointerdown cannot start a drag while locked');
+  assert.equal(services.length,0,'no priority writes while locked');
+
+  lock.click();
+  assert.equal(card._priorityLocked,false);
+  assert.equal(root.querySelector('.priority-lock').getAttribute('aria-pressed'),'true');
+  assert.equal(root.querySelector('.priority-lock ha-icon').getAttribute('icon'),'mdi:lock-open-variant');
+  assert.ok(!root.querySelector('.list .handle').classList.contains('locked'));
+  down();
+  assert.ok(card._drag,'unlocked handle starts pointer drag');
+  root.querySelector('.list .dev-wrap').dispatchEvent(new root.host.ownerDocument.defaultView.Event('pointercancel',{bubbles:true}));
+  await Promise.resolve();
+  assert.equal(card._drag,null,'cancel clears the gesture');
+  assert.equal(services.length,0,'cancel never submits a priority order');
+
+  root.querySelector('.priority-lock').click();
+  assert.equal(card._priorityLocked,true,'can relock without saving another configuration');
+  assert.ok(root.querySelector('.list .handle').classList.contains('locked'));
+  down();
+  assert.equal(card._drag,null,'priority lock still blocks dragging after re-render');
+  assert.equal(services.length,0);
+});
+
+test('PV plan shows a narrow unlabelled day gap instead of grey Nacht block',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_priorities:false,show_header:false,show_timeline:true,show_pv_tips:false});
+  dom.window.document.body.append(card);
+  const h1=new Date();h1.setDate(h1.getDate()+1);h1.setHours(14,0,0,0);
+  const h2=new Date(h1);h2.setDate(h2.getDate()+1);h2.setHours(9,0,0,0);
+  const hours=[h1,h2].map(time=>({zeit:time.toISOString(),pv_w:1200,frei_w:900,
+    geraete:{},prognose_verfuegbar:true}));
+  card.hass={
+    entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
+    states:{'sensor.plan':{state:'–',last_updated:new Date().toISOString(),attributes:{stunden:hours}}},
+    devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}
+  };
+  const root=card.shadowRoot;
+  const gap=root.querySelector('.timeline .pv-break');
+  assert.ok(gap,'the gap still separates disjoint forecast hours');
+  assert.equal(gap.textContent.trim(),'','neither Nacht nor PV-Pause is displayed');
+  assert.match(gap.getAttribute('title'),/ohne PV-Ertrag/,'gap remains explainable by tooltip');
+  assert.equal(root.querySelector('.timeline .pv-break-label').textContent.trim(),'');
+  assert.match(source,/\.pv-break \{ flex:0 0 12px/,'gap is now a narrow transparent separator');
+  assert.match(source,/background:transparent;opacity:\.6/);
+  assert.ok(root.querySelectorAll('.pv-plan-day').length>=2,'day headings still mark the new day');
+});
+
+
+test('PV plan and forecast/actual comparison move together above priorities',()=>{
+  const root=settingsCard();
+  const card=root.host;
+  card.setConfig({show_timeline:true,show_priorities:true});
+  const order=()=>[...root.querySelectorAll('[data-order-block]')].map(x=>x.dataset.orderBlock);
+  assert.deepEqual(order(),['priorities','pv'],'legacy order is the default');
+  assert.equal(root.querySelector('[data-order-block="pv"] [data-pvcompare]')!=null,true,
+    'forecast/actual comparison remains inside the PV block');
+  assert.ok(root.querySelector('[data-priority-lock]'),'lock remains in priorities header');
+  card._changeSectionOrder(true);
+  assert.deepEqual(order(),['pv','priorities'],'drag moves the complete PV block above priorities');
+  assert.ok(root.querySelector('[data-order-block="pv"] [data-pvcompare]'),
+    'comparison remains with PV timeline after reordering');
+  assert.equal(card._priorityLocked,true,'section rearrangement does not unlock device priorities');
+  card._changeSectionOrder(false);
+  assert.deepEqual(order(),['priorities','pv'],'both directions supported');
+});
+
+test('live section grip pointer gesture reorders, but short tap or cancellation does not',()=>{
+  const root=settingsCard();
+  const card=root.host;
+  card.setConfig({show_timeline:true,show_priorities:true});
+  assert.equal(card._pvPlanFirstOverride,null);
+  const grip=root.querySelector('[data-section-grip="pv"]');
+  const win=grip.ownerDocument.defaultView;
+  const pointer=(name,y)=>new win.MouseEvent(name,{bubbles:true,clientY:y});
+  grip.dispatchEvent(pointer('pointerdown',200));
+  grip.dispatchEvent(pointer('pointerup',190));
+  assert.equal(card._pvPlanFirstOverride,null,'short tap does not modify config');
+  grip.dispatchEvent(pointer('pointerdown',200));
+  grip.dispatchEvent(pointer('pointercancel',100));
+  assert.equal(card._pvPlanFirstOverride,null,'cancelled gesture cannot reorder');
+  grip.dispatchEvent(pointer('pointerdown',200));
+  grip.dispatchEvent(pointer('pointermove',100));
+  grip.dispatchEvent(pointer('pointerup',100));
+  assert.equal(card._pvPlanFirstOverride,true,'upward drag brings PV above priorities');
+  assert.equal(root.querySelector('[data-order-block]').dataset.orderBlock,'pv');
+  const newGrip=root.querySelector('[data-section-grip="pv"]');
+  newGrip.dispatchEvent(pointer('pointerdown',100));
+  newGrip.dispatchEvent(pointer('pointerup',200));
+  assert.equal(card._pvPlanFirstOverride,false,'downward drag reverses order');
+});
+
+test('editor saves order in Lovelace card configuration and offers touch-safe fallback',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
+  dom.window.eval(source);
+  const editor=dom.window.document.createElement('smartify-energy-plan-card-editor');
+  editor.setConfig({});
+  dom.window.document.body.append(editor);
+  const names=()=>[...editor.shadowRoot.querySelectorAll('[data-order-item]')].map(x=>x.dataset.orderItem);
+  assert.deepEqual(names(),['priorities','pv']);
+  let saved;
+  editor.addEventListener('config-changed',e=>{saved=e.detail.config;});
+  editor.shadowRoot.querySelector('[data-order-item="pv"] [data-order-swap]').click();
+  assert.equal(saved.pv_plan_first,true,'editor emitted durable configuration value');
+  assert.deepEqual(names(),['pv','priorities']);
+  editor.shadowRoot.querySelector('[data-order-item="pv"] [data-order-swap]').click();
+  assert.equal(saved.pv_plan_first,false);
+  assert.deepEqual(names(),['priorities','pv']);
+  editor.setConfig({pv_plan_first:true});
+  assert.deepEqual(names(),['pv','priorities'],'saved order restored on editor reload');
+});

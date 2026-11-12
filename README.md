@@ -259,3 +259,13 @@ Der PV-Plan lässt sich weiterhin direkt mit dem Finger horizontal durch Prognos
 
 ### Starre PV-Vergleichsskala (v0.3.82)
 Der Prognose-Ist-Vergleich für 14 Tage verwendet als feste Y-Obergrenze **genau 1,0 × konfigurierte PV-Gesamt-Peakleistung**: bei 10 kWp also 10 kWh je Stunde. Anders als bisher gibt es keine 10-%-Reserve und keine Rundung auf 500 Wh. Oberhalb des festen Maximums liegende Messwerte bleiben als Tooltip und HA-Sensordaten erhalten, auch wenn ihr Balken visuell auf 100 % begrenzt wird.
+
+
+### SEP 0.3.83 – Prioritäten per Schloss schützen
+In der Kartenüberschrift **links über der ersten Prioritätszeile** gibt es ein Schloss zum Sperren/Entsperren der Drag-&-Drop-Reihenfolge. Standardmäßig ist die Sortierung gesperrt, auch nach Neuladen. Zum Bearbeiten Schloss öffnen, Geräte/Batterie wie gewohnt ziehen und anschließend wieder schließen. Gesperrte Ziehpunkte sind gedimmt; normales Scrollen am Handy bleibt erhalten.
+
+Im PV-Plan ist die graue Nachtfläche samt vertikaler „Nacht“-Beschriftung entfallen. Ein schmaler transparenter Trenner und die Tagesüberschriften zeigen weiterhin den Tageswechsel.
+
+
+### PV-Plan oberhalb der Prioritäten anordnen (v0.3.83)
+Der ganze PV-Plan mit Prognose-Ist-Vergleich kann per Ziehgriff an der Abschnittsüberschrift oberhalb von **Prioritäten** angeordnet werden. Die Ziehgriffe verändern nur die Ansicht; das Schloss links neben „Prioritäten“ schützt weiterhin ausschließlich die Geräte-Reihenfolge. Für eine **dauerhaft für alle Geräte gespeicherte Reihenfolge** in der Lovelace-Kartenkonfiguration unter **Reihenfolge der Bereiche** die zwei Abschnitte mit Drag & Drop (oder den Pfeilen) vertauschen und die Karte speichern. Die Drag-Geste direkt in der Karte merkt sich die Anordnung zusätzlich lokal im jeweiligen Browser.

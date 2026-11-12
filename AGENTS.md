@@ -1,3 +1,16 @@
+## PV-Plan-Abschnitt vor Prioritäten verschieben (0.3.83)
+- **PV-Plan inklusive „PV-Prognose / Ist-Erzeugung (14 Tage)“ als zusammenhängenden Block** verschieben. Der PV-Block kann vor bzw. hinter dem Prioritätenblock stehen; der HA-Header mit Saldo/Budget bleibt an seiner Position. Geräte-Prioritäten unverändert.
+- Standard ist bisherige Reihenfolge `pv_plan_first=false`; Karteneditor stellt die zwei Bereiche als per Maus-/Touch-Drag-&-Drop vertauschbare Zeilen bereit und speichert `pv_plan_first` mit `config-changed` in Lovelace (geräteübergreifend). Pfeile sind barrierearme Alternative.
+- Die Karte selbst hat `data-section-grip`-Handles und tauscht Bereiche nach zielgerichtetem Pointer-Drag, bei `pointercancel`/kurzen Bewegungen unverändert. Der normale Kartenbetrieb speichert die Ansicht lokal im Browser; zum geräteübergreifenden Speichern Card-Editor nutzen. Nie den `set_priority_order`-Service für Abschnittsverschiebung verwenden.
+- Die Prioritäten-Sperre muss weiterhin **ganz links neben der Überschrift** stehen und ausschließlich Geräte-/Akku-Drag sperren. Abschnittsverschiebung vom Schloss unabhängig; PV-Stunden, Tagesvergleich, Tipps, Touchscroll, Geräte-Aktoren unverändert.
+- Tests in `tests/ui/card.test.cjs`, Doku und Release-Notes pflegen; CI vor Veröffentlichung prüfen.
+
+## Priority-Drag-Sperre und kompakter Tagestrenner (0.3.83)
+- In der SEP-Lovelace-Karte über der ersten Gerätezeile **links** neben dem Wort `Prioritäten` einen Schlossschalter `data-priority-lock` anzeigen. Default in jeder Karteninstanz `_priorityLocked=true`, auch nach Neuladen. Nur nach bewusstem Entsperren Drag & Drop zulassen (auch Akku); gesperrte Handles optisch dimmen und mit `touch-action:pan-y` normales Touchscrollen erlauben.
+- Vor jedem `_dragStart`, bei Bewegung und vor Senden von `set_priority_order` Sperrzustand prüfen. `pointercancel` verwirft den Sortierversuch. Keine Änderung am Backend-Prioritätsservice oder an der optimistischen Sortierung, wenn entsperrt. Während `_prioritySaving` Sperrschalter deaktivieren.
+- Im PV-Plan die vertikale Nacht-/PV-Pausenbeschriftung samt grau hinterlegtem breitem Abschnitt entfernen. Ein **transparenter schmaler 12px-Trenner** mit Tooltip, plus bereits vorhandene Tagesüberschriften, genügen. Interne Zeitdaten und Vorhersagen nicht ändern.
+- Regressionen `tests/ui/card.test.cjs`, Changelog und Doku aktualisieren; Versionierung/Release nur nach vollständiger CI.
+
 ## PV-Prognose-Ist-Vergleich: starre Peak-Skala (0.3.82)
 - Diagramm-Y-Maximum **streng 1,0 × `pv_vergleich.gesamt_peak_kwp` × 1000 Wh**, nicht aufrunden und keinen 10-%-Puffer hinzufügen. Beispiel 10 kWp → 10 kWh/Stunde. `sepAxisLabels` teilt das feste Maximum in vier gleiche Achsenintervalle.
 - Historische Messspitzen dürfen das Maximum **nicht** ändern. Bei beobachteten Leistungen über STC-Peak bleiben Sensorwerte/Tooltip vollständig erhalten; nur die Balken werden bei 100 % abgeschnitten. Das gilt ausschließlich für den 14-Tage-Prognose-Ist-Vergleich, nicht für die andere PV-Plan-Skala oder Regelungen.
