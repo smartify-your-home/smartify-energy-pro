@@ -1,5 +1,14 @@
 ## Unreleased
 
+## 0.3.83 – 2026-11-12
+
+- Prioritäten-Schutz in der SEP-Karte: kleines Schloss **links in der Prioritätenüberschrift, direkt über der ersten Gerätezeile**. Standardmäßig nach dem Laden gesperrt. Klick zum Entsperren/Sperren aktiviert oder deaktiviert Drag & Drop für alle Geräte einschließlich Batteriespeicher. Die Ziehpunkte sind bei gesperrtem Zustand gedimmt; normales Scrollen am Handy bleibt möglich.
+- Sperre verhindert Prioritätsänderungen bereits beim Pointer-Start sowie zusätzlich bei Bewegungs-/Abschlussereignissen. Bei abgebrochener Touch-Geste (`pointercancel`) wird keine neue Reihenfolge gespeichert. Während laufender Speicherung kann das Schloss nicht umgeschaltet werden. Bestehende optimistische Sortierung bei entsperrtem Zustand bleibt erhalten.
+- PV-Plan: die vertikale Beschriftung „Nacht“ / „PV-Pause“ sowie die graue 30-px-Nachtfläche entfernt. Ein schmaler transparenter, gestrichelter 12-px-Abstand und Tagesüberschriften kennzeichnen weiterhin Tages-/Stundenwechsel. Keine Änderung an PV- oder Gerätewerten.
+- Neue UI-Regressionstests für Schlossposition, standardmäßige Sperre, Drag-Freigabe, Touch-Abbruch und Nachtdarstellung.
+
+
+
 ## 0.3.82 – 2026-11-12
 
 - PV-Prognose-/Ist-Vergleich (14 Tage): feste Y-Obergrenze jetzt **exakt 1,0 × konfigurierte gesamte PV-Peakleistung** (kWp → kWh je Stunde), ohne bisherigen 10-%-Zuschlag und ohne Aufrundung auf 0,5 kWh. Beispiel 10 kWp → 10 kWh.
