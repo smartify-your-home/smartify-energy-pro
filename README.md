@@ -237,3 +237,11 @@ Seit 0.3.75 nummeriert der PV-Flächeneditor auch ältere gespeicherte automatis
 
 ### Adaptive Live-PV-Prognose (optional, seit v0.3.77)
 Im Prognose-Schritt aktivierbar (Standard **Aus**), nur bei „Eigene Berechnung“ mit echter PV-Erzeugungsleistung für exakt dieselben modellierten PV-Flächen. SEP analysiert ohne externe API die tatsächliche Einstrahlung anhand der Wechselrichterleistung und des Klarhimmel-Modells. Nach mindestens 6 Messwerten über 5 Minuten passt es die nahe Prognose vorsichtig für rund zwei Stunden an. Bei veralteten oder ungültigen Sensorwerten bleibt die Prognose unverändert. Das Attribut `live_pv` des PV-Prognosesensors liefert Zustand, Einstrahlungsindex, Trend und Volatilität. Die historische Ist-/Prognosegrafik bleibt unverändert.
+
+
+### PV-Alltagstipps und scrollbarer PV-Plan (v0.3.79)
+Der PV-Plan kann horizontal durch die tatsächlich vorhandenen Stundenprognosen der kommenden Tage gewischt werden. Tagesüberschriften sind wie beim PV-Prognose-Ist-Vergleich, die kW-Achse bleibt links sichtbar; weitere reine Anzeige-Stunden führen zu keinen zusätzlichen automatischen Starts.
+
+Ab 06:00 Uhr vergleicht SEP das Zeitfenster 08–16 Uhr über heute, morgen und, wenn vollständig verfügbar, übermorgen. Zum Verschieben der Wäsche müssen mindestens **25 % und 3 kWh** mehr Ertrag prognostiziert sein. Tipps zu Geschirrspüler, Trockner, reinem PV-E-Autoladen, Warmwasser, Speicher und auffälliger Live-Wetterlage werden nur bei passenden konfigurierten Komponenten angezeigt. Datenlücken ergeben keine erfundenen Erträge. Zwei HA-Sensoren **PV-Tipp** und **PV-Waschtipp** geben Hauptempfehlung, verfügbare Tipps und Tageswerte als Attribute aus. Keine automatische Aktion.
+
+**Nur in der Konfiguration der Lovelace-PV-Plan-Karte:** Option „PV-Alltagstipps über den Balken anzeigen“ deaktivieren, um das zweizeilige Tipp-Overlay vollständig auszublenden. Dies beeinflusst die Sensoren und Energie-Steuerung nicht.
