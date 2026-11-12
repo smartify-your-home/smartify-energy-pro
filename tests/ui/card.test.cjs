@@ -748,7 +748,7 @@ test('PV plan shows a narrow unlabelled day gap instead of grey Nacht block',()=
   const card=dom.window.document.createElement('smartify-energy-plan-card');
   card.setConfig({show_priorities:false,show_header:false,show_timeline:true,show_pv_tips:false});
   dom.window.document.body.append(card);
-  const h1=new Date();h1.setHours(14,0,0,0);
+  const h1=new Date();h1.setDate(h1.getDate()+1);h1.setHours(14,0,0,0);
   const h2=new Date(h1);h2.setDate(h2.getDate()+1);h2.setHours(9,0,0,0);
   const hours=[h1,h2].map(time=>({zeit:time.toISOString(),pv_w:1200,frei_w:900,
     geraete:{},prognose_verfuegbar:true}));
