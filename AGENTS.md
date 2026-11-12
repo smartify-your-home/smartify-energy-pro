@@ -193,6 +193,9 @@ Dokumentation gehört zur Änderung, nicht zu einem späteren Auftrag. Bei Verha
 
 - Schmale Prioritätenlisten anhand ihrer eigenen Breite formatieren. Die rechte Spalte begrenzen, damit Modus und Zahnrad den Gerätenamen nicht verdrängen.
 
+## Wallbox km-/Tage-Ziel ohne PV-Stopp (0.3.78)
+- In `EvDevice.decide` (laufende Ladung, nach Pflicht/Boost): Ziel `km_until`/`days` und `_need_wh > 0` ⇒ kein `_deficit_since`, mindestens Mindeststrom, kein Abschalten. Start ohne Überschuss weiterhin nur über Pflichtstart. Ziel erreicht ⇒ normale Stopp-Verzögerung. Tests: `tests/test_ev_stop_delay.py` (`test_km_goal_*`).
+
 ## Wallbox PV-Stopp (0.3.45)
 - `EvDevice.pv_stop_at` = `_deficit_since + stop_delay`, nur bei Status `charging_pv` (Statuscodes über `STATUS_CODES` vergleichen, nicht Legacy-Strings). `_deficit_since` wird bei nicht laufender Ladung, Sofort-/Pflichtladung, Abstecken und Verdrängung gelöscht. Strom wird weiterhin sofort reduziert, abgeschaltet erst nach Ablauf. Test: tests/test_ev_stop_delay.py.
 - Karte: EV-Zeile Akku zuerst, Leistung/Budget in `.pb-stack` untereinander; andere Geräte `.pb-pair` (display:contents) unverändert.

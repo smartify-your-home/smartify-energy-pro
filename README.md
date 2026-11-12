@@ -130,7 +130,7 @@ Die Ansage ist unabhängig von der Regelung: SEP wartet nicht auf das Script, un
 ## E-Auto / Wallbox
 
 - **Nur PV:** Ladestrom folgt dem Überschuss. Start, wenn aktuelles Budget **und** 2-Minuten-Mittel die Startschwelle erreichen (Mindestladeleistung × Mindest-PV-Anteil). Fehlt Überschuss, wird der Strom sofort reduziert und erst nach der **Stopp-Verzögerung** abgeschaltet – die Karte zeigt dann „PV-Stopp HH:MM“.
-- **km bis Uhrzeit / Tage-Konfigurator:** Für die geplante Strecke lädt SEP zuerst mit PV und rechtzeitig vor der Abfahrt mit Netzstrom (Pflichtladung).
+- **km bis Uhrzeit / Tage-Konfigurator:** Für die geplante Strecke lädt SEP zuerst mit PV und rechtzeitig vor der Abfahrt mit Netzstrom (Pflichtladung). Solange für das Ziel noch Energie fehlt, wird eine laufende Ladung **nicht** per PV-Stopp abgeschaltet, sondern läuft bei zu wenig Überschuss mit Mindeststrom weiter (Netzbezug möglich). Erst wenn das Ziel erreicht ist, gilt die normale Stopp-Verzögerung.
 - **Sofort:** maximaler Ladestrom, Netzbezug möglich.
 - **PV-Boost** (Rakete): für eine einstellbare Dauer (Standard 3 h) mit Boost-Faktor × PV-Überschuss laden, mindestens mit der Boost-Mindestleistung; Netzbezug ist erlaubt. Liegt das Ziel unter dem Wallbox-Minimum (z. B. 6 A × 3), lädt der Boost mit diesem Minimum. Endet nach Ablauf, beim Ausschalten oder Abstecken; Anzeige „Boost bis HH:MM“.
 - **Ladeende:** „voll HH:MM“ schätzt, wann Max-SoC bei gleichbleibender Ladeleistung erreicht ist.
