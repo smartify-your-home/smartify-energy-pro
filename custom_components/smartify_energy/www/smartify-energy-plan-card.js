@@ -636,7 +636,26 @@ const CARD_CSS = `
   .pv-compare-totals small{color:var(--secondary-text-color);font-size:11px}
   .pv-compare-totals strong{font-size:16px;font-variant-numeric:tabular-nums}
   .pv-compare-scroll{overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
-  .pv-plan-scroll{overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x pan-y;min-width:0}
+  .pv-plan-scroll{overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x pan-y;min-width:0;
+    scrollbar-width:thin;scrollbar-color:var(--secondary-text-color) transparent}
+  .pv-plan-controls{display:flex;align-items:center;justify-content:space-between;gap:6px;
+    color:var(--secondary-text-color);font-size:11px;margin:0 1px 4px;min-height:23px}
+  .pv-plan-controls>span{overflow-wrap:anywhere}
+  .pv-plan-day-nav{display:flex;align-items:center;gap:4px;flex:none}
+  .pv-plan-day-nav button{background:transparent;color:var(--secondary-text-color);
+    border:1px solid var(--divider-color);border-radius:5px;min-height:26px;min-width:30px;
+    font:inherit;font-size:16px;cursor:pointer;padding:0 6px}
+  .pv-plan-day-nav button:hover{color:var(--primary-text-color);border-color:var(--primary-color)}
+  .pv-plan-day-nav button:focus-visible{outline:2px solid var(--primary-color);outline-offset:1px}
+  .pv-plan-missing{flex:none;box-sizing:border-box;height:96px;width:216px;
+    display:flex;justify-content:center;align-items:center;text-align:center;
+    border:1px dashed var(--divider-color);border-radius:4px;padding:10px;
+    background:color-mix(in srgb,var(--secondary-text-color) 7%,transparent);
+    color:var(--secondary-text-color);font-size:11px;line-height:1.4;white-space:normal}
+  .pv-plan-coverage{font-size:11px;color:var(--secondary-text-color);padding:5px 2px 1px;
+    overflow-wrap:anywhere}
+  .pv-plan-missing-label{flex:none;width:216px;text-align:center;color:var(--secondary-text-color);
+    font-size:10px}
   .pv-plan-days{display:flex;height:24px;box-sizing:border-box}
   .pv-plan-day{box-sizing:border-box;font-size:11px;font-weight:600;padding:3px 4px 5px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--primary-text-color)}
