@@ -348,6 +348,14 @@ const EDITOR_CSS = `
   .row { display:flex; gap:8px; align-items:center; margin:6px 0; }
   .row label { margin:0; font-size:13px; color:var(--primary-text-color); }
   input[type=checkbox] { width:16px; height:16px; cursor:pointer; flex-shrink:0; }
+  .section-sort{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+  .section-sort-item{display:flex;align-items:center;gap:9px;border:1px solid var(--divider-color);
+    background:var(--card-background-color);border-radius:6px;padding:8px;color:var(--primary-text-color);
+    font-size:13px;cursor:grab;touch-action:pan-y;user-select:none}
+  .section-sort-item .sort-grip{color:var(--secondary-text-color);font-size:19px;touch-action:none;cursor:grab}
+  .section-sort-item button{margin-left:auto;border:1px solid var(--divider-color);background:transparent;
+    color:var(--primary-text-color);border-radius:5px;padding:4px 8px;font-size:14px;cursor:pointer}
+
   input[type=range] { width:100%; accent-color:var(--primary-color); cursor:pointer; }
   .hint { font-size:11px; color:var(--secondary-text-color); margin-top:3px; }
 `;
@@ -393,6 +401,17 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
       <div class="row"><input type="checkbox" id="show_settings" ${chk("show_settings")}><label for="show_settings">Einstellungen (Zahnrad) erlauben</label></div>
       <div class="hint">Zeigt das Zahnrad mit Einstellungen und Erklärungen. Ausblenden verändert keine Regelung und ist keine Zugriffssperre.</div>
       <div class="row"><input type="checkbox" id="show_timeline" ${chk("show_timeline")}><label for="show_timeline">PV-Plan (Zeitleiste)</label></div>
+      <div class="section">Reihenfolge der Bereiche</div>
+      <div class="section-sort" id="section-sort">
+        ${(c.pv_plan_first ? ["pv","priorities"] : ["priorities","pv"]).map((kind,i)=>`
+        <div class="section-sort-item" draggable="true" data-order-item="${kind}" tabindex="0"
+          aria-label="${kind==="pv"?"PV-Plan mit Prognose-Ist-Vergleich":"Prioritäten"} verschieben">
+          <span class="sort-grip" aria-hidden="true">⠿</span>
+          <span>${kind==="pv"?"PV-Plan + Prognose/Ist":"Prioritäten"}</span>
+          <button type="button" data-order-swap aria-label="${kind==="pv"?"PV-Plan":"Prioritäten"} ${i===0?"nach unten":"nach oben"} verschieben">${i===0?"↓":"↑"}</button>
+        </div>`).join("")}
+      </div>
+      <div class="hint">Bereiche durch Ziehen vertauschen; die Reihenfolge wird mit der Karte gespeichert.</div>
       <div class="row"><input type="checkbox" id="show_pv_tips" ${chk("show_pv_tips")}><label for="show_pv_tips">PV-Alltagstipps über den Balken anzeigen</label></div>
       <div class="hint">Nur Anzeige in dieser Karte: Ausblenden deaktiviert keine PV-Tipp-Sensoren und ändert keine Regelung.</div>
       <div class="hint">Zeigt die Prognose und die empfohlenen Zeiträume. Der Plan ist eine Empfehlung, keine feste Startzusage.</div>
@@ -408,6 +427,43 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
     });
     ["show_header", "show_allocated", "show_priorities", "show_mode", "show_settings", "show_timeline", "show_pv_tips"].forEach(k =>
       $(k).addEventListener("change", e => set(k, e.target.checked)));
+    const saveOrder = first => { set("pv_plan_first", first === "pv"); this._render(); };
+    const sort = $("section-sort");
+    let dragged = null;
+    sort.querySelectorAll(".section-sort-item").forEach(item => {
+      item.addEventListener("dragstart", e => {
+        dragged = item.dataset.orderItem;
+        e.dataTransfer?.setData("text/plain", dragged);
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+      });
+      item.addEventListener("dragend", () => { dragged = null; });
+      item.addEventListener("dragover", e => e.preventDefault());
+      item.addEventListener("drop", e => {
+        e.preventDefault();
+        const from = dragged || e.dataTransfer?.getData("text/plain");
+        if (from && from !== item.dataset.orderItem) saveOrder(from);
+      });
+      item.querySelector("[data-order-swap]").addEventListener("click", () =>
+        saveOrder(item.dataset.orderItem === "pv" ? "priorities" : "pv"));
+      const grip = item.querySelector(".sort-grip");
+      grip.addEventListener("pointerdown", e => {
+        if (e.pointerType === "mouse") return;
+        e.preventDefault();
+        const y = e.clientY;
+        grip.setPointerCapture?.(e.pointerId);
+        const finish = up => {
+          grip.removeEventListener("pointerup", finish);
+          grip.removeEventListener("pointercancel", cancel);
+          if (Math.abs(up.clientY-y) > 25) saveOrder(item.dataset.orderItem);
+        };
+        const cancel = () => {
+          grip.removeEventListener("pointerup", finish);
+          grip.removeEventListener("pointercancel", cancel);
+        };
+        grip.addEventListener("pointerup", finish);
+        grip.addEventListener("pointercancel", cancel);
+      });
+    });
 
   }
 }
