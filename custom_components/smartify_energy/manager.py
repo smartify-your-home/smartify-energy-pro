@@ -1119,6 +1119,41 @@ class EnergyManager:
             {"zeit": h.isoformat(), "pv_w": round(pv[h]), "frei_w": round(rem[h]), "geraete": alloc[h]}
             for h in hours
         ]
+        # Display-only extension. Do not schedule loads into the extra days.
+        display_end = now + timedelta(hours=72)
+        already = set(hours)
+        for h, wh in sorted(self.forecast.hours.items()):
+            if h not in already and end <= h < display_end and math.isfinite(wh) and wh >= 0:
+                self.plan_hours.append({
+                    "zeit": h.isoformat(), "pv_w": round(wh),
+                    "frei_w": round(max(0.0, wh - base)), "geraete": {},
+                })
+        day_devices = []
+        for dev in self.devices.values():
+            if dev.mode == "off":
+                continue
+            kind = (dev.cfg.get("appliance_type", "washing_machine")
+                    if dev.TYPE == "load" else dev.TYPE)
+            if kind not in {"washing_machine", "dishwasher", "dryer", "ev", "heater", "heatpump"}:
+                continue
+            duration = 2.0
+            if kind in {"washing_machine", "dishwasher", "dryer"}:
+                try:
+                    duration = float(dev.p("duration"))
+                except (TypeError, ValueError):
+                    pass
+            day_devices.append({
+                "kind": kind, "mode": dev.mode,
+                "duration": duration, "power": float(dev.nominal),
+                "pv_only": dev.p("goal") == "pv_only" if kind == "ev" else True,
+            })
+        self.pv_advice = build_advice(
+            self.forecast.hours, dt_util.as_local(now), day_devices,
+            base_load_w=base,
+            live_state=self.live_pv.diagnostics(now).get("state") if self.live_pv else None,
+            battery_soc=self.battery_soc if self.has_battery else None,
+            battery_capacity_kwh=float(self.cfg.get(CONF_BAT_CAPACITY) or 0),
+        )
         actions.sort()
         self.next_action = " · ".join(a for _, a in actions[:3])
 
