@@ -245,3 +245,9 @@ Der PV-Plan kann horizontal durch die tatsächlich vorhandenen Stundenprognosen 
 Ab 06:00 Uhr vergleicht SEP das Zeitfenster 08–16 Uhr über heute, morgen und, wenn vollständig verfügbar, übermorgen. Zum Verschieben der Wäsche müssen mindestens **25 % und 3 kWh** mehr Ertrag prognostiziert sein. Tipps zu Geschirrspüler, Trockner, reinem PV-E-Autoladen, Warmwasser, Speicher und auffälliger Live-Wetterlage werden nur bei passenden konfigurierten Komponenten angezeigt. Datenlücken ergeben keine erfundenen Erträge. Zwei HA-Sensoren **PV-Tipp** und **PV-Waschtipp** geben Hauptempfehlung, verfügbare Tipps und Tageswerte als Attribute aus. Keine automatische Aktion.
 
 **Nur in der Konfiguration der Lovelace-PV-Plan-Karte:** Option „PV-Alltagstipps über den Balken anzeigen“ deaktivieren, um das zweizeilige Tipp-Overlay vollständig auszublenden. Dies beeinflusst die Sensoren und Energie-Steuerung nicht.
+
+
+### PV-Plan: Übermorgen und fehlende Prognosedaten (v0.3.80)
+Mit den neuen Tagespfeilen kann der PV-Plan auch am Desktop weitergeschaltet werden. Übermorgen bleibt als Tag erreichbar, selbst wenn die Wetterquelle nicht weit genug reicht. Statt fiktiver Nullbalken erscheint dann ein Hinweis, bis wann echte Prognosestunden vorhanden sind. Bei My-Weather für längere Vorschau in SEP → Konfigurieren → Prognose die **Meteonomiqs Cloud Forecast 48h**-Entität auswählen; der bisherige 8h-Sensor wurde aus Kompatibilitätsgründen nicht automatisch ersetzt. Auch 48h reichen morgens um 06:00 nicht für übermorgen bis 16:00 (dafür wären mindestens 58h nötig).
+
+GitHub Actions: überholte PR-Testläufe werden abgebrochen, doppelte Validierung beim Release entfernt; die komplette Prüfung vor der Veröffentlichung bleibt bestehen. Um Actions-E-Mails abzustellen: [GitHub → Settings → Notifications](https://github.com/settings/notifications) → System → Actions → Don't notify (oder Email abwählen).
