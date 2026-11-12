@@ -1,3 +1,9 @@
+## PV-Plan: Alltagstipps und Zukunftsscrollen (0.3.79)
+- `pv_advice.py` wertet vollständige lokale 08–16h-Forecastfenster pro Tag aus. Mindestens 25 % und 3 kWh Mehrertrag; nicht vorhandene Stunden werden nie als Nullwerte aufgefüllt. 06:00-Uhr-Trigger und Refresh im normalen Forecast-Intervall.
+- `manager.py` ergänzt die `plan_hours` für die UI nur um tatsächlich vorhandene Zukunftsstunden bis maximal 72h; dispositive Geräteplanung bleibt bis morgen. Sensor `pv_tipp` listet Tipps und Tageserträge; `pv_waschtipp` liefert eigenständigen Wasch-Hinweis. Weitere Tipps basieren auf konfigurierten, nicht deaktivierten Geräten, PV-only-E-Auto, Speicher und optionaler Live-PV-Analyse.
+- `smartify-energy-plan-card.js`: die ursprüngliche Leistungsgrafik bekommt Tagesüberschriften und horizontalen Scrollbereich (feststehende kW-Y-Achse). Über dem Balken kompakte zweizeilige Tippanzeige, weitere Tipps via Pfeiltasten. **`show_pv_tips` ist ausschließlich eine Lovelace-Kartenoption**, Standard true, keine Integrationsoption. Vollständiges Verbergen ohne Änderung der HA-Sensoren.
+- Die Tipps sind Beratung, kein Netzbezug-/Ladegarant oder automatischer Schaltbefehl.
+
 ## Tagesbezogene Auswertung des PV-Vergleichs (0.3.71)
 Die UI gruppiert `pv_vergleich.stunden` über `zeitzone` in lokale Kalendertage. Für die Tageszusammenfassung zählt ein Stundenpaar nur bei beiden numerischen Werten (`prognose_wh`, `ist_wh`); Summen `expected/actual` in Wh werden jeweils durch 1000 in kWh umgerechnet, Tagesabweichung `(actual/expected - 1) * 100`. Fehlende Stunden bleiben offen, „bisher“ für unvollständige/laufende Tage. Die sichtbare Mitte des scrollbaren Diagramms bestimmt den ausgewählten Tag; ein delegierter Scroll-Listener aktualisiert die drei DOM-Werte ohne Ganzkarten-Rerender. Die aggregierten `pv_vergleich`-Attribute bleiben für API-Kompatibilität unverändert; die UI zeigt diese Gesamtsummen nicht mehr.
 
