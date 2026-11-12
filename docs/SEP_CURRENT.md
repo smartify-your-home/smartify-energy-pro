@@ -1,3 +1,7 @@
+## SEP v0.3.83 – Prioritäten sperren / Nachtbeschriftung entfernen
+Links in der Kopfzeile „Prioritäten“, direkt über der ersten Gerätezeile, befindet sich ein Schloss. Standardmäßig geschlossen: Drag & Drop der Geräte und des Batteriespeichers ist deaktiviert, der Touchscreen kann normal scrollen. Nach dem Antippen öffnet sich das Schloss und die Prioritäten können wie bisher verschoben werden. Nochmaliges Antippen sperrt; nach Neuladen der Karte ist das Schloss sicherheitshalber wieder geschlossen. Unterbrechungen von Touch-Gesten verändern die Reihenfolge nicht.
+Die im PV-Plan bisher grau markierte und vertikal mit „Nacht“ bzw. „PV-Pause“ beschriftete Lücke ist durch einen sehr schmalen transparenten Tagestrenner ersetzt. Die Datumsüberschrift bleibt erhalten; die Prognose selbst ist unverändert.
+
 ## PV-Prognose-Ist-Vergleich: fixe Skala (0.3.82)
 Die Y-Achse des 14-Tage-Prognose-Ist-Vergleichs endet jetzt exakt bei der konfigurierten gesamten PV-Peakleistung in kWh pro Stunde (z. B. 10 kWp → 10 kWh). Es gibt weder Reserve noch Rundung oder automatische Vergrößerung für Ausreißer. Einzelne höhere Messwerte werden grafisch bei 100 % gekappt; die Messwerte und Tooltips bleiben unverändert. Die Einstellung `pv_total_peak_kwp` bleibt die vollständige Anlagenleistung inklusive weiterer PV-Flächen, falls explizit eingetragen.
 
