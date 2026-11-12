@@ -1,9 +1,13 @@
 name: SEP validation
 on:
   workflow_call:
+  workflow_dispatch:
   pull_request:
-  push:
-    branches: [main]
+# Validate PRs once per latest revision. Release workflow calls validation
+# again on main before publishing; a standalone main-push run would be duplicate.
+concurrency:
+  group: sep-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 permissions:
   contents: read
 jobs:
