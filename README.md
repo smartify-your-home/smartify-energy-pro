@@ -265,3 +265,7 @@ Der Prognose-Ist-Vergleich für 14 Tage verwendet als feste Y-Obergrenze **genau
 In der Kartenüberschrift **links über der ersten Prioritätszeile** gibt es ein Schloss zum Sperren/Entsperren der Drag-&-Drop-Reihenfolge. Standardmäßig ist die Sortierung gesperrt, auch nach Neuladen. Zum Bearbeiten Schloss öffnen, Geräte/Batterie wie gewohnt ziehen und anschließend wieder schließen. Gesperrte Ziehpunkte sind gedimmt; normales Scrollen am Handy bleibt erhalten.
 
 Im PV-Plan ist die graue Nachtfläche samt vertikaler „Nacht“-Beschriftung entfallen. Ein schmaler transparenter Trenner und die Tagesüberschriften zeigen weiterhin den Tageswechsel.
+
+
+### PV-Plan oberhalb der Prioritäten anordnen (v0.3.83)
+Der ganze PV-Plan mit Prognose-Ist-Vergleich kann per Ziehgriff an der Abschnittsüberschrift oberhalb von **Prioritäten** angeordnet werden. Die Ziehgriffe verändern nur die Ansicht; das Schloss links neben „Prioritäten“ schützt weiterhin ausschließlich die Geräte-Reihenfolge. Für eine **dauerhaft für alle Geräte gespeicherte Reihenfolge** in der Lovelace-Kartenkonfiguration unter **Reihenfolge der Bereiche** die zwei Abschnitte mit Drag & Drop (oder den Pfeilen) vertauschen und die Karte speichern. Die Drag-Geste direkt in der Karte merkt sich die Anordnung zusätzlich lokal im jeweiligen Browser.
