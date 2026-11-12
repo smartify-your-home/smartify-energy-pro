@@ -273,6 +273,29 @@ class EnergyManager:
                            "kalibrierung": self.forecast.calibration.diagnostics(dt_util.now())
                            if self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED) else None,
                        }),
+
+            SensorSpec("pv_tipp", lambda: self.pv_advice.get("state", "Kein PV-Tipp verfügbar"),
+                       icon="mdi:lightbulb-on-outline",
+                       attrs=lambda: {
+                           "tipps": self.pv_advice.get("tips", []),
+                           "tage": self.pv_advice.get("tage", []),
+                           "zeitfenster": self.pv_advice.get("zeitfenster", "08:00–16:00"),
+                           "aktualisiert": self.pv_advice.get("aktualisiert"),
+                       }),
+            SensorSpec("pv_waschtipp",
+                       lambda: (self.pv_advice.get("waschtipp") or {}).get(
+                           "text", "Keine Waschmaschine konfiguriert"
+                           if not any(d.TYPE == "load" and
+                                      d.cfg.get("appliance_type", "washing_machine") == "washing_machine"
+                                      for d in self.devices.values()) else "Prognose unvollständig"),
+                       icon="mdi:washing-machine",
+                       attrs=lambda: {
+                           "empfehlung": (self.pv_advice.get("waschtipp") or {}).get("empfehlung"),
+                           "begruendung": (self.pv_advice.get("waschtipp") or {}).get("detail"),
+                           "zeitfenster": self.pv_advice.get("zeitfenster", "08:00–16:00"),
+                           "tage": self.pv_advice.get("tage", []),
+                           "aktualisiert": self.pv_advice.get("aktualisiert"),
+                       }),
             SensorSpec("plan", lambda: self.next_action or "–", icon="mdi:calendar-clock",
                        attrs=lambda: {"stunden": self.plan_hours,
                                       "prognose_quelle": self.forecast.source_label,
