@@ -159,7 +159,7 @@ export class SEPChartController {
     if(!host.isConnected)return false;
     const wrapper=host.closest(".sep-echarts-wrap");
     if(wrapper)wrapper.classList.add("chart-ready");
-    host.style.width=chartData.width+"px";
+    host.style.width=Math.max(chartData.width, host.parentElement?.clientWidth || 0)+"px";
     host.classList.add("ready");
     let entry=this.charts.get(kind);
     if(entry && entry.host!==host){this.dispose(kind);entry=null;}
