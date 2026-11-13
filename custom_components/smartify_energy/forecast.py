@@ -157,7 +157,9 @@ class ForecastProvider:
             self.hours = hours
             self.source_label = (
                 "GeoSphere Austria C-LAEF (GHI)" if source == "geosphere"
-                else "Eigene Berechnung"
+                else ("GeoSphere Austria C-LAEF (Bewölkung)"
+                      if cloud_forecast_horizon(state.attributes) == 60
+                      else "Eigene Berechnung")
             ) if hours else None
             self.error = "; ".join(errors) or None
             self.last_update = dt_util.now()
