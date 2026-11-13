@@ -17,7 +17,7 @@ from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
 from .solar_calibration import SolarCalibration
-from .solar_model import hourly_clouds, pv_hours
+from .solar_model import hourly_clouds, hourly_ghi, pv_hours, pv_hours_ghi
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -89,37 +89,72 @@ class ForecastProvider:
         errors: list[str] = []
         self.source_label = None
         if self.solar_config.get("mode") == "calculated":
-            # Never learn from the previous forecast if weather becomes invalid.
+            # Select one weather model explicitly; never mix GHI and cloud
+            # attenuation or silently substitute clear sky for missing hours.
             self.raw_hours = {}
             self.cloud_hours = {}
+            source = self.solar_config.get("weather_source", "cloud")
             try:
-                cloud_entity = self.solar_config.get("cloud_entity")
-                state = self.hass.states.get(cloud_entity) if cloud_entity else None
-                if state is None:
-                    raise ValueError("My-Weather cloud sensor is unavailable")
-                cloudy_hours = hourly_clouds(state.attributes, dt_util.utcnow())
-                if not cloudy_hours:
-                    raise ValueError("My-Weather has no valid hourly cloud forecast")
+                sensor = self.solar_config.get("cloud_entity")
+                state = self.hass.states.get(sensor) if sensor else None
+                if state is None or state.state == "unavailable":
+                    raise ValueError("Selected My-Weather forecast sensor is unavailable")
                 config = self.solar_config
                 surfaces = config.get("surfaces") or []
                 if not surfaces:
                     raise ValueError("Configure at least one PV surface")
-                self.cloud_hours = {_hour(stamp): cloud for stamp, cloud in cloudy_hours.items()}
-                self.raw_hours = {
-                    _hour(stamp): wh for stamp, wh in
-                    pv_hours(dt_util.utcnow(), float(self.hass.config.latitude),
-                             float(self.hass.config.longitude), surfaces, cloudy_hours).items()
-                }
+                now = dt_util.utcnow()
+                lat = float(self.hass.config.latitude)
+                lon = float(self.hass.config.longitude)
+                if source == "geosphere":
+                    ghi = hourly_ghi(state.attributes, now)
+                    if not ghi:
+                        raise ValueError(
+                            "GeoSphere sensor has no valid GHI forecast (W/m²); "
+                            "select GeoSphere Cloud/Solar Irradiation 60h in my-weather"
+                        )
+                    self.raw_hours = {
+                        _hour(stamp): wh for stamp, wh in
+                        pv_hours_ghi(now, lat, lon, surfaces, ghi).items()
+                    }
+                    cloudy_hours = hourly_clouds(state.attributes, now, horizon_hours=60)
+                    self.cloud_hours = {
+                        _hour(stamp): cloud for stamp, cloud in cloudy_hours.items()
+                        if _hour(stamp) in self.raw_hours
+                    }
+                elif source == "cloud":
+                    cloudy_hours = hourly_clouds(state.attributes, now)
+                    if not cloudy_hours:
+                        raise ValueError("My-Weather has no valid hourly cloud forecast")
+                    self.raw_hours = {
+                        _hour(stamp): wh for stamp, wh in
+                        pv_hours(now, lat, lon, surfaces, cloudy_hours).items()
+                    }
+                    self.cloud_hours = {
+                        _hour(stamp): cloud for stamp, cloud in cloudy_hours.items()
+                    }
+                else:
+                    raise ValueError("Unknown calculated solar forecast source")
+
                 hours = {
-                    stamp: round(raw * self.calibration.factor(self.cloud_hours[stamp], dt_util.now()), 2)
-                    if self.solar_config.get("calibration_enabled") else raw
+                    stamp: round(
+                        raw * self.calibration.factor(
+                            self.cloud_hours[stamp], dt_util.now(), source=source
+                        ), 2
+                    ) if (
+                        self.solar_config.get("calibration_enabled")
+                        and stamp in self.cloud_hours
+                    ) else raw
                     for stamp, raw in self.raw_hours.items()
                 }
             except (TypeError, ValueError, OverflowError) as err:
                 errors.append(f"PV calculation: {err}")
             self.base_hours = dict(hours)
             self.hours = hours
-            self.source_label = "Eigene Berechnung" if hours else None
+            self.source_label = (
+                "GeoSphere Austria C-LAEF (GHI)" if source == "geosphere"
+                else "Eigene Berechnung (Bewölkung)"
+            ) if hours else None
             self.error = "; ".join(errors) or None
             self.last_update = dt_util.now()
             return
