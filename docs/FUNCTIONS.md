@@ -1,3 +1,9 @@
+## SEP 0.3.86 – UI-ECharts-Adapter
+- `__init__.py`: `ECHARTS_URL` und `ECHARTS_ADAPTER_URL` als zusätzliche lokale StaticPathConfigs. Keine fremden Lovelace-Ressourcen oder ExtraJS-URLs.
+- `www/sep-echarts.mjs`: `sepPlanChart`, `sepComparisonRows`, `sepComparisonChart`, `sepEChartsTheme`, `SEPChartController`; Uhrzeitbasis UTC-ISO-Zeitpunkte, Benutzeranzeige in lokalen Zeiten, Datenlücken bleiben `null`, kein stilles Auffüllen. Y-Achse der PV-Ist-Vergleichsdarstellung exakt installierte kWp in kWh/h. Eigenständiger Renderer, lokale Bundle-Datei, Fehler-Fallback.
+- `www/smartify-energy-plan-card.js`: Kartenoption `use_echarts`; native Geräteplanung bleibt. `patchChildren` überspringt ECharts-Knoten zur Bewahrung der Instanz. `_syncECharts` startet den Adapter erst nach dem Laden der SEP-Card, verwaltet Signatur, Resize und Dispose, Chart-Klick aktualisiert Tagesvergleich. Deaktivierung und Ladenfehler stellen die native Ansicht wieder her.
+- `tests/ui/echarts.test.cjs` prüft statische Einbindung, Lizenz, Null-/Datenlücken, feste Peak-Skala, Dispose und Rückfall. Keine Änderungen am Hubmanager, Gerätebudget oder Solarberechnungsformel.
+
 ## SEP 0.3.85 – C-LAEF GHI-Import und PV-Umrechnung
 - `config_flow._forecast_schema`: optionale Quelle `solar_weather_source=cloud|geosphere` für `solar_mode=calculated`. Default `cloud` ohne Datenmigration. Der ausgewählte `solar_cloud_entity` verweist abhängig von der Quelle auf Meteonomiqs 8/48h bzw. GeoSphere 60h.
 - `ForecastProvider.async_refresh`: `hourly_ghi` validiert `source=GeoSphere Austria C-LAEF`, `dataset=nwp-v2-1h-1km`, `irradiance_unit=W/m²`, TZ-aware Zeitfenster (1 h) und `ghi_w_m2` (0..1800); `pv_hours_ghi` berechnet stündliche Wh. Kein zweiter cloud%-Faktor! Der verwendete Cloudwert dient nur als optionale Kalibrierungsklasse.
