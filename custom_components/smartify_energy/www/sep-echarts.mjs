@@ -2,7 +2,7 @@
  * Embedded SEP charts with Apache ECharts 6.1.0 (Apache-2.0).
  * Offline, same-origin; no external card, CDN or HA state writes.
  */
-const VENDOR_URL = "/smartify_energy/echarts.simple.min.js?v=6.1.0";
+const VENDOR_URL = "/smartify_energy/echarts.common.min.js?v=6.1.0";
 let vendorPromise = null;
 
 export function loadVendorECharts() {
