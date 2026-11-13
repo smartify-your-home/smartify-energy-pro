@@ -1,3 +1,8 @@
+## SEP 0.3.87 – GeoSphere 60h-Bewölkung
+- Für `solar_weather_source=cloud` verarbeitet SEP bis zu 60h echte Wolkenwerte nur bei GeoSphere-C-LAEF-Sensormetadaten: `source=GeoSphere Austria C-LAEF`, `dataset=nwp-v2-1h-1km`, `max_forecast_hours=60`. Für Meteonomiqs 8/48h und andere Quellen bleibt der bisherige 48h-Parserhorizont. Keine Entity-ID-Heuristik.
+- `cloud_coverage` statt `ghi_w_m2` wird im Wolkenmodell genutzt. Bei GHI-Eigenberechnung keine Änderung: keine zweite Cloud-Dämpfung. Keine erfundenen Stunden, Kalibrierung und Messwert-Schutz unverändert; 72h-Anzeigefenster und Geräteplanung heute/morgen beibehalten.
+- Version 0.3.86 wurde zurückgezogen; neuer Release 0.3.87, keine Wiederverwendung der Tagnummer. Regressionen: `tests/test_geosphere_solar.py` und `tests/ha/test_geosphere_cloud_horizon.py`; alle GitHub-Tests vor Release, Doku DE/EN/Changelog pflegen.
+
 ## GeoSphere-C-LAEF-Prognose in SEP (0.3.85)
 - `solar_weather_source=cloud` ist der unveränderte Standard; `geosphere` ist eine ausdrücklich gewählte Alternative zur Bewölkungsabschätzung nur bei `solar_mode=calculated`. Bestehende `solar_cloud_entity`-Konfiguration wird als Wettersensor wiederverwendet, nicht mit externen Prognose-Sensoren addieren.
 - GeoSphere-Sensoren von `my-weather` müssen stündliches `ghi_w_m2` als horizontalen Mittelwert W/m² liefern, inkl. `source`, `dataset`, `irradiance_unit`, gültigem `datetime` und `end`. Falsches Format/Einheit, fehlende/stale Stunden ⇒ keine erfundene 0- oder Klarhimmel-Prognose. 0 W/m² bei gültiger Stunde bleibt 0.
