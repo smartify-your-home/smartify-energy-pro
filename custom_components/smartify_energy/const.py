@@ -17,6 +17,7 @@ CONF_SINK_SENSORS = "sink_sensors"          # externe Überschusssenken, informa
 CONF_FORECAST_ENTRIES = "forecast_entries"  # Config-Entries mit Energie-Plattform (Forecast.Solar, Solcast, …)
 CONF_SOLAR_MODE = "solar_mode"  # external or calculated (My-Weather + roof geometry)
 CONF_SOLAR_CLOUD_ENTITY = "solar_cloud_entity"
+CONF_SOLAR_WEATHER_SOURCE = "solar_weather_source"  # cloud (legacy) or geosphere GHI
 CONF_SOLAR_CALIBRATION_ENABLED = "solar_calibration_enabled"
 CONF_SOLAR_LIVE_ADAPT_ENABLED = "solar_live_adapt_enabled"  # opt-in live irradiance feedback
 CONF_SOLAR_PV_POWER_ENTITY = "solar_pv_power_entity"

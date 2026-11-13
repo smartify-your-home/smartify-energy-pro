@@ -1,3 +1,9 @@
+## GeoSphere-C-LAEF-Prognose in SEP (0.3.85)
+- `solar_weather_source=cloud` ist der unveränderte Standard; `geosphere` ist eine ausdrücklich gewählte Alternative zur Bewölkungsabschätzung nur bei `solar_mode=calculated`. Bestehende `solar_cloud_entity`-Konfiguration wird als Wettersensor wiederverwendet, nicht mit externen Prognose-Sensoren addieren.
+- GeoSphere-Sensoren von `my-weather` müssen stündliches `ghi_w_m2` als horizontalen Mittelwert W/m² liefern, inkl. `source`, `dataset`, `irradiance_unit`, gültigem `datetime` und `end`. Falsches Format/Einheit, fehlende/stale Stunden ⇒ keine erfundene 0- oder Klarhimmel-Prognose. 0 W/m² bei gültiger Stunde bleibt 0.
+- `pv_hours_ghi` nutzt vorhandene Flächendaten (bis 4, inkl. bifazial) zur näherungsweisen POA-Umrechnung. **Nie** zusätzlich Cloud%-Abschlag anwenden; Cloud% nur für optionale Quellenspezifische Kalibrierung. Alte Kalibrierungsdaten ohne `source` gehören zu `cloud`; zwischen GeoSphere/Bewölkung keine Lernwerte vermischen.
+- Kein neuer API-Call in SEP. GeoSphere ist optional und wird nur von `my-weather` direkt geladen. Aktuelle Netzleistung, Schutzbedingungen, Geräte-Prioritäten, 15-min-Plan, PV-Vergleich-Baseline und 14-Tage-Historie unverändert. Neue Funktion nur mit Regressionstests, Doku, DE/EN-Übersetzungen und grüner CI freigeben. My-weather PR #9 ist eigenständig zu validieren.
+
 ## Überschrift-Prioritäten: Bedienelemente links in Reihenfolge (0.3.84)
 - In der Kopfzeile des Prioritätenabschnitts **exakt Ziehgriff · Schloss · „Prioritäten“** von links nach rechts anzeigen, im mobilen und Desktop-Layout. data-section-grip="priorities" steuert nur die Verschiebung des ganzen Abschnitts; data-priority-lock entsperrt nur die Reihenfolge einzelner Geräte. Tooltip/ARIA und Sperrschutz erhalten.
 - UI-Test in tests/ui/card.test.cjs überprüft die tatsächliche DOM-Reihenfolge, auch nach Änderung des Sperrstatus. Versionierung, Changelog und CI beachten.

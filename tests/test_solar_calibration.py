@@ -51,6 +51,32 @@ class CalibrationTests(unittest.TestCase):
                              "predicted": 3000, "cloud": 20}], self.now)
         self.assertEqual(self.model.dump(), [])
 
+    def test_weather_source_calibration_is_separated(self):
+        for index in range(8):
+            at = self.now + timedelta(minutes=index * 11)
+            self.assertTrue(self.model.observe(
+                at, 1500, 4000, 20, 10000, source="geosphere"))
+        later = self.now + timedelta(hours=3)
+        self.assertLess(self.model.factor(20, later, source="geosphere"), 1.0)
+        self.assertEqual(self.model.factor(20, later, source="cloud"), 1.0)
+        self.assertEqual(self.model.diagnostics(later, source="cloud")["samples"], 0)
+        self.assertEqual(self.model.diagnostics(later, source="geosphere")["samples"], 8)
+
+    def test_legacy_untagged_samples_restore_to_cloud_only(self):
+        legacy = [{"time": self.now.isoformat(), "actual": 2000,
+                   "predicted": 4000, "cloud": 20}]
+        restored = calib.SolarCalibration()
+        restored.restore(legacy, self.now + timedelta(minutes=10))
+        self.assertEqual(restored.diagnostics(self.now, source="cloud")["samples"], 1)
+        self.assertEqual(restored.diagnostics(self.now, source="geosphere")["samples"], 0)
+        self.assertEqual(restored.dump()[0]["source"], "cloud")
+
+    def test_unknown_source_not_learned(self):
+        self.assertFalse(self.model.observe(
+            self.now, 2000, 4000, 20, 10000, source="invented"))
+        self.assertEqual(self.model.factor(20, self.now, source="invented"), 1.0)
+
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,3 +1,10 @@
+## SEP 0.3.85 – C-LAEF GHI-Import und PV-Umrechnung
+- `config_flow._forecast_schema`: optionale Quelle `solar_weather_source=cloud|geosphere` für `solar_mode=calculated`. Default `cloud` ohne Datenmigration. Der ausgewählte `solar_cloud_entity` verweist abhängig von der Quelle auf Meteonomiqs 8/48h bzw. GeoSphere 60h.
+- `ForecastProvider.async_refresh`: `hourly_ghi` validiert `source=GeoSphere Austria C-LAEF`, `dataset=nwp-v2-1h-1km`, `irradiance_unit=W/m²`, TZ-aware Zeitfenster (1 h) und `ghi_w_m2` (0..1800); `pv_hours_ghi` berechnet stündliche Wh. Kein zweiter cloud%-Faktor! Der verwendete Cloudwert dient nur als optionale Kalibrierungsklasse.
+- `solar_model.pv_hours_ghi`: horizontale GHI-Prognose wird relativ zu modellierter klarer Horizontalstrahlung auf die bereits unterstützten Dach- und bifazialen Flächen skaliert (geometrische Näherung, 0,85 Systemfaktor). Keine zusätzliche API-Last in SEP, echte 0 W/m² bleiben echte 0, missing bleibt missing.
+- `SolarCalibration`: gespeicherte `source` pro Beobachtung; alte Datensätze ohne Tag bleiben `cloud`; Faktoren/Diagnostik je Quelle getrennt. Live-PV-Feedback und historische `PVComparison`-Snapshots bleiben unverändert.
+- Neue Prüfung `tests/test_geosphere_solar.py` plus Kalibrierungsquellentests; zusätzlich HA-Runtime, Timezone/DST, Optionen-Reload und Forecast-Failure im PR prüfen. Kein Hardwarebetrieb durch Offline-Tests belegt.
+
 ## v0.3.84 – Abschnittsgriff und Prioritätenschloss
 In der Prioritätenüberschrift sind die Elemente von links nach rechts data-section-grip, data-priority-lock, danach der Labeltext „Prioritäten“. Die zwei Drag-Modi sind voneinander getrennt; keine Änderung der Serviceaufrufe oder Sperrlogik.
 

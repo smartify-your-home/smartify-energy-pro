@@ -47,6 +47,7 @@ from .const import (
     CONF_SOLAR_LIVE_ADAPT_ENABLED,
     CONF_SOLAR_MODE,
     CONF_SOLAR_PV_POWER_ENTITY,
+    CONF_SOLAR_WEATHER_SOURCE,
     DOMAIN,
     GRID_SIGN_IMPORT_POSITIVE,
     HUB_MODES,
@@ -94,6 +95,7 @@ class EnergyManager:
             solar_config={
                 "mode": self.cfg.get(CONF_SOLAR_MODE, "external"),
                 "cloud_entity": self.cfg.get(CONF_SOLAR_CLOUD_ENTITY),
+                "weather_source": self.cfg.get(CONF_SOLAR_WEATHER_SOURCE, "cloud"),
                 "calibration_enabled": bool(self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED, False)),
                 # Drawn in the PV editor card; old solar_N_* fields are migrated on read.
                 "surfaces": model_surfaces(surfaces_from_config(self.cfg)),
@@ -275,7 +277,8 @@ class EnergyManager:
                            "live_pv": self.live_pv.diagnostics(dt_util.now()) if self.live_pv else None,
                            "kalibrierung_aktiv": bool(self.cfg.get(CONF_SOLAR_MODE) == "calculated"
                                                        and self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED)),
-                           "kalibrierung": self.forecast.calibration.diagnostics(dt_util.now())
+                           "kalibrierung": self.forecast.calibration.diagnostics(
+                               dt_util.now(), source=self.forecast.solar_config.get("weather_source", "cloud"))
                            if self.cfg.get(CONF_SOLAR_CALIBRATION_ENABLED) else None,
                        }),
 
@@ -390,7 +393,7 @@ class EnergyManager:
         if actual is None or prediction is None or cloud is None:
             return
         capacity = sum(float(s.get("kwp") or 0) for s in self.forecast.solar_config.get("surfaces", [])) * 1000
-        if self.forecast.calibration.observe(now, actual, prediction, cloud, capacity):
+        if self.forecast.calibration.observe(now, actual, prediction, cloud, capacity, source=self.forecast.solar_config.get("weather_source", "cloud")):
             self._store.async_delay_save(self._dump, 5)
 
     async def async_reset_solar_calibration(self) -> None:

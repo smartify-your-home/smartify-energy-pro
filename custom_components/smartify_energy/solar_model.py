@@ -9,12 +9,12 @@ irradiance simulation and requires measured PV feedback for calibration.
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from math import asin, cos, degrees, exp, pi, radians, sin
+from math import asin, cos, degrees, exp, isfinite, pi, radians, sin
 from typing import Any
 
 
-def hourly_clouds(attributes: dict, now: datetime) -> dict[datetime, float]:
-    """Read up to 48 UTC hourly cloud slots; reject invalid/stale forecasts."""
+def hourly_clouds(attributes: dict, now: datetime, horizon_hours: int = 48) -> dict[datetime, float]:
+    """Read UTC hourly cloud slots; default legacy horizon remains 48h."""
     result = {}
     for row in attributes.get("forecast", []) if isinstance(attributes.get("forecast"), list) else []:
         if not isinstance(row, dict):
@@ -27,11 +27,49 @@ def hourly_clouds(attributes: dict, now: datetime) -> dict[datetime, float]:
             cloud = row.get("cloud_coverage")
             if isinstance(cloud, bool) or not isinstance(cloud, (float, int)) or not 0 <= cloud <= 100:
                 continue
-            if now.astimezone(UTC) - timedelta(hours=1) <= stamp < now.astimezone(UTC) + timedelta(hours=49):
+            if now.astimezone(UTC) - timedelta(hours=1) <= stamp < now.astimezone(UTC) + timedelta(hours=horizon_hours + 1):
                 result[stamp] = float(cloud)
         except (ValueError, KeyError, TypeError):
             continue
     return result
+
+
+def hourly_ghi(attributes: dict, now: datetime) -> dict[datetime, float]:
+    """Read GeoSphere C-LAEF hourly GHI in W/m², not a PV energy forecast.
+
+    Only explicitly labelled and time-aligned GeoSphere data are accepted.
+    Missing readings are omitted rather than converted to zero or clear sky.
+    """
+    if (attributes.get("source") != "GeoSphere Austria C-LAEF"
+            or attributes.get("dataset") != "nwp-v2-1h-1km"
+            or attributes.get("irradiance_unit") != "W/m²"):
+        return {}
+    rows = attributes.get("forecast")
+    if not isinstance(rows, list):
+        return {}
+    now_utc = now.astimezone(UTC)
+    out = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        try:
+            stamp = datetime.fromisoformat(str(row["datetime"]).replace("Z", "+00:00"))
+            end = datetime.fromisoformat(str(row["end"]).replace("Z", "+00:00"))
+            if stamp.tzinfo is None or end.tzinfo is None:
+                continue
+            stamp, end = stamp.astimezone(UTC), end.astimezone(UTC)
+            if (stamp.minute or stamp.second or stamp.microsecond
+                    or end - stamp != timedelta(hours=1)
+                    or not now_utc - timedelta(hours=1) <= stamp < now_utc + timedelta(hours=61)):
+                continue
+            ghi = row.get("ghi_w_m2")
+            if (isinstance(ghi, bool) or not isinstance(ghi, (int, float))
+                    or not isfinite(ghi) or not 0 <= ghi <= 1800):
+                continue
+            out[stamp] = float(ghi)
+        except (KeyError, TypeError, ValueError, OverflowError):
+            continue
+    return out
 
 
 def _clear_sky_poa(stamp: datetime, latitude: float, longitude: float, tilt: float, azimuth: float) -> float:
@@ -109,3 +147,46 @@ def pv_hours(now: datetime, latitude: float, longitude: float,
             value += peak * 1000 * (poa / 1000) * 0.85 * factor
         out[hour] = round(value, 2)
     return out
+
+
+def pv_hours_ghi(now: datetime, latitude: float, longitude: float,
+                 surfaces: list[dict[str, Any]], ghi_hours: dict[datetime, float]) -> dict[datetime, float]:
+    """Convert GeoSphere horizontal GHI into estimated per-surface AC Wh.
+
+    Apply the forecast/clear-sky horizontal irradiation ratio to the existing
+    clear-sky plane-of-array estimate for each roof surface, including bifacial
+    rear contribution. This is an approximate irradiance transposition (not a
+    measured direct/diffuse split). Do NOT additionally attenuate by cloud%.
+    """
+    result = {}
+    for hour, ghi in ghi_hours.items():
+        if (not isinstance(ghi, (float, int)) or isinstance(ghi, bool)
+                or not isfinite(ghi) or not 0 <= ghi <= 1800):
+            continue
+        t1, t2 = hour + timedelta(minutes=15), hour + timedelta(minutes=45)
+        clear_ghi = (_clear_sky_poa(t1, latitude, longitude, 0, 180)
+                     + _clear_sky_poa(t2, latitude, longitude, 0, 180)) / 2
+        # No division by nearly-zero solar altitude near dawn/dusk. A physical
+        # 0 W/m² forecast remains a valid zero-production hour.
+        ratio = min(1.3, ghi / clear_ghi) if clear_ghi >= 10 else 0.0
+        value = 0.0
+        for surface in surfaces[:4]:
+            peak = float(surface.get("kwp") or 0)
+            if peak <= 0:
+                continue
+            tilt = float(surface.get("tilt", 0))
+            azimuth = float(surface.get("azimuth", 180))
+            if not (0 <= tilt <= 90 and 0 <= azimuth <= 360):
+                continue
+            poa = (_clear_sky_poa(t1, latitude, longitude, tilt, azimuth)
+                   + _clear_sky_poa(t2, latitude, longitude, tilt, azimuth)) / 2
+            bifaciality = float(surface.get("bifaciality") or 0)
+            if 0 < bifaciality <= 1:
+                rear_tilt, rear_az = 180 - tilt, (azimuth + 180) % 360
+                poa += bifaciality * (
+                    _clear_sky_poa(t1, latitude, longitude, rear_tilt, rear_az)
+                    + _clear_sky_poa(t2, latitude, longitude, rear_tilt, rear_az)
+                ) / 2
+            value += peak * 1000 * (poa / 1000) * 0.85 * ratio
+        result[hour] = round(value, 2)
+    return result
