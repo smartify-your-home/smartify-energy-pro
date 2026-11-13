@@ -1,3 +1,9 @@
+## SEP 0.3.86 – ECharts direkt im SEP-PV-Plan (Apache-2.0)
+- Lokale Bibliothek `echarts.common.min.js` (Apache ECharts 6.1.0, Apache-2.0) und eigener Adapter `sep-echarts.mjs` samt LICENSE und NOTICE. Alle Dateien werden vom SEP-HA-Backend ausgeliefert, keine CDN- oder Fremdkarte. Dynamischer Import erfolgt erst nach Initialisierung der vorhandenen Lovelace-Card, ohne Registrierungs-Race.
+- Karteneditor: `use_echarts` (Default `true`, abschaltbar). Der bestehende grafische Geräte-PV-Plan bleibt erhalten; darüber zusätzlich ein horizontales ECharts-PV-Diagramm. Der 14-Tage-Vergleich erhält eine ECharts-Visualisierung mit anklickbaren Stunden und unveränderter Tagessumme; bei Ausfall bleibt die klassische Ansicht erhalten.
+- Zeitzonenbeschriftungen, fehlende Stunden (`null`), kWh-Balken, feste Peakleistung als Y-Maximum, Touchscrollen und Theme-Farben beachten. ECharts-Daten kommen aus existierenden `sensor.plan`-Attributen; kein Backend-Steuerungs- oder Forecast-Algorithmus geändert.
+- Tests `tests/ui/echarts.test.cjs`. Echte mobile HA-Laufzeit und visuelle Prüfung noch nicht durchgeführt. Weitere GeoSphere/Meteonomiqs-Live-Serien erfordern erst eine separate Backend-Quelle.
+
 ## SEP 0.3.85 – GeoSphere Solarstrahlung für eigene PV-Prognose (optional)
 Im Schritt **Prognose** gibt es bei eigener Berechnung das neue Feld `solar_weather_source`: `cloud` (Standard wie bisher, Meteonomiqs Bewölkung) oder `geosphere` (GeoSphere C-LAEF GHI in W/m²). Als Wettersensor dient weiterhin `solar_cloud_entity`, bei GeoSphere aber `GeoSphere Cloud Forecast 60h` oder `GeoSphere Solar Irradiation 60h` von my-weather. Die GeoSphere-Option muss in my-weather aktiviert sein; der Datenabruf erfolgt dort direkt kostenlos ohne API-Key.
 
