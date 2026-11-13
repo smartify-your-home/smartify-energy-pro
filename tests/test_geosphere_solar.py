@@ -81,7 +81,7 @@ class GeoSpherePVTests(unittest.TestCase):
         self.assertNotIn(self.now + timedelta(hours=63), selected)
         pv = solar.pv_hours(self.now, 48, 13, self.surface, selected)
         self.assertEqual(len(pv), 60)
-        self.assertGreater(pv[self.now + timedelta(hours=59)], 0)
+        self.assertGreater(pv[self.now + timedelta(hours=48)], 0)
         self.assertEqual(solar.hourly_ghi(attrs, self.now), {})
 
     def test_legacy_cloud_horizon_and_metadata_detection(self):
