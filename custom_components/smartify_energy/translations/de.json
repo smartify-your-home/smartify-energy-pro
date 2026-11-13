@@ -29,21 +29,23 @@
           "forecast_entries": "[Optional] Prognose-Integrationen (werden summiert)",
           "forecast_sensors": "[Optional] Prognose-Sensoren (Fallback)",
           "solar_mode": "Prognoseart",
-          "solar_cloud_entity": "My-Weather Bewölkungsprognose (bis 48 h)",
+          "solar_cloud_entity": "My-Weather Prognosesensor (Bewölkung oder GeoSphere 60h)",
           "solar_calibration_enabled": "PV-Prognose automatisch kalibrieren (optional)",
           "solar_live_adapt_enabled": "Adaptive Live-PV-Prognose (optional)",
           "solar_pv_power_entity": "PV-Erzeugungsleistung (W) – echter Wechselrichter-/Erzeugungssensor",
-          "pv_total_peak_kwp": "Installierte PV-Gesamtpeakleistung (alle Anlagen, kWp)"
+          "pv_total_peak_kwp": "Installierte PV-Gesamtpeakleistung (alle Anlagen, kWp)",
+          "solar_weather_source": "Wettermodell der Eigenprognose"
         },
         "data_description": {
           "forecast_entries": "**Optional:** Wählen Sie die Sonnenstrom-Prognose für Ihre PV-Anlage. Mehrere Dachflächen werden addiert. Jede Fläche nur einmal auswählen, damit der erwartete Ertrag nicht doppelt gezählt wird.",
           "forecast_sensors": "**Optional:** Zusätzliche Prognosequelle über Sensorattribute. Nur nutzen, wenn dieselbe PV-Fläche nicht schon oben enthalten ist: Diese Werte werden ebenfalls addiert, nicht automatisch als Ersatz verwendet.",
-          "solar_mode": "Externe Prognose oder Eigenberechnung aus Bewölkung und Geometrie.",
-          "solar_cloud_entity": "My-Weather Bewölkungssensor (8 h oder bis zu 48 h) auswählen, kein PV-Energiesensor. Für längere Planung den neuen 48h-Sensor verwenden.",
+          "solar_mode": "Externe Prognose oder Eigenberechnung mit PV-Flächen und Bewölkung bzw. GeoSphere-Solarstrahlung.",
+          "solar_cloud_entity": "Passenden Sensor wählen: bei Bewölkung Meteonomiqs Cloud Forecast 8h/48h, bei GeoSphere GeoSphere Cloud Forecast 60h oder Solar Irradiation 60h. GeoSphere vorher in my-weather aktivieren; es wird kein API-Key benötigt.",
           "solar_calibration_enabled": "Nur bei eigener PV-Prognose wirksam. Lernt aus echten PV-Messwerten und bleibt standardmäßig aus.",
           "solar_live_adapt_enabled": "**Optional, Standard aus:** Analysiert die echte PV-Leistung gegenüber einem Klarhimmel-Modell über mindestens 5 Minuten (stabil, wechselhaft, aufklarend). Korrigiert nur die kommenden rund 2 Stunden. Nur bei Eigenberechnung, benötigt einen Erzeugungsleistungssensor, der dieselben PV-Flächen umfasst wie das Modell. Keine zusätzliche Wetter-API; Messlücken und nachts keine Korrektur.",
           "solar_pv_power_entity": "Echte gesamte PV-Erzeugungsleistung (W), nicht Netzsaldo, Hausverbrauch oder Akkuleistung. Optional für Prognose-Ist-Vergleich unter dem PV-Plan; bei aktivierter Eigenprognose-Kalibrierung erforderlich.",
-          "pv_total_peak_kwp": "Optional Summe aller PV-Anlagen einschließlich Balkon-PV. Die Y-Achse bleibt damit unabhängig vom höchsten Stundenwert der 14 Tage. Ohne Eingabe werden die eingezeichneten PV-Flächen summiert."
+          "pv_total_peak_kwp": "Optional Summe aller PV-Anlagen einschließlich Balkon-PV. Die Y-Achse bleibt damit unabhängig vom höchsten Stundenwert der 14 Tage. Ohne Eingabe werden die eingezeichneten PV-Flächen summiert.",
+          "solar_weather_source": "Bewölkung: bisheriges Modell. GeoSphere: direkt prognostizierte horizontale Globalstrahlung (GHI, W/m²). Kein zweiter Bewölkungsabschlag. Bestehende Installationen bleiben bei der Bewölkungsberechnung."
         },
         "description": "PV-Flächen (Leistung, Neigung, Ausrichtung) für die eigene Berechnung werden im Dashboard eingezeichnet: Karte „SEP PV-Flächen“ (custom:smartify-energy-pv-card)."
       },
@@ -65,7 +67,7 @@
       }
     },
     "error": {
-      "required": "Bitte den My-Weather-Bewölkungssensor auswählen."
+      "required": "Bitte einen zum Wettermodell passenden My-Weather-Prognosesensor auswählen."
     }
   },
   "options": {
@@ -97,19 +99,21 @@
           "forecast_entries": "[Optional] Prognose-Integrationen (werden summiert)",
           "forecast_sensors": "[Optional] Prognose-Sensoren (Fallback)",
           "solar_mode": "Prognoseart",
-          "solar_cloud_entity": "My-Weather Bewölkungsprognose (bis 48 h)",
+          "solar_cloud_entity": "My-Weather Prognosesensor (Bewölkung oder GeoSphere 60h)",
           "solar_calibration_enabled": "PV-Prognose automatisch kalibrieren (optional)",
           "solar_live_adapt_enabled": "Adaptive Live-PV-Prognose (optional)",
-          "solar_pv_power_entity": "PV-Erzeugungsleistung (W) – echter Wechselrichter-/Erzeugungssensor"
+          "solar_pv_power_entity": "PV-Erzeugungsleistung (W) – echter Wechselrichter-/Erzeugungssensor",
+          "solar_weather_source": "Wettermodell der Eigenprognose"
         },
         "data_description": {
           "forecast_entries": "**Optional:** Wählen Sie die Sonnenstrom-Prognose für Ihre PV-Anlage. Mehrere Dachflächen werden addiert. Jede Fläche nur einmal auswählen, damit der erwartete Ertrag nicht doppelt gezählt wird.",
           "forecast_sensors": "**Optional:** Zusätzliche Prognosequelle über Sensorattribute. Nur nutzen, wenn dieselbe PV-Fläche nicht schon oben enthalten ist: Diese Werte werden ebenfalls addiert, nicht automatisch als Ersatz verwendet.",
-          "solar_mode": "Externe Prognose oder Eigenberechnung aus Bewölkung und Geometrie.",
-          "solar_cloud_entity": "My-Weather Bewölkungssensor (8 h oder bis zu 48 h) auswählen, kein PV-Energiesensor. Für längere Planung den neuen 48h-Sensor verwenden.",
+          "solar_mode": "Externe Prognose oder Eigenberechnung mit PV-Flächen und Bewölkung bzw. GeoSphere-Solarstrahlung.",
+          "solar_cloud_entity": "Passenden Sensor wählen: bei Bewölkung Meteonomiqs Cloud Forecast 8h/48h, bei GeoSphere GeoSphere Cloud Forecast 60h oder Solar Irradiation 60h. GeoSphere vorher in my-weather aktivieren; es wird kein API-Key benötigt.",
           "solar_calibration_enabled": "Nur bei eigener PV-Prognose wirksam. Lernt aus echten PV-Messwerten und bleibt standardmäßig aus.",
           "solar_live_adapt_enabled": "**Optional, Standard aus:** Analysiert die echte PV-Leistung gegenüber einem Klarhimmel-Modell über mindestens 5 Minuten (stabil, wechselhaft, aufklarend). Korrigiert nur die kommenden rund 2 Stunden. Nur bei Eigenberechnung, benötigt einen Erzeugungsleistungssensor, der dieselben PV-Flächen umfasst wie das Modell. Keine zusätzliche Wetter-API; Messlücken und nachts keine Korrektur.",
-          "solar_pv_power_entity": "Echte gesamte PV-Erzeugungsleistung (W), nicht Netzsaldo, Hausverbrauch oder Akkuleistung. Optional für Prognose-Ist-Vergleich unter dem PV-Plan; bei aktivierter Eigenprognose-Kalibrierung erforderlich."
+          "solar_pv_power_entity": "Echte gesamte PV-Erzeugungsleistung (W), nicht Netzsaldo, Hausverbrauch oder Akkuleistung. Optional für Prognose-Ist-Vergleich unter dem PV-Plan; bei aktivierter Eigenprognose-Kalibrierung erforderlich.",
+          "solar_weather_source": "Bewölkung: bisheriges Modell. GeoSphere: direkt prognostizierte horizontale Globalstrahlung (GHI, W/m²). Kein zweiter Bewölkungsabschlag. Bestehende Installationen bleiben bei der Bewölkungsberechnung."
         },
         "description": "PV-Flächen (Leistung, Neigung, Ausrichtung) für die eigene Berechnung werden im Dashboard eingezeichnet: Karte „SEP PV-Flächen“ (custom:smartify-energy-pv-card)."
       },
@@ -131,7 +135,7 @@
       }
     },
     "error": {
-      "required": "Bitte den My-Weather-Bewölkungssensor auswählen."
+      "required": "Bitte einen zum Wettermodell passenden My-Weather-Prognosesensor auswählen."
     }
   },
   "config_subentries": {
