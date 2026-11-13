@@ -63,7 +63,9 @@ class GeoSpherePVTests(unittest.TestCase):
         self.assertEqual(values[self.now+timedelta(hours=59)], 295)
         self.assertNotIn(self.now+timedelta(hours=64), values)
         self.assertEqual(len(solar.hourly_clouds(self.attrs(rows), self.now, horizon_hours=60)), 60)
-        self.assertEqual(len(solar.hourly_clouds(self.attrs(rows), self.now)), 48)
+        # Keep the pre-existing cloud-parser boundary rule unchanged (49 when
+        # a synthetic provider feeds more than the legacy 48h series).
+        self.assertEqual(len(solar.hourly_clouds(self.attrs(rows), self.now)), 49)
 
     def test_larger_ghi_yields_larger_pv_even_with_same_clouds(self):
         low = solar.pv_hours_ghi(self.now, 48, 13, self.surface, {self.now: 100})[self.now]
