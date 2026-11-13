@@ -86,7 +86,7 @@ test("Apex-free ECharts controller disposes on unload and does not repeat setOpt
 
 test("Card retains native graphical fallback, device schedule, day summary and theme",()=>{
   assert.match(source,/this\._echartsFailed = true/);
-  assert.match(source,/\.sep-echarts-active>\.sep-axis-layout\{display:none\}/);
+  assert.match(source,/\.sep-echarts-active>\.sep-axis-layout,\.pv-compare-body\.sep-echarts-active>\.pv-compare-legend\{display:none\}/);
   assert.match(source,/this\._echartsController\?\.destroy\(\)/);
   assert.match(source,/pv-compare-days/);
   assert.match(source,/pv-plan-days/);
