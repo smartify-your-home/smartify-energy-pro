@@ -22,7 +22,9 @@ test("ECharts is bundled locally; a separate Lovelace card is not required",()=>
   assert.match(source,/use_echarts: true/);
   assert.match(source,/id="use_echarts"/);
   assert.match(source,/if \(!old\.hasAttribute\("data-sep-echarts"\)\) patchChildren/);
-  assert.doesNotMatch(init,/add_extra_js_url/);
+  // The longstanding YAML-mode fallback may mention extra_js in comments;
+  // the new ECharts asset must not introduce another frontend loader.
+  assert.doesNotMatch(adapter,/add_extra_js_url|extra_module_url/);
 });
 
 test("PV plan preserves forecast gaps and current+future hour order",async()=>{
