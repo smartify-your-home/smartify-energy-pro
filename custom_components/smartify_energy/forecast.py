@@ -123,7 +123,11 @@ class ForecastProvider:
                         if _hour(stamp) in self.raw_hours
                     }
                 elif source == "cloud":
-                    cloudy_hours = hourly_clouds(state.attributes, now)
+                    # The cloud attenuation model can use all published
+                    # GeoSphere C-LAEF 60h slots; the Meteonomiqs 8/48h
+                    # integration deliberately retains its legacy horizon.
+                    horizon = cloud_forecast_horizon(state.attributes)
+                    cloudy_hours = hourly_clouds(state.attributes, now, horizon_hours=horizon)
                     if not cloudy_hours:
                         raise ValueError("My-Weather has no valid hourly cloud forecast")
                     self.raw_hours = {
