@@ -43,14 +43,16 @@ class SolarCalibration:
                 predicted = float(row["predicted"])
                 actual = float(row["actual"])
                 cloud = float(row["cloud"])
+                source = row.get("source", "cloud")
                 if (stamp.tzinfo is None or not now - timedelta(days=30) <= stamp <= now
                         or not all(isfinite(x) for x in (predicted, actual, cloud))
-                        or predicted < MIN_PREDICTION_W or actual < 0 or not 0 <= cloud <= 100):
+                        or predicted < MIN_PREDICTION_W or actual < 0 or not 0 <= cloud <= 100
+                        or source not in ("cloud", "geosphere")):
                     continue
             except (KeyError, TypeError, ValueError, OverflowError):
                 continue
             self.samples.append({"time": stamp.isoformat(), "predicted": predicted,
-                                 "actual": actual, "cloud": cloud})
+                                 "actual": actual, "cloud": cloud, "source": source})
         self.samples.sort(key=lambda item: item["time"])
         if self.samples:
             self.last_observation = datetime.fromisoformat(self.samples[-1]["time"])
@@ -63,7 +65,7 @@ class SolarCalibration:
         self.last_observation = None
 
     def observe(self, now: datetime, actual: float, predicted: float,
-                cloud: float, capacity_w: float) -> bool:
+                cloud: float, capacity_w: float, *, source: str = "cloud") -> bool:
         """Record eligible observations; skip night, spikes and likely clipping.
 
         No learning is performed from values <=0 for prediction or from sparse
@@ -71,25 +73,27 @@ class SolarCalibration:
         """
         if (now.tzinfo is None or not all(isfinite(x) for x in (actual, predicted, cloud, capacity_w))
                 or predicted < MIN_PREDICTION_W or actual < 0 or not 0 <= cloud <= 100
+                or source not in ("cloud", "geosphere")
                 or capacity_w <= 0 or actual > capacity_w * 1.10
                 or actual >= capacity_w * 0.98
                 or (self.last_observation and now - self.last_observation < MIN_INTERVAL)):
             return False
         self.samples.append({"time": now.isoformat(), "predicted": round(predicted, 2),
-                             "actual": round(actual, 2), "cloud": cloud})
+                             "actual": round(actual, 2), "cloud": cloud, "source": source})
         self.last_observation = now
         cutoff = now - timedelta(days=30)
         self.samples = [x for x in self.samples
                         if datetime.fromisoformat(x["time"]) >= cutoff][-MAX_RECORDS:]
         return True
 
-    def factor(self, cloud: float, now: datetime) -> float:
+    def factor(self, cloud: float, now: datetime, *, source: str = "cloud") -> float:
         """Robust weighted correction; shrink toward 1 until data are sufficient."""
-        if not isfinite(cloud) or not 0 <= cloud <= 100:
+        if source not in ("cloud", "geosphere") or not isfinite(cloud) or not 0 <= cloud <= 100:
             return 1.0
         band = cloud_band(cloud)
         eligible = [r for r in self.samples
-                    if cloud_band(r["cloud"]) == band
+                    if r.get("source", "cloud") == source
+                    and cloud_band(r["cloud"]) == band
                     and timedelta(0) <= now - datetime.fromisoformat(r["time"]) <= timedelta(days=30)]
         if len(eligible) < MIN_SAMPLES:
             return 1.0
@@ -101,19 +105,20 @@ class SolarCalibration:
         confidence = min(1.0, (len(eligible) - MIN_SAMPLES + 1) / 24)
         return round(max(0.6, min(1.25, 1 + (robust - 1) * confidence)), 4)
 
-    def diagnostics(self, now: datetime) -> dict[str, Any]:
+    def diagnostics(self, now: datetime, *, source: str = "cloud") -> dict[str, Any]:
         """7/30-day absolute percentage-independent mean absolute errors in W."""
-        out: dict[str, Any] = {"samples": len(self.samples)}
+        records = [r for r in self.samples if r.get("source", "cloud") == source]
+        out: dict[str, Any] = {"samples": len(records), "model_source": source}
         for band in BANDS:
             out[f"factor_{band}"] = self.factor(
-                {"clear": 0, "partial": 50, "overcast": 100}[band], now)
-            out[f"samples_{band}"] = sum(1 for r in self.samples
+                {"clear": 0, "partial": 50, "overcast": 100}[band], now, source=source)
+            out[f"samples_{band}"] = sum(1 for r in records
                                          if cloud_band(r["cloud"]) == band)
         for days in (7, 30):
-            recent = [r for r in self.samples
+            recent = [r for r in records
                       if timedelta(0) <= now - datetime.fromisoformat(r["time"]) <= timedelta(days=days)]
             out[f"mae_{days}d_w"] = (round(sum(abs(r["actual"] - r["predicted"]) for r in recent)
                                           / len(recent), 1) if recent else None)
             out[f"samples_{days}d"] = len(recent)
-        out["last_sample"] = self.last_observation.isoformat() if self.last_observation else None
+        out["last_sample"] = records[-1]["time"] if records else None
         return out
