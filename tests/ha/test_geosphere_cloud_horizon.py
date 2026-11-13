@@ -55,7 +55,10 @@ async def test_geosphere_cloud_60h_used_by_real_forecast_provider(hass):
 async def test_meteonomiqs_stays_on_legacy_horizon(hass):
     start = dt_util.utcnow().replace(minute=0, second=0, microsecond=0)
     fc = await _forecast(hass, _cloud_attrs(start, source="Meteonomiqs"))
-    assert len(fc.hours) == 49  # Established 48h window accepts the end edge.
+    # The legacy time window includes the current partial hour and its
+    # forward boundary: 49 or 50 slots depending on the clock minute.
+    assert 49 <= len(fc.hours) <= 50
+    assert dt_util.as_local(start + timedelta(hours=50)) not in fc.hours
     assert fc.source_label == "Eigene Berechnung"
 
 
