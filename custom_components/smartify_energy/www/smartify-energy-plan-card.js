@@ -779,7 +779,7 @@ const CARD_CSS = `
     overscroll-behavior-x:contain;touch-action:pan-x pan-y}
   .sep-echarts-host{height:235px;min-height:235px;box-sizing:border-box}
   .sep-echarts-host[data-sep-echarts="compare"]{height:305px;min-height:305px}
-  .pv-compare-body.sep-echarts-active>.sep-axis-layout{display:none}
+  .pv-compare-body.sep-echarts-active>.sep-axis-layout,.pv-compare-body.sep-echarts-active>.pv-compare-legend{display:none}
   @media(max-width:560px){.pv-compare-totals{gap:9px}.pv-compare-totals strong{font-size:14px}}
   /* These rules must come after the default surface rules above. */
   .tile, .dev, .timeline { background:color-mix(in srgb, var(--row-bg) var(--sep-surface-opacity,100%), transparent); }
@@ -1648,6 +1648,25 @@ class SmartifyEnergyPlanCard extends HTMLElement {
           this._updatePVSelectedDay(scroll);
         }
       } : null;
+      if (kind === "compare") {
+        const scroll = host.parentElement;
+        scroll._sepChartRows = chartData.rows;
+        scroll._sepChartWidth = chartData.width;
+        scroll._sepChartSelect = click;
+        if (!scroll._sepChartScrollBound) {
+          scroll._sepChartScrollBound = true;
+          scroll.addEventListener("scroll", () => {
+            const rows = scroll._sepChartRows;
+            if (!rows?.length) return;
+            const chartWidth = Math.max(1, scroll._sepChartWidth - 73);
+            const viewport = scroll.clientWidth || scroll.offsetWidth || 0;
+            const position = scroll.scrollLeft + viewport / 2 - 58;
+            const index = Math.max(0, Math.min(rows.length - 1,
+              Math.round(position / chartWidth * (rows.length - 1))));
+            scroll._sepChartSelect?.(rows[index]);
+          }, {passive: true});
+        }
+      }
       this._echartsController.paint(host, kind, chartData, click).then(ok => {
         if (ok && host.isConnected && kind === "compare")
           host.closest(".pv-compare-body")?.classList.add("sep-echarts-active");
