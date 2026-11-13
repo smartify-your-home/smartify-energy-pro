@@ -1,3 +1,8 @@
+## SEP 0.3.87 – Quellenspezifischer Wolkenprognose-Horizont
+- `solar_model.cloud_forecast_horizon(attributes)`: 60 nur für GeoSphere C-LAEF `nwp-v2-1h-1km` mit `max_forecast_hours=60`, sonst 48. `hourly_clouds` behält Standardwert 48.
+- `ForecastProvider.async_refresh`: Cloud-Zweig verarbeitet bis zu 60 tatsächlich verfügbare Wolkenstunden und rechnet daraus über `pv_hours` die bestehende Clear-Sky/PV-Flächen-Bewölkungsabschätzung. Der GHI-Zweig und andere Wetterquellen bleiben unverändert. Source-Label `GeoSphere Austria C-LAEF (Bewölkung)` macht den Ursprung sichtbar.
+- Geräte-, Speicher-, Netzschutz und PV-Vergleich bleiben unverändert; nicht vorhandene Stunden bleiben fehlend. Modell- und HA-Tests erweitert.
+
 ## SEP 0.3.85 – C-LAEF GHI-Import und PV-Umrechnung
 - `config_flow._forecast_schema`: optionale Quelle `solar_weather_source=cloud|geosphere` für `solar_mode=calculated`. Default `cloud` ohne Datenmigration. Der ausgewählte `solar_cloud_entity` verweist abhängig von der Quelle auf Meteonomiqs 8/48h bzw. GeoSphere 60h.
 - `ForecastProvider.async_refresh`: `hourly_ghi` validiert `source=GeoSphere Austria C-LAEF`, `dataset=nwp-v2-1h-1km`, `irradiance_unit=W/m²`, TZ-aware Zeitfenster (1 h) und `ghi_w_m2` (0..1800); `pv_hours_ghi` berechnet stündliche Wh. Kein zweiter cloud%-Faktor! Der verwendete Cloudwert dient nur als optionale Kalibrierungsklasse.
