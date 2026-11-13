@@ -13,6 +13,15 @@ from math import asin, cos, degrees, exp, isfinite, pi, radians, sin
 from typing import Any
 
 
+def cloud_forecast_horizon(attributes: dict) -> int:
+    """Extend only identified GeoSphere C-LAEF 60h feeds; preserve legacy 48h."""
+    return 60 if (
+        attributes.get("source") == "GeoSphere Austria C-LAEF"
+        and attributes.get("dataset") == "nwp-v2-1h-1km"
+        and attributes.get("max_forecast_hours") == 60
+    ) else 48
+
+
 def hourly_clouds(attributes: dict, now: datetime, horizon_hours: int = 48) -> dict[datetime, float]:
     """Read UTC hourly cloud slots; default legacy horizon remains 48h."""
     result = {}
