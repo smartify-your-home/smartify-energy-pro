@@ -40,19 +40,6 @@ SEP verteilt den verfügbaren PV-Überschuss nach einstellbarer Priorität. Ber�
 
 ## Die SEP-Karte
 
-### Interaktive Diagramme mit Apache ECharts (ab 0.3.86)
-SEP bringt Apache ECharts 6.1.0 unter der Apache-2.0-Lizenz inklusive Lizenz- und NOTICE-Datei direkt mit. Es wird **keine** weitere HACS-Karte und kein externer CDN-Zugriff benötigt. `ECharts-Diagramme` sind im SEP-Karteneditor standardmäßig eingeschaltet und bei Bedarf abschaltbar.
-
-- **PV-Plan:** zusätzliche interaktive Kurve für die echten stündlichen PV-Prognosen (kW) mit Geräteplanung als Balken. Darunter bleibt die bisherige detaillierte Geräte-Zeitleiste unverändert.
-- **PV-Prognose / Ist-Erzeugung (14 Tage):** ECharts-Balkendiagramm (kWh je Stunde), horizontales Touchscrollen; Diagramm antippen, um die Tages-Zusammenfassung auszuwählen. Die Obergrenze bleibt strikt bei der konfigurierten PV-Peakleistung (kWp), selbst bei höheren Messwerten. Fehlende Messstunden bleiben ohne Balken; historische Prognosen werden nicht nachträglich verändert.
-- Passt Farben an Home-Assistant-Themes an. Bei Lade- oder Renderproblemen bleibt die bisherige native HTML-Darstellung verfügbar. Einstellungen und Gerätefreigaben werden nicht von der Grafik beeinflusst.
-
-Die ECharts-Datei liegt auf dem HA-Server unter `/smartify_energy/echarts.common.min.js`; die Option installiert **keine zusätzliche Ressource** in Lovelace. Apache-Copyright und Lizenz siehe `custom_components/smartify_energy/www/ECHARTS-NOTICE.txt` und `ECHARTS-LICENSE.txt`.
-
-**Umfang:** Die derzeitige Version visualisiert die bereits in SEP vorhandenen zwei Datenreihen-Sets (PV-Plan und historische Prognose/Ist-Erzeugung). Ein echter paralleler GeoSphere/Meteonomiqs-Vergleich benötigt zusätzliche Rohdaten im Backend; ein zeitaufgelöster SolarEdge-Einstrahlungsvergleich ebenso. Diese werden nicht durch ECharts allein erzeugt.
-
-
-
 Die Integration bringt die Karte mit und registriert sie selbst als Lovelace-Ressource – kein manueller Ressourceneintrag nötig.
 
 ```yaml

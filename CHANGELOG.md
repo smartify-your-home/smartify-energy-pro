@@ -1,13 +1,5 @@
 ## Unreleased
 
-## 0.3.86 – 2026-11-13 (PR, pending release)
-
-- Apache ECharts 6.1.0 (Apache-2.0) inkl. Lizenz/NOTICE fest in SEP eingebunden, lokal von Home Assistant ausgeliefert. Kein CDN, keine zusätzliche Lovelace-/HACS-Abhängigkeit, keine Änderung am Karten-Registrierungsverfahren.
-- Wahlweise interaktive, mobile/touchfähige ECharts-PV-Stundenkurve mit Gerätebedarfsbalken zusätzlich zur bisherigen detaillierten Geräteplanung; 14-Tage-Prognose/Ist-Vergleich als ECharts-Stundenbalken mit gewohnter Tagesauswertung und fester Skala 1,0 × kWp (kWh/Stunde).
-- Karteneditor: `use_echarts` (Standard eingeschaltet; abschaltbar). Bei fehlender/fehlerhafter Bibliothek wird die unveränderte native Vergleichsgrafik angezeigt. Fehlende Stunden und Messwerte bleiben fehlend.
-- Regressionen für statische Ressourcen, Lizenz, Datenlücken, DST-Zeitachse, unveränderte kWp-Skala, Chart-Lebenszyklus/Dispose und Rückfallmechanismus ergänzt. Browser-Praxistest auf realem HA-iOS/Android noch offen.
-
-
 ## 0.3.85 – GeoSphere GHI-Modell (vorbereiteter PR, nicht veröffentlicht)
 
 - Alternative Wetterquelle für `solar_mode=calculated`: `solar_weather_source=geosphere` liest direkt die stündliche GeoSphere-C-LAEF-GHI-Prognose aus my-weather (60h, W/m²) und berechnet die PV-Stundenenergie je Dach-/Bifazialfläche. Bewölkungsmodell bleibt Standard.

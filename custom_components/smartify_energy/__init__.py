@@ -27,8 +27,6 @@ SERVICE_PRIORITY_ORDER = "set_priority_order"
 CARD_FILE = "smartify-energy-plan-card.js"
 CARD_URL = f"/{DOMAIN}/{CARD_FILE}"
 LOGO_URL = f"/{DOMAIN}/sep-logo.png"
-ECHARTS_URL = f"/{DOMAIN}/echarts.common.min.js"
-ECHARTS_ADAPTER_URL = f"/{DOMAIN}/sep-echarts.mjs"
 
 type SmartifyEnergyConfigEntry = ConfigEntry[EnergyManager]
 
@@ -98,8 +96,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         await hass.http.async_register_static_paths([
             StaticPathConfig(CARD_URL, str(path), False),
             StaticPathConfig(LOGO_URL, str(path.parent / "sep-logo.png"), False),
-            StaticPathConfig(ECHARTS_URL, str(path.parent / "echarts.common.min.js"), False),
-            StaticPathConfig(ECHARTS_ADAPTER_URL, str(path.parent / "sep-echarts.mjs"), False),
         ])
         version = (await async_get_integration(hass, DOMAIN)).version
         card_hash = await hass.async_add_executor_job(_file_hash, path)

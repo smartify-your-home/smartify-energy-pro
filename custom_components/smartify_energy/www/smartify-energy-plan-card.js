@@ -28,7 +28,7 @@
  *   smartify-plan-text-color       Textfarbe (default primary-text-color)
  */
 
-const CARD_VERSION = "1.6.4";
+const CARD_VERSION = "1.6.3";
 const DOMAIN = "smartify_energy";
 
 const PALETTE = [
@@ -401,7 +401,6 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
       <div class="row"><input type="checkbox" id="show_settings" ${chk("show_settings")}><label for="show_settings">Einstellungen (Zahnrad) erlauben</label></div>
       <div class="hint">Zeigt das Zahnrad mit Einstellungen und Erklärungen. Ausblenden verändert keine Regelung und ist keine Zugriffssperre.</div>
       <div class="row"><input type="checkbox" id="show_timeline" ${chk("show_timeline")}><label for="show_timeline">PV-Plan (Zeitleiste)</label></div>
-      <div class="row"><input type="checkbox" id="use_echarts" ${chk("use_echarts")}><label for="use_echarts">Interaktive ECharts-Diagramme (PV und Prognose/Ist)</label></div>
       <div class="section">Reihenfolge der Bereiche</div>
       <div class="section-sort" id="section-sort">
         ${(c.pv_plan_first ? ["pv","priorities"] : ["priorities","pv"]).map((kind,i)=>`
@@ -426,7 +425,7 @@ class SmartifyEnergyPlanCardEditor extends HTMLElement {
       $("background_transparency_value").textContent = `${e.target.value} %`;
       set("background_transparency", Number(e.target.value));
     });
-    ["show_header", "show_allocated", "show_priorities", "show_mode", "show_settings", "show_timeline", "show_pv_tips", "use_echarts"].forEach(k =>
+    ["show_header", "show_allocated", "show_priorities", "show_mode", "show_settings", "show_timeline", "show_pv_tips"].forEach(k =>
       $(k).addEventListener("change", e => set(k, e.target.checked)));
     const saveOrder = first => { set("pv_plan_first", first === "pv"); this._render(); };
     const sort = $("section-sort");
@@ -771,15 +770,6 @@ const CARD_CSS = `
   .pv-compare-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--secondary-text-color)}
   .pv-compare-legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:middle}
   .pv-compare-note{font-size:11px;color:var(--secondary-text-color);margin-top:8px}
-  .sep-echarts-wrap{display:none;min-width:0;margin:10px 0 16px}
-  .sep-echarts-wrap.chart-ready{display:block}
-  .sep-echarts-title{font-size:12px;font-weight:600;color:var(--secondary-text-color);margin:0 2px 7px}
-  .sep-echarts-scroll{overflow-x:auto;overflow-y:hidden;max-width:100%;min-width:0;
-    scrollbar-width:thin;scrollbar-color:var(--secondary-text-color) transparent;
-    overscroll-behavior-x:contain;touch-action:pan-x pan-y}
-  .sep-echarts-host{height:235px;min-height:235px;box-sizing:border-box}
-  .sep-echarts-host[data-sep-echarts="compare"]{height:305px;min-height:305px}
-  .pv-compare-body.sep-echarts-active>.sep-axis-layout,.pv-compare-body.sep-echarts-active>.pv-compare-legend{display:none}
   @media(max-width:560px){.pv-compare-totals{gap:9px}.pv-compare-totals strong{font-size:14px}}
   /* These rules must come after the default surface rules above. */
   .tile, .dev, .timeline { background:color-mix(in srgb, var(--row-bg) var(--sep-surface-opacity,100%), transparent); }
@@ -802,8 +792,7 @@ function patchChildren(parent, source) {
     if (old.nodeType !== 1) return;
     for (const attr of [...old.attributes]) if (!next.hasAttribute(attr.name)) old.removeAttribute(attr.name);
     for (const attr of next.attributes) if (old.getAttribute(attr.name) !== attr.value) old.setAttribute(attr.name, attr.value);
-    // ECharts owns SVG/canvas children; never diff its internal DOM on HA updates.
-    if (!old.hasAttribute("data-sep-echarts")) patchChildren(old, next);
+    patchChildren(old, next);
     if (old.matches("input")) { old.value = next.value; old.checked = next.checked; }
     if (old.matches("select")) old.value = next.value;
   });
@@ -832,22 +821,13 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._pvCompareOpen = false;
     this._pvCompareDay = null;
     this._pvTipIndex = 0;
-    this._echartsModule = null;
-    this._echartsController = null;
-    this._echartsLoad = null;
-    this._echartsFailed = false;
-  }
-
-  disconnectedCallback() {
-    this._echartsController?.destroy();
-    this._echartsController = null;
   }
 
   static getConfigElement() { return document.createElement("smartify-energy-plan-card-editor"); }
   static getStubConfig() { return { show_header: true, show_priorities: true, show_timeline: true, timeline_hours: 24 }; }
 
   setConfig(config) {
-    this._config = { show_header: true, show_priorities: true, show_timeline: true, show_pv_tips: true, show_mode: true, timeline_hours: 24, pv_plan_first: false, use_echarts: true, ...config };
+    this._config = { show_header: true, show_priorities: true, show_timeline: true, show_pv_tips: true, show_mode: true, timeline_hours: 24, pv_plan_first: false, ...config };
     this._pvPlanFirstOverride = null;
     // A saved Lovelace card option takes priority. Otherwise remember in-card
     // drag changes for this browser until the user saves a global card setting.
@@ -883,8 +863,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const data = collect(hass, this._config.hub);
     const ids = data ? [...Object.values(data.ents), ...data.hubSettings.map(x => x.id),
       ...data.devices.flatMap(d => [d.status, d.power, d.planned, d.mode, d.active, d.nachladen, d.boost, ...d.settings.map(x => x.id)])] : [];
-    const themeSig = `${hass.themes?.darkMode ?? ""}:${hass.themes?.theme ?? ""}:${hass.themes?.default_theme ?? ""}`;
-    const sig = ids.map(id => { const s = hass.states[id]; return s ? `${id}:${s.last_updated}` : id; }).join("|") + "|theme:" + themeSig;
+    const sig = ids.map(id => { const s = hass.states[id]; return s ? `${id}:${s.last_updated}` : id; }).join("|");
     if (sig === this._sig) return;
     this._data = data;
     // Retain optimistic order until the server has published all new ranks.
@@ -1391,12 +1370,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const coverageNote = !completeDayAfter
       ? `<div class="pv-plan-coverage">Übermorgen, 08–16 Uhr: Stundenprognose unvollständig
          (verfügbar bis ${esc(knownUntil)}).${esc(sourceHint)}</div>` : "";
-    return `<div class="timeline">${tipOverlay}
-      <div class="sep-echarts-wrap" data-echarts-wrap="plan">
-        <div class="sep-echarts-title">Interaktive PV-Prognose · Stunden vergleichen und horizontal scrollen</div>
-        <div class="sep-echarts-scroll"><div class="sep-echarts-host" data-sep-echarts="plan"
-          role="img" aria-label="PV-Prognose mit geplanter Gerätebelegung"></div></div>
-      </div><div class="sep-axis-layout">
+    return `<div class="timeline">${tipOverlay}<div class="sep-axis-layout">
       <div class="sep-y-axis" aria-label="PV-Leistung in kW" style="margin-top:24px">${sepAxisLabels(axisMax,"kW")}</div>
       <div class="pv-plan-scroll" aria-label="PV-Plan horizontal scrollen">
         <div class="pv-plan-inner" style="min-width:max(100%,${offsetPx}px);position:relative">
@@ -1515,11 +1489,6 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         <div><small>Ist-Erzeugung (vergleichbar)</small><strong data-pv-day-actual>${initialDay.compared?fmt(initialDay.actual/1000):"–"}</strong></div>
         <div><small>Abweichung (Tag)</small><strong data-pv-day-deviation>${totalPct===null?"–":esc(signed(totalPct))}</strong></div>
       </div>
-      <div class="sep-echarts-wrap" data-echarts-wrap="compare">
-        <div class="sep-echarts-title">Prognose und tatsächliche PV-Erzeugung · Diagramm antippen, um einen Tag auszuwählen</div>
-        <div class="sep-echarts-scroll"><div class="sep-echarts-host" data-sep-echarts="compare"
-          role="img" aria-label="Vierzehn Tage ursprüngliche Prognose und gemessene Solarproduktion"></div></div>
-      </div>
       <div class="sep-axis-layout">
         <div class="sep-y-axis compare" aria-label="PV-Energie je Stunde in kWh">${sepAxisLabels(axisMax,"kWh")}</div>
         <div class="pv-compare-scroll"><div class="pv-compare-chart-content" style="width:${totalWidth}px;position:relative">
@@ -1593,95 +1562,6 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     patchChildren(this.shadowRoot, template.content);
     this._bind(d);
     if (this._pvCompareOpen) this._updatePVSelectedDay();
-    this._syncECharts(d);
-  }
-
-  _syncECharts(d) {
-    if (this._config.use_echarts === false || this._echartsFailed) {
-      this._echartsController?.destroy();
-      this._echartsController = null;
-      this.shadowRoot.querySelector(".pv-compare-body")?.classList.remove("sep-echarts-active");
-      return;
-    }
-    const hosts = [...this.shadowRoot.querySelectorAll("[data-sep-echarts]")];
-    if (!hosts.length) { this._echartsController?.cleanup(new Set()); return; }
-    if (!this._echartsModule) {
-      if (!this._echartsLoad) {
-        this._echartsLoad = import("/smartify_energy/sep-echarts.mjs?v=0.3.86")
-          .then(mod => {
-            this._echartsModule = mod;
-            this._echartsLoad = null;
-            if (this.isConnected) this._syncECharts(this._boundData);
-          }).catch(err => {
-            this._echartsFailed = true;
-            this._echartsLoad = null;
-            console.warn("SEP: ECharts nicht verfügbar, verwende bisherige Diagramme", err);
-          });
-      }
-      return;
-    }
-    const data = d || this._boundData;
-    if (!data) return;
-    const plan = this._st(data.ents["sensor:plan"]);
-    const attrs = plan?.attributes || {};
-    const theme = this._echartsModule.sepEChartsTheme(
-      typeof getComputedStyle === "function" ? getComputedStyle(this) : null);
-    if (!this._echartsController)
-      this._echartsController = new this._echartsModule.SEPChartController();
-    const active = new Set();
-    for (const host of hosts) {
-      const kind = host.dataset.sepEcharts;
-      const chartData = kind === "plan"
-        ? this._echartsModule.sepPlanChart(attrs.stunden, theme)
-        : kind === "compare"
-          ? this._echartsModule.sepComparisonChart(attrs.pv_vergleich, theme)
-          : null;
-      if (!chartData) continue;
-      active.add(kind);
-      const click = kind === "compare" ? row => {
-        const zone = attrs.pv_vergleich?.zeitzone || undefined;
-        const key = new Date(row.zeit).toLocaleDateString("sv-SE", {timeZone:zone});
-        const scroll = this.shadowRoot.querySelector(".pv-compare-scroll");
-        const target = [...(scroll?.querySelectorAll(".pv-compare-day") || [])]
-          .find(x => x.dataset.day === key);
-        if (target && scroll) {
-          scroll.scrollLeft = Number(target.dataset.start) * 45;
-          this._updatePVSelectedDay(scroll);
-        }
-      } : null;
-      if (kind === "compare") {
-        const scroll = host.parentElement;
-        scroll._sepChartRows = chartData.rows;
-        scroll._sepChartWidth = chartData.width;
-        scroll._sepChartSelect = click;
-        if (!scroll._sepChartScrollBound) {
-          scroll._sepChartScrollBound = true;
-          scroll.addEventListener("scroll", () => {
-            const rows = scroll._sepChartRows;
-            if (!rows?.length) return;
-            const chartWidth = Math.max(1, scroll._sepChartWidth - 73);
-            const viewport = scroll.clientWidth || scroll.offsetWidth || 0;
-            const position = scroll.scrollLeft + viewport / 2 - 58;
-            const index = Math.max(0, Math.min(rows.length - 1,
-              Math.round(position / chartWidth * (rows.length - 1))));
-            scroll._sepChartSelect?.(rows[index]);
-          }, {passive: true});
-        }
-      }
-      this._echartsController.paint(host, kind, chartData, click).then(ok => {
-        if (ok && host.isConnected && kind === "compare")
-          host.closest(".pv-compare-body")?.classList.add("sep-echarts-active");
-      }).catch(err => {
-        this._echartsFailed = true;
-        this._echartsController?.destroy();
-        this._echartsController = null;
-        for (const wrap of this.shadowRoot.querySelectorAll(".sep-echarts-wrap"))
-          wrap.classList.remove("chart-ready");
-        this.shadowRoot.querySelector(".pv-compare-body")?.classList.remove("sep-echarts-active");
-        console.warn("SEP: ECharts-Renderfehler, Standardansicht bleibt aktiv", err);
-      });
-    }
-    this._echartsController.cleanup(active);
   }
 
   _updatePVSelectedDay(scroll=this.shadowRoot.querySelector(".pv-compare-scroll")) {

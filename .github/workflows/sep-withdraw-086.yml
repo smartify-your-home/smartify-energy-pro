@@ -1,0 +1,40 @@
+name: One-time removal of withdrawn SEP 0.3.86
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/sep-withdraw-086.yml
+permissions:
+  contents: write
+jobs:
+  withdraw:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm rollback and delete withdrawn release and tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(gh api repos/${GH_REPO}/contents/custom_components/smartify_energy/manifest.json -H 'Accept: application/vnd.github.raw+json' | python3 -c 'import sys,json;print(json.load(sys.stdin)["version"])')"
+          if [ "$version" != "0.3.85" ]; then
+            echo "Refusing cleanup: main manifest is $version, not 0.3.85" >&2
+            exit 1
+          fi
+          gh release view "0.3.85" >/dev/null
+          if gh release view "0.3.86" >/dev/null 2>&1; then
+            gh release delete "0.3.86" --yes --cleanup-tag
+          fi
+          if gh api repos/${GH_REPO}/git/ref/tags/0.3.86 >/dev/null 2>&1; then
+            gh api --method DELETE repos/${GH_REPO}/git/refs/tags/0.3.86
+          fi
+          if gh release view "0.3.86" >/dev/null 2>&1; then
+            echo "Release 0.3.86 still exists" >&2
+            exit 1
+          fi
+          if gh api repos/${GH_REPO}/git/ref/tags/0.3.86 >/dev/null 2>&1; then
+            echo "Tag 0.3.86 still exists" >&2
+            exit 1
+          fi
+          echo "Removed withdrawn SEP release 0.3.86 and tag; 0.3.85 retained."
