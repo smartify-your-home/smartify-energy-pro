@@ -1,3 +1,10 @@
+## SEP 0.3.85 – GeoSphere Solarstrahlung für eigene PV-Prognose (optional)
+Im Schritt **Prognose** gibt es bei eigener Berechnung das neue Feld `solar_weather_source`: `cloud` (Standard wie bisher, Meteonomiqs Bewölkung) oder `geosphere` (GeoSphere C-LAEF GHI in W/m²). Als Wettersensor dient weiterhin `solar_cloud_entity`, bei GeoSphere aber `GeoSphere Cloud Forecast 60h` oder `GeoSphere Solar Irradiation 60h` von my-weather. Die GeoSphere-Option muss in my-weather aktiviert sein; der Datenabruf erfolgt dort direkt kostenlos ohne API-Key.
+
+Das SEP-Backend prüft Quelle, Datensatz, Einheit, Zeitintervalle und gültige Strahlungswerte. Die vorhandenen im PV-Flächen-Editor eingetragenen Dach-/Bifazialflächen bestimmen aus horizontaler Strahlung die angenäherte Modulstrahlung und AC-Energie in Wh pro Stunde. **Keine zusätzliche Cloud-Dämpfung** bei GHI; fehlende Stunden bleiben fehlend (0 W/m² bleibt echte Null), bis zu 60 h für Prognose/Übermorgen-Tipps. Bestehende Installation bleibt im Modus `cloud`, keine stille Datenquellen- oder Geräte-Regelumstellung. SolarEdge-Istvergleich, feste 14-Tage-Achse, PV-Tipps und eingefrorene Stundenprognosen bleiben kompatibel. Kalibrierung wird je Wetterquelle separat gelernt; historische Meteonomiqs-Kalibrierung darf GeoSphere nicht verfälschen.
+
+**Status/Abhängigkeit:** my-weather PR #9 (GeoSphere) muss separat validiert und veröffentlicht werden; dieser SEP-PR kann mit alten my-weather-Versionen auf Bewölkung weiterlaufen. Bei ungültigem/fehlendem GeoSphere-Sensor meldet SEP einen Prognosefehler, ohne künstlich Klarhimmel zu prognostizieren. Die Solarprojektion ist eine Näherung, der Vorteil für Pfaffstätt muss mit realen Istwerten überprüft werden.
+
 ## 0.3.84 – Reihenfolge der Bedienelemente in der Prioritätenüberschrift
 Die Überschrift zeigt von links nach rechts **Ziehgriff · Schloss · PRIORITÄTEN**. Der Ziehgriff verschiebt den ganzen Bereich, das Schloss schützt die Geräteprioritäten. Dies gilt auf Smartphones, Tablets und Desktop unverändert.
 
