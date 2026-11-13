@@ -17,7 +17,7 @@ from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
 from .solar_calibration import SolarCalibration
-from .solar_model import hourly_clouds, hourly_ghi, pv_hours, pv_hours_ghi
+from .solar_model import cloud_forecast_horizon, hourly_clouds, hourly_ghi, pv_hours, pv_hours_ghi
 
 _LOGGER = logging.getLogger(__name__)
 
