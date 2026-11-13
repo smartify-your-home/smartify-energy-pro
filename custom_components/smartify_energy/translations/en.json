@@ -29,21 +29,23 @@
           "forecast_entries": "Forecast integrations (summed)",
           "forecast_sensors": "Forecast sensors (fallback)",
           "solar_mode": "Solar forecast mode",
-          "solar_cloud_entity": "My-Weather cloud forecast 8–48h",
+          "solar_cloud_entity": "My-Weather forecast sensor (cloud or GeoSphere 60h)",
           "solar_calibration_enabled": "Automatically calibrate PV forecast (optional)",
           "solar_live_adapt_enabled": "Adaptive live PV forecast (optional)",
           "solar_pv_power_entity": "Measured PV generation power (W) – actual inverter/production sensor",
-          "pv_total_peak_kwp": "Total installed PV peak power (all arrays, kWp)"
+          "pv_total_peak_kwp": "Total installed PV peak power (all arrays, kWp)",
+          "solar_weather_source": "Calculated forecast weather source"
         },
         "data_description": {
           "forecast_entries": "Preselected from the energy dashboard. Selected entries are summed – choose one source per array.",
           "forecast_sensors": "Only if the forecast integration has no energy platform.",
-          "solar_mode": "External forecast or calculated from cloud and PV geometry.",
-          "solar_cloud_entity": "Select the My-Weather 8h or 48h cloud forecast sensor, not a PV energy sensor. Choose the 48h sensor for extended planning.",
+          "solar_mode": "External forecast or calculated from PV surface geometry and either cloud cover or GeoSphere solar irradiation.",
+          "solar_cloud_entity": "Choose the matching My-Weather sensor: Meteonomiqs Cloud Forecast 8h/48h for cloud mode, GeoSphere Cloud Forecast 60h or Solar Irradiation 60h for GeoSphere mode. Enable GeoSphere in my-weather first; no API key.",
           "solar_calibration_enabled": "Only used for calculated PV forecast. Learns from measured PV generation; off by default.",
           "solar_live_adapt_enabled": "**Optional, off by default:** Compares actual PV generation with a clear-sky reference (at least 5 minutes of readings) to adjust only the next ~2 hours. Only in calculated mode and with a generation power sensor covering the same arrays as the model. No new weather API; missing data or nighttime disables the live correction.",
           "solar_pv_power_entity": "Actual total PV generation (W), not grid balance, house load or battery power. Optional for the forecast-versus-actual chart below the PV plan; required if self-calibration is enabled.",
-          "pv_total_peak_kwp": "Optional sum of all installed arrays, including balcony PV. Sets a stable chart Y-axis from installed peak, not from the highest hourly value in 14 days. If empty, the drawn PV surfaces are summed."
+          "pv_total_peak_kwp": "Optional sum of all installed arrays, including balcony PV. Sets a stable chart Y-axis from installed peak, not from the highest hourly value in 14 days. If empty, the drawn PV surfaces are summed.",
+          "solar_weather_source": "Cloud cover keeps the existing model; GeoSphere uses forecast global horizontal irradiance (GHI, W/m²) without a second cloud attenuation. Existing installations continue using cloud mode."
         },
         "description": "PV arrays (power, tilt, orientation) for the calculated forecast are drawn in the dashboard: card “SEP PV arrays” (custom:smartify-energy-pv-card)."
       },
@@ -65,7 +67,7 @@
       }
     },
     "error": {
-      "required": "Select the My-Weather cloud forecast sensor."
+      "required": "Select a matching My-Weather forecast sensor."
     }
   },
   "options": {
@@ -97,19 +99,21 @@
           "forecast_entries": "Forecast integrations (summed)",
           "forecast_sensors": "Forecast sensors (fallback)",
           "solar_mode": "Solar forecast mode",
-          "solar_cloud_entity": "My-Weather cloud forecast 8–48h",
+          "solar_cloud_entity": "My-Weather forecast sensor (cloud or GeoSphere 60h)",
           "solar_calibration_enabled": "Automatically calibrate PV forecast (optional)",
           "solar_live_adapt_enabled": "Adaptive live PV forecast (optional)",
-          "solar_pv_power_entity": "Measured PV generation power (W) – actual inverter/production sensor"
+          "solar_pv_power_entity": "Measured PV generation power (W) – actual inverter/production sensor",
+          "solar_weather_source": "Calculated forecast weather source"
         },
         "data_description": {
           "forecast_entries": "Preselected from the energy dashboard. Selected entries are summed – choose one source per array.",
           "forecast_sensors": "Only if the forecast integration has no energy platform.",
-          "solar_mode": "External forecast or calculated from cloud and PV geometry.",
-          "solar_cloud_entity": "Select the My-Weather 8h or 48h cloud forecast sensor, not a PV energy sensor. Choose the 48h sensor for extended planning.",
+          "solar_mode": "External forecast or calculated from PV surface geometry and either cloud cover or GeoSphere solar irradiation.",
+          "solar_cloud_entity": "Choose the matching My-Weather sensor: Meteonomiqs Cloud Forecast 8h/48h for cloud mode, GeoSphere Cloud Forecast 60h or Solar Irradiation 60h for GeoSphere mode. Enable GeoSphere in my-weather first; no API key.",
           "solar_calibration_enabled": "Only used for calculated PV forecast. Learns from measured PV generation; off by default.",
           "solar_live_adapt_enabled": "**Optional, off by default:** Compares actual PV generation with a clear-sky reference (at least 5 minutes of readings) to adjust only the next ~2 hours. Only in calculated mode and with a generation power sensor covering the same arrays as the model. No new weather API; missing data or nighttime disables the live correction.",
-          "solar_pv_power_entity": "Actual total PV generation (W), not grid balance, house load or battery power. Optional for the forecast-versus-actual chart below the PV plan; required if self-calibration is enabled."
+          "solar_pv_power_entity": "Actual total PV generation (W), not grid balance, house load or battery power. Optional for the forecast-versus-actual chart below the PV plan; required if self-calibration is enabled.",
+          "solar_weather_source": "Cloud cover keeps the existing model; GeoSphere uses forecast global horizontal irradiance (GHI, W/m²) without a second cloud attenuation. Existing installations continue using cloud mode."
         },
         "description": "PV arrays (power, tilt, orientation) for the calculated forecast are drawn in the dashboard: card “SEP PV arrays” (custom:smartify-energy-pv-card)."
       },
@@ -131,7 +135,7 @@
       }
     },
     "error": {
-      "required": "Select the My-Weather cloud forecast sensor."
+      "required": "Select a matching My-Weather forecast sensor."
     }
   },
   "config_subentries": {
