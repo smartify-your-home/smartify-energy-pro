@@ -1,3 +1,9 @@
+## SEP 0.3.87 – GeoSphere Cloud Forecast 60h im Bewölkungsmodell
+- Im Eigenberechnungsmodus `cloud` wird der echte GeoSphere-C-LAEF-Wolkensensor (`source`, `dataset`, `max_forecast_hours=60`) bis zur tatsächlichen Modellreichweite von 60h ausgewertet. Frühere 48h-Grenze entfällt **nur** für diesen Sensor.
+- Meteonomiqs Cloud Forecast 8h/48h bleibt unverändert. Bei GeoSphere-Modell `geosphere` wird weiterhin `ghi_w_m2` gerechnet, nicht Bewölkung; im Cloud-Modell `cloud_coverage`, nicht GHI. Nur echte Stunden, keine neuen API-Aufrufe oder Auffüllung fehlender Stunden.
+- Der PV-Plan darf echte Daten im bestehenden 72h-Fenster anzeigen; keine Erweiterung der Geräteplanung über heute und morgen, keine Änderung an Schutz, Kalibrierung oder historischer Prognose. Version 0.3.86 bleibt zurückgezogen.
+- Tests: `tests/test_geosphere_solar.py`, `tests/ha/test_geosphere_cloud_horizon.py`.
+
 ## SEP 0.3.85 – GeoSphere Solarstrahlung für eigene PV-Prognose (optional)
 Im Schritt **Prognose** gibt es bei eigener Berechnung das neue Feld `solar_weather_source`: `cloud` (Standard wie bisher, Meteonomiqs Bewölkung) oder `geosphere` (GeoSphere C-LAEF GHI in W/m²). Als Wettersensor dient weiterhin `solar_cloud_entity`, bei GeoSphere aber `GeoSphere Cloud Forecast 60h` oder `GeoSphere Solar Irradiation 60h` von my-weather. Die GeoSphere-Option muss in my-weather aktiviert sein; der Datenabruf erfolgt dort direkt kostenlos ohne API-Key.
 
