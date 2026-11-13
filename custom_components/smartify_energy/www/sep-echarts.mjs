@@ -135,8 +135,8 @@ export function sepComparisonChart(data, theme) {
     if(!params?.length)return "";
     const row=rows[params[0].dataIndex];
     return label(row.zeit,data.zeitzone)+"\n"+
-      "Prognose: "+fmt(valueOrNull(row.prognose_wh)/1000)+" kWh\n"+
-      "Ist: "+(row.ist_wh==null?"–":fmt(valueOrNull(row.ist_wh)/1000))+" kWh";
+      "Prognose: "+(valueOrNull(row.prognose_wh)===null?"–":fmt(row.prognose_wh/1000))+" kWh\n"+
+      "Ist: "+(valueOrNull(row.ist_wh)===null?"–":fmt(row.ist_wh/1000))+" kWh";
   };
   return {options:opt,rows,width:Math.max(640,rows.length*45)};
 }
@@ -157,6 +157,8 @@ export class SEPChartController {
     if(!host || !chartData)return false;
     const echarts=await loadVendorECharts();
     if(!host.isConnected)return false;
+    const wrapper=host.closest(".sep-echarts-wrap");
+    if(wrapper)wrapper.classList.add("chart-ready");
     host.style.width=chartData.width+"px";
     host.classList.add("ready");
     let entry=this.charts.get(kind);
@@ -169,8 +171,9 @@ export class SEPChartController {
     }
     const signature=JSON.stringify(chartData.options.series.map(x=>x.data))+
       JSON.stringify(chartData.options.xAxis.data)+
-      JSON.stringify(chartData.options.yAxis.max)+
-      JSON.stringify(chartData.options.series.map(x=>x.itemStyle));
+      JSON.stringify(chartData.options.yAxis)+
+      JSON.stringify(chartData.options.textStyle)+
+      JSON.stringify(chartData.options.series.map(x=>[x.itemStyle,x.lineStyle]));
     if(entry.signature!==signature){
       entry.chart.setOption(chartData.options,{notMerge:true,lazyUpdate:false});
       entry.signature=signature;
