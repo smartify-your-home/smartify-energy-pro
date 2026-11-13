@@ -44,7 +44,9 @@ test("PV plan preserves forecast gaps and current+future hour order",async()=>{
 
 test("14-day comparison has exact STC peak scale and missing values stay missing",async()=>{
   const {sepComparisonChart}=await chartModule;
-  const data={gesamt_peak_kwp:10,zeitzone:"Europe/Vienna",stunden:[
+  const data={gesamt_peak_kwp:10,zeitzone:"Europe/Vienna",
+    tageslicht:[{datum:"2026-11-14",sonnenaufgang:"2026-11-14T06:15:00Z",sonnenuntergang:"2026-11-14T15:20:00Z"}],
+    stunden:[
     {zeit:"2026-11-14T10:00:00Z",prognose_wh:9200,ist_wh:10800},
     {zeit:"2026-11-14T11:00:00Z",prognose_wh:6500,ist_wh:null},
     {zeit:"2026-11-14T12:00:00Z",prognose_wh:null,ist_wh:0},
