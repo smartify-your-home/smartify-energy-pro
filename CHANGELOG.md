@@ -1,5 +1,13 @@
 ## Unreleased
 
+## 0.3.85 – GeoSphere GHI-Modell (vorbereiteter PR, nicht veröffentlicht)
+
+- Alternative Wetterquelle für `solar_mode=calculated`: `solar_weather_source=geosphere` liest direkt die stündliche GeoSphere-C-LAEF-GHI-Prognose aus my-weather (60h, W/m²) und berechnet die PV-Stundenenergie je Dach-/Bifazialfläche. Bewölkungsmodell bleibt Standard.
+- Stündliche Einstrahlung wird geprüft (Quelle, Datensatz, Einheit, Zeit), ohne zweiten Bewölkungsabschlag; fehlende Werte bleiben fehlend, gültige Nullwerte 0. Keine neuen externen API-Aufrufe aus SEP und keine Änderung an Netz-/Geräteschutz.
+- Automatische Kalibrierung lernt getrennt je Wetterquelle; alte unmarkierte Lernwerte bleiben dem bisherigen Bewölkungsmodell zugeordnet.
+- Doku/DE-/EN-Texte und Regressionstests ergänzt. GeoSphere muss zuvor in my-weather aktiviert sein; reale HA-/Provider-Tests und grüne CI vor Veröffentlichung erforderlich.
+
+
 ## 0.3.84 – 2026-11-12
 
 - Prioritäten-Überschrift optisch korrigiert: **Ziehgriff · Schloss · PRIORITÄTEN**, beide Bedienelemente stehen links vor der Überschrift. Der Ziehgriff verschiebt den gesamten Abschnitt, das Schloss sperrt weiterhin ausschließlich das Geräte-Drag-&-Drop.
