@@ -13,7 +13,7 @@ const theme={text:"#fff",muted:"#aaa",grid:"#333",pv:"#f90",
 test("ECharts is bundled locally; a separate Lovelace card is not required",()=>{
   const init=fs.readFileSync("custom_components/smartify_energy/__init__.py","utf8");
   const adapter=fs.readFileSync("custom_components/smartify_energy/www/sep-echarts.mjs","utf8");
-  const vendor=fs.readFileSync("custom_components/smartify_energy/www/echarts.simple.min.js","utf8");
+  const vendor=fs.readFileSync("custom_components/smartify_energy/www/echarts.common.min.js","utf8");
   assert.match(init,/StaticPathConfig\(ECHARTS_URL/);
   assert.match(init,/StaticPathConfig\(ECHARTS_ADAPTER_URL/);
   assert.match(adapter,/\/smartify_energy\/echarts\.simple\.min\.js/);
