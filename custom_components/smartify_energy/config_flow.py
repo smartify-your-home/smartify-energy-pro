@@ -60,6 +60,7 @@ from .const import (
     CONF_SOC_SENSOR,
     CONF_SOLAR_CALIBRATION_ENABLED,
     CONF_SOLAR_CLOUD_ENTITY,
+    CONF_SOLAR_WEATHER_SOURCE,
     CONF_SOLAR_LIVE_ADAPT_ENABLED,
     CONF_SOLAR_MODE,
     CONF_SOLAR_PV_POWER_ENTITY,
@@ -146,6 +147,15 @@ def _forecast_schema(d: dict, options: list[dict[str, str]]) -> vol.Schema:
             options=[
                 {"value": "external", "label": "Externe PV-Prognose (wie bisher)"},
                 {"value": "calculated", "label": "Eigene Berechnung: My-Weather + PV-Flächen"},
+            ],
+            mode=sel.SelectSelectorMode.DROPDOWN,
+        )
+    )
+    fields[_req(CONF_SOLAR_WEATHER_SOURCE, d, "cloud")] = sel.SelectSelector(
+        sel.SelectSelectorConfig(
+            options=[
+                {"value": "cloud", "label": "Bewölkung (bisherige Berechnung)"},
+                {"value": "geosphere", "label": "GeoSphere Austria (Solarstrahlung GHI)"},
             ],
             mode=sel.SelectSelectorMode.DROPDOWN,
         )
