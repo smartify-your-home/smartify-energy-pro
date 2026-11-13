@@ -883,7 +883,8 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const data = collect(hass, this._config.hub);
     const ids = data ? [...Object.values(data.ents), ...data.hubSettings.map(x => x.id),
       ...data.devices.flatMap(d => [d.status, d.power, d.planned, d.mode, d.active, d.nachladen, d.boost, ...d.settings.map(x => x.id)])] : [];
-    const sig = ids.map(id => { const s = hass.states[id]; return s ? `${id}:${s.last_updated}` : id; }).join("|");
+    const themeSig = `${hass.themes?.darkMode ?? ""}:${hass.themes?.theme ?? ""}:${hass.themes?.default_theme ?? ""}`;
+    const sig = ids.map(id => { const s = hass.states[id]; return s ? `${id}:${s.last_updated}` : id; }).join("|") + "|theme:" + themeSig;
     if (sig === this._sig) return;
     this._data = data;
     // Retain optimistic order until the server has published all new ranks.
