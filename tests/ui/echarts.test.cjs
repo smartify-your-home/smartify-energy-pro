@@ -16,7 +16,7 @@ test("ECharts is bundled locally; a separate Lovelace card is not required",()=>
   const vendor=fs.readFileSync("custom_components/smartify_energy/www/echarts.common.min.js","utf8");
   assert.match(init,/StaticPathConfig\(ECHARTS_URL/);
   assert.match(init,/StaticPathConfig\(ECHARTS_ADAPTER_URL/);
-  assert.match(adapter,/\/smartify_energy\/echarts\.simple\.min\.js/);
+  assert.match(adapter,/\/smartify_energy\/echarts\.common\.min\.js/);
   assert.doesNotMatch(adapter,/https?:\/\/(?!example)/);
   assert.match(vendor,/Apache License/);
   assert.match(source,/use_echarts: true/);
