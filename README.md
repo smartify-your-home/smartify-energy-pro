@@ -159,6 +159,8 @@ Der grüne Haken erscheint nur, wenn alle Bedingungen erfüllt sind. Sofortstart
 
 ## PV-Prognose und PV-Plan
 
+**Neu in 0.3.87 – GeoSphere-Bewölkung bis 60h:** Du kannst in SEP das bisherige Wettermodell **Bewölkung (bisherige Berechnung)** beibehalten und als My-Weather-Prognosesensor `GeoSphere Cloud Forecast 60h` auswählen. SEP rechnet dann mit den tatsächlich verfügbaren `cloud_coverage`-Stunden bis zur GeoSphere-Modellgrenze, statt schon nach ca. 48h abzuschneiden. Meteonomiqs 8h/48h bleibt unverändert. Im getrennten Wettermodell **GeoSphere Austria (Solarstrahlung GHI)** wird dagegen `ghi_w_m2` verwendet, nicht die Bewölkung. GeoSphere muss vorher in my-weather aktiviert werden. Die 60 Stunden beginnen ab dem GeoSphere-Modelllauf, nicht ab dem Zeitpunkt der Sensorabfrage. Fehlende Stunden werden nicht ergänzt.
+
 Unter **Einstellungen → Geräte & Dienste → Smartify Energy Pro → Konfigurieren → Prognose**:
 
 - **Externe Prognose (Standard):** eine Prognose-Integration der Home-Assistant-Energieplattform (z. B. Forecast.Solar, Solcast, Open-Meteo Solar Forecast) oder ein Prognosesensor.

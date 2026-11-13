@@ -17,7 +17,7 @@ from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
 from .solar_calibration import SolarCalibration
-from .solar_model import hourly_clouds, hourly_ghi, pv_hours, pv_hours_ghi
+from .solar_model import cloud_forecast_horizon, hourly_clouds, hourly_ghi, pv_hours, pv_hours_ghi
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -123,7 +123,11 @@ class ForecastProvider:
                         if _hour(stamp) in self.raw_hours
                     }
                 elif source == "cloud":
-                    cloudy_hours = hourly_clouds(state.attributes, now)
+                    # The cloud attenuation model can use all published
+                    # GeoSphere C-LAEF 60h slots; the Meteonomiqs 8/48h
+                    # integration deliberately retains its legacy horizon.
+                    horizon = cloud_forecast_horizon(state.attributes)
+                    cloudy_hours = hourly_clouds(state.attributes, now, horizon_hours=horizon)
                     if not cloudy_hours:
                         raise ValueError("My-Weather has no valid hourly cloud forecast")
                     self.raw_hours = {
@@ -153,7 +157,9 @@ class ForecastProvider:
             self.hours = hours
             self.source_label = (
                 "GeoSphere Austria C-LAEF (GHI)" if source == "geosphere"
-                else "Eigene Berechnung"
+                else ("GeoSphere Austria C-LAEF (Bewölkung)"
+                      if cloud_forecast_horizon(state.attributes) == 60
+                      else "Eigene Berechnung")
             ) if hours else None
             self.error = "; ".join(errors) or None
             self.last_update = dt_util.now()

@@ -67,6 +67,42 @@ class GeoSpherePVTests(unittest.TestCase):
         # a synthetic provider feeds more than the legacy 48h series).
         self.assertEqual(len(solar.hourly_clouds(self.attrs(rows), self.now)), 49)
 
+    def test_geosphere_cloud_sensor_uses_all_60_real_hours(self):
+        # Cloud-based PV model must not be cut off at Meteonomiqs' 48h.
+        rows = [self.row(self.now + timedelta(hours=i), None, i % 101)
+                for i in range(60)]
+        rows.append(self.row(self.now + timedelta(hours=63), None, 20))
+        attrs = self.attrs(rows, max_forecast_hours=60)
+        horizon = solar.cloud_forecast_horizon(attrs)
+        self.assertEqual(horizon, 60)
+        selected = solar.hourly_clouds(attrs, self.now, horizon_hours=horizon)
+        self.assertEqual(len(selected), 60)
+        self.assertIn(self.now + timedelta(hours=59), selected)
+        self.assertNotIn(self.now + timedelta(hours=63), selected)
+        pv = solar.pv_hours(self.now, 48, 13, self.surface, selected)
+        self.assertEqual(len(pv), 60)
+        self.assertGreater(pv[self.now + timedelta(hours=48)], 0)
+        self.assertEqual(solar.hourly_ghi(attrs, self.now), {})
+
+    def test_legacy_cloud_horizon_and_metadata_detection(self):
+        rows = [self.row(self.now + timedelta(hours=i), None, 20)
+                for i in range(60)]
+        gs = self.attrs(rows, max_forecast_hours=60)
+        meteonomiqs = {**gs, "source": "Meteonomiqs"}
+        self.assertEqual(solar.cloud_forecast_horizon(meteonomiqs), 48)
+        self.assertEqual(len(solar.hourly_clouds(
+            meteonomiqs, self.now, solar.cloud_forecast_horizon(meteonomiqs))), 49)
+        self.assertEqual(solar.cloud_forecast_horizon({**gs, "dataset": "unknown"}), 48)
+        self.assertEqual(solar.cloud_forecast_horizon({**gs, "max_forecast_hours": 48}), 48)
+        self.assertEqual(solar.cloud_forecast_horizon({**gs, "source": "unverified"}), 48)
+        self.assertEqual(solar.cloud_forecast_horizon({}), 48)
+        short = self.attrs(rows[:6], max_forecast_hours=60)
+        self.assertEqual(len(solar.hourly_clouds(
+            short, self.now, solar.cloud_forecast_horizon(short))), 6)
+        # Real zero-cloud coverage remains zero, not missing.
+        zero = self.attrs([self.row(self.now, None, 0)], max_forecast_hours=60)
+        self.assertEqual(solar.hourly_clouds(zero, self.now, 60)[self.now], 0.0)
+
     def test_larger_ghi_yields_larger_pv_even_with_same_clouds(self):
         low = solar.pv_hours_ghi(self.now, 48, 13, self.surface, {self.now: 100})[self.now]
         high = solar.pv_hours_ghi(self.now, 48, 13, self.surface, {self.now: 750})[self.now]
