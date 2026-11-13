@@ -1,5 +1,13 @@
 ## Unreleased
 
+## 0.3.87 – 2026-11-13
+
+- **GeoSphere Cloud Forecast 60h:** Im bisherigen Bewölkungsmodell werden ab sofort alle tatsächlich von GeoSphere C-LAEF gelieferten Wolkenstunden bis zur 60h-Reichweite für die PV-Prognose verwendet. Bisher begrenzte die Standardverarbeitung die Bewölkungsprognose auf ungefähr 48 Stunden.
+- **Quellenerkennung anhand von Metadaten:** Die Erweiterung gilt nur für GeoSphere-Sensoren mit passender C-LAEF-Quelle, Dataset und 60h-Kennzeichnung. Meteonomiqs 8h/48h und andere Wetterquellen behalten ihr bisheriges Verhalten.
+- Im Bewölkungsmodus wird ausschließlich `cloud_coverage` verwendet. Das separate GeoSphere-GHI-Modell, Kalibrierung, PV-Plan-Sicherheitsregeln und Schaltlogik bleiben unverändert. Fehlende Prognosestunden werden nicht aufgefüllt.
+- Neue Modell- und Home-Assistant-Laufzeittests, aktualisierte Hinweise für die Sensorauswahl und Dokumentation. Die zuvor zurückgezogene v0.3.86 wird nicht wiederverwendet.
+
+
 ## 0.3.85 – GeoSphere GHI-Modell (vorbereiteter PR, nicht veröffentlicht)
 
 - Alternative Wetterquelle für `solar_mode=calculated`: `solar_weather_source=geosphere` liest direkt die stündliche GeoSphere-C-LAEF-GHI-Prognose aus my-weather (60h, W/m²) und berechnet die PV-Stundenenergie je Dach-/Bifazialfläche. Bewölkungsmodell bleibt Standard.
