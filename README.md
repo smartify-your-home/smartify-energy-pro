@@ -280,3 +280,19 @@ Der ganze PV-Plan mit Prognose-Ist-Vergleich kann per Ziehgriff an der Abschnitt
 
 ### Prioritätenüberschrift (v0.3.84)
 Die Bedienelemente stehen ab sofort ganz links in der Reihenfolge **Ziehgriff · Schloss · PRIORITÄTEN**. Der Griff verschiebt den gesamten Bereich, das Schloss schützt das Verschieben einzelner Geräte.
+
+
+### WP FBH Sollwerterhöhung, WP Warmwasser Boost und aktuelle Waschtipps (0.3.88)
+Der bestehende Wärmepumpen-Boost heißt jetzt **WP Warmwasser Boost**. Zusätzlich gibt es den neuen SEP-Gerätetyp **WP FBH Sollwerterhöhung** mit bis zu zwei Start-/End-Zeitfenstern, einstellbarer Sollwerterhöhung in Kelvin und Maximaltemperatur sowie wählbarer Zeit- oder PV-Steuerung. Notwendig sind ein schreibbarer FBH-Sollwert (`number`, `input_number` oder `climate`), elektrischer WP-Leistungssensor und WP-Nennleistung. Heizbetriebs- und WW-Aktiv-Signale erhöhen die Zuverlässigkeit und verhindern, dass die Warmwasserladung als FBH-Heizung gezählt wird.
+
+SEP merkt den Sollwert vor der Anhebung dauerhaft und stellt ihn nach Zeitfensterende oder vorzeitig erkannter Fertigstellung zurück (standardmäßig nach mindestens 3 h elektrischer FBH-Heizlaufzeit plus 20 min Standby). Die **Vorausreservierung** vor einem geplanten Boost ist pro Gerät 0–120 min einstellbar (30 min Standard). Sie hat Vorrang vor nachrangigen, noch nicht freigegebenen Geräten; WP-Messwerte werden nicht doppelt berücksichtigt. Prüfe nach der Anlage eines FBH-Geräts die Priorität und stelle es erst nach Konfiguration von Beobachten auf Automatik.
+
+PV-Waschtipps bewerten heute nur noch den **restlichen PV-Ertrag bis 16 Uhr**, nicht den schon produzierten Tagesertrag. Gibt es heute noch ein gutes Waschfenster, empfiehlt SEP nicht bloß aufgrund einer höheren morgigen Tagessumme, den Waschgang zu verschieben. Sobald SEP das Waschprogramm erkennt, wird der Waschtipp bis nach dem Zyklus (und bei Fertigstellung für den restlichen Tag) ausgeblendet. Die übrigen Alltagstipps bleiben sichtbar.
+
+
+### Bedingter FBH-Wiederanlaufimpuls nach Warmwasser (0.3.88)
+
+Optionaler Parameter **„FBH-Wiederanlauf nach WW“** (standardmäßig aus). SEP verfolgt den Übergang FBH → Warmwasser → Heizbetrieb: Nur wenn **vor** Beginn der Warmwasserladung der FBH-Heizstatus nachweislich EIN war und die elektrische WP-Leistung über der Standby-Schwelle lag, wird ein Wiederanlaufimpuls überhaupt in Betracht gezogen. Beide Binärsensoren (FBH-Heizbetrieb und WW-Bereitung) sind zwingend für diese Option. WP-Leistung allein ist kein ausreichender Nachweis. Bei fehlenden/ungültigen Messungen, bereits vor WW ruhender FBH, beendetem Zeitfenster oder automatisch wieder angelaufenem FBH-Betrieb erfolgt **keine Zusatzanhebung**.
+
+Bleibt FBH nach WW dennoch stehen, wartet SEP standardmäßig 5 Minuten (1–30 konfigurierbar) und erhöht **einmal je FBH-Zeitfenster** den bereits aktivierten FBH-Boost-Sollwert um zusätzliche 3 K (0,5–8 K konfigurierbar), nie höher als die konfigurierte und vom Aktor vorgegebene Maximaltemperatur. Der Impuls dauert höchstens 15 Minuten (5–30 konfigurierbar); bei vorzeitig erkanntem FBH-Neustart wird die Erhöhung unmittelbar wieder zurückgenommen. Danach gilt der normale FBH-Boost-Sollwert; am Ende des Zeitfensters wird der ursprüngliche Sollwert wiederhergestellt. Im PV-gesteuerten Modus ist auch für den Wiederanlauf ausreichendes aktuelles PV-Budget Voraussetzung. Jeder Impuls und seine Sollwert-Rückstellung werden **vor** dem Schreiben dauerhaft gespeichert. Manuelle Sollwertänderungen werden nicht überschrieben.
+

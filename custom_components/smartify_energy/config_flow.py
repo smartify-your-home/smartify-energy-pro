@@ -77,6 +77,7 @@ from .const import (
     TYPE_EV,
     TYPE_HEATER,
     TYPE_HEATPUMP,
+    TYPE_HEATPUMP_FBH,
     TYPE_LOAD,
     TYPE_POOL,
 )
@@ -269,6 +270,7 @@ class SmartifyEnergyConfigFlow(_HubSteps, ConfigFlow, domain=DOMAIN):
             TYPE_POOL: PoolSubentryFlow,
             TYPE_EV: EvSubentryFlow,
             TYPE_HEATPUMP: HeatPumpSubentryFlow,
+            TYPE_HEATPUMP_FBH: FBHBoostSubentryFlow,
             TYPE_HEATER: HeaterSubentryFlow,
         }
 
@@ -410,10 +412,31 @@ class EvSubentryFlow(_DeviceFlow):
         return {}
 
 
+class FBHBoostSubentryFlow(_DeviceFlow):
+    """Independent underfloor-heating temperature boost of an existing WP."""
+
+    def schema(self, d: dict) -> vol.Schema:
+        return vol.Schema({
+            _req(CONF_NAME, d, "WP FBH Sollwerterhöhung"): sel.TextSelector(),
+            _req("fbh_setpoint_entity", d): _ent(["number", "input_number", "climate"]),
+            _req(CONF_POWER_SENSOR, d): _ent("sensor", "power"),
+            _req(CONF_NOMINAL, d, 2500): _num(100, 12000, 50, "W"),
+            _opt("fbh_heating_active_entity", d): _ent(["binary_sensor", "input_boolean"]),
+            _opt(CONF_WW_ACTIVE_ENTITY, d): _ent(["binary_sensor", "input_boolean"]),
+            _opt(CONF_ABSENCE_ENTITY, d): _ent(["binary_sensor", "input_boolean"]),
+        })
+
+    def validate(self, data: dict) -> dict[str, str]:
+        setpoint = data.get("fbh_setpoint_entity", "")
+        if not setpoint.startswith(("number.", "input_number.", "climate.")):
+            return {"fbh_setpoint_entity": "required"}
+        return {}
+
+
 class HeatPumpSubentryFlow(_DeviceFlow):
     def schema(self, d: dict) -> vol.Schema:
         return vol.Schema({
-            _req(CONF_NAME, d, "Wärmepumpe Boost"): sel.TextSelector(),
+            _req(CONF_NAME, d, "WP Warmwasser Boost"): sel.TextSelector(),
             _req(CONF_BOOST_TYPE, d, BOOST_SWITCH): _choice([BOOST_SWITCH, BOOST_BUTTON, BOOST_NUMBER], "boost_type"),
             _req(CONF_BOOST_ENTITY, d): _ent(["switch", "input_boolean", "button", "input_button", "number", "input_number"]),
             _opt(CONF_POWER_SENSOR, d): _ent("sensor", "power"),

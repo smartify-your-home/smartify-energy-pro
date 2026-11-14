@@ -50,12 +50,13 @@ const OPTION_LABELS = {
   forecast: "Prognose", battery_first: "Speicher zuerst", devices_first: "Geräte zuerst",
   summer: "Sommer", winter: "Winter",
   none: "Kein Filter", cloud: "Bewölkung", pv_forecast: "PV-Forecast",
+  time: "Zeitgesteuert", pv: "PV-gesteuert",
   "1": "Nächste 1 Stunde", "2": "Nächste 2 Stunden",
   pv_only: "Nur PV", km_until: "km bis Uhrzeit", days: "Tage-Konfigurator", now: "Sofort laden",
   one: "1-phasig", three: "3-phasig",
 };
 const MODE_LABELS = { auto: "Automatik", observe: "Beobachten", manual: "Manuell", off: "Aus", disabled: "Deaktiviert" };
-const TYPE_ICONS = { load: "mdi:washing-machine", pool: "mdi:pool", ev: "mdi:ev-station", heatpump: "mdi:heat-pump", heater: "mdi:water-boiler" };
+const TYPE_ICONS = { load: "mdi:washing-machine", pool: "mdi:pool", ev: "mdi:ev-station", heatpump: "mdi:heat-pump", heatpump_fbh: "mdi:heat-pump", heater: "mdi:water-boiler" };
 const STATUS_LABELS = {"initializing": "Initialisierung", "ready": "Bereit", "detected": "Erkannt", "waiting": "Wartet", "running": "Läuft", "finished": "Fertig", "off": "Aus", "manual": "Manuell", "observing": "Beobachten", "inactive": "Inaktiv", "locked": "Sperrzeit", "limit_reached": "Grenze erreicht", "disconnected": "Nicht verbunden", "full": "Voll", "charging_now": "Lädt sofort", "charging_required": "Pflichtladen", "charging_pv": "PV-Laden", "boost": "Boost", "actuator_unavailable": "Aktor nicht verfügbar", "actuator_error": "Aktorfehler",
   laeuft: "läuft", wartet: "wartet", bereit: "bereit", erkannt: "erkannt", fertig: "fertig",
   aus: "aus", manuell: "manuell", beobachten: "beobachten", inaktiv: "inaktiv", sperrzeit: "Sperrzeit",
@@ -144,6 +145,21 @@ const SETTING_HELP = {
   "boost_forecast_hours": "Zeitraum ab jetzt: 1 oder 2 Stunden, Standard 2. Angebrochene Stunden werden anteilig berechnet. Nur wirksam bei Startfilter PV-Forecast. Beispiel: um 12:30 mit 2 Stunden bis 14:30.",
   "boost_forecast_min_kwh": "Mindestens erwarteter PV-Ertrag im gewählten Zeitraum, Standard 2 kWh; einstellbar 0,1–100 kWh. Das ist Erzeugung, kein freier Überschuss: Die Budgetprüfung bleibt erhalten. Fehlende, fehlerhafte, unvollständige oder über 60 Minuten alte Prognosen sperren im Forecast-Modus neue Starts. Quelle in den zentralen SEP-Prognoseeinstellungen wählen.",
   "ww_active_minutes": "So lange muss Warmwasser aktiv ununterbrochen EIN sein. Danach darf SEP bei aktuellem Steuerbudget ≥ 0 W einmalig boosten. Standard 10 Minuten, einstellbar 0–180 Minuten (0 deaktiviert die Sonderfreigabe). Temperatur, optionaler Sonnenwinkelfilter und Startsperre gelten weiter; Bewölkung wird hier ignoriert. Nur für Button/Schalter/Boolean; maximal ein Boost je WW-Zyklus.",
+  "fbh_control": "Zeitgesteuert erhöht den Sollwert immer im Zeitfenster; PV-gesteuert nur bei ausreichendem aktuellen PV-Budget. Die Vorausreservierung ist separat einstellbar.",
+  "fbh_delta": "Temperaturdifferenz in Kelvin, die zum aktuell eingestellten FBH-Sollwert addiert wird. Der vorherige Sollwert wird vor dem Schreiben gespeichert.",
+  "fbh_max_temp": "Feste obere Sicherheitsgrenze. Die vom Heizungsregler gemeldete Maximaltemperatur wird ebenfalls berücksichtigt.",
+  "fbh_start_1": "Beginn des ersten optionalen FBH-Boost-Zeitfensters. Anfang gleich Ende deaktiviert das Zeitfenster.",
+  "fbh_end_1": "Ende des ersten Boost-Zeitfensters; Rückstellung spätestens zu diesem Zeitpunkt.",
+  "fbh_start_2": "Beginn des zweiten optionalen Zeitfensters; beide Zeiten 00:00 deaktivieren es.",
+  "fbh_end_2": "Ende des zweiten optionalen Zeitfensters.",
+  "fbh_reserve_before": "Vorlaufzeit 0–120 Minuten: Die kommende zusätzliche WP-Leistung wird bei neuen Gerätefreigaben berücksichtigt. 0 deaktiviert die Vorausreservierung vor dem Start.",
+  "fbh_finish_runtime": "Mindestdauer tatsächlicher, der FBH zuzuordnender WP-Leistungsaufnahme, bevor eine lange Ruhephase als erledigt zählen darf.",
+  "fbh_idle_power": "Elektrische Ruheschwelle in Watt; nur bestätigter FBH-Betrieb ohne Warmwasserladung zählt.",
+  "fbh_idle_minutes": "Nach der Mindest-Heizlaufzeit unter Ruheschwelle: Boost als erledigt markieren und nicht im selben Fenster erneut starten.",
+  "fbh_restart_after_ww": "Optionaler einmaliger Wiederanlaufimpuls nach einer Warmwasserladung. Nur wenn die FBH unmittelbar VOR Warmwasser tatsächlich heizte: FBH-Aktiv-Sensor EIN plus elektrische WP-Leistung. Benötigt beide Status-Entitäten (FBH aktiv und WW aktiv). Standard AUS.",
+  "fbh_restart_wait": "So lange nach Ende der Warmwasserladung warten. Startet die FBH währenddessen selbst, wird kein zusätzlicher Sollwertimpuls ausgelöst.",
+  "fbh_restart_delta": "Zusätzliche Erhöhung in Kelvin ÜBER den schon angehobenen FBH-Sollwert. Der konfigurierte Maximalwert des Reglers darf niemals überschritten werden.",
+  "fbh_restart_duration": "Maximale Dauer des einmaligen Wiederanlaufimpulses. Danach sofort zurück auf den normalen FBH-Boost-Sollwert. Bei erkanntem FBH-Wiederanlauf auch früher.",
   "trigger_cooldown": "Mindestzeit zwischen zwei WW-Boost-Auslösungen in Minuten. Standard 60 min, einstellbar 60–720 min. Nach erfolgreicher Startfreigabe wird der Zeitstempel VOR dem WP-Befehl gespeichert und übersteht auch Home-Assistant-Neustarts. Während laufender WW-Ladung ist nach der konfigurierten WW-Aktiv-Wartezeit höchstens ein Boost je Zyklus möglich."
 };
 
@@ -164,7 +180,15 @@ const SETTING_SHORT = {
   lock_enabled: "tägliche Sperrzeit", lock_start: "Sperre ab", lock_end: "Sperre bis",
   min_on: "Mindestlaufzeit", min_off: "Mindestpause", max_per_day: "Maximum pro Tag",
   target_temp: "Ziel-Warmwasser", boost_hysteresis: "Abstand zum Ziel für Start", boost_value: "Sollwert im Boost", normal_value: "Sollwert normal",
-  idle_power_threshold: "Leerlauf unter", idle_minutes: "Leerlauf-Dauer", trigger_cooldown: "Pause zwischen Auslösungen", ww_active_minutes: "WW-Bereitung erkannt nach",
+  idle_power_threshold: "Leerlauf unter", idle_minutes: "Leerlauf-Dauer",
+  fbh_control: "Betriebsart", fbh_delta: "Sollwert anheben um", fbh_max_temp: "Sollwert maximal",
+  fbh_start_1: "Zeitfenster 1 von", fbh_end_1: "Zeitfenster 1 bis",
+  fbh_start_2: "Zeitfenster 2 von", fbh_end_2: "Zeitfenster 2 bis",
+  fbh_reserve_before: "Vorausreservierung", fbh_finish_runtime: "Mindest-Heizlaufzeit",
+  fbh_idle_power: "Standby unter", fbh_idle_minutes: "Standby mindestens",
+  fbh_restart_after_ww: "nur falls vorher FBH aktiv", fbh_restart_wait: "nach WW kurz warten",
+  fbh_restart_delta: "extra über FBH-Boost", fbh_restart_duration: "maximale Dauer",
+  trigger_cooldown: "Pause zwischen Auslösungen", ww_active_minutes: "WW-Bereitung erkannt nach",
   sun_filter_active: "nur bei Sonnenstand", sun_angle_min: "Sonnenwinkel mindestens", boost_start_filter: "Wetterbedingung für Start",
   boost_forecast_hours: "Prognosefenster", boost_forecast_min_kwh: "PV im Fenster mindestens", cloud_now_max: "Bewölkung jetzt höchstens", cloud_next_max: "Bewölkung nächste Stunde höchstens",
   heater_max_temp: "sofort aus ab", heater_hysteresis: "wieder ein unter Max − Wert", heater_start_surplus: "Überschuss für EIN", heater_stop_surplus: "AUS unter",
@@ -182,6 +206,7 @@ const SETTING_GROUPS = [
   { id: "goal", title: "Ladeziel", keys: ["deadline", "target_km"] },
   { id: "boost", title: "PV-Boost", keys: ["boost", "boost_factor", "boost_hours", "boost_min_power"] },
   { id: "vehicle", title: "Fahrzeug", keys: ["reserve_soc", "max_soc", "consumption"] },
+  { id: "fbh", title: "WP FBH Sollwerterhöhung", keys: ["fbh_control", "fbh_delta", "fbh_max_temp", "fbh_start_1", "fbh_end_1", "fbh_start_2", "fbh_end_2", "fbh_reserve_before", "fbh_finish_runtime", "fbh_idle_power", "fbh_idle_minutes", "fbh_restart_after_ww", "fbh_restart_wait", "fbh_restart_delta", "fbh_restart_duration"] },
   { id: "temp", title: "Temperatur", keys: ["target_temp", "boost_hysteresis", "boost_value", "normal_value", "heater_max_temp", "heater_hysteresis"] },
   { id: "runtime", title: "Laufzeit", keys: ["fixed_runtime", "temp_factor", "runtime_min", "runtime_max", "max_runtime", "winter_temp", "vm_share", "max_per_day", "duration"] },
   { id: "power", title: "Leistung & PV", keys: ["nominal_power", "min_surplus", "heater_start_surplus", "heater_stop_surplus", "grid_reserve", "base_load", "sinks_yield", "pause_budget_release_pct"] },
@@ -197,11 +222,21 @@ const SETTING_LABELS = {
   detect_threshold: "Programmerkennung: Leistung über", detect_seconds: "Programmerkennung: Zeitraum",
   finish_threshold: "Fertigerkennung: Leistung unter", finish_minutes: "Fertigerkennung: Zeitraum",
   pause_budget_release_pct: "Budgetfreigabe nach Heizphase",
+  fbh_control: "Betriebsart", fbh_delta: "Erhöhung in Kelvin", fbh_max_temp: "Maximaler FBH-Sollwert",
+  fbh_reserve_before: "Leistung vor Start vormerken",
+  fbh_finish_runtime: "Heizen mindestens", fbh_idle_power: "Standby-Leistung unter",
+  fbh_idle_minutes: "Standby für Fertigerkennung",
+  fbh_restart_after_ww: "FBH-Wiederanlauf nach WW", fbh_restart_wait: "Wartezeit nach Warmwasser",
+  fbh_restart_delta: "Extra-Anhebung bei Wiederanlauf",
+  fbh_restart_duration: "Max. Wiederanlaufimpuls",
 };
 
 // Nur anzeigen, wenn die Einstellung im aktuellen Zustand wirkt.
 // state(key) liefert den aktuellen Zustand einer anderen Einstellung desselben Geräts.
 const SETTING_VISIBLE = {
+  fbh_restart_wait: st => st("fbh_restart_after_ww") === "on",
+  fbh_restart_delta: st => st("fbh_restart_after_ww") === "on",
+  fbh_restart_duration: st => st("fbh_restart_after_ww") === "on",
   announce_reminder: st => st("announce_finished") !== "off",
   deadline: st => st("goal") == null || st("goal") === "km_until",
   target_km: st => st("goal") == null || st("goal") === "km_until",

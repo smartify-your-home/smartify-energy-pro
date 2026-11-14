@@ -30,6 +30,17 @@ _LOGGER = logging.getLogger(__name__)
 IDLE, DETECTED, WAITING, RUNNING, FINISHED = "bereit", "erkannt", "wartet", "laeuft", "fertig"
 
 
+def _washing_program_day(now: datetime) -> str:
+    """Local calendar day for suppressing repeat washing advice.
+
+    Some lightweight offline tests replace the Home Assistant dt module with
+    a reduced stub lacking as_local; production uses HA's local timezone.
+    """
+    localize = getattr(dt_util, "as_local", None)
+    return (localize(now) if localize is not None else now).date().isoformat()
+
+
+
 class LoadDevice(BaseDevice):
     TYPE = "load"
     ICON = "mdi:washing-machine"
@@ -83,6 +94,7 @@ class LoadDevice(BaseDevice):
         self.state.setdefault("approved", False)
         self.state.setdefault("hp_active", False)
         self.state.setdefault("hp_done", False)
+        self.state.setdefault("last_wash_day", None)
         self._detected_since: datetime | None = None
         self._hp_since: datetime | None = None
         self._low_since: datetime | None = None
@@ -218,7 +230,8 @@ class LoadDevice(BaseDevice):
         await self.manager.async_request_run(immediate=True)
 
     async def async_start_now(self) -> None:
-        self.state.update(sm=RUNNING, approved=True, forced_start=True, since=dt_util.now().timestamp())
+        self.state.update(sm=RUNNING, approved=True, forced_start=True, since=dt_util.now().timestamp(),
+                          last_wash_day=_washing_program_day(dt_util.now()))
         self.reason = "Sofort-Start"
         if not self.is_on():
             await self._switch(self.switch, True)
@@ -354,7 +367,8 @@ class LoadDevice(BaseDevice):
                 self.status = "bereit"
                 return Decision(False, 0, "Programmerkennung: 5 Sekunden prüfen")
             self._detected_since = None
-            self.state.update(sm=DETECTED, since=ctx.now.timestamp(), approved=False)
+            self.state.update(sm=DETECTED, since=ctx.now.timestamp(), approved=False,
+                              last_wash_day=_washing_program_day(ctx.now))
             # First detected cycle proceeds to DETECTED below; earliest time is checked there.
 
         if sm == FINISHED:
@@ -365,7 +379,8 @@ class LoadDevice(BaseDevice):
             if self._new_program_detected(ctx, sw_on, p):
                 _LOGGER.info("[%s] neues Programm erkannt – automatischer Reset", self.name)
                 self._reset()
-                self.state.update(sm=DETECTED, since=ctx.now.timestamp(), approved=False)
+                self.state.update(sm=DETECTED, since=ctx.now.timestamp(), approved=False,
+                                  last_wash_day=_washing_program_day(ctx.now))
                 self.reason = "Automatischer Reset – neues Programm erkannt"
                 return self.decide(ctx, budget_left)
             return Decision(sw_on, p, "Fertig – neues Programm wird automatisch erkannt")

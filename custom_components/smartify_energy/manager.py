@@ -292,13 +292,15 @@ class EnergyManager:
                        }),
             SensorSpec("pv_waschtipp",
                        lambda: (self.pv_advice.get("waschtipp") or {}).get(
-                           "text", "Keine Waschmaschine konfiguriert"
+                           "text", "Kein aktueller Waschtipp" if self.pv_advice.get("waesche_unterdrueckt")
+                           else "Keine Waschmaschine konfiguriert"
                            if not any(d.TYPE == "load" and
                                       d.cfg.get("appliance_type", "washing_machine") == "washing_machine"
                                       for d in self.devices.values()) else "Prognose unvollständig"),
                        icon="mdi:washing-machine",
                        attrs=lambda: {
                            "empfehlung": (self.pv_advice.get("waschtipp") or {}).get("empfehlung"),
+                           "waesche_unterdrueckt": bool(self.pv_advice.get("waesche_unterdrueckt")),
                            "begruendung": (self.pv_advice.get("waschtipp") or {}).get("detail"),
                            "zeitfenster": self.pv_advice.get("zeitfenster", "08:00–16:00"),
                            "tage": self.pv_advice.get("tage", []),
@@ -446,7 +448,7 @@ class EnergyManager:
         for dev in self.devices.values():
             entities.update(dev.observed_entities())
             fast_inputs.add(dev.cfg.get("power_sensor"))
-            if dev.TYPE in ("heater", "heatpump"):
+            if dev.TYPE in ("heater", "heatpump", "heatpump_fbh"):
                 fast_inputs.add(dev.cfg.get("absence_entity"))
             if dev.TYPE == "ev":
                 fast_inputs.add(dev.cfg.get("current_entity"))
@@ -963,6 +965,8 @@ class EnergyManager:
 
         left = ctx.alloc_base
         self.device_budgets = {}
+        # Two boost types may share one physical WP compressor.
+        wp_shared_pending: dict[str, float] = {}
         battery_rank = int(self.p("battery_rank")) if self.has_battery else 999
         battery_w = self.battery_charging_w if self.has_battery else 0.0
         battery_passed = False
@@ -1023,12 +1027,25 @@ class EnergyManager:
                     previous = dev.last_decision
                     power = max(current, previous.power if previous and previous.on else 0.0)
                     decision = Decision(power > 0, power, "Aktorfehler – Leistung vorsorglich reserviert")
-                # Reserve newly commanded manual heating before PV allocations, too.
+                # A scheduled FBH boost reserves expected unmet WP draw at
+                # its configured priority, even before the compressor starts.
+                anticipatory = (dev.advance_reservation(ctx.now)
+                                if dev.TYPE == "heatpump_fbh" else 0.0)
+                extra = 0.0
                 if decision.on and (dev.mode == MODE_AUTO or (
                         dev.mode == "manual" and dev.CONTROLS_MANUAL)):
                     extra = additional_reservation(decision.power, current, reclaimed)
-                    effective_left -= extra
-                    self.device_budgets[dev.id]["zusaetzlich_reserviert_w"] = round(extra)
+                pending = max(extra, anticipatory)
+                shared = (dev.cfg.get("power_sensor")
+                          if dev.TYPE in ("heatpump", "heatpump_fbh") else None)
+                if shared:
+                    prior_reserved = wp_shared_pending.get(shared, 0.0)
+                    pending = max(0.0, pending - prior_reserved)
+                    wp_shared_pending[shared] = max(prior_reserved, max(extra, anticipatory))
+                effective_left -= pending
+                self.device_budgets[dev.id]["zusaetzlich_reserviert_w"] = round(pending)
+                if dev.TYPE == "heatpump_fbh":
+                    self.device_budgets[dev.id]["fbh_vorreservierung_w"] = round(anticipatory)
             finally:
                 ctx.budget_now, ctx.budget_avg, ctx.budget_short, ctx.alloc_base = (
                     original_now, original_avg, original_short, original_base)
@@ -1040,7 +1057,42 @@ class EnergyManager:
         if plan_due:
             self._plan_dirty = False
             self._plan(now)
+        self._refresh_pv_advice(now)
         self._store.async_delay_save(self._dump, 60)
+
+    def _refresh_pv_advice(self, now: datetime) -> None:
+        """Update tips on every device cycle rather than each forecast refresh."""
+        day_devices = []
+        for dev in self.devices.values():
+            if dev.mode == "off":
+                continue
+            kind = (dev.cfg.get("appliance_type", "washing_machine")
+                    if dev.TYPE == "load" else dev.TYPE)
+            if kind not in {"washing_machine", "dishwasher", "dryer", "ev", "heater", "heatpump"}:
+                continue
+            duration = 2.0
+            if kind in {"washing_machine", "dishwasher", "dryer"}:
+                try:
+                    duration = float(dev.p("duration"))
+                except (TypeError, ValueError):
+                    pass
+            day_devices.append({
+                "kind": kind, "mode": dev.mode,
+                "duration": duration, "power": float(dev.nominal),
+                "pv_only": dev.p("goal") == "pv_only" if kind == "ev" else True,
+                "program_state": dev.state.get("sm") if kind == "washing_machine" else None,
+                "program_day": dev.state.get("last_wash_day") if kind == "washing_machine" else None,
+                "power_running": bool(kind == "washing_machine" and
+                    (power_w(self.hass, dev.cfg.get("power_sensor")) or 0) >=
+                    float(dev.p("detect_threshold") or 9)),
+            })
+        self.pv_advice = build_advice(
+            self.forecast.hours, dt_util.as_local(now), day_devices,
+            base_load_w=float(self.p("base_load") or 0),
+            live_state=self.live_pv.diagnostics(now).get("state") if self.live_pv else None,
+            battery_soc=self.battery_soc if self.has_battery else None,
+            battery_capacity_kwh=float(self.cfg.get(CONF_BAT_CAPACITY) or 0),
+        )
 
     # ── Prognose-Planer ──────────────────────────────────────────────────────
     def _plan(self, now: datetime) -> None:
@@ -1148,32 +1200,6 @@ class EnergyManager:
                     "frei_w": round(max(0.0, wh - base)), "geraete": {},
                     "prognose_verfuegbar": True,
                 })
-        day_devices = []
-        for dev in self.devices.values():
-            if dev.mode == "off":
-                continue
-            kind = (dev.cfg.get("appliance_type", "washing_machine")
-                    if dev.TYPE == "load" else dev.TYPE)
-            if kind not in {"washing_machine", "dishwasher", "dryer", "ev", "heater", "heatpump"}:
-                continue
-            duration = 2.0
-            if kind in {"washing_machine", "dishwasher", "dryer"}:
-                try:
-                    duration = float(dev.p("duration"))
-                except (TypeError, ValueError):
-                    pass
-            day_devices.append({
-                "kind": kind, "mode": dev.mode,
-                "duration": duration, "power": float(dev.nominal),
-                "pv_only": dev.p("goal") == "pv_only" if kind == "ev" else True,
-            })
-        self.pv_advice = build_advice(
-            self.forecast.hours, dt_util.as_local(now), day_devices,
-            base_load_w=base,
-            live_state=self.live_pv.diagnostics(now).get("state") if self.live_pv else None,
-            battery_soc=self.battery_soc if self.has_battery else None,
-            battery_capacity_kwh=float(self.cfg.get(CONF_BAT_CAPACITY) or 0),
-        )
         actions.sort()
         self.next_action = " · ".join(a for _, a in actions[:3])
 
