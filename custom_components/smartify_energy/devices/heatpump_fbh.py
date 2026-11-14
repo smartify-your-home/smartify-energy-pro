@@ -25,6 +25,9 @@ class FBHBoostDevice(BaseDevice):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        # Place the upcoming WP heating commitment ahead of ordinary loads by
+        # default. The user can change priority via normal SEP drag & drop.
+        self.params["priority"] = 2
         self.state.setdefault("active", False)
         self.state.setdefault("completed_window", None)
         self.state.setdefault("window", None)
@@ -259,7 +262,10 @@ class FBHBoostDevice(BaseDevice):
             self.status = "boost"
             return Decision(True, self.nominal, "FBH-Sollwerterhöhung läuft")
         window = self._window_now(now)
-        if not window or self.state.get("completed_window") == window[2]:
+        if window and self.state.get("completed_window") == window[2]:
+            self.status = "fertig"
+            return Decision(False, 0, "FBH-Boost in diesem Zeitfenster erledigt")
+        if not window:
             self.status = "bereit"
             return Decision(False, 0, "Kein offenes FBH-Zeitfenster")
         if self._shared_ww_running():
