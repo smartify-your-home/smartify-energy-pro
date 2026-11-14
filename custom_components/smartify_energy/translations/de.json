@@ -563,6 +563,7 @@
             "power_sensor": "WP-Leistungssensor",
             "nominal_power": "Elektrische WP-Nennleistung",
             "fbh_heating_active_entity": "FBH-Heizbetrieb aktiv (optional)",
+            "fbh_demand_entity": "Heizbedarf vorhanden (optional; EIN = Wärmebedarf)",
             "ww_active_entity": "Warmwasserbereitung aktiv (empfohlen)",
             "absence_entity": "Abwesenheit sperrt Boost (optional)"
           },
@@ -571,6 +572,7 @@
             "power_sensor": "Pflicht: elektrische WP-Leistung in W oder kW. Notwendig für die Fertigerkennung und die Vorausreservierung.",
             "nominal_power": "Pflicht: elektrische WP-Nennleistung, die vor geplanten Starts reserviert wird.",
             "fbh_heating_active_entity": "Optional: EIN nur beim FBH-Heizbetrieb. Verhindert, dass WW-Ladungen fälschlich als FBH-Heizlaufzeit gezählt werden.",
+            "fbh_demand_entity": "Optional: binary_sensor oder input_boolean. EIN erlaubt den FBH-Boost; AUS hält ihn im Standby und stellt eine laufende Erhöhung auf den original gespeicherten Sollwert zurück. Unbekannt/nicht verfügbar sperrt sicherheitshalber. Ohne Auswahl bleibt bisheriges Verhalten.",
             "ww_active_entity": "Sehr empfohlen: EIN während Warmwasserladung. Im WW-Betrieb keine neuen FBH-Starts oder falsch gezählte Standby-Phasen.",
             "absence_entity": "Optional: EIN sperrt den Boost. Ein bereits angehobener Sollwert wird sicher zurückgestellt."
           }
@@ -583,6 +585,7 @@
             "power_sensor": "WP-Leistungssensor",
             "nominal_power": "Elektrische WP-Nennleistung",
             "fbh_heating_active_entity": "FBH-Heizbetrieb aktiv (optional)",
+            "fbh_demand_entity": "Heizbedarf vorhanden (optional; EIN = Wärmebedarf)",
             "ww_active_entity": "Warmwasserbereitung aktiv (empfohlen)",
             "absence_entity": "Abwesenheit sperrt Boost (optional)"
           },
@@ -591,6 +594,7 @@
             "power_sensor": "Pflicht: elektrische WP-Leistung in W oder kW. Notwendig für die Fertigerkennung und die Vorausreservierung.",
             "nominal_power": "Pflicht: elektrische WP-Nennleistung, die vor geplanten Starts reserviert wird.",
             "fbh_heating_active_entity": "Optional: EIN nur beim FBH-Heizbetrieb. Verhindert, dass WW-Ladungen fälschlich als FBH-Heizlaufzeit gezählt werden.",
+            "fbh_demand_entity": "Optional: binary_sensor oder input_boolean. EIN erlaubt den FBH-Boost; AUS hält ihn im Standby und stellt eine laufende Erhöhung auf den original gespeicherten Sollwert zurück. Unbekannt/nicht verfügbar sperrt sicherheitshalber. Ohne Auswahl bleibt bisheriges Verhalten.",
             "ww_active_entity": "Sehr empfohlen: EIN während Warmwasserladung. Im WW-Betrieb keine neuen FBH-Starts oder falsch gezählte Standby-Phasen.",
             "absence_entity": "Optional: EIN sperrt den Boost. Ein bereits angehobener Sollwert wird sicher zurückgestellt."
           }
