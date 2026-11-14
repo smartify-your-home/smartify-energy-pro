@@ -362,7 +362,7 @@ class EnergyManager:
         total_kwp = float(configured_kwp) if configured_kwp else surfaces_kwp
         return {"konfiguriert": True,
                 "gesamt_peak_kwp": round(total_kwp, 3) if total_kwp > 0 else None,
-                **self.pv_comparison.recent(dt_util.utcnow(), 14 * 24),
+                **self.pv_comparison.timeline(dt_util.utcnow(), self.forecast.hours, 14 * 24, 60),
                 "tageslicht": self._pv_daylight_windows(),
                 "zeitzone": self.hass.config.time_zone}
 
