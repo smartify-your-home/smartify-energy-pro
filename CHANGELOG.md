@@ -2,6 +2,9 @@
 
 ## 0.3.88 – 2026-11-14
 
+- Nach WW-Ladung optionaler, einmaliger **FBH-Wiederanlaufimpuls**: nur bei eindeutig nachgewiesenem FBH-Heizbetrieb **unmittelbar vor** Warmwasserstart (Heizstatus EIN + WP-Leistung über Standby). Wenn FBH vor WW inaktiv war oder danach selbst wieder startet, absolut keine Zusatzanhebung. Beide Betriebsstatussensoren erforderlich.
+- Konfigurierbare Wartezeit nach WW (Standard 5 min), zusätzliche Anhebung (Standard +3 K) und begrenzte Dauer (Standard 15 min); Maximaltemperatur bleibt strikt gültig. Bei spontanem Wiederanlauf vorzeitig zurück zum normalen Boost-Sollwert, am Fensterende zum gesicherten Original. Standardmäßig abgeschaltet, einmal pro Zeitfenster, Zustands-/Rollback-Sicherung vor jedem Aktorbefehl.
+
 - **WP Warmwasser Boost:** bisherigen Wärmepumpen-Boost in Formularen und DE/EN-Übersetzungen präziser umbenannt; vorhandene Geräte und Konfigurationen werden nicht verändert.
 - **Neuer SEP-Gerätetyp „WP FBH Sollwerterhöhung“:** schreibbare number/input_number/climate-Temperaturentität, elektrischer WP-Leistungssensor und Nennleistung; optional FBH-Heizstatus, Warmwasser-aktiv sowie Abwesenheit. In der bestehenden Karte eigene Parameter für zeitgesteuert/PV-gesteuert, +Kelvin, zulässigen Maximalwert und **zwei unabhängige Zeitfenster** (00:00–00:00 = aus).
 - Setpoint-Sicherung **vor jeder Anhebung** in HA-Storage; Rückstellung bei Ende, Fertigmeldung, Deaktivierung oder Moduswechsel. Erst bei bestätigtem Rückstellwert wird die gespeicherte Sicherung gelöscht. Zwischenzeitlich manuell veränderte Sollwerte werden nicht blind überschrieben.
