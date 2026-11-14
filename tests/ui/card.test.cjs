@@ -515,7 +515,7 @@ test('unified PV comparison scrolls into tomorrow and later hours',()=>{
   const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});dom.window.eval(source);
   const card=dom.window.document.createElement('smartify-energy-plan-card');
   card.setConfig({show_timeline:true,show_priorities:false,show_header:false});dom.window.document.body.append(card);
-  const now=new Date();now.setHours(10,0,0,0);
+  const now=new Date();now.setDate(now.getDate()+1);now.setHours(10,0,0,0);
   const hours=[0,1,2].map(i=>{const t=new Date(now);t.setDate(t.getDate()+i);return {zeit:t.toISOString(),prognose_wh:1000,aktuelle_prognose_wh:1200,ist_wh:null};});
   card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},states:{'sensor.plan':{state:'–',attributes:{pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:3,stunden:hours}}}},devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
   const root=card.shadowRoot,scroll=root.querySelector('.pv-compare-scroll');
@@ -556,20 +556,48 @@ test('unified PV comparison does not invent missing forecast hours',()=>{
 });
 
 
-test('unified PV comparison renders three series on available hours',()=>{
+test('unified PV comparison shows original and measured production in completed hours',()=>{
   const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});dom.window.eval(source);
   const card=dom.window.document.createElement('smartify-energy-plan-card');
   card.setConfig({show_timeline:true,show_priorities:false,show_header:false});dom.window.document.body.append(card);
-  const now=new Date();now.setHours(11,0,0,0);
-  const hours=[0,1].map(i=>{const t=new Date(now);t.setDate(t.getDate()+i);return {zeit:t.toISOString(),prognose_wh:1000,aktuelle_prognose_wh:1100,ist_wh:900};});
+  const now=Date.now(),hours=[-2,-1].map(i=>({zeit:new Date(Math.floor(now/3600000)*3600000+i*3600000).toISOString(),prognose_wh:1000,aktuelle_prognose_wh:1100,ist_wh:900}));
   card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},states:{'sensor.plan':{state:'–',attributes:{pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:3,stunden:hours}}}},devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
   const root=card.shadowRoot;
   assert.equal(root.querySelectorAll('.pv-compare-col').length,2);
   assert.equal(root.querySelectorAll('.pv-compare-forecast').length,2);
-  assert.equal(root.querySelectorAll('.pv-compare-current').length,2);
+  assert.equal(root.querySelectorAll('.pv-compare-current').length,0);
   assert.equal(root.querySelectorAll('.pv-compare-actual').length,2);
 });
 
+
+test('PV comparison displays original and actual in past, two forecasts now, only current forecast in future',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
+  dom.window.document.body.append(card);
+  const hour=Math.floor(Date.now()/3600000)*3600000;
+  const entries=[-1,0,1].map(offset=>({
+    zeit:new Date(hour+offset*3600000).toISOString(),
+    prognose_wh:1000,aktuelle_prognose_wh:1200,ist_wh:900
+  }));
+  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
+    states:{'sensor.plan':{state:'–',attributes:{pv_vergleich:{
+      konfiguriert:true,gesamt_peak_kwp:3,stunden:entries
+    }}}},devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  const cols=[...card.shadowRoot.querySelectorAll('.pv-compare-col')];
+  assert.equal(cols.length,3);
+  const count=(col,cls)=>col.querySelectorAll(cls).length;
+  assert.equal(count(cols[0],'.pv-compare-forecast'),1,'past retains original');
+  assert.equal(count(cols[0],'.pv-compare-current'),0,'past hides live forecast');
+  assert.equal(count(cols[0],'.pv-compare-actual'),1,'past retains actual');
+  assert.equal(count(cols[1],'.pv-compare-forecast'),1,'current hour retains original');
+  assert.equal(count(cols[1],'.pv-compare-current'),1,'current hour retains live forecast');
+  assert.equal(count(cols[1],'.pv-compare-actual'),0,'incomplete actual is hidden');
+  assert.equal(count(cols[2],'.pv-compare-forecast'),0,'future original is hidden');
+  assert.equal(count(cols[2],'.pv-compare-current'),1,'future live forecast remains');
+  assert.equal(count(cols[2],'.pv-compare-actual'),0,'future actual is hidden');
+  assert.match(cols[2].getAttribute('title'),/Aktuelle Prognose 1.20 kWh/);
+});
 
 test('PV tip stays above bars with 16px headline and 14px detail, without scroll toolbar',()=>{
   assert.match(source,/\.pv-tip-title\{font-size:16px;/);
