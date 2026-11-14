@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 0.3.94 – 2026-11-14
+
+- Gemeinsames PV-Diagramm: Geräteplanung ist wieder enthalten, mit farblich zugeordneten, je Stunde gestapelten Balken auf Basis der echten SEP-Planungsdaten (`sensor.plan.attributes.stunden[].geraete`). Die Gerätenamen und die pro Stunde geplante Leistung erscheinen in Legende und Tooltip.
+- Ursprüngliche PV-Prognose, aktuelle Prognose und gemessene Erzeugung werden als **Punkt-zu-Punkt-Linien** statt Balken dargestellt. Fehlende Mess-/Prognosewerte und Nachtlücken unterbrechen Linien ausdrücklich, ohne Werte zu erfinden. Die ursprüngliche Prognose endet spätestens in der aktuellen Stunde; in der Zukunft wird ausschließlich die aktuelle Prognose gezeichnet.
+- Die gemeinsame kWh-Skala, Tagesübersichten, 14 Tage historischer Rückblick, 60 Stunden Vorschau und der Initialfokus auf den heutigen Tag bleiben erhalten. Geräteplanung und PV-Werte teilen dieselbe Zeitachse; es entsteht kein zweites Diagramm.
+
 ## 0.3.93 – 2026-11-14
 
 - FBH-Gerätezeile zeigt den tatsächlichen Zustand der Sollwerterhöhung permanent und unmissverständlich: „Erhöhung aktiv“ bzw. „Keine Erhöhung aktiv“ / „kein Heizbedarf“, zusätzlich den aktuellen Sollwert und bei aktiver Erhöhung Original- und Boost-Sollwert.
