@@ -277,3 +277,103 @@ async def test_post_ww_pulse_only_once_and_respects_disabled_default(hass):
     await dev.async_run(make_ctx(today_at(10, 30)), 4000)
     assert dev.state["restart_pulse_target"] is None
     assert float(hass.states.get("input_number.fbh_setpoint").state) == 28
+
+
+async def test_demand_sensor_blocks_automatic_start_and_advance_reservation(hass):
+    _, dev = make_fbh(hass)
+    dev.cfg["fbh_demand_entity"] = "input_boolean.heizbedarf"
+    hass.states.async_set("input_boolean.heizbedarf", "off")
+    ctx = make_ctx(today_at(10, 15))
+    assert not dev.decide(ctx, 5000).on
+    assert "Standby" in dev.reason or "Standby" in dev.decide(ctx, 5000).reason
+    assert dev.advance_reservation(today_at(9, 40)) == 0
+    assert not dev._manual_can_raise(today_at(10, 15))
+    hass.states.async_set("input_boolean.heizbedarf", "on")
+    assert dev.decide(ctx, 5000).on
+    assert dev.advance_reservation(today_at(9, 40)) == 2500
+
+
+async def test_demand_unknown_fails_closed_and_active_boost_restores(hass):
+    _, dev = make_fbh(hass)
+    dev.cfg["fbh_demand_entity"] = "binary_sensor.heizbedarf"
+    hass.states.async_set("binary_sensor.heizbedarf", "on")
+    await dev.async_run(make_ctx(today_at(10, 20)), 5000)
+    assert dev.state["active"]
+    assert float(hass.states.get("input_number.fbh_setpoint").state) == 28
+    hass.states.async_set("binary_sensor.heizbedarf", "unavailable")
+    await dev.async_run(make_ctx(today_at(10, 21)), 5000)
+    assert not dev.state["active"]
+    assert float(hass.states.get("input_number.fbh_setpoint").state) == 26
+    assert dev.advance_reservation(today_at(10, 22)) == 0
+
+
+async def test_manual_raise_lower_remembers_original_and_locks_current_window(hass):
+    from unittest.mock import patch
+
+    manager, dev = make_fbh(hass)
+    # Disable cyclic execution in this isolated button test, retain durable writes.
+    manager.async_request_run = AsyncMock()
+    with patch("custom_components.smartify_energy.devices.heatpump_fbh.dt_util.now",
+               return_value=today_at(10, 30)):
+        assert dev.status_attrs()["fbh_manuell_anheben_moeglich"]
+        assert not dev.status_attrs()["fbh_manuell_absenken_moeglich"]
+        await dev.async_raise_now()
+        assert dev.state["active"] and dev.state["original"] == 26
+        assert float(hass.states.get("input_number.fbh_setpoint").state) == 28
+        assert not dev.status_attrs()["fbh_manuell_anheben_moeglich"]
+        assert dev.status_attrs()["fbh_manuell_absenken_moeglich"]
+        await dev.async_lower_now()
+        assert not dev.state["active"]
+        assert float(hass.states.get("input_number.fbh_setpoint").state) == 26
+        assert dev.state["manual_lock_window"] is not None
+        assert not dev.status_attrs()["fbh_manuell_anheben_moeglich"]
+        assert not dev.status_attrs()["fbh_manuell_absenken_moeglich"]
+        assert not dev.decide(make_ctx(today_at(10, 35)), 5000).on
+    with patch("custom_components.smartify_energy.devices.heatpump_fbh.dt_util.now",
+               return_value=today_at(10, 50)):
+        with pytest.raises(ValueError):
+            await dev.async_raise_now()
+
+
+async def test_manual_raise_denied_after_last_hour_of_window(hass):
+    from unittest.mock import patch
+
+    _, dev = make_fbh(hass)
+    for hour, minute, expected in [(13, 59, True), (14, 0, True), (14, 1, False),
+                                    (15, 0, False), (9, 59, False)]:
+        with patch("custom_components.smartify_energy.devices.heatpump_fbh.dt_util.now",
+                   return_value=today_at(hour, minute)):
+            assert dev._manual_can_raise(today_at(hour, minute)) is expected
+
+
+async def test_manual_raise_does_not_bypass_missing_heat_demand(hass):
+    from unittest.mock import patch
+
+    _, dev = make_fbh(hass)
+    dev.cfg["fbh_demand_entity"] = "input_boolean.heizbedarf"
+    hass.states.async_set("input_boolean.heizbedarf", "off")
+    with patch("custom_components.smartify_energy.devices.heatpump_fbh.dt_util.now",
+               return_value=today_at(10, 20)):
+        with pytest.raises(ValueError):
+            await dev.async_raise_now()
+    assert dev.state["original"] is None
+    assert float(hass.states.get("input_number.fbh_setpoint").state) == 26
+
+
+async def test_manual_lower_does_not_forget_rollback_if_write_unconfirmed(hass):
+    from unittest.mock import patch
+
+    manager, dev = make_fbh(hass)
+    manager.async_request_run = AsyncMock()
+    with patch("custom_components.smartify_energy.devices.heatpump_fbh.dt_util.now",
+               return_value=today_at(10, 20)):
+        await dev.async_raise_now()
+        hass.services.async_remove("input_number", "set_value")
+        async def delayed_write(_call):
+            return None
+        hass.services.async_register("input_number", "set_value", delayed_write)
+        await dev.async_lower_now()
+        assert dev.state["active"], "rollback snapshot must survive unconfirmed actor write"
+        assert dev.state["original"] == 26
+        assert dev.state["restore_pending"]
+        assert dev.state["manual_lock_window"] == dev.state["window"]
