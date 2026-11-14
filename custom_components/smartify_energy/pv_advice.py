@@ -96,7 +96,12 @@ def build_advice(hours: dict[datetime, float], now: datetime, devices: list[dict
     comparison = _recommend_day(days)
     tips = []
     laundry = None
-    first = next((d for d in devices if d.get("kind") == "washing_machine"), None)
+    washers = [d for d in devices if d.get("kind") == "washing_machine"]
+    # A switched-on plug alone does not count as washing. SEP detects a program.
+    first = next((d for d in washers if d.get("program_state") not in
+                  {"erkannt", "wartet", "laeuft", "fertig"}
+                  and not d.get("power_running")), None)
+    laundry_suppressed = bool(washers and first is None)
     if first:
         if comparison:
             wanted = comparison["tag"]
@@ -170,7 +175,11 @@ def build_advice(hours: dict[datetime, float], now: datetime, devices: list[dict
                          15 if live_state == "clearing" else 50))
     tips.sort(key=lambda x: x["prioritaet"])
     return {"state": tips[0]["text"] if tips else "Kein PV-Tipp verfügbar",
-            "tips": tips, "waschtipp": laundry, "tage": [
+            "tips": tips, "waschtipp": laundry,
+            "waesche_unterdrueckt": laundry_suppressed,
+            "waesche_status": ("Waschprogramm läuft oder bereits erledigt"
+                               if laundry_suppressed else None),
+            "tage": [
                 {k: v for k, v in day.items() if k != "stunden"} for day in days],
             "zeitfenster": "08:00–16:00", "aktualisiert": now.isoformat(),
             "mindestens_mehrertrag_kwh": 3, "mindestens_mehrertrag_prozent": 25}
