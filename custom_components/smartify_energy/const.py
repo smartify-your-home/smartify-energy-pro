@@ -38,6 +38,7 @@ TYPE_DRYER = "dryer"
 TYPE_POOL = "pool"
 TYPE_EV = "ev"
 TYPE_HEATPUMP = "heatpump"
+TYPE_HEATPUMP_FBH = "heatpump_fbh"
 TYPE_HEATER = "heater"
 
 # Geräte-Konfiguration
