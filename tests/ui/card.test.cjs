@@ -274,7 +274,7 @@ test('PV forecast tile keeps source and remaining kWh without a second chart',()
   assert.match(card.shadowRoot.querySelector('.forecast-source').textContent,/Solcast/);
   assert.match(card.shadowRoot.textContent,/Rest 7.2 kWh/);
   assert.equal(card.shadowRoot.querySelectorAll('.pv-compare-body').length,1);
-  states['sensor.fc']={state:'8.1',attributes:{rest_heute_kwh:4.3,prognose_quelle:'Eigene Berechnung',prognose_modus:'calculated'}};
+  states['sensor.fc']={state:'8.1',last_updated:new Date(Date.now()+1000).toISOString(),attributes:{rest_heute_kwh:4.3,prognose_quelle:'Eigene Berechnung',prognose_modus:'calculated'}};
   card.hass={entities,states,devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
   assert.match(card.shadowRoot.querySelector('.forecast-source').textContent,/Eigene Berechnung/);
 });
