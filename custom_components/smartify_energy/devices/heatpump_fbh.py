@@ -36,6 +36,7 @@ class FBHBoostDevice(BaseDevice):
         self.state.setdefault("setpoint_entity", None)
         self.state.setdefault("runtime_seconds", 0.0)
         self.state.setdefault("idle_since", None)
+        self.state.setdefault("reservation_released", False)
         self.state.setdefault("last_sample", None)
         self.state.setdefault("externally_changed", False)
         self.state.setdefault("restore_pending", False)
@@ -181,6 +182,8 @@ class FBHBoostDevice(BaseDevice):
                 "heizbetrieb_aktiv": self._heating_active(),
                 "laufzeit_heizen_min": round(float(self.state.get("runtime_seconds") or 0) / 60, 1),
                 "fertig_im_zeitfenster": self.state.get("completed_window"),
+                "temperatur_angehoben": bool(self.state.get("active") and not self.state.get("externally_changed")),
+                "leistungsreservierung_freigegeben": bool(self.state.get("reservation_released")),
                 "vorreservierung_w": round(self.advance_reservation(dt_util.now())),
                 "manuell_geaendert": bool(self.state.get("externally_changed")),
                 "ww_unterbrechung_fbh_vorher_aktiv": bool(self.state.get("fbh_was_running_before_ww")),
@@ -224,7 +227,7 @@ class FBHBoostDevice(BaseDevice):
             return 0
         window = self._next_window(now)
         if self.state.get("active"):
-            if self.state.get("completed_window") == self.state.get("window"):
+            if self.state.get("reservation_released"):
                 return 0
             return max(0.0, self.nominal - (self._power() or 0.0))
         if not window:
@@ -401,6 +404,7 @@ class FBHBoostDevice(BaseDevice):
         idle_limit = float(self.p("fbh_idle_power"))
         if power >= idle_limit:
             self.state["idle_since"] = None
+            self.state["reservation_released"] = False
             if heating is False:
                 return
             elapsed = min(max(0.0, ctx.now.timestamp() - float(previous or ctx.now.timestamp())), 90.0)
@@ -416,19 +420,15 @@ class FBHBoostDevice(BaseDevice):
         if self.state.get("idle_since") is None:
             self.state["idle_since"] = ctx.now.timestamp()
         if ctx.now.timestamp() - float(self.state["idle_since"]) >= 60 * float(self.p("fbh_idle_minutes")):
-            self.state["completed_window"] = self.state.get("window")
-            self.status = "fertig"
-            self.reason = "FBH-Boost abgeschlossen: WP länger im Standby"
-            # async_apply restores the old setpoint and releases the budget.
+            self.state["reservation_released"] = True
+            self.status = "boost"
+            self.reason = "FBH-Heizzyklus beendet: Leistung freigegeben, Sollwert bleibt angehoben"
 
     def decide(self, ctx: Context, budget_left: float) -> Decision:
         now = ctx.now
         if self.state.get("restore_pending"):
             return Decision(False, 0, "Wiederherstellung des FBH-Sollwerts läuft")
         if self.state.get("active"):
-            if self.state.get("completed_window") == self.state.get("window"):
-                self.status = "fertig"
-                return Decision(False, 0, "FBH fertig – Standby erkannt")
             key = self.state.get("window")
             window = self._window_now(now)
             if window is None or window[2] != key:
@@ -438,6 +438,8 @@ class FBHBoostDevice(BaseDevice):
                 self.status = "wartet"
                 return Decision(True, 0, "Warmwasserbetrieb hat Vorrang – keine zusätzliche FBH-Reservierung")
             self.status = "boost"
+            if self.state.get("reservation_released"):
+                return Decision(True, 0, "Temperatur angehoben – Leistungsreservierung freigegeben")
             return Decision(True, self.nominal, "FBH-Sollwerterhöhung läuft")
         window = self._window_now(now)
         if window and self.state.get("completed_window") == window[2]:
@@ -503,7 +505,8 @@ class FBHBoostDevice(BaseDevice):
         target = original + float(self.p("fbh_delta"))
         self.state.update(active=True, window=window[2], setpoint_entity=self.cfg["fbh_setpoint_entity"],
                           original=original, target=target, started=ctx.now.timestamp(),
-                          runtime_seconds=0.0, idle_since=None, last_sample=ctx.now.timestamp(),
+                          runtime_seconds=0.0, idle_since=None, reservation_released=False,
+                          last_sample=ctx.now.timestamp(),
                           externally_changed=False, restore_pending=False,
                           ww_seen=self._ww_active(), last_fbh_running_at=None,
                           fbh_was_running_before_ww=False, ww_ended_at=None,
@@ -544,7 +547,8 @@ class FBHBoostDevice(BaseDevice):
                 # Do not overwrite an externally adjusted temperature target.
                 self.state["externally_changed"] = True
         self.state.update(active=False, original=None, target=None, setpoint_entity=None,
-                          idle_since=None, last_sample=None, restore_pending=False,
+                          idle_since=None, last_sample=None, reservation_released=False,
+                          restore_pending=False,
                           ww_recovery_eligible=False, fbh_was_running_before_ww=False,
                           restart_pulse_target=None, restart_pulse_until=None,
                           restart_return_pending=False, ww_ended_at=None)
