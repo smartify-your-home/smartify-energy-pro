@@ -94,5 +94,62 @@ class PVAdviceTests(unittest.TestCase):
         self.assertEqual(res["tage"][1]["kwh"], 16)
 
 
+    def test_today_remainder_is_real_baseline_and_good_washing_slot_wins(self):
+        self.now = self.now.replace(hour=12, minute=15)
+        result = self.run_advice([32, 48, 45])
+        self.assertEqual(result["waschtipp"]["empfehlung"], "heute")
+        self.assertIn("heute noch gutes", result["waschtipp"]["detail"])
+        self.assertAlmostEqual(result["tage"][0]["kwh"], 15, delta=0.05)
+        self.assertEqual(result["tage"][1]["kwh"], 48)
+
+    def test_tomorrow_only_if_current_remainder_is_unsuitable(self):
+        self.now = self.now.replace(hour=12, minute=0)
+        result = self.run_advice([8, 24, 27])
+        self.assertEqual(result["waschtipp"]["empfehlung"], "morgen")
+        self.assertEqual(result["tage"][0]["kwh"], 4)
+        self.assertIn("gegenüber heute ab jetzt", result["waschtipp"]["detail"])
+
+    def test_past_hours_may_be_missing_for_rest_of_today(self):
+        self.now = self.now.replace(hour=12, minute=0)
+        vals = self.hours([32, 36, 38])
+        for h in list(vals):
+            if h.date() == self.now.date() and h.hour < 12:
+                del vals[h]
+        res = advice.build_advice(vals, self.now, self.washer)
+        self.assertTrue(res["tage"][0]["vollstaendig"])
+        self.assertEqual(res["tage"][0]["kwh"], 16)
+        self.assertEqual(res["waschtipp"]["empfehlung"], "heute")
+
+    def test_after_16_today_has_no_remaining_pv(self):
+        self.now = self.now.replace(hour=17, minute=0)
+        res = self.run_advice([32, 24, 18])
+        self.assertEqual(res["tage"][0]["kwh"], 0)
+        self.assertEqual(res["waschtipp"]["empfehlung"], "morgen")
+
+    def test_running_detected_waiting_and_same_day_finished_hide_wash_tip(self):
+        for phase in ("erkannt", "wartet", "laeuft", "fertig"):
+            with self.subTest(phase=phase):
+                washing = {**self.washer[0], "program_state": phase,
+                           "program_day": self.now.date().isoformat()}
+                res = self.run_advice([16, 24, 20], devices=[washing])
+                self.assertIsNone(res["waschtipp"])
+                self.assertTrue(res["waesche_unterdrueckt"])
+                self.assertFalse(any(t["typ"] == "waschen" for t in res["tips"]))
+
+    def test_fresh_plug_or_previous_day_finished_allows_new_tip(self):
+        free = {**self.washer[0], "program_state": "bereit", "power_running": False}
+        old = {**self.washer[0], "program_state": "fertig", "program_day": "2026-11-11"}
+        for washer in (free, old):
+            res = self.run_advice([16, 24, 20], devices=[washer])
+            self.assertIsNotNone(res["waschtipp"])
+            self.assertFalse(res["waesche_unterdrueckt"])
+
+    def test_washing_tips_disappear_but_other_pv_tips_remain(self):
+        washer = {**self.washer[0], "program_state": "laeuft"}
+        res = self.run_advice([16, 24, 20], devices=[washer], live_state="clearing")
+        self.assertIsNone(res["waschtipp"])
+        self.assertTrue(any(t["typ"] == "pv_wetter" for t in res["tips"]))
+
+
 if __name__ == "__main__":
     unittest.main()
