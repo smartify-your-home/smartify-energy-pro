@@ -430,7 +430,7 @@ test('PV actual-forecast comparison uses fixed left kWh axis while scrolling 48h
   assert.equal(axis.querySelectorAll('span').length,5);
   assert.equal(axis.querySelector('span').textContent,'2,5 kWh');
   assert.equal(axis.querySelector('span:last-child').textContent,'0 kWh');
-  assert.equal(root.querySelector('.pv-compare-forecast').getAttribute('style'),'height:100%');
+  assert.equal(root.querySelector('.pv-compare-forecast').getAttribute('cy'),'0.000','peak-point reaches top of fixed kWh chart');
   assert.equal(root.querySelectorAll('.pv-compare-day-divider').length,1);
   assert.equal(root.querySelector('.sep-y-axis.compare').getAttribute('class'),'sep-y-axis compare');
 });
@@ -612,13 +612,13 @@ test('unified PV comparison shows original and measured production in completed 
 });
 
 
-test('PV comparison displays original and actual in past, two forecasts now, only current forecast in future',()=>{
+test('PV comparison draws points and connected lines only for permitted historical/current/future series',()=>{
   const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});dom.window.eval(source);
   const card=dom.window.document.createElement('smartify-energy-plan-card');
   card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
   dom.window.document.body.append(card);
   const hour=Math.floor(Date.now()/3600000)*3600000;
-  const entries=[-1,0,1].map(offset=>({
+  const entries=[-2,-1,0,1,2].map(offset=>({
     zeit:new Date(hour+offset*3600000).toISOString(),
     prognose_wh:1000,aktuelle_prognose_wh:1200,ist_wh:900
   }));
@@ -626,19 +626,72 @@ test('PV comparison displays original and actual in past, two forecasts now, onl
     states:{'sensor.plan':{state:'–',attributes:{pv_vergleich:{
       konfiguriert:true,gesamt_peak_kwp:3,stunden:entries
     }}}},devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
-  const cols=[...card.shadowRoot.querySelectorAll('.pv-compare-col')];
+  const root=card.shadowRoot,cols=[...root.querySelectorAll('.pv-compare-col')];
+  assert.equal(cols.length,5);
+  const p=css=>[...root.querySelectorAll(css)].map(x=>Number(x.getAttribute('cx')));
+  assert.deepEqual(p('.pv-compare-forecast'),[20,65,110],'past and current: frozen original only');
+  assert.deepEqual(p('.pv-compare-current'),[110,155,200],'current and future: live forecast only');
+  assert.deepEqual(p('.pv-compare-actual'),[20,65],'only completed hours have measured actual');
+  for(const css of ['.pv-line-forecast','.pv-line-current','.pv-line-actual']){
+    assert.match(root.querySelector(css).getAttribute('d'),/ L/,'consecutive hours are joined');
+  }
+  assert.match(cols[3].getAttribute('title'),/Aktuelle Prognose 1.20 kWh/);
+  assert.match(root.querySelector('.pv-compare-legend').textContent,/Aktuelle Prognose/);
+});
+
+
+
+test('planned loads render as stacked device bars in the same forecast/actual line chart',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
+  dom.window.document.body.append(card);
+  const base=Math.floor(Date.now()/3600000)*3600000+3600000;
+  const hours=[0,1,2].map(i=>new Date(base+i*3600000).toISOString());
+  const entities={
+    plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'},
+    load:{platform:'smartify_energy',translation_key:'status',device_id:'wm',entity_id:'sensor.wm'}
+  };
+  const planHours=[{zeit:hours[0],geraete:{Waschmaschine:1500,Geschirrspüler:700}},
+    {zeit:hours[1],geraete:{Waschmaschine:900}},
+    {zeit:hours[2],geraete:{}}];
+  const pvHours=hours.map((zeit,i)=>({zeit,prognose_wh:3000,aktuelle_prognose_wh:2500+i*200,ist_wh:null}));
+  card.hass={entities,devices:{hub:{name:'SEP'},wm:{name:'Waschmaschine',via_device_id:'hub'}},
+    states:{'sensor.plan':{state:'–',attributes:{stunden:planHours,pv_vergleich:{
+      konfiguriert:true,gesamt_peak_kwp:5,stunden:pvHours}}},'sensor.wm':{state:'waiting',attributes:{geraetetyp:'load'}}},
+    callService(){return Promise.resolve()}};
+  const root=card.shadowRoot,cols=[...root.querySelectorAll('.pv-compare-col')];
   assert.equal(cols.length,3);
-  const count=(col,cls)=>col.querySelectorAll(cls).length;
-  assert.equal(count(cols[0],'.pv-compare-forecast'),1,'past retains original');
-  assert.equal(count(cols[0],'.pv-compare-current'),0,'past hides live forecast');
-  assert.equal(count(cols[0],'.pv-compare-actual'),1,'past retains actual');
-  assert.equal(count(cols[1],'.pv-compare-forecast'),1,'current hour retains original');
-  assert.equal(count(cols[1],'.pv-compare-current'),1,'current hour retains live forecast');
-  assert.equal(count(cols[1],'.pv-compare-actual'),0,'incomplete actual is hidden');
-  assert.equal(count(cols[2],'.pv-compare-forecast'),0,'future original is hidden');
-  assert.equal(count(cols[2],'.pv-compare-current'),1,'future live forecast remains');
-  assert.equal(count(cols[2],'.pv-compare-actual'),0,'future actual is hidden');
-  assert.match(cols[2].getAttribute('title'),/Aktuelle Prognose 1.20 kWh/);
+  assert.equal(cols[0].querySelectorAll('.pv-device-bar').length,2,'both planned devices share first hour');
+  assert.equal(cols[1].querySelectorAll('.pv-device-bar').length,1,'next hour has only one allocation');
+  assert.equal(cols[2].querySelectorAll('.pv-device-bar').length,0,'no phantom device bar');
+  assert.match(cols[0].getAttribute('title'),/Waschmaschine/);
+  assert.match(cols[0].getAttribute('title'),/Geschirrspüler/);
+  assert.match(root.querySelector('.pv-compare-legend').textContent,/Waschmaschine \(geplant\)/);
+  assert.match(root.querySelector('.pv-compare-legend').textContent,/Geschirrspüler \(geplant\)/);
+  assert.equal(root.querySelectorAll('.pv-compare-lines').length,1,'one unified chart');
+  assert.equal(root.querySelectorAll('.pv-compare-current').length,3);
+});
+
+test('point-to-point PV lines break at missing hours and overnight gaps',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
+  dom.window.document.body.append(card);
+  const base=Math.floor(Date.now()/3600000)*3600000-6*3600000;
+  const offsets=[0,1,4,5];
+  const hours=offsets.map((i,j)=>({zeit:new Date(base+i*3600000).toISOString(),
+    prognose_wh:1000,aktuelle_prognose_wh:1000,ist_wh:j===1?null:850}));
+  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
+    states:{'sensor.plan':{state:'–',attributes:{pv_vergleich:{konfiguriert:true,
+      gesamt_peak_kwp:3,stunden:hours}}}},devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  const root=card.shadowRoot,paths=root.querySelectorAll('.pv-line-forecast,.pv-line-actual');
+  const forecast=paths[0].getAttribute('d'),actual=paths[1].getAttribute('d');
+  assert.equal((forecast.match(/M/g)||[]).length,2,'forecast does not connect a 3-hour gap');
+  assert.equal((forecast.match(/L/g)||[]).length,2,'only consecutive forecast hours are joined');
+  assert.equal((actual.match(/M/g)||[]).length,3,'missing actual hour and night break the line');
+  assert.equal((actual.match(/L/g)||[]).length,0,'no false actual interpolations');
+  assert.equal(root.querySelectorAll('.pv-compare-actual').length,3,'missing actual never becomes zero');
 });
 
 test('PV chart initially scrolls to today rather than the oldest history day',()=>{
@@ -694,8 +747,8 @@ test('PV comparison exact peak scale stays at 10 kWh even with larger historic v
   const axis=root.querySelector('.pv-compare-body .sep-y-axis');
   assert.equal(axis.querySelector('span').textContent,'10 kWh');
   assert.equal(axis.querySelector('span:last-child').textContent,'0 kWh');
-  assert.equal(root.querySelector('.pv-compare-forecast').getAttribute('style'),'height:84%');
-  assert.equal(root.querySelector('.pv-compare-actual').getAttribute('style'),'height:100%',
+  assert.equal(root.querySelector('.pv-compare-forecast').getAttribute('cy'),'24.960','8.4 kWh is 84 percent of fixed 10 kWh chart');
+  assert.equal(root.querySelector('.pv-compare-actual').getAttribute('cy'),'0.000',
     'above peak measurement is visually capped, not rescaled');
   assert.match(root.querySelector('.pv-compare-col').getAttribute('title'),/11.00 kWh/,
     'the real above-peak value remains accessible in the tooltip');
