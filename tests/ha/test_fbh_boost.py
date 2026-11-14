@@ -307,32 +307,73 @@ async def test_demand_unknown_fails_closed_and_active_boost_restores(hass):
     assert dev.advance_reservation(today_at(10, 22)) == 0
 
 
-async def test_manual_raise_lower_remembers_original_and_locks_current_window(hass):
+async def test_manual_lower_pauses_automatic_restart_but_explicit_raise_is_possible(hass):
     from unittest.mock import patch
 
     manager, dev = make_fbh(hass)
-    # Disable cyclic execution in this isolated button test, retain durable writes.
     manager.async_request_run = AsyncMock()
     with patch("custom_components.smartify_energy.devices.heatpump_fbh.dt_util.now",
                return_value=today_at(10, 30)):
-        assert dev.status_attrs()["fbh_manuell_anheben_moeglich"]
-        assert not dev.status_attrs()["fbh_manuell_absenken_moeglich"]
+        before = dev.status_attrs()
+        assert before["fbh_erhoehung_aktiv"] is False
+        assert before["sollwert_aktuell"] == 26
+        assert before["fbh_manuell_anheben_moeglich"]
+        assert not before["fbh_manuell_absenken_moeglich"]
         await dev.async_raise_now()
-        assert dev.state["active"] and dev.state["original"] == 26
-        assert float(hass.states.get("input_number.fbh_setpoint").state) == 28
-        assert not dev.status_attrs()["fbh_manuell_anheben_moeglich"]
-        assert dev.status_attrs()["fbh_manuell_absenken_moeglich"]
+        raised = dev.status_attrs()
+        assert raised["fbh_erhoehung_aktiv"]
+        assert raised["sollwert_original"] == 26
+        assert raised["sollwert_boost"] == 28
+        assert raised["sollwert_aktuell"] == 28
+        assert not raised["fbh_manuell_anheben_moeglich"]
+        assert raised["fbh_manuell_absenken_moeglich"]
+
         await dev.async_lower_now()
-        assert not dev.state["active"]
-        assert float(hass.states.get("input_number.fbh_setpoint").state) == 26
-        assert dev.state["manual_lock_window"] is not None
-        assert not dev.status_attrs()["fbh_manuell_anheben_moeglich"]
-        assert not dev.status_attrs()["fbh_manuell_absenken_moeglich"]
+        lowered = dev.status_attrs()
+        assert not lowered["fbh_erhoehung_aktiv"]
+        assert lowered["sollwert_aktuell"] == 26
+        assert lowered["fbh_automatik_nach_absenken_pausiert"]
+        assert lowered["fbh_manuell_anheben_moeglich"]
+        assert not lowered["fbh_manuell_absenken_moeglich"]
+        # No automatic restart immediately following a user lowering.
         assert not dev.decide(make_ctx(today_at(10, 35)), 5000).on
+
+        # Explicit user request may raise again in the same eligible window.
+        await dev.async_raise_now()
+        assert dev.state["active"]
+        assert dev.state["manual_lock_window"] is None
+        assert dev.state["completed_window"] is None
+        assert float(hass.states.get("input_number.fbh_setpoint").state) == 28
+        await dev.async_lower_now()
+        assert float(hass.states.get("input_number.fbh_setpoint").state) == 26
+
+
+async def test_manual_lower_is_only_offered_during_matching_active_window(hass):
+    from unittest.mock import patch
+
+    manager, dev = make_fbh(hass)
+    manager.async_request_run = AsyncMock()
     with patch("custom_components.smartify_energy.devices.heatpump_fbh.dt_util.now",
-               return_value=today_at(10, 50)):
+               return_value=today_at(10, 20)):
+        await dev.async_raise_now()
+        assert dev._manual_can_lower(today_at(10, 21))
+        assert not dev._manual_can_lower(today_at(15, 1))
+        attrs = dev.status_attrs()
+        assert attrs["fbh_erhoehung_aktiv"]
+        assert attrs["fbh_zeitfenster_aktiv"]
+    with patch("custom_components.smartify_energy.devices.heatpump_fbh.dt_util.now",
+               return_value=today_at(15, 1)):
+        attrs = dev.status_attrs()
+        assert attrs["fbh_erhoehung_aktiv"]  # Until normal safe restore completes.
+        assert not attrs["fbh_manuell_absenken_moeglich"]
+        assert not attrs["fbh_zeitfenster_aktiv"]
         with pytest.raises(ValueError):
-            await dev.async_raise_now()
+            await dev.async_lower_now()
+    # Existing scheduler safely restores outside the configured window.
+    await dev.async_run(make_ctx(today_at(15, 2), 0), 0)
+    assert not dev.state["active"]
+    assert float(hass.states.get("input_number.fbh_setpoint").state) == 26
+
 
 
 async def test_manual_raise_denied_after_last_hour_of_window(hass):
