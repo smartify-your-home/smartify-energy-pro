@@ -228,9 +228,11 @@ class FBHBoostDevice(BaseDevice):
     async def _manual_raise(self) -> None:
         if self.mode != MODE_AUTO:
             raise ValueError("Jetzt anheben erfordert FBH-Automatikmodus")
+        now = dt_util.now()
+        window = self._window_now(now)
+        if window is None or window[1] - dt_util.as_local(now) < timedelta(hours=1):
+            raise ValueError("Jetzt anheben nur im Zeitfenster und mindestens 60 Minuten vor Ende")
         if self.state.get("active"):
-            self.state["manual_hold_window"] = None
-            await self.manager.async_save_now()
             return
         original = self._setpoint()
         entity = self.cfg.get("fbh_setpoint_entity")
@@ -243,9 +245,8 @@ class FBHBoostDevice(BaseDevice):
             maximum = min(maximum, float(st.attributes["max"]))
         if target > maximum:
             raise ValueError("FBH-Sollwertmaximum überschritten")
-        window = self._window_now(dt_util.now())
-        self.state.update(active=True, manual_override=True, manual_hold_window=None,
-                          window=window[2] if window else None,
+        self.state.update(active=True, manual_override=False, manual_hold_window=None,
+                          window=window[2],
                           setpoint_entity=entity, original=original, target=target,
                           started=dt_util.now().timestamp(), runtime_seconds=0.0,
                           idle_since=None, reservation_released=False,
