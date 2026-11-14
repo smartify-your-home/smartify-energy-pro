@@ -563,6 +563,7 @@
             "power_sensor": "Heat-pump electrical power sensor",
             "nominal_power": "Electrical heat-pump rated power",
             "fbh_heating_active_entity": "Floor-heating mode active (optional)",
+            "fbh_demand_entity": "Heating demand present (optional; ON = heat needed)",
             "ww_active_entity": "Hot-water charging active (recommended)",
             "absence_entity": "Away-mode inhibit (optional)"
           },
@@ -571,6 +572,7 @@
             "power_sensor": "Electrical power in W or kW. Required for standby completion and reservation.",
             "nominal_power": "Expected electrical heat-pump power reserved for a future boost.",
             "fbh_heating_active_entity": "Optional on while underfloor-heating is active; allows filtering hot-water or non-heating cycles.",
+            "fbh_demand_entity": "Optional binary_sensor or input_boolean. ON allows FBH boost; OFF holds it in standby and restores an active boost to its saved original setpoint. Unknown/unavailable fails closed. If omitted, current behavior is unchanged.",
             "ww_active_entity": "Strongly recommended when hot-water and heating share the same compressor; on suspends FBH runtime detection and start.",
             "absence_entity": "Optional on means away and disables the new boost. Existing active setpoint is restored safely."
           }
@@ -583,6 +585,7 @@
             "power_sensor": "Heat-pump electrical power sensor",
             "nominal_power": "Electrical heat-pump rated power",
             "fbh_heating_active_entity": "Floor-heating mode active (optional)",
+            "fbh_demand_entity": "Heating demand present (optional; ON = heat needed)",
             "ww_active_entity": "Hot-water charging active (recommended)",
             "absence_entity": "Away-mode inhibit (optional)"
           },
@@ -591,6 +594,7 @@
             "power_sensor": "Electrical power in W or kW. Required for standby completion and reservation.",
             "nominal_power": "Expected electrical heat-pump power reserved for a future boost.",
             "fbh_heating_active_entity": "Optional on while underfloor-heating is active; allows filtering hot-water or non-heating cycles.",
+            "fbh_demand_entity": "Optional binary_sensor or input_boolean. ON allows FBH boost; OFF holds it in standby and restores an active boost to its saved original setpoint. Unknown/unavailable fails closed. If omitted, current behavior is unchanged.",
             "ww_active_entity": "Strongly recommended when hot-water and heating share the same compressor; on suspends FBH runtime detection and start.",
             "absence_entity": "Optional on means away and disables the new boost. Existing active setpoint is restored safely."
           }
