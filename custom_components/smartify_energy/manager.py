@@ -370,7 +370,7 @@ class EnergyManager:
         """Astronomical day/night for each historic local date, not sun.sun's current state."""
         today = dt_util.now().date()
         windows = []
-        for offset in range(-14, 1):
+        for offset in range(-14, 5):
             day = today + timedelta(days=offset)
             sunrise = get_astral_event_date(self.hass, "sunrise", day)
             sunset = get_astral_event_date(self.hass, "sunset", day)
