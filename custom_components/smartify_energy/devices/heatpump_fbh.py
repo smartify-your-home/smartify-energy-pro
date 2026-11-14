@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from homeassistant.util import dt as dt_util
 
 from ..const import MODE_AUTO
-from ..helpers import ParamSpec, SensorSpec, state_float, state_str, power_w, time_from_str
+from ..helpers import ParamSpec, SensorSpec, power_w, state_float, state_str, time_from_str
 from .base import BaseDevice, Context, Decision
 
 _LOGGER = logging.getLogger(__name__)
