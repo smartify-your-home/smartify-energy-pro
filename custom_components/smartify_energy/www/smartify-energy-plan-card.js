@@ -1475,7 +1475,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     });
     const starts = new Set(days.map(x=>x.first));
     const dayDividers = days.slice(1).map(day =>
-      `<span class="pv-compare-day-divider" style="left:${day.first*unitWidth-3}px" aria-hidden="true"></span>`).join("");
+      `<span class="pv-compare-day-divider" style="left:${day.first*45-3}px" aria-hidden="true"></span>`).join("");
     const unitWidth = 45;
     const totalWidth = Math.max(580, rows.length*unitWidth);
     const dayHead = days.map(day=>{
