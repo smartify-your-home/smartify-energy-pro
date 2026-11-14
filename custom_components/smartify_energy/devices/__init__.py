@@ -1,12 +1,13 @@
 """Gerätetypen."""
 from __future__ import annotations
 
-from ..const import TYPE_DRYER, TYPE_EV, TYPE_HEATER, TYPE_HEATPUMP, TYPE_LOAD, TYPE_POOL
+from ..const import TYPE_DRYER, TYPE_EV, TYPE_HEATER, TYPE_HEATPUMP, TYPE_HEATPUMP_FBH, TYPE_LOAD, TYPE_POOL
 from .base import BaseDevice, Context, Decision, PlanDemand
 from .dryer import DryerDevice
 from .ev import EvDevice
 from .heater import HeaterDevice
 from .heatpump import HeatPumpDevice
+from .heatpump_fbh import FBHBoostDevice
 from .load import LoadDevice
 from .pool import PoolDevice
 
@@ -16,6 +17,7 @@ DEVICE_CLASSES: dict[str, type[BaseDevice]] = {
     TYPE_POOL: PoolDevice,
     TYPE_EV: EvDevice,
     TYPE_HEATPUMP: HeatPumpDevice,
+    TYPE_HEATPUMP_FBH: FBHBoostDevice,
     TYPE_HEATER: HeaterDevice,
 }
 
