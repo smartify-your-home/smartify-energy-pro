@@ -1088,7 +1088,7 @@ class EnergyManager:
             })
         self.pv_advice = build_advice(
             self.forecast.hours, dt_util.as_local(now), day_devices,
-            base_load_w=base,
+            base_load_w=float(self.p("base_load") or 0),
             live_state=self.live_pv.diagnostics(now).get("state") if self.live_pv else None,
             battery_soc=self.battery_soc if self.has_battery else None,
             battery_capacity_kwh=float(self.cfg.get(CONF_BAT_CAPACITY) or 0),
