@@ -1,3 +1,11 @@
+## SEP 0.3.94 – gemeinsame PV-/Geräteplanungsgrafik
+
+- Ausschließlich **ein** Diagramm für PV und Geräte. `pv_vergleich.stunden` liefert die historische und zukünftige stündliche Zeitachse; `sensor.plan.attributes.stunden[].geraete` liefert die originale SEP-Geräteplanung. Planstunden per absolutem Stundenzeitstempel zusammenführen, nicht anhand bloßer Listenpositionen oder lokaler Uhrzeit.
+- Ursprüngliche Prognose nur bis inklusive laufender Stunde; aktuelle Prognose ab inklusive laufender Stunde; vollständiges Ist nur für vergangene Stunden. Darstellung sämtlicher verfügbarer PV-Werte als verbundene SVG-Linien mit Punkten. Fehlende Werte bleiben null; nur direkt aufeinanderfolgende Stunden dürfen verbunden werden. Niemals über Nacht oder Prognoselücken interpolieren.
+- Geplante Geräte pro Stunde als gestapelte farbige Balken mit Gerätenamen und Wh/W-Wert je Zeitfenster; Farbzuordnung analog ursprünglichem Geräteplan. Planbare Nachtstunden nicht allein wegen fehlender PV-Erzeugung ausblenden. Kein künstliches Planungsfenster über die tatsächlichen Backend-Planungen hinaus.
+- Zeitachse 14 Tage Rückblick + 60 Stunden Zukunft; kWh-Achse weiterhin fest an installierter PV-Peakleistung. Die SEP-Karte springt initial zum heutigen lokalen Kalendertag und respektiert danach manuelles Scrollen. Tagesübersicht und Geräte-Prioritäten bleiben intakt.
+- Tests in `tests/ui/card.test.cjs` müssen echte Planungsbalken, Punkt-zu-Punkt-Verbindung, Lücken/Nachttrennung, historische/einzige Zukunftsprognose sowie Skalierung prüfen.
+
 ## SEP 0.3.93 – sichtbarer FBH-Zustand und kontextuelle Aktionen
 
 - Für heatpump_fbh im Status immer fbh_erhoehung_aktiv, fbh_zeitfenster_aktiv und sollwert_aktuell ausgeben. Original- und Boost-Sollwert nur anzeigen, wenn tatsächlich eine FBH-Erhöhung verwaltet wird. Die Darstellung darf nie vom reservierten PV-Budget oder dem Statuscode „finished“ abgeleitet werden; bei WW-Vorrang kann der FBH-Sollwert erhöht bleiben, obwohl keine zusätzliche Leistung reserviert wird.
