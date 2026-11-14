@@ -163,3 +163,117 @@ async def test_advance_reservation_delays_lower_priority_appliance(hass):
     assert not appliance.last_decision.on
     assert manager.device_budgets["load"]["aktuell_w"] <= 500
     await manager.async_stop()
+
+async def test_post_ww_restart_only_if_fbh_was_heating_before_ww(hass):
+    _, dev = make_fbh(hass)
+    dev.params.update(fbh_restart_after_ww=True, fbh_restart_wait=5,
+                      fbh_restart_delta=3.0, fbh_restart_duration=15)
+    await dev.async_run(make_ctx(today_at(10)), 4000)
+    # A positively identified heating run must precede the WW transition.
+    hass.states.async_set("sensor.wp", "900", {"unit_of_measurement": "W"})
+    dev.pre_update(make_ctx(today_at(10, 1)))
+    hass.states.async_set("binary_sensor.ww", "on")
+    hass.states.async_set("binary_sensor.fbh_heating", "off")
+    hass.states.async_set("sensor.wp", "1800", {"unit_of_measurement": "W"})
+    dev.pre_update(make_ctx(today_at(10, 2)))
+    assert dev.state["fbh_was_running_before_ww"]
+    # WW has finished but the FBH did not resume.
+    hass.states.async_set("binary_sensor.ww", "off")
+    hass.states.async_set("sensor.wp", "0", {"unit_of_measurement": "W"})
+    dev.pre_update(make_ctx(today_at(10, 15)))
+    assert dev.state["ww_recovery_eligible"]
+    await dev.async_run(make_ctx(today_at(10, 19)), 4000)
+    assert float(hass.states.get("input_number.fbh_setpoint").state) == 28
+    await dev.async_run(make_ctx(today_at(10, 20)), 4000)
+    assert float(hass.states.get("input_number.fbh_setpoint").state) == 31
+    assert dev.state["restart_used_window"] == dev.state["window"]
+    # Without feedback of a heating restart the 15-minute cap must prevail.
+    await dev.async_run(make_ctx(today_at(10, 34)), 4000)
+    assert float(hass.states.get("input_number.fbh_setpoint").state) == 31
+    await dev.async_run(make_ctx(today_at(10, 35)), 4000)
+    assert float(hass.states.get("input_number.fbh_setpoint").state) == 28
+    # The same WW interruption must never cause a second pulse.
+    await dev.async_run(make_ctx(today_at(10, 42)), 4000)
+    assert float(hass.states.get("input_number.fbh_setpoint").state) == 28
+    await dev.async_run(make_ctx(today_at(15)), 4000)
+    assert float(hass.states.get("input_number.fbh_setpoint").state) == 26
+
+
+async def test_ww_without_prior_fbh_heating_does_not_trigger_pulse(hass):
+    _, dev = make_fbh(hass)
+    dev.params.update(fbh_restart_after_ww=True, fbh_restart_wait=5)
+    await dev.async_run(make_ctx(today_at(10)), 4000)
+    hass.states.async_set("sensor.wp", "0", {"unit_of_measurement": "W"})
+    hass.states.async_set("binary_sensor.fbh_heating", "off")
+    dev.pre_update(make_ctx(today_at(10, 1)))
+    hass.states.async_set("binary_sensor.ww", "on")
+    hass.states.async_set("sensor.wp", "1800", {"unit_of_measurement": "W"})
+    dev.pre_update(make_ctx(today_at(10, 2)))
+    assert not dev.state["fbh_was_running_before_ww"]
+    hass.states.async_set("binary_sensor.ww", "off")
+    hass.states.async_set("sensor.wp", "0", {"unit_of_measurement": "W"})
+    dev.pre_update(make_ctx(today_at(10, 15)))
+    await dev.async_run(make_ctx(today_at(10, 30)), 4000)
+    assert not dev.state["ww_recovery_eligible"]
+    assert dev.state["restart_pulse_target"] is None
+    assert float(hass.states.get("input_number.fbh_setpoint").state) == 28
+
+
+async def test_post_ww_spontaneous_fbh_restart_prevents_extra_setpoint(hass):
+    _, dev = make_fbh(hass)
+    dev.params["fbh_restart_after_ww"] = True
+    await dev.async_run(make_ctx(today_at(10)), 4000)
+    hass.states.async_set("sensor.wp", "900", {"unit_of_measurement": "W"})
+    dev.pre_update(make_ctx(today_at(10, 1)))
+    hass.states.async_set("binary_sensor.ww", "on")
+    hass.states.async_set("binary_sensor.fbh_heating", "off")
+    dev.pre_update(make_ctx(today_at(10, 2)))
+    hass.states.async_set("binary_sensor.ww", "off")
+    hass.states.async_set("sensor.wp", "0", {"unit_of_measurement": "W"})
+    dev.pre_update(make_ctx(today_at(10, 15)))
+    hass.states.async_set("binary_sensor.fbh_heating", "on")
+    hass.states.async_set("sensor.wp", "900", {"unit_of_measurement": "W"})
+    dev.pre_update(make_ctx(today_at(10, 18)))
+    await dev.async_run(make_ctx(today_at(10, 28)), 4000)
+    assert dev.state["restart_pulse_target"] is None
+    assert float(hass.states.get("input_number.fbh_setpoint").state) == 28
+
+
+async def test_post_ww_restart_requires_both_status_signals_and_max_temp_limit(hass):
+    _, dev = make_fbh(hass)
+    dev.params.update(fbh_restart_after_ww=True, fbh_restart_wait=5,
+                      fbh_restart_delta=6.0)
+    await dev.async_run(make_ctx(today_at(10)), 4000)
+    hass.states.async_set("sensor.wp", "900", {"unit_of_measurement": "W"})
+    dev.pre_update(make_ctx(today_at(10, 1)))
+    hass.states.async_set("binary_sensor.ww", "on")
+    hass.states.async_set("binary_sensor.fbh_heating", "off")
+    dev.pre_update(make_ctx(today_at(10, 2)))
+    hass.states.async_set("binary_sensor.ww", "off")
+    hass.states.async_set("sensor.wp", "0", {"unit_of_measurement": "W"})
+    dev.pre_update(make_ctx(today_at(10, 15)))
+    dev.cfg.pop("fbh_heating_active_entity")
+    await dev.async_run(make_ctx(today_at(10, 21)), 4000)
+    assert dev.state["restart_pulse_target"] is None
+    dev.cfg["fbh_heating_active_entity"] = "binary_sensor.fbh_heating"
+    dev.params["fbh_max_temp"] = 30
+    await dev.async_run(make_ctx(today_at(10, 22)), 4000)
+    assert float(hass.states.get("input_number.fbh_setpoint").state) == 30
+    assert dev.state["restart_pulse_target"] == 30
+
+
+async def test_post_ww_pulse_only_once_and_respects_disabled_default(hass):
+    _, dev = make_fbh(hass)
+    assert dev.p("fbh_restart_after_ww") is False
+    await dev.async_run(make_ctx(today_at(10)), 4000)
+    hass.states.async_set("sensor.wp", "900", {"unit_of_measurement": "W"})
+    dev.pre_update(make_ctx(today_at(10, 1)))
+    hass.states.async_set("binary_sensor.ww", "on")
+    hass.states.async_set("binary_sensor.fbh_heating", "off")
+    dev.pre_update(make_ctx(today_at(10, 2)))
+    hass.states.async_set("binary_sensor.ww", "off")
+    hass.states.async_set("sensor.wp", "0", {"unit_of_measurement": "W"})
+    dev.pre_update(make_ctx(today_at(10, 15)))
+    await dev.async_run(make_ctx(today_at(10, 30)), 4000)
+    assert dev.state["restart_pulse_target"] is None
+    assert float(hass.states.get("input_number.fbh_setpoint").state) == 28
