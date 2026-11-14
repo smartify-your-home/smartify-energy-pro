@@ -171,24 +171,47 @@ function rowCard(devs){
   return card.shadowRoot;
 }
 
-test('FBH card shows only authorized raise or lower action and hides locked actions',()=>{
-  const setup = overrides => rowCard({
-    fbh:[['sensor.fbh','status','waiting',{geraetetyp:'heatpump_fbh',modus:'auto',
-      fbh_manuell_anheben_moeglich:true,fbh_manuell_absenken_moeglich:false,
-      fbh_schreibvorgang:false,...overrides}],
+test('FBH row shows clear boost state, temperatures and only contextually available action',()=>{
+  const setup=(state,overrides={})=>rowCard({
+    fbh:[['sensor.fbh','status',state,{geraetetyp:'heatpump_fbh',modus:'auto',
+      fbh_erhoehung_aktiv:false,fbh_manuell_anheben_moeglich:true,
+      fbh_manuell_absenken_moeglich:false,fbh_zeitfenster_aktiv:true,
+      fbh_schreibvorgang:false,sollwert_aktuell:26,heizbedarf:true,...overrides}],
       ['button.fbh_up','fbh_raise_now','unknown'],
       ['button.fbh_down','fbh_lower_now','unknown']],
   });
-  const available=setup({});
-  assert.deepEqual([...available.querySelectorAll('[data-wrap="fbh"] .sep-act')].map(x=>x.textContent.trim()),['Jetzt anheben']);
-  assert.equal(available.querySelector('[data-press="button.fbh_up"]')?.textContent.trim(),'Jetzt anheben');
-  const active=setup({fbh_manuell_anheben_moeglich:false,fbh_manuell_absenken_moeglich:true});
-  assert.deepEqual([...active.querySelectorAll('[data-wrap="fbh"] .sep-act')].map(x=>x.textContent.trim()),['Jetzt absenken']);
-  const locked=setup({fbh_manuell_anheben_moeglich:false,fbh_manuell_absenken_moeglich:false});
-  assert.equal(locked.querySelectorAll('[data-wrap="fbh"] .sep-act').length,0);
-  const writing=setup({fbh_schreibvorgang:true});
-  assert.equal(writing.querySelectorAll('[data-wrap="fbh"] .sep-act').length,0);
+  const row=root=>root.querySelector('[data-wrap="fbh"]');
+  const off=setup('finished');
+  assert.match(row(off).querySelector('.fbh-boost-chip').textContent,/Nicht erhöht/);
+  assert.match(row(off).querySelector('.sub').textContent,/Keine Erhöhung aktiv/);
+  assert.doesNotMatch(row(off).textContent,/Neues Programm wird autom/);
+  assert.match(row(off).querySelector('.fbh-setpoint').textContent,/Aktueller Sollwert 26 °C/);
+  assert.deepEqual([...row(off).querySelectorAll('.sep-act')].map(x=>x.textContent.trim()),['Erhöhen']);
+  assert.equal(row(off).querySelector('[data-press="button.fbh_up"]')?.textContent.trim(),'Erhöhen');
+
+  const active=setup('waiting',{fbh_erhoehung_aktiv:true,fbh_manuell_anheben_moeglich:false,
+    fbh_manuell_absenken_moeglich:true,sollwert_original:26,sollwert_boost:28,sollwert_aktuell:28});
+  assert.match(row(active).querySelector('.fbh-boost-chip').textContent,/Erhöhung aktiv/);
+  assert.match(row(active).querySelector('.sub').textContent,/Erhöhung aktiv/);
+  assert.match(row(active).querySelector('.fbh-setpoint').textContent,/Original 26 °C/);
+  assert.match(row(active).querySelector('.fbh-setpoint').textContent,/Erhöht 28 °C/);
+  assert.deepEqual([...row(active).querySelectorAll('.sep-act')].map(x=>x.textContent.trim()),['Absenken']);
+  assert.equal(row(active).querySelector('[data-press="button.fbh_down"]')?.textContent.trim(),'Absenken');
+
+  const noDemand=setup('waiting',{heizbedarf:false,fbh_manuell_anheben_moeglich:false});
+  assert.match(row(noDemand).querySelector('.sub').textContent,/kein Heizbedarf/);
+  assert.equal(row(noDemand).querySelectorAll('.sep-act').length,0);
+
+  const outOfWindow=setup('waiting',{fbh_zeitfenster_aktiv:false,
+    fbh_manuell_anheben_moeglich:false,fbh_manuell_absenken_moeglich:false});
+  assert.equal(row(outOfWindow).querySelectorAll('.sep-act').length,0);
+
+  const writing=setup('waiting',{fbh_schreibvorgang:true,fbh_erhoehung_aktiv:true,
+    fbh_manuell_absenken_moeglich:true});
+  assert.equal(row(writing).querySelectorAll('.sep-act').length,0);
+  assert.match(row(writing).querySelector('.sub').textContent,/zurückgestellt/);
 });
+
 
 test('device rows: no mode select, EV shows charge goal, loads show actions',()=>{
   const modeOpts={options:['auto','observe','manual','off']};
