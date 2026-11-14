@@ -354,13 +354,13 @@
       }
     },
     "heatpump": {
-      "entry_type": "Wärmepumpe",
+      "entry_type": "WP Warmwasser Boost",
       "initiate_flow": {
-        "user": "Wärmepumpen-Boost hinzufügen"
+        "user": "WP Warmwasser Boost hinzufügen"
       },
       "step": {
         "user": {
-          "title": "Wärmepumpe – PV-Boost",
+          "title": "WP Warmwasser Boost",
           "data": {
             "absence_entity": "Abwesenheit (Ein = abwesend)",
             "name": "[Pflicht] Name",
@@ -399,7 +399,7 @@
           }
         },
         "reconfigure": {
-          "title": "Wärmepumpe – PV-Boost",
+          "title": "WP Warmwasser Boost",
           "data": {
             "absence_entity": "Abwesenheit (Ein = abwesend)",
             "name": "[Pflicht] Name",
@@ -547,6 +547,54 @@
       },
       "abort": {
         "reconfigure_successful": "Gespeichert."
+      }
+    },
+    "heatpump_fbh": {
+      "entry_type": "WP FBH Sollwerterhöhung",
+      "initiate_flow": {
+        "user": "WP FBH Sollwerterhöhung hinzufügen"
+      },
+      "step": {
+        "user": {
+          "title": "WP FBH Sollwerterhöhung",
+          "data": {
+            "name": "Name",
+            "fbh_setpoint_entity": "Schreibbarer FBH-Temperatursollwert",
+            "power_sensor": "WP-Leistungssensor",
+            "nominal_power": "Elektrische WP-Nennleistung",
+            "fbh_heating_active_entity": "FBH-Heizbetrieb aktiv (optional)",
+            "ww_active_entity": "Warmwasserbereitung aktiv (empfohlen)",
+            "absence_entity": "Abwesenheit sperrt Boost (optional)"
+          },
+          "data_description": {
+            "fbh_setpoint_entity": "Pflicht: number, input_number oder climate. SEP merkt den originalen Sollwert dauerhaft, erhöht ihn und stellt ihn sicher zurück.",
+            "power_sensor": "Pflicht: elektrische WP-Leistung in W oder kW. Notwendig für die Fertigerkennung und die Vorausreservierung.",
+            "nominal_power": "Pflicht: elektrische WP-Nennleistung, die vor geplanten Starts reserviert wird.",
+            "fbh_heating_active_entity": "Optional: EIN nur beim FBH-Heizbetrieb. Verhindert, dass WW-Ladungen fälschlich als FBH-Heizlaufzeit gezählt werden.",
+            "ww_active_entity": "Sehr empfohlen: EIN während Warmwasserladung. Im WW-Betrieb keine neuen FBH-Starts oder falsch gezählte Standby-Phasen.",
+            "absence_entity": "Optional: EIN sperrt den Boost. Ein bereits angehobener Sollwert wird sicher zurückgestellt."
+          }
+        },
+        "reconfigure": {
+          "title": "WP FBH Sollwerterhöhung",
+          "data": {
+            "name": "Name",
+            "fbh_setpoint_entity": "Schreibbarer FBH-Temperatursollwert",
+            "power_sensor": "WP-Leistungssensor",
+            "nominal_power": "Elektrische WP-Nennleistung",
+            "fbh_heating_active_entity": "FBH-Heizbetrieb aktiv (optional)",
+            "ww_active_entity": "Warmwasserbereitung aktiv (empfohlen)",
+            "absence_entity": "Abwesenheit sperrt Boost (optional)"
+          },
+          "data_description": {
+            "fbh_setpoint_entity": "Pflicht: number, input_number oder climate. SEP merkt den originalen Sollwert dauerhaft, erhöht ihn und stellt ihn sicher zurück.",
+            "power_sensor": "Pflicht: elektrische WP-Leistung in W oder kW. Notwendig für die Fertigerkennung und die Vorausreservierung.",
+            "nominal_power": "Pflicht: elektrische WP-Nennleistung, die vor geplanten Starts reserviert wird.",
+            "fbh_heating_active_entity": "Optional: EIN nur beim FBH-Heizbetrieb. Verhindert, dass WW-Ladungen fälschlich als FBH-Heizlaufzeit gezählt werden.",
+            "ww_active_entity": "Sehr empfohlen: EIN während Warmwasserladung. Im WW-Betrieb keine neuen FBH-Starts oder falsch gezählte Standby-Phasen.",
+            "absence_entity": "Optional: EIN sperrt den Boost. Ein bereits angehobener Sollwert wird sicher zurückgestellt."
+          }
+        }
       }
     }
   },
@@ -744,6 +792,24 @@
       },
       "boost_min_power": {
         "name": "Boost-Mindestleistung"
+      },
+      "fbh_delta": {
+        "name": "FBH-Sollwerterhöhung"
+      },
+      "fbh_max_temp": {
+        "name": "Maximaler FBH-Sollwert"
+      },
+      "fbh_reserve_before": {
+        "name": "Vorausreservierung"
+      },
+      "fbh_finish_runtime": {
+        "name": "Mindest-Heizlaufzeit"
+      },
+      "fbh_idle_power": {
+        "name": "Standby unter"
+      },
+      "fbh_idle_minutes": {
+        "name": "Standby-Mindestdauer"
       }
     },
     "time": {
@@ -779,6 +845,18 @@
       },
       "announce_end": {
         "name": "Ansagen bis"
+      },
+      "fbh_start_1": {
+        "name": "Zeitfenster 1 von"
+      },
+      "fbh_end_1": {
+        "name": "Zeitfenster 1 bis"
+      },
+      "fbh_start_2": {
+        "name": "Zeitfenster 2 von"
+      },
+      "fbh_end_2": {
+        "name": "Zeitfenster 2 bis"
       }
     },
     "switch": {
@@ -886,6 +964,9 @@
       },
       "boost_today": {
         "name": "Boost heute"
+      },
+      "fbh_runtime": {
+        "name": "FBH-Heizlaufzeit"
       }
     },
     "binary_sensor": {
@@ -970,6 +1051,13 @@
         "state": {
           "1": "Nächste 1 Stunde",
           "2": "Nächste 2 Stunden"
+        }
+      },
+      "fbh_control": {
+        "name": "FBH Betriebsart",
+        "state": {
+          "time": "Zeitgesteuert",
+          "pv": "PV-gesteuert"
         }
       }
     }
