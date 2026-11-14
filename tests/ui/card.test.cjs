@@ -599,6 +599,31 @@ test('PV comparison displays original and actual in past, two forecasts now, onl
   assert.match(cols[2].getAttribute('title'),/Aktuelle Prognose 1.20 kWh/);
 });
 
+test('PV chart initially scrolls to today rather than the oldest history day',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});dom.window.eval(source);
+  const card=dom.window.document.createElement('smartify-energy-plan-card');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
+  dom.window.document.body.append(card);
+  const today=new Date();today.setHours(12,0,0,0);
+  const history=Array.from({length:14},(_,i)=>{
+    const date=new Date(today);date.setDate(date.getDate()-14+i);
+    return {zeit:date.toISOString(),prognose_wh:1200,aktuelle_prognose_wh:null,ist_wh:900};
+  });
+  const rows=[...history,{zeit:today.toISOString(),prognose_wh:1200,aktuelle_prognose_wh:1300,ist_wh:null}];
+  const entities={plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}};
+  const states={'sensor.plan':{state:'–',attributes:{pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:3,stunden:rows}}}};
+  card.hass={entities,states,devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  const scroll=card.shadowRoot.querySelector('.pv-compare-scroll');
+  assert.ok(scroll);
+  assert.equal(card._pvCompareInitialScroll,false,'zero-width first render waits for layout');
+  Object.defineProperty(scroll,'clientWidth',{configurable:true,value:270});
+  card._render();
+  assert.ok(scroll.scrollLeft>0,'chart skips 14 older days');
+  assert.equal(card._pvCompareInitialScroll,true);
+  assert.equal(card._pvCompareDay,today.toLocaleDateString('sv-SE'));
+  assert.match(card.shadowRoot.querySelector('[data-pv-selected-date]').textContent,/bisher/);
+});
+
 test('PV tip stays above bars with 16px headline and 14px detail, without scroll toolbar',()=>{
   assert.match(source,/\.pv-tip-title\{font-size:16px;/);
   assert.match(source,/\.pv-tip-detail\{font-size:14px;/);

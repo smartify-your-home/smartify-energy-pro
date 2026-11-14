@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 0.3.91 – 2026-11-14
+
+- PV-Vergleich startet beim Öffnen der SEP-Karte automatisch am heutigen Tag, statt am ältesten gespeicherten Prognosetag. Nach dem ersten Browser-Layout wird die Scrollposition auf den heutigen Tag gesetzt; anschließendes manuelles Scrollen bleibt erhalten.
+- Zukunftsstunden zeigen weiterhin ausschließlich die aktuelle Prognose (Regel aus 0.3.90).
+
 ## 0.3.90 – 2026-11-14
 
 - PV-Diagramm: Vergangene vollständige Stunden zeigen eingefrorene ursprüngliche Prognose und gemessene Erzeugung; die aktuelle Stunde zeigt ursprüngliche und aktuelle Prognose ohne unvollständigen Ist-Balken; zukünftige Stunden zeigen ausschließlich die aktuell gültige Prognose.
