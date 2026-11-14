@@ -264,36 +264,19 @@ test('EV shows history + budget start check (no trend) with exact threshold in I
   assert.equal(charging.querySelector('.sep-gates'),null);
 });
 
-test('PV forecast tile identifies its active source without losing remaining kWh',()=>{
-  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
-  dom.window.eval(source);
+test('PV forecast tile keeps source and remaining kWh without a second chart',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});dom.window.eval(source);
   const card=dom.window.document.createElement('smartify-energy-plan-card');
-  card.setConfig({show_timeline:false});
-  dom.window.document.body.appendChild(card);
-  const hub='hub';
-  const entities={
-    plan:{platform:'smartify_energy',translation_key:'plan',device_id:hub,entity_id:'sensor.plan'},
-    forecast:{platform:'smartify_energy',translation_key:'forecast_today',device_id:hub,entity_id:'sensor.fc'},
-  };
-  const states={
-    'sensor.plan':{state:'-',attributes:{stunden:[]}},
-    'sensor.fc':{state:'12.5',last_updated:'2026-11-08T14:00:00Z',attributes:{rest_heute_kwh:7.2,prognose_quelle:'Solcast',prognose_modus:'external'}},
-  };
+  card.setConfig({show_timeline:true});dom.window.document.body.append(card);
+  const entities={plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'},forecast:{platform:'smartify_energy',translation_key:'forecast_today',device_id:'hub',entity_id:'sensor.fc'}};
+  const states={'sensor.plan':{state:'–',attributes:{stunden:[]}},'sensor.fc':{state:'12.5',attributes:{rest_heute_kwh:7.2,prognose_quelle:'Solcast',prognose_modus:'external'}}};
   card.hass={entities,states,devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
-  let tile=card.shadowRoot.querySelector('.forecast-source');
-  assert.ok(tile,'source should be visible in the tile');
-  assert.match(tile.textContent,/Quelle: Solcast/);
+  assert.match(card.shadowRoot.querySelector('.forecast-source').textContent,/Solcast/);
   assert.match(card.shadowRoot.textContent,/Rest 7.2 kWh/);
-  card.setConfig({show_timeline:true});
-  let planTitle=[...card.shadowRoot.querySelectorAll(".section")].find(x=>x.textContent.includes("PV-Plan"));
-  assert.match(planTitle.textContent,/Solcast/);
-  states['sensor.fc']={state:'8.1',last_updated:'2026-11-08T14:15:00Z',attributes:{rest_heute_kwh:4.3,prognose_quelle:'Eigene Berechnung',prognose_modus:'calculated'}};
+  assert.equal(card.shadowRoot.querySelectorAll('.pv-compare-body').length,1);
+  states['sensor.fc']={state:'8.1',attributes:{rest_heute_kwh:4.3,prognose_quelle:'Eigene Berechnung',prognose_modus:'calculated'}};
   card.hass={entities,states,devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
-  tile=card.shadowRoot.querySelector('.forecast-source');
-  assert.match(tile.textContent,/Eigene Berechnung/);
-  assert.doesNotMatch(tile.textContent,/Solcast/);
-  planTitle=[...card.shadowRoot.querySelectorAll(".section")].find(x=>x.textContent.includes("PV-Plan"));
-  assert.match(planTitle.textContent,/Eigene Berechnung/);
+  assert.match(card.shadowRoot.querySelector('.forecast-source').textContent,/Eigene Berechnung/);
 });
 
 
@@ -368,28 +351,20 @@ test('PV comparison supports a 48h scrollback including missing hours',()=>{
 });
 
 
-test('PV plan shows readable kW axis with 4 aligned horizontal guide lines',()=>{
-  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
-  dom.window.eval(source);
+test('unified PV comparison shows pinned kWh axis and four grid lines',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});dom.window.eval(source);
   const card=dom.window.document.createElement('smartify-energy-plan-card');
-  const now=Date.now();
-  const soon=new Date(now-now%3600000+3600000).toISOString();
-  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
-  dom.window.document.body.append(card);
-  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
-    states:{'sensor.plan':{state:'–',last_updated:new Date().toISOString(),attributes:{
-      stunden:[{zeit:soon,pv_w:4300,frei_w:2000,geraete:{Waschmaschine:1800}}]}}},
-    devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
-  const plot=card.shadowRoot.querySelector('.timeline .bars');
-  const axis=card.shadowRoot.querySelector('.timeline .sep-y-axis');
-  assert.ok(plot,'PV plan chart exists');
-  assert.equal(plot.querySelectorAll('.sep-chart-grid i').length,4);
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});dom.window.document.body.append(card);
+  const soon=new Date(Date.now()+3600000).toISOString();
+  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},states:{'sensor.plan':{state:'–',attributes:{pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:5,stunden:[{zeit:soon,prognose_wh:2000,aktuelle_prognose_wh:4300,ist_wh:null}]}}}},devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  const root=card.shadowRoot,axis=root.querySelector('.pv-compare-body .sep-y-axis');
+  assert.ok(root.querySelector('.pv-compare-scroll'));
   assert.equal(axis.querySelectorAll('span').length,5);
-  assert.match(axis.textContent,/kW/);
-  assert.equal(axis.querySelector('span').textContent,'5 kW','max 4.3 kW uses rounded 5 kW axis');
-  assert.equal(axis.querySelector('span:last-child').textContent,'0 kW');
-  assert.match(plot.querySelector('.col .pv').getAttribute('style'),/86%/);
+  assert.equal(root.querySelectorAll('.pv-compare-plot .sep-chart-grid i').length,4);
+  assert.equal(root.querySelectorAll('.pv-compare-current').length,1);
+  assert.equal(root.querySelectorAll('.pv-compare-actual').length,0);
 });
+
 
 test('PV actual-forecast comparison uses fixed left kWh axis while scrolling 48h',()=>{
   const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
@@ -536,46 +511,20 @@ test('PV selected-day summary shows incomplete hours as missing rather than zero
 });
 
 
-test('PV plan scrolls into tomorrow and day after with pinned kW scale and tip carousel',()=>{
-  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
-  dom.window.eval(source);
+test('unified PV comparison scrolls into tomorrow and later hours',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});dom.window.eval(source);
   const card=dom.window.document.createElement('smartify-energy-plan-card');
-  card.setConfig({show_timeline:true,show_priorities:false,show_header:false,show_pv_tips:true});
-  dom.window.document.body.append(card);
-  const now=new Date(),hour=new Date(now);hour.setMinutes(0,0,0);hour.setHours(hour.getHours()+1);
-  const entries=[];
-  for(let i=0;i<3;i++){
-    const d=new Date(hour);d.setDate(d.getDate()+i);
-    for(let h=0;h<3;h++){
-      const ts=new Date(d);ts.setHours(d.getHours()+h);
-      entries.push({zeit:ts.toISOString(),pv_w:1600+i*1000,frei_w:700+i*1000,geraete:{Waschmaschine:500}});
-    }
-  }
-  const entities={
-    plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'},
-    tip:{platform:'smartify_energy',translation_key:'pv_tipp',device_id:'hub',entity_id:'sensor.tip'},
-  };
-  const stamp=now.toISOString();
-  const states={
-    'sensor.plan':{state:'–',last_updated:stamp,attributes:{stunden:entries}},
-    'sensor.tip':{state:'Wäsche besser morgen',last_updated:stamp,attributes:{tipps:[
-      {text:'Wäsche besser morgen',detail:'08–16 Uhr · +4,8 kWh (+38 %)',icon:'mdi:washing-machine'},
-      {text:'E-Auto morgen laden',detail:'PV-Fenster',icon:'mdi:ev-station'},
-    ]}},
-  };
-  card.hass={entities,states,devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
-  const root=card.shadowRoot;
-  const scroll=root.querySelector('.pv-plan-scroll');
-  assert.ok(scroll,'timeline has horizontal scroll container');
-  assert.ok(root.querySelectorAll('.pv-plan-day').length>=2,'day headings across forecast');
-  assert.ok(!scroll.contains(root.querySelector('.sep-y-axis')),'kW scale fixed outside scroller');
-  assert.match(root.querySelector('.pv-tip').textContent,/Wäsche besser morgen/);
-  root.querySelector('[data-pvtip="1"]').click();
-  assert.match(root.querySelector('.pv-tip').textContent,/E-Auto morgen laden/);
-  card.setConfig({show_timeline:true,show_priorities:false,show_header:false,show_pv_tips:false});
-  assert.equal(root.querySelector('.pv-tip'),null,'per-card toggle hides overlay entirely');
-  assert.equal(states['sensor.tip'].state,'Wäsche besser morgen','tip sensor is independent');
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});dom.window.document.body.append(card);
+  const now=new Date();now.setHours(10,0,0,0);
+  const hours=[0,1,2].map(i=>{const t=new Date(now);t.setDate(t.getDate()+i);return {zeit:t.toISOString(),prognose_wh:1000,aktuelle_prognose_wh:1200,ist_wh:null};});
+  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},states:{'sensor.plan':{state:'–',attributes:{pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:3,stunden:hours}}}},devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
+  const root=card.shadowRoot,scroll=root.querySelector('.pv-compare-scroll');
+  assert.ok(scroll);
+  assert.equal(root.querySelectorAll('.pv-compare-day').length,3);
+  assert.equal(root.querySelectorAll('.pv-compare-current').length,3);
+  assert.ok(!scroll.contains(root.querySelector('.sep-y-axis')));
 });
+
 
 test('PV advice visibility lives only in the Lovelace card editor',()=>{
   const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
@@ -593,64 +542,34 @@ test('PV advice visibility lives only in the Lovelace card editor',()=>{
 });
 
 
-test('PV plan can navigate to overmorgen when weather hours are missing, without fake bars',()=>{
-  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
-  dom.window.eval(source);
+test('unified PV comparison does not invent missing forecast hours',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});dom.window.eval(source);
   const card=dom.window.document.createElement('smartify-energy-plan-card');
-  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});
-  dom.window.document.body.append(card);
-  const tomorrow=new Date();
-  tomorrow.setHours(10,0,0,0);
-  tomorrow.setDate(tomorrow.getDate()+1);
-  const entries=[0,1,2].map(i=>{
-    const hour=new Date(tomorrow);hour.setHours(10+i);
-    return {zeit:hour.toISOString(),pv_w:2400,frei_w:1600,geraete:{},
-      prognose_verfuegbar:true};
-  });
-  const e={plan:{platform:'smartify_energy',translation_key:'plan',
-    device_id:'hub',entity_id:'sensor.sep_plan'}};
-  card.hass={entities:e,devices:{hub:{name:'SEP'}},
-    states:{'sensor.sep_plan':{state:'–',last_updated:new Date().toISOString(),
-      attributes:{stunden:entries,prognose_bis:entries.at(-1).zeit,
-        wetter_sensor:'sensor.meteonomiqs_cloud_forecast_8h'}}},
-    callService(){return Promise.resolve()}};
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});dom.window.document.body.append(card);
+  const day=new Date();day.setDate(day.getDate()+1);day.setHours(10,0,0,0);
+  const hours=[0,1,2].map(i=>{const t=new Date(day);t.setHours(t.getHours()+i);return {zeit:t.toISOString(),prognose_wh:1200,aktuelle_prognose_wh:null,ist_wh:null};});
+  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},states:{'sensor.plan':{state:'–',attributes:{pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:3,stunden:hours}}}},devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
   const root=card.shadowRoot;
-  const days=[...root.querySelectorAll('.pv-plan-day')];
-  assert.equal(days.length,2,'morgen plus missing übermorgen are both displayed');
-  assert.match(root.querySelector('.pv-plan-missing').textContent,/keine vollständige Stundenprognose/);
-  assert.match(root.querySelector('.pv-plan-coverage').textContent,/48h/);
-  assert.equal(root.querySelectorAll('.bars > .col').length,3,'no invented overmorgen PV columns');
-  assert.equal(root.querySelector('.pv-plan-day-nav'),null,'day navigation buttons are hidden');
-  assert.equal(root.querySelector('.pv-plan-controls'),null,'no redundant scroll instruction');
-  assert.ok(root.querySelector('.pv-plan-scroll'),'horizontal scroll remains available');
+  assert.equal(root.querySelectorAll('.pv-compare-col').length,3);
+  assert.equal(root.querySelectorAll('.pv-compare-current').length,0);
+  assert.equal(root.querySelectorAll('.pv-compare-actual').length,0);
 });
 
-test('PV plan shows real übermorgen bars without missing marker when full forecast exists',()=>{
-  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
-  dom.window.eval(source);
+
+test('unified PV comparison renders three series on available hours',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});dom.window.eval(source);
   const card=dom.window.document.createElement('smartify-energy-plan-card');
-  card.setConfig({show_timeline:true,show_priorities:false,show_header:false,show_pv_tips:false});
-  dom.window.document.body.append(card);
-  const entries=[];
-  for(let offset=1;offset<=2;offset++){
-    const day=new Date();day.setDate(day.getDate()+offset);
-    for(let hour=8;hour<16;hour++){
-      const stamp=new Date(day);stamp.setHours(hour,0,0,0);
-      entries.push({zeit:stamp.toISOString(),pv_w:offset*1100,frei_w:offset*800,geraete:{},
-        prognose_verfuegbar:true});
-    }
-  }
-  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',
-    device_id:'hub',entity_id:'sensor.sep_plan'}},devices:{hub:{name:'SEP'}},
-    states:{'sensor.sep_plan':{state:'–',last_updated:new Date().toISOString(),
-      attributes:{stunden:entries,prognose_bis:entries.at(-1).zeit}}},
-    callService(){return Promise.resolve()}};
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});dom.window.document.body.append(card);
+  const now=new Date();now.setHours(11,0,0,0);
+  const hours=[0,1].map(i=>{const t=new Date(now);t.setDate(t.getDate()+i);return {zeit:t.toISOString(),prognose_wh:1000,aktuelle_prognose_wh:1100,ist_wh:900};});
+  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},states:{'sensor.plan':{state:'–',attributes:{pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:3,stunden:hours}}}},devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
   const root=card.shadowRoot;
-  assert.equal(root.querySelectorAll('.pv-plan-day').length,2);
-  assert.equal(root.querySelectorAll('.bars > .col').length,16);
-  assert.equal(root.querySelector('.pv-plan-missing'),null);
-  assert.equal(root.querySelector('.pv-plan-coverage'),null);
+  assert.equal(root.querySelectorAll('.pv-compare-col').length,2);
+  assert.equal(root.querySelectorAll('.pv-compare-forecast').length,2);
+  assert.equal(root.querySelectorAll('.pv-compare-current').length,2);
+  assert.equal(root.querySelectorAll('.pv-compare-actual').length,2);
 });
+
 
 test('PV tip stays above bars with 16px headline and 14px detail, without scroll toolbar',()=>{
   assert.match(source,/\.pv-tip-title\{font-size:16px;/);
@@ -727,30 +646,18 @@ test('priority lock sits top-left above first row and blocks mobile drag until u
   assert.equal(services.length,0);
 });
 
-test('PV plan shows a narrow unlabelled day gap instead of grey Nacht block',()=>{
-  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});
-  dom.window.eval(source);
+test('unified PV comparison separates local days without duplicate PV plan',()=>{
+  const dom=new JSDOM('<div></div>',{runScripts:'outside-only'});dom.window.eval(source);
   const card=dom.window.document.createElement('smartify-energy-plan-card');
-  card.setConfig({show_priorities:false,show_header:false,show_timeline:true,show_pv_tips:false});
-  dom.window.document.body.append(card);
-  const h1=new Date();h1.setDate(h1.getDate()+1);h1.setHours(14,0,0,0);
-  const h2=new Date(h1);h2.setDate(h2.getDate()+1);h2.setHours(9,0,0,0);
-  const hours=[h1,h2].map(time=>({zeit:time.toISOString(),pv_w:1200,frei_w:900,
-    geraete:{},prognose_verfuegbar:true}));
-  card.hass={
-    entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
-    states:{'sensor.plan':{state:'–',last_updated:new Date().toISOString(),attributes:{stunden:hours}}},
-    devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}
-  };
+  card.setConfig({show_timeline:true,show_priorities:false,show_header:false});dom.window.document.body.append(card);
+  const a=new Date();a.setDate(a.getDate()+1);a.setHours(14,0,0,0);
+  const b=new Date(a);b.setDate(b.getDate()+1);
+  const hours=[a,b].map(t=>({zeit:t.toISOString(),prognose_wh:1200,aktuelle_prognose_wh:1000,ist_wh:null}));
+  card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},states:{'sensor.plan':{state:'–',attributes:{pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:3,stunden:hours}}}},devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
   const root=card.shadowRoot;
-  const gap=root.querySelector('.timeline .pv-break');
-  assert.ok(gap,'the gap still separates disjoint forecast hours');
-  assert.equal(gap.textContent.trim(),'','neither Nacht nor PV-Pause is displayed');
-  assert.match(gap.getAttribute('title'),/ohne PV-Ertrag/,'gap remains explainable by tooltip');
-  assert.equal(root.querySelector('.timeline .pv-break-label').textContent.trim(),'');
-  assert.match(source,/\.pv-break \{ flex:0 0 12px/,'gap is now a narrow transparent separator');
-  assert.match(source,/background:transparent;opacity:\.6/);
-  assert.ok(root.querySelectorAll('.pv-plan-day').length>=2,'day headings still mark the new day');
+  assert.equal(root.querySelectorAll('.pv-compare-day').length,2);
+  assert.equal(root.querySelectorAll('.pv-compare-day-divider').length,1);
+  assert.equal(root.querySelectorAll('.pv-plan-scroll').length,0);
 });
 
 
