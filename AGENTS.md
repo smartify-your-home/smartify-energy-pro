@@ -1,3 +1,9 @@
+## SEP 0.3.91 – Initialposition PV-Vergleich
+
+- Beim ersten Anzeigen des PV-Diagramms den aktuellen lokalen Kalendertag (Zeitzone aus `pv_vergleich.zeitzone`) zentriert im horizontalen Scrollbereich zeigen, niemals standardmäßig den ältesten historischen Tag.
+- Bei noch nicht gemessener Scrollbreite nach dem Browser-Layout erneut positionieren; danach Nutzer-Scrollposition nicht überschreiben.
+- Zukünftige Stunden enthalten nur die aktuelle Prognose; ursprüngliche Prognose bleibt gespeichert, aber unsichtbar. UI-Test in `tests/ui/card.test.cjs`.
+
 ## SEP 0.3.90 – PV-Zeitbereiche und Balkenregeln
 
 - Abgeschlossene Stunden: ursprüngliche (eingefrorene) Prognose und vollständige Ist-Erzeugung anzeigen; keine zusätzliche Live-Prognose.
