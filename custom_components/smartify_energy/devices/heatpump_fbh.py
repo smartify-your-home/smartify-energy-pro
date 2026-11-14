@@ -61,7 +61,7 @@ class FBHBoostDevice(BaseDevice):
             ParamSpec("fbh_idle_power", "number", 50, "mdi:flash-outline",
                       0, 1000, 5, "W"),
             ParamSpec("fbh_idle_minutes", "number", 20, "mdi:timer-sand",
-                      5, 120, 5, "min"),
+                      20, 120, 5, "min"),
         ]
 
     def _windows(self, now: datetime) -> list[tuple[datetime, datetime, str]]:
