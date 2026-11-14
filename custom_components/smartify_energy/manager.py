@@ -292,13 +292,15 @@ class EnergyManager:
                        }),
             SensorSpec("pv_waschtipp",
                        lambda: (self.pv_advice.get("waschtipp") or {}).get(
-                           "text", "Keine Waschmaschine konfiguriert"
+                           "text", "Kein aktueller Waschtipp" if self.pv_advice.get("waesche_unterdrueckt")
+                           else "Keine Waschmaschine konfiguriert"
                            if not any(d.TYPE == "load" and
                                       d.cfg.get("appliance_type", "washing_machine") == "washing_machine"
                                       for d in self.devices.values()) else "Prognose unvollständig"),
                        icon="mdi:washing-machine",
                        attrs=lambda: {
                            "empfehlung": (self.pv_advice.get("waschtipp") or {}).get("empfehlung"),
+                           "waesche_unterdrueckt": bool(self.pv_advice.get("waesche_unterdrueckt")),
                            "begruendung": (self.pv_advice.get("waschtipp") or {}).get("detail"),
                            "zeitfenster": self.pv_advice.get("zeitfenster", "08:00–16:00"),
                            "tage": self.pv_advice.get("tage", []),
