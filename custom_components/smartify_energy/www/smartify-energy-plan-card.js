@@ -1619,7 +1619,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
           scroll.scrollLeft = position;
           this._pvCompareDay = today;
           this._pvCompareInitialScroll = true;
-        } else if (!this._pvCompareScrollScheduled) {
+        } else if (!this._pvCompareScrollScheduled && typeof requestAnimationFrame === "function") {
           this._pvCompareScrollScheduled = true;
           // First HA render may occur before the card has a layout width.
           // Retry after layout instead of leaving the oldest day selected.
