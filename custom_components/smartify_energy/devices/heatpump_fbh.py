@@ -227,15 +227,26 @@ class FBHBoostDevice(BaseDevice):
         heating = self._heating_active()
         previous = self.state.get("last_sample")
         self.state["last_sample"] = ctx.now.timestamp()
-        if power is None or ww is not False or heating is False:
+        if power is None or ww is not False:
+            self.state["idle_since"] = None
+            return
+        # Do not count hours of an unrelated compressor mode. Without at
+        # least one mode signal, standby alone cannot prove FBH completion.
+        if not (self.cfg.get("ww_active_entity") or
+                self.cfg.get("fbh_heating_active_entity")):
             self.state["idle_since"] = None
             return
         idle_limit = float(self.p("fbh_idle_power"))
-        if power > idle_limit and heating is not False:
+        if power >= idle_limit:
+            self.state["idle_since"] = None
+            if heating is False:
+                return
             elapsed = min(max(0.0, ctx.now.timestamp() - float(previous or ctx.now.timestamp())), 90.0)
             self.state["runtime_seconds"] = float(self.state.get("runtime_seconds") or 0) + elapsed
-            self.state["idle_since"] = None
             return
+        # Once genuine heating ran for long enough, the heating-status
+        # binary may legitimately turn OFF in standby; that is completion,
+        # not a reason to reset the idle timer.
         if self.state.get("runtime_seconds", 0) < float(self.p("fbh_finish_runtime")) * 60:
             return
         if self.state.get("idle_since") is None:
