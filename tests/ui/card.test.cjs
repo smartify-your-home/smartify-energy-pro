@@ -689,8 +689,8 @@ test('point-to-point PV lines break at missing hours and overnight gaps',()=>{
   const forecast=paths[0].getAttribute('d'),actual=paths[1].getAttribute('d');
   assert.equal((forecast.match(/M/g)||[]).length,2,'forecast does not connect a 3-hour gap');
   assert.equal((forecast.match(/L/g)||[]).length,2,'only consecutive forecast hours are joined');
-  assert.equal((actual.match(/M/g)||[]).length,3,'missing actual hour and night break the line');
-  assert.equal((actual.match(/L/g)||[]).length,0,'no false actual interpolations');
+  assert.equal((actual.match(/M/g)||[]).length,2,'missing actual hour and night break the line');
+  assert.equal((actual.match(/L/g)||[]).length,1,'only the truly adjacent actual hours connect');
   assert.equal(root.querySelectorAll('.pv-compare-actual').length,3,'missing actual never becomes zero');
 });
 
