@@ -1496,7 +1496,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const deviation=deviationOf(x);
       const peak=Math.max(0,forecast || 0,current || 0,actual || 0);
       const position=(Math.min(peak, axisMax) / axisMax * 100).toFixed(3);
-      return `<div class="pv-compare-col ${starts.has(i)?"day-start":""}" data-hour="${esc(x.zeit)}" title="${esc(label)} · Prognose ${forecast===null?"kein Wert":esc((forecast/1000).toFixed(2))+" kWh"} · Ist ${actual===null?"noch nicht vollständig gemessen":esc((actual/1000).toFixed(2))+" kWh"}">
+      return `<div class="pv-compare-col ${starts.has(i)?"day-start":""}" data-hour="${esc(x.zeit)}" title="${esc(label)} · Prognose ${forecast===null?"kein Wert":esc((forecast/1000).toFixed(2))+" kWh"} · Aktuelle Prognose ${current===null?"kein Wert":esc((current/1000).toFixed(2))+" kWh"} · Ist ${actual===null?"noch nicht vollständig gemessen":esc((actual/1000).toFixed(2))+" kWh"}">
         ${bar(forecast,"pv-compare-forecast")}${bar(current,"pv-compare-current")}${bar(actual,"pv-compare-actual")}
         ${deviation===null?"":`<span class="pv-compare-hour-pct ${classify(deviation)}" style="bottom:calc(${position}% + 8px)" title="${esc(signed(deviation))}">${esc(signed(deviation))}</span>`}</div>`;
     }).join("");
@@ -1575,10 +1575,10 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         <button type="button" class="section-move-grip" data-section-grip="pv"
           aria-label="PV-Plan-Abschnitt verschieben" title="PV-Plan und Prognose-Ist-Vergleich verschieben">
           <ha-icon icon="mdi:drag-vertical"></ha-icon>
-        </button>PV-Plan</span>
-        <span>Zukunft scrollen${this._st(d.ents["sensor:forecast_today"])?.attributes?.prognose_quelle ?
+        </button>PV-Prognose / Ist</span>
+        <span>14 Tage zurück · 60 h voraus${this._st(d.ents["sensor:forecast_today"])?.attributes?.prognose_quelle ?
           ` · ${esc(this._st(d.ents["sensor:forecast_today"]).attributes.prognose_quelle)}` : ""}</span>
-      </div>${this._timeline(d)}${this._pvComparison(d)}</div>` : "";
+      </div>${this._pvComparison(d)}</div>` : "";
     const orderedBlocks = pvFirst ? pvBlock + priorityBlock : priorityBlock + pvBlock;
     const markup = `
       <style>${CARD_CSS}</style>
