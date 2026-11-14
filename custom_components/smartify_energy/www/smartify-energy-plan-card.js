@@ -669,6 +669,11 @@ const CARD_CSS = `
     .dev .sep-gates { flex-wrap:wrap; white-space:normal; }
   }
   .chip { font-size:10px; padding:1px 6px; border-radius:8px; color:#000; font-weight:600; }
+  .chip.fbh-boost-chip { background:var(--secondary-background-color); color:var(--secondary-text-color);
+    border:1px solid var(--divider-color); }
+  .chip.fbh-boost-chip.active { color:var(--success-color,#43a047); border-color:var(--success-color,#43a047);
+    background:var(--secondary-background-color); }
+  .fbh-setpoint { font-variant-numeric:tabular-nums; }
 
   .timeline { background:var(--row-bg); border-radius:var(--radius); padding:8px 6px 4px; box-sizing:border-box; }
   .sep-axis-layout { display:grid; grid-template-columns:49px minmax(0,1fr); gap:5px; min-width:0; }
@@ -1147,7 +1152,12 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const a = st?.attributes || {};
       const mode = a.modus || this._st(dev.mode)?.state;
       const reserved = num(a.reserviert_w) || 0;
-      const on = reserved > 0;
+      // An active FBH setpoint remains raised during WW priority even when
+      // the allocated power temporarily drops to zero.
+      const isFBH = a.geraetetyp === "heatpump_fbh";
+      const fbhKnown = typeof a.fbh_erhoehung_aktiv === "boolean";
+      const fbhActive = isFBH && a.fbh_erhoehung_aktiv === true;
+      const on = isFBH ? fbhActive : reserved > 0;
       const forced = on && a.pflicht;
       const power = num(this._st(dev.power)?.state);
       const budgetNow = num(a.aktuell_w);
@@ -1162,8 +1172,24 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const border = forced ? FORCED_GRADIENT : on ? dev.color : null;
       const statusTxt = STATUS_LABELS[st?.state] || st?.state || "";
       const rawSub = mode === "observe" && a.empfehlung ? `Empfehlung: ${a.empfehlung}` : (a.reason || a.grund || statusTxt);
-      const sub = ["finished", "fertig"].includes(st?.state) || ["finished", "fertig"].includes(a.status_code)
-        ? "Neues Programm wird autom. erkannt" : rawSub;
+      const fbhWrite = isFBH && a.fbh_schreibvorgang === true;
+      const fbhTemperature = isFBH ? (v => v == null || !Number.isFinite(Number(v))
+        ? null : Number(v).toLocaleString("de-AT",{maximumFractionDigits:1})+" °C") : null;
+      const originalTemp = isFBH ? fbhTemperature(a.sollwert_original) : null;
+      const boostedTemp = isFBH ? fbhTemperature(a.sollwert_boost) : null;
+      const actualTemp = isFBH ? fbhTemperature(a.sollwert_aktuell) : null;
+      const fbhTemperatureText = !isFBH ? "" : fbhActive
+        ? [originalTemp ? "Original "+originalTemp : "",boostedTemp ? "Erhöht "+boostedTemp : "",
+           actualTemp ? "Aktuell "+actualTemp : ""].filter(Boolean).join(" · ")
+        : actualTemp ? "Aktueller Sollwert "+actualTemp : "";
+      const sub = isFBH
+        ? fbhWrite ? "FBH-Sollwert wird zurückgestellt" : !fbhKnown ? "FBH-Erhöhungsstatus unbekannt"
+          : fbhActive ? "FBH-Erhöhung aktiv" : a.heizbedarf === false ? "Keine Erhöhung aktiv · kein Heizbedarf"
+          : a.heizbedarf == null ? "Keine Erhöhung aktiv · Heizbedarf unbekannt"
+          : "Keine Erhöhung aktiv"
+        : (["load","dryer"].includes(a.geraetetyp) &&
+            (["finished", "fertig"].includes(st?.state) || ["finished", "fertig"].includes(a.status_code)))
+          ? "Neues Programm wird autom. erkannt" : rawSub;
       const planned = this._st(dev.planned);
       const pt = planned && planned.state && !["unknown", "unavailable"].includes(planned.state) ? fmtTime(planned.state) : null;
       const trendRelevant = ["load", "heatpump"].includes(a.geraetetyp);
@@ -1251,21 +1277,23 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         dev.reset && ["laeuft", "running"].includes(phase)
           ? act("data-press", dev.reset, "mdi:check-circle-outline", "Fertig") : "",
       ].join("") : "";
-      // FBH controls are exclusive and derived from the device's server-side
-      // guard state. Never offer both actions or an action while writing.
+      // FBH actions use exactly the same standard action area as WM/GS.
+      // They are mutually exclusive and never shown outside server-authorized windows.
       const fbhAttrs = st?.attributes || {};
-      const fbhActions = a.geraetetyp === "heatpump_fbh" && !fbhAttrs.fbh_schreibvorgang
-        ? fbhAttrs.fbh_manuell_absenken_moeglich && dev.fbhLower
-          ? act("data-press", dev.fbhLower, "mdi:thermometer-chevron-down", "Jetzt absenken")
-          : fbhAttrs.fbh_manuell_anheben_moeglich && dev.fbhRaise
-            ? act("data-press", dev.fbhRaise, "mdi:thermometer-chevron-up", "Jetzt anheben")
+      const fbhActions = isFBH && !fbhAttrs.fbh_schreibvorgang
+        ? fbhAttrs.fbh_manuell_absenken_moeglich === true && fbhActive && dev.fbhLower
+          ? act("data-press", dev.fbhLower, "mdi:thermometer-chevron-down", "Absenken")
+          : fbhAttrs.fbh_manuell_anheben_moeglich === true && !fbhActive && dev.fbhRaise
+            ? act("data-press", dev.fbhRaise, "mdi:thermometer-chevron-up", "Erhöhen")
             : ""
         : "";
       const allActions = actions + fbhActions;
       const evSoc = a.geraetetyp === "ev" ? num(a.soc) : null;
-      const chip = forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`
-                 : on ? `<span class="chip" style="background:${grad(dev.color)}">${esc(statusTxt || "ein")}</span>`
-                 : mode === "observe" ? `<span class="chip" style="background:#B3E5FC">beobachten</span>` : "";
+      const chip = isFBH
+        ? `<span class="chip fbh-boost-chip ${fbhActive?"active":"idle"}">${!fbhKnown ? "Status unbekannt" : fbhActive ? "Erhöhung aktiv" : "Nicht erhöht"}</span>`
+        : forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`
+        : on ? `<span class="chip" style="background:${grad(dev.color)}">${esc(statusTxt || "ein")}</span>`
+        : mode === "observe" ? `<span class="chip" style="background:#B3E5FC">beobachten</span>` : "";
       const open = this._open.has(dev.id);
       return `
         <div class="dev-wrap" data-wrap="${dev.id}">
@@ -1275,7 +1303,8 @@ class SmartifyEnergyPlanCard extends HTMLElement {
           <ha-icon icon="${esc(icon)}" data-more="${dev.status}" style="color:${on ? dev.color[1] : "var(--secondary-text-color)"}"></ha-icon>
           <div class="main" data-more="${dev.status}">
             <div class="name"><span class="t">${esc(dev.name)}</span>${chip}</div>
-            <div class="sub" title="${esc(sub)}">${esc(sub)}</div>
+            <div class="sub" title="${esc(isFBH && (a.reason || a.grund) ? (a.reason || a.grund) : sub)}">${esc(sub)}</div>
+            ${fbhTemperatureText ? `<div class="plan fbh-setpoint">${esc(fbhTemperatureText)}</div>` : ""}
             ${planTxt ? `<div class="plan">${esc(planTxt)}</div>` : ""}
             ${boostTxt ? `<div class="plan sep-boost"><ha-icon icon="mdi:rocket-launch"></ha-icon>${esc(boostTxt)}</div>` : ""}
             ${pvStopTxt ? `<div class="plan sep-stop" title="Stopp-Verzögerung läuft. Kehrt der Überschuss vorher zurück, lädt das Auto weiter und die Anzeige verschwindet."><ha-icon icon="mdi:timer-pause"></ha-icon>${esc(pvStopTxt)}</div>` : ""}
