@@ -156,6 +156,10 @@ const SETTING_HELP = {
   "fbh_finish_runtime": "Mindestdauer tatsächlicher, der FBH zuzuordnender WP-Leistungsaufnahme, bevor eine lange Ruhephase als erledigt zählen darf.",
   "fbh_idle_power": "Elektrische Ruheschwelle in Watt; nur bestätigter FBH-Betrieb ohne Warmwasserladung zählt.",
   "fbh_idle_minutes": "Nach der Mindest-Heizlaufzeit unter Ruheschwelle: Boost als erledigt markieren und nicht im selben Fenster erneut starten.",
+  "fbh_restart_after_ww": "Optionaler einmaliger Wiederanlaufimpuls nach einer Warmwasserladung. Nur wenn die FBH unmittelbar VOR Warmwasser tatsächlich heizte: FBH-Aktiv-Sensor EIN plus elektrische WP-Leistung. Benötigt beide Status-Entitäten (FBH aktiv und WW aktiv). Standard AUS.",
+  "fbh_restart_wait": "So lange nach Ende der Warmwasserladung warten. Startet die FBH währenddessen selbst, wird kein zusätzlicher Sollwertimpuls ausgelöst.",
+  "fbh_restart_delta": "Zusätzliche Erhöhung in Kelvin ÜBER den schon angehobenen FBH-Sollwert. Der konfigurierte Maximalwert des Reglers darf niemals überschritten werden.",
+  "fbh_restart_duration": "Maximale Dauer des einmaligen Wiederanlaufimpulses. Danach sofort zurück auf den normalen FBH-Boost-Sollwert. Bei erkanntem FBH-Wiederanlauf auch früher.",
   "trigger_cooldown": "Mindestzeit zwischen zwei WW-Boost-Auslösungen in Minuten. Standard 60 min, einstellbar 60–720 min. Nach erfolgreicher Startfreigabe wird der Zeitstempel VOR dem WP-Befehl gespeichert und übersteht auch Home-Assistant-Neustarts. Während laufender WW-Ladung ist nach der konfigurierten WW-Aktiv-Wartezeit höchstens ein Boost je Zyklus möglich."
 };
 
@@ -199,7 +203,7 @@ const SETTING_GROUPS = [
   { id: "goal", title: "Ladeziel", keys: ["deadline", "target_km"] },
   { id: "boost", title: "PV-Boost", keys: ["boost", "boost_factor", "boost_hours", "boost_min_power"] },
   { id: "vehicle", title: "Fahrzeug", keys: ["reserve_soc", "max_soc", "consumption"] },
-  { id: "fbh", title: "WP FBH Sollwerterhöhung", keys: ["fbh_control", "fbh_delta", "fbh_max_temp", "fbh_start_1", "fbh_end_1", "fbh_start_2", "fbh_end_2", "fbh_reserve_before", "fbh_finish_runtime", "fbh_idle_power", "fbh_idle_minutes"] },
+  { id: "fbh", title: "WP FBH Sollwerterhöhung", keys: ["fbh_control", "fbh_delta", "fbh_max_temp", "fbh_start_1", "fbh_end_1", "fbh_start_2", "fbh_end_2", "fbh_reserve_before", "fbh_finish_runtime", "fbh_idle_power", "fbh_idle_minutes", "fbh_restart_after_ww", "fbh_restart_wait", "fbh_restart_delta", "fbh_restart_duration"] },
   { id: "temp", title: "Temperatur", keys: ["target_temp", "boost_hysteresis", "boost_value", "normal_value", "heater_max_temp", "heater_hysteresis"] },
   { id: "runtime", title: "Laufzeit", keys: ["fixed_runtime", "temp_factor", "runtime_min", "runtime_max", "max_runtime", "winter_temp", "vm_share", "max_per_day", "duration"] },
   { id: "power", title: "Leistung & PV", keys: ["nominal_power", "min_surplus", "heater_start_surplus", "heater_stop_surplus", "grid_reserve", "base_load", "sinks_yield", "pause_budget_release_pct"] },
@@ -219,11 +223,17 @@ const SETTING_LABELS = {
   fbh_reserve_before: "Leistung vor Start vormerken",
   fbh_finish_runtime: "Heizen mindestens", fbh_idle_power: "Standby-Leistung unter",
   fbh_idle_minutes: "Standby für Fertigerkennung",
+  fbh_restart_after_ww: "FBH-Wiederanlauf nach WW", fbh_restart_wait: "Wartezeit nach Warmwasser",
+  fbh_restart_delta: "Extra-Anhebung bei Wiederanlauf",
+  fbh_restart_duration: "Max. Wiederanlaufimpuls",
 };
 
 // Nur anzeigen, wenn die Einstellung im aktuellen Zustand wirkt.
 // state(key) liefert den aktuellen Zustand einer anderen Einstellung desselben Geräts.
 const SETTING_VISIBLE = {
+  fbh_restart_wait: st => st("fbh_restart_after_ww") === "on",
+  fbh_restart_delta: st => st("fbh_restart_after_ww") === "on",
+  fbh_restart_duration: st => st("fbh_restart_after_ww") === "on",
   announce_reminder: st => st("announce_finished") !== "off",
   deadline: st => st("goal") == null || st("goal") === "km_until",
   target_km: st => st("goal") == null || st("goal") === "km_until",
