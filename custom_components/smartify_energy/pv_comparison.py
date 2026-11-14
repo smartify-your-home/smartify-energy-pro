@@ -173,6 +173,53 @@ class PVComparison:
             "hinweis": "Vergleich nur aus vollständig gemessenen und zuvor prognostizierten Stunden.",
         }
 
+    def timeline(self, now: datetime, live_hours: dict[datetime, float],
+                 history_hours: int = 14 * 24, future_hours: int = 60) -> dict:
+        """Unified hourly original forecast, latest forecast and measured production.
+
+        Live forecast is never substituted for the immutable original. Past live
+        forecasts are omitted when no longer supplied by the provider.
+        """
+        now_utc = _utc(now)
+        current = _hour(now_utc)
+        history = max(1, min(MAX_REPORT_HOURS, int(history_hours)))
+        future = max(0, min(60, int(future_hours)))
+        live = {_hour(k).isoformat(): float(v) for k, v in live_hours.items()
+                if isinstance(k, datetime) and k.tzinfo is not None
+                and isinstance(v, (int, float)) and not isinstance(v, bool)
+                and isfinite(v) and v >= 0}
+        rows = []
+        expected_total = actual_total = 0.0
+        compared = 0
+        for offset in range(-history, future):
+            stamp = current + timedelta(hours=offset)
+            key = stamp.isoformat()
+            expected = self.forecasts.get(key)
+            actual = self.actual_wh.get(key)
+            valid = (stamp + timedelta(hours=1) <= now_utc
+                     and self.coverage_s.get(key, 0) >= MIN_COVERAGE_SECONDS
+                     and actual is not None)
+            rows.append({
+                "zeit": key,
+                "prognose_wh": round(expected, 1) if expected is not None else None,
+                "aktuelle_prognose_wh": round(live[key], 1) if key in live else None,
+                "ist_wh": round(actual, 1) if valid else None,
+            })
+            if valid and expected is not None:
+                expected_total += expected
+                actual_total += actual
+                compared += 1
+        return {
+            "stunden": rows,
+            "prognose_kwh": round(expected_total / 1000, 2) if compared else None,
+            "ist_kwh": round(actual_total / 1000, 2) if compared else None,
+            "abweichung_pct": round((actual_total / expected_total - 1) * 100, 1)
+            if expected_total > 0 and compared else None,
+            "verglichene_stunden": compared,
+            "zeitraum_stunden": history + future,
+            "hinweis": "Originalprognose unverändert; aktuelle Prognose nur bei vorhandenen Daten.",
+        }
+
     def today(self, now: datetime, tzinfo) -> dict:
         """Backward-compatible calendar-day summary for existing consumers."""
         now_utc = _utc(now)
