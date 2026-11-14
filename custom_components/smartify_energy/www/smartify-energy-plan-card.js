@@ -1490,10 +1490,17 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const plotted = rows.map((x,i)=>{
       const t=new Date(x.zeit);
       const label=t.toLocaleString("de-AT",{timeZone:data.zeitzone || undefined,weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
-      const forecast=typeof x.prognose_wh==="number"?x.prognose_wh:null;
-      const actual=typeof x.ist_wh==="number"?x.ist_wh:null;
-      const current=typeof x.aktuelle_prognose_wh==="number"?x.aktuelle_prognose_wh:null;
-      const deviation=deviationOf(x);
+      // Completed hours compare the frozen forecast with measured production.
+      // The current hour shows both forecasts (actual is still incomplete).
+      // Future hours show only the latest forecast; stored originals stay intact.
+      const hourStart=Date.parse(x.zeit);
+      const currentHour=Math.floor(Date.now()/3600000)*3600000;
+      const isPast=hourStart<currentHour;
+      const isCurrent=hourStart===currentHour;
+      const forecast=(isPast||isCurrent)&&typeof x.prognose_wh==="number"?x.prognose_wh:null;
+      const actual=isPast&&typeof x.ist_wh==="number"?x.ist_wh:null;
+      const current=!isPast&&typeof x.aktuelle_prognose_wh==="number"?x.aktuelle_prognose_wh:null;
+      const deviation=isPast?deviationOf(x):null;
       const peak=Math.max(0,forecast || 0,current || 0,actual || 0);
       const position=(Math.min(peak, axisMax) / axisMax * 100).toFixed(3);
       return `<div class="pv-compare-col ${starts.has(i)?"day-start":""}" data-hour="${esc(x.zeit)}" title="${esc(label)} · Prognose ${forecast===null?"kein Wert":esc((forecast/1000).toFixed(2))+" kWh"} · Aktuelle Prognose ${current===null?"kein Wert":esc((current/1000).toFixed(2))+" kWh"} · Ist ${actual===null?"noch nicht vollständig gemessen":esc((actual/1000).toFixed(2))+" kWh"}">
@@ -1529,7 +1536,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
           <div class="pv-compare-day-dividers">${dayDividers}</div></div></div>
       </div>
       <div class="pv-compare-legend">
-        <span><i style="background:var(--warning-color,#e5a21a)"></i>Ursprüngliche Prognose</span>
+        <span><i style="background:var(--warning-color,#e5a21a)"></i>Ursprüngliche Prognose (Vergangenheit/aktuelle Stunde)</span>
         <span><i style="background:var(--info-color,#4399ce)"></i>Aktuelle Prognose</span>
         <span><i style="background:var(--success-color,#22a06b)"></i>Gemessene Erzeugung</span>
       </div>
