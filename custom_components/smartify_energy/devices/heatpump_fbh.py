@@ -39,6 +39,17 @@ class FBHBoostDevice(BaseDevice):
         self.state.setdefault("last_sample", None)
         self.state.setdefault("externally_changed", False)
         self.state.setdefault("restore_pending", False)
+        # Optional one-shot recovery after WW preempts an ACTIVE FBH cycle.
+        # Scalar values are retained in HA's durable manager storage.
+        self.state.setdefault("ww_seen", None)
+        self.state.setdefault("last_fbh_running_at", None)
+        self.state.setdefault("fbh_was_running_before_ww", False)
+        self.state.setdefault("ww_ended_at", None)
+        self.state.setdefault("ww_recovery_eligible", False)
+        self.state.setdefault("restart_used_window", None)
+        self.state.setdefault("restart_pulse_target", None)
+        self.state.setdefault("restart_pulse_until", None)
+        self.state.setdefault("restart_return_pending", False)
 
     def param_specs(self) -> list[ParamSpec]:
         return [
@@ -62,6 +73,13 @@ class FBHBoostDevice(BaseDevice):
                       0, 1000, 5, "W"),
             ParamSpec("fbh_idle_minutes", "number", 20, "mdi:timer-sand",
                       20, 120, 5, "min"),
+            ParamSpec("fbh_restart_after_ww", "switch", False, "mdi:heat-pump-outline"),
+            ParamSpec("fbh_restart_wait", "number", 5, "mdi:clock-check",
+                      1, 30, 1, "min"),
+            ParamSpec("fbh_restart_delta", "number", 3.0, "mdi:thermometer-plus",
+                      0.5, 8, 0.5, "K"),
+            ParamSpec("fbh_restart_duration", "number", 15, "mdi:timer-play-outline",
+                      5, 30, 1, "min"),
         ]
 
     def _windows(self, now: datetime) -> list[tuple[datetime, datetime, str]]:
@@ -164,7 +182,12 @@ class FBHBoostDevice(BaseDevice):
                 "laufzeit_heizen_min": round(float(self.state.get("runtime_seconds") or 0) / 60, 1),
                 "fertig_im_zeitfenster": self.state.get("completed_window"),
                 "vorreservierung_w": round(self.advance_reservation(dt_util.now())),
-                "manuell_geaendert": bool(self.state.get("externally_changed"))}
+                "manuell_geaendert": bool(self.state.get("externally_changed")),
+                "ww_unterbrechung_fbh_vorher_aktiv": bool(self.state.get("fbh_was_running_before_ww")),
+                "ww_wiederanlauf_freigegeben": bool(self.state.get("ww_recovery_eligible")),
+                "ww_wiederanlauf_verwendet": self.state.get("restart_used_window"),
+                "ww_wiederanlauf_impuls_bis": self.state.get("restart_pulse_until"),
+                "ww_wiederanlauf_impuls_sollwert": self.state.get("restart_pulse_target")}
 
     def sensor_specs(self) -> list[SensorSpec]:
         return super().sensor_specs() + [
@@ -217,6 +240,144 @@ class FBHBoostDevice(BaseDevice):
             return 0
         return max(0.0, self.nominal - (self._power() or 0.0))
 
+    def _watch_ww_interruption(self, now: datetime, power: float | None,
+                               ww: bool | None, heating: bool | None) -> None:
+        """Observe WW edges; require proof FBH was running BEFORE WW started.
+
+        A power reading without a positive FBH-mode sensor is insufficient;
+        the compressor may have been heating water or doing another task.
+        """
+        t = now.timestamp()
+        previous = self.state.get("ww_seen")
+        has_feedback = bool(self.cfg.get("ww_active_entity") and
+                            self.cfg.get("fbh_heating_active_entity"))
+        if not self.p("fbh_restart_after_ww") or not has_feedback or not self.state.get("active"):
+            self.state["ww_seen"] = ww
+            self.state["ww_recovery_eligible"] = False
+            return
+        if ww is None or heating is None or power is None:
+            # Unknown feedback must not trigger a speculative heat-pump restart.
+            self.state["ww_seen"] = None
+            self.state["ww_recovery_eligible"] = False
+            return
+        is_heating = heating is True and power > float(self.p("fbh_idle_power"))
+        if ww is False and is_heating:
+            self.state["last_fbh_running_at"] = t
+            # Heating has already resumed on its own: a pulse is unnecessary.
+            if self.state.get("ww_ended_at") is not None:
+                self.state["ww_recovery_eligible"] = False
+        if ww is True and previous is False:
+            seen = self.state.get("last_fbh_running_at")
+            was_running = bool(seen is not None and
+                               0 <= t - float(seen) <= 180)
+            self.state["fbh_was_running_before_ww"] = was_running
+            self.state["ww_recovery_eligible"] = False
+            self.state["ww_ended_at"] = None
+        elif ww is False and previous is True:
+            # Only this confirmed transition can authorize a future pulse.
+            eligible = bool(self.state.get("fbh_was_running_before_ww") and
+                            self.state.get("restart_used_window") != self.state.get("window") and
+                            self._window_now(now) is not None)
+            self.state["ww_ended_at"] = t
+            self.state["ww_recovery_eligible"] = eligible
+            self.state["fbh_was_running_before_ww"] = False
+        self.state["ww_seen"] = ww
+
+    def _restart_ready(self, ctx: Context) -> bool:
+        if not self.state.get("active") or not self.state.get("ww_recovery_eligible"):
+            return False
+        if not self.p("fbh_restart_after_ww") or self.state.get("externally_changed"):
+            return False
+        if not self.cfg.get("fbh_heating_active_entity") or not self.cfg.get("ww_active_entity"):
+            return False
+        if self.state.get("restart_used_window") == self.state.get("window"):
+            return False
+        window = self._window_now(ctx.now)
+        if not window or window[2] != self.state.get("window"):
+            return False
+        if (self._ww_active() is not False or self._heating_active() is not False or
+                self._shared_ww_running()):
+            return False
+        power = self._power()
+        if power is None or power >= float(self.p("fbh_idle_power")):
+            return False
+        ended = self.state.get("ww_ended_at")
+        if ended is None or ctx.now.timestamp() - float(ended) < (
+                float(self.p("fbh_restart_wait")) * 60):
+            return False
+        # In PV-gated mode do not force extra heating without surplus.
+        if self.p("fbh_control") == "pv" and (
+                not ctx.grid_valid or ctx.budget_now < self.nominal):
+            return False
+        return True
+
+    async def _restart_pulse(self, ctx: Context) -> None:
+        """Temporarily raise the ALREADY boosted target, not the stored original."""
+        if not self._restart_ready(ctx):
+            return
+        entity = self.state.get("setpoint_entity")
+        baseline = self.state.get("target")
+        actual = self._setpoint(entity)
+        if entity is None or baseline is None or actual is None or (
+                abs(actual - float(baseline)) > EPSILON):
+            return
+        maximum = float(self.p("fbh_max_temp"))
+        st = self.hass.states.get(entity)
+        if st and st.attributes.get("max") is not None:
+            try:
+                maximum = min(maximum, float(st.attributes["max"]))
+            except (TypeError, ValueError):
+                return
+        pulse_target = min(maximum, float(baseline) + float(self.p("fbh_restart_delta")))
+        if pulse_target <= float(baseline) + EPSILON:
+            return  # Temperature limit reached; never exceed it to force a start.
+        # If near the end, the existing window-end restore takes precedence.
+        self.state["restart_used_window"] = self.state.get("window")
+        self.state["ww_recovery_eligible"] = False
+        self.state["restart_pulse_target"] = pulse_target
+        self.state["restart_pulse_until"] = (
+            ctx.now.timestamp() + 60 * float(self.p("fbh_restart_duration")))
+        self.state["restart_return_pending"] = False
+        await self.manager.async_save_now()  # Crash-safe before extra setpoint write.
+        await self._write_setpoint(entity, pulse_target)
+
+    async def _settle_restart_pulse(self, ctx: Context) -> None:
+        """Revert the temporary impulse to the normal FBH boost setpoint."""
+        pulse_target = self.state.get("restart_pulse_target")
+        if pulse_target is None:
+            return
+        baseline = self.state.get("target")
+        entity = self.state.get("setpoint_entity")
+        actual = self._setpoint(entity)
+        if actual is None or baseline is None or entity is None:
+            return  # A missing sensor never justifies clearing rollback data.
+        until = self.state.get("restart_pulse_until")
+        running_again = (self._ww_active() is False and self._heating_active() is True
+                         and (self._power() or 0) > float(self.p("fbh_idle_power")))
+        must_end = bool(self._ww_active() is not False or running_again or
+                        (until is not None and ctx.now.timestamp() >= float(until)) or
+                        self._window_now(ctx.now) is None)
+        if not must_end and not self.state.get("restart_return_pending"):
+            return
+        if abs(actual - float(baseline)) <= EPSILON:
+            self.state.update(restart_pulse_target=None, restart_pulse_until=None,
+                              restart_return_pending=False)
+            await self.manager.async_save_now()
+            return
+        if abs(actual - float(pulse_target)) > EPSILON:
+            # External intervention: do not overwrite a user-adjusted setpoint.
+            self.state["externally_changed"] = True
+            self.state["ww_recovery_eligible"] = False
+            return
+        self.state["restart_return_pending"] = True
+        await self.manager.async_save_now()
+        await self._write_setpoint(entity, float(baseline))
+        confirmed = self._setpoint(entity)
+        if confirmed is not None and abs(confirmed - float(baseline)) <= EPSILON:
+            self.state.update(restart_pulse_target=None, restart_pulse_until=None,
+                              restart_return_pending=False)
+            await self.manager.async_save_now()
+
     def pre_update(self, ctx: Context) -> None:
         if not self.state.get("active"):
             return
@@ -227,6 +388,7 @@ class FBHBoostDevice(BaseDevice):
         heating = self._heating_active()
         previous = self.state.get("last_sample")
         self.state["last_sample"] = ctx.now.timestamp()
+        self._watch_ww_interruption(ctx.now, power, ww, heating)
         if power is None or ww is not False:
             self.state["idle_since"] = None
             return
@@ -247,6 +409,8 @@ class FBHBoostDevice(BaseDevice):
         # Once genuine heating ran for long enough, the heating-status
         # binary may legitimately turn OFF in standby; that is completion,
         # not a reason to reset the idle timer.
+        if self.state.get("restart_pulse_target") is not None:
+            return  # A running restart pulse is not a finished FBH cycle.
         if self.state.get("runtime_seconds", 0) < float(self.p("fbh_finish_runtime")) * 60:
             return
         if self.state.get("idle_since") is None:
@@ -321,6 +485,10 @@ class FBHBoostDevice(BaseDevice):
                 decision = Decision(False, 0, "FBH-Sollwert extern verändert")
             if not decision.on:
                 await self._restore()
+            else:
+                await self._settle_restart_pulse(ctx)
+                if self.state.get("restart_pulse_target") is None:
+                    await self._restart_pulse(ctx)
             return
         if not decision.on:
             return
@@ -334,7 +502,11 @@ class FBHBoostDevice(BaseDevice):
         self.state.update(active=True, window=window[2], setpoint_entity=self.cfg["fbh_setpoint_entity"],
                           original=original, target=target, started=ctx.now.timestamp(),
                           runtime_seconds=0.0, idle_since=None, last_sample=ctx.now.timestamp(),
-                          externally_changed=False, restore_pending=False)
+                          externally_changed=False, restore_pending=False,
+                          ww_seen=self._ww_active(), last_fbh_running_at=None,
+                          fbh_was_running_before_ww=False, ww_ended_at=None,
+                          ww_recovery_eligible=False, restart_pulse_target=None,
+                          restart_pulse_until=None, restart_return_pending=False)
         # Persist BEFORE changing the external actuator: restart must restore.
         await self.manager.async_save_now()
         await self._write_setpoint(self.state["setpoint_entity"], target)
@@ -352,9 +524,12 @@ class FBHBoostDevice(BaseDevice):
         if not entity or original is None or target is None:
             raise RuntimeError("FBH-Rückstellwert fehlt; Zustand zur Diagnose erhalten")
         if not self.state.get("externally_changed"):
+            pulse_target = self.state.get("restart_pulse_target")
             if abs(current - float(original)) <= EPSILON:
                 pass  # Already restored (or the boost write never took effect).
-            elif abs(current - float(target)) <= EPSILON:
+            elif (abs(current - float(target)) <= EPSILON or
+                  (pulse_target is not None and
+                   abs(current - float(pulse_target)) <= EPSILON)):
                 self.state["restore_pending"] = True
                 await self.manager.async_save_now()
                 await self._write_setpoint(entity, float(original))
@@ -367,7 +542,10 @@ class FBHBoostDevice(BaseDevice):
                 # Do not overwrite an externally adjusted temperature target.
                 self.state["externally_changed"] = True
         self.state.update(active=False, original=None, target=None, setpoint_entity=None,
-                          idle_since=None, last_sample=None, restore_pending=False)
+                          idle_since=None, last_sample=None, restore_pending=False,
+                          ww_recovery_eligible=False, fbh_was_running_before_ww=False,
+                          restart_pulse_target=None, restart_pulse_until=None,
+                          restart_return_pending=False, ww_ended_at=None)
         await self.manager.async_save_now()
 
     async def async_run(self, ctx: Context, budget_left: float) -> Decision:
