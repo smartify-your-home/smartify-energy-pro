@@ -479,7 +479,9 @@ class FBHBoostDevice(BaseDevice):
             ts = self.state.get("started")
             if (actual is not None and target is not None and ts is not None
                     and ctx.now.timestamp() - float(ts) > 120
-                    and abs(actual - float(target)) > EPSILON):
+                    and abs(actual - float(target)) > EPSILON
+                    and (self.state.get("restart_pulse_target") is None or
+                         abs(actual - float(self.state["restart_pulse_target"])) > EPSILON)):
                 self.state["externally_changed"] = True
                 self.state["completed_window"] = self.state.get("window")
                 decision = Decision(False, 0, "FBH-Sollwert extern verändert")
