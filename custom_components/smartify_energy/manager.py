@@ -448,7 +448,7 @@ class EnergyManager:
         for dev in self.devices.values():
             entities.update(dev.observed_entities())
             fast_inputs.add(dev.cfg.get("power_sensor"))
-            if dev.TYPE in ("heater", "heatpump"):
+            if dev.TYPE in ("heater", "heatpump", "heatpump_fbh"):
                 fast_inputs.add(dev.cfg.get("absence_entity"))
             if dev.TYPE == "ev":
                 fast_inputs.add(dev.cfg.get("current_entity"))
@@ -965,6 +965,8 @@ class EnergyManager:
 
         left = ctx.alloc_base
         self.device_budgets = {}
+        # Two boost types may share one physical WP compressor.
+        wp_shared_pending: dict[str, float] = {}
         battery_rank = int(self.p("battery_rank")) if self.has_battery else 999
         battery_w = self.battery_charging_w if self.has_battery else 0.0
         battery_passed = False
@@ -1025,12 +1027,25 @@ class EnergyManager:
                     previous = dev.last_decision
                     power = max(current, previous.power if previous and previous.on else 0.0)
                     decision = Decision(power > 0, power, "Aktorfehler – Leistung vorsorglich reserviert")
-                # Reserve newly commanded manual heating before PV allocations, too.
+                # A scheduled FBH boost reserves expected unmet WP draw at
+                # its configured priority, even before the compressor starts.
+                anticipatory = (dev.advance_reservation(ctx.now)
+                                if dev.TYPE == "heatpump_fbh" else 0.0)
+                extra = 0.0
                 if decision.on and (dev.mode == MODE_AUTO or (
                         dev.mode == "manual" and dev.CONTROLS_MANUAL)):
                     extra = additional_reservation(decision.power, current, reclaimed)
-                    effective_left -= extra
-                    self.device_budgets[dev.id]["zusaetzlich_reserviert_w"] = round(extra)
+                pending = max(extra, anticipatory)
+                shared = (dev.cfg.get("power_sensor")
+                          if dev.TYPE in ("heatpump", "heatpump_fbh") else None)
+                if shared:
+                    prior_reserved = wp_shared_pending.get(shared, 0.0)
+                    pending = max(0.0, pending - prior_reserved)
+                    wp_shared_pending[shared] = max(prior_reserved, max(extra, anticipatory))
+                effective_left -= pending
+                self.device_budgets[dev.id]["zusaetzlich_reserviert_w"] = round(pending)
+                if dev.TYPE == "heatpump_fbh":
+                    self.device_budgets[dev.id]["fbh_vorreservierung_w"] = round(anticipatory)
             finally:
                 ctx.budget_now, ctx.budget_avg, ctx.budget_short, ctx.alloc_base = (
                     original_now, original_avg, original_short, original_base)
