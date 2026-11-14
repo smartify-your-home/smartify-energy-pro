@@ -1040,7 +1040,42 @@ class EnergyManager:
         if plan_due:
             self._plan_dirty = False
             self._plan(now)
+        self._refresh_pv_advice(now)
         self._store.async_delay_save(self._dump, 60)
+
+    def _refresh_pv_advice(self, now: datetime) -> None:
+        """Update tips on every device cycle rather than each forecast refresh."""
+        day_devices = []
+        for dev in self.devices.values():
+            if dev.mode == "off":
+                continue
+            kind = (dev.cfg.get("appliance_type", "washing_machine")
+                    if dev.TYPE == "load" else dev.TYPE)
+            if kind not in {"washing_machine", "dishwasher", "dryer", "ev", "heater", "heatpump"}:
+                continue
+            duration = 2.0
+            if kind in {"washing_machine", "dishwasher", "dryer"}:
+                try:
+                    duration = float(dev.p("duration"))
+                except (TypeError, ValueError):
+                    pass
+            day_devices.append({
+                "kind": kind, "mode": dev.mode,
+                "duration": duration, "power": float(dev.nominal),
+                "pv_only": dev.p("goal") == "pv_only" if kind == "ev" else True,
+                "program_state": dev.state.get("sm") if kind == "washing_machine" else None,
+                "program_day": dev.state.get("last_wash_day") if kind == "washing_machine" else None,
+                "power_running": bool(kind == "washing_machine" and
+                    (power_w(self.hass, dev.cfg.get("power_sensor")) or 0) >=
+                    float(dev.p("detect_threshold") or 9)),
+            })
+        self.pv_advice = build_advice(
+            self.forecast.hours, dt_util.as_local(now), day_devices,
+            base_load_w=base,
+            live_state=self.live_pv.diagnostics(now).get("state") if self.live_pv else None,
+            battery_soc=self.battery_soc if self.has_battery else None,
+            battery_capacity_kwh=float(self.cfg.get(CONF_BAT_CAPACITY) or 0),
+        )
 
     # ── Prognose-Planer ──────────────────────────────────────────────────────
     def _plan(self, now: datetime) -> None:
@@ -1148,32 +1183,6 @@ class EnergyManager:
                     "frei_w": round(max(0.0, wh - base)), "geraete": {},
                     "prognose_verfuegbar": True,
                 })
-        day_devices = []
-        for dev in self.devices.values():
-            if dev.mode == "off":
-                continue
-            kind = (dev.cfg.get("appliance_type", "washing_machine")
-                    if dev.TYPE == "load" else dev.TYPE)
-            if kind not in {"washing_machine", "dishwasher", "dryer", "ev", "heater", "heatpump"}:
-                continue
-            duration = 2.0
-            if kind in {"washing_machine", "dishwasher", "dryer"}:
-                try:
-                    duration = float(dev.p("duration"))
-                except (TypeError, ValueError):
-                    pass
-            day_devices.append({
-                "kind": kind, "mode": dev.mode,
-                "duration": duration, "power": float(dev.nominal),
-                "pv_only": dev.p("goal") == "pv_only" if kind == "ev" else True,
-            })
-        self.pv_advice = build_advice(
-            self.forecast.hours, dt_util.as_local(now), day_devices,
-            base_load_w=base,
-            live_state=self.live_pv.diagnostics(now).get("state") if self.live_pv else None,
-            battery_soc=self.battery_soc if self.has_battery else None,
-            battery_capacity_kwh=float(self.cfg.get(CONF_BAT_CAPACITY) or 0),
-        )
         actions.sort()
         self.next_action = " · ".join(a for _, a in actions[:3])
 
