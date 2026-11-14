@@ -797,8 +797,9 @@ const CARD_CSS = `
     padding:30px 0 0;border-bottom:1px solid var(--divider-color)}
   .pv-compare-plot .sep-chart-grid{top:30px}
   .pv-compare-col{flex:0 0 40px;min-width:40px;height:100%;display:flex;align-items:end;justify-content:center;gap:2px;position:relative;z-index:1}
-  .pv-compare-bar{width:42%;min-height:0;border-radius:3px 3px 0 0}
+  .pv-compare-bar{width:29%;min-height:0;border-radius:3px 3px 0 0}
   .pv-compare-forecast{background:var(--warning-color,#e5a21a);opacity:.82}
+  .pv-compare-current{background:var(--info-color,#4399ce)}
   .pv-compare-actual{background:var(--success-color,#22a06b)}
   .pv-compare-labels{min-width:max(100%,580px);display:flex;gap:5px}
   .pv-compare-labels span{flex:0 0 40px;min-width:40px;text-align:center;color:var(--secondary-text-color);font-size:10px}
@@ -853,7 +854,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._grpOpen = new Set();    // geöffnete, standardmäßig zugeklappte Gruppen
     this._grpClosed = new Set();  // geschlossene, standardmäßig offene Gruppen
     this._boostUntil = {};
-    this._pvCompareOpen = false;
+    this._pvCompareOpen = true;
     this._pvCompareDay = null;
     this._pvTipIndex = 0;
   }
@@ -1421,7 +1422,6 @@ class SmartifyEnergyPlanCard extends HTMLElement {
   _pvComparison(d) {
     const plan = this._st(d.ents["sensor:plan"]);
     const data = plan?.attributes?.pv_vergleich;
-    const open = true;
     if (!data?.konfiguriert) return `<div class="pv-compare-body" id="sep-pv-compare">
       <div class="pv-compare-note">Für diesen Vergleich unter SEP → Konfigurieren → Prognose
       den Sensor für die gesamte PV-Erzeugungsleistung (W) auswählen.
@@ -1506,7 +1506,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     }).join("");
     // Summary is always one local day, never the 14-day aggregate from pv_vergleich.
     // On first expansion default to newest day; a scroll event changes the selected day.
-    const initialDay=days.find(x=>x.key===this._pvCompareDay) || days[days.length-1];
+    const initialDay=days.find(x=>x.key===this._pvCompareDay) || days.find(x=>x.key===localDay(new Date().toISOString())) || days[days.length-1];
     const totalPct=initialDay.compared && initialDay.expected > 0
       ? (initialDay.actual/initialDay.expected-1)*100 : null;
     const partial=initialDay.incomplete > 0 || initialDay.key===localDay(new Date().toISOString());
@@ -1599,12 +1599,12 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     if (!scroll) return;
     const heads=[...scroll.querySelectorAll(".pv-compare-day[data-day]")];
     if (!heads.length) return;
-    // Each hourly column occupies 45px. Choose the day at the viewport centre.
+    // Each hourly column occupies 54px. Choose the day at the viewport centre.
     // Using data-start/count also works before layout sizes are available in jsdom.
     const centre=scroll.scrollLeft+(scroll.clientWidth || scroll.offsetWidth || 0)/2;
-    const chosen=heads.find(h=>centre >= Number(h.dataset.start)*45 &&
-      centre < (Number(h.dataset.start)+Number(h.dataset.count))*45) ||
-      (centre < Number(heads[0].dataset.start)*45 ? heads[0] : heads[heads.length-1]);
+    const chosen=heads.find(h=>centre >= Number(h.dataset.start)*54 &&
+      centre < (Number(h.dataset.start)+Number(h.dataset.count))*54) ||
+      (centre < Number(heads[0].dataset.start)*54 ? heads[0] : heads[heads.length-1]);
     if (!chosen) return;
     const key=chosen.dataset.day;
     this._pvCompareDay=key;
