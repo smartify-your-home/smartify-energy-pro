@@ -32,9 +32,9 @@ def day_windows(hours: dict[datetime, float], now: datetime) -> list[dict]:
         ]
         complete = all(fraction == 0 or
                        (isinstance(value, (float, int)) and isfinite(value) and value >= 0)
-                       for fraction, value in zip(fractions, values))
+                       for fraction, value in zip(fractions, values, strict=True))
         weighted = [value * fraction if fraction and value is not None else 0.0
-                    for fraction, value in zip(fractions, values)] if complete else []
+                    for fraction, value in zip(fractions, values, strict=True)] if complete else []
         results.append({"tag": ("heute", "morgen", "uebermorgen")[offset],
                         "datum": date.isoformat(), "vollstaendig": complete,
                         "kwh": round(sum(weighted) / 1000, 2) if complete else None,
