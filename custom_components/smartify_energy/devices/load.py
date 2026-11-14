@@ -368,7 +368,8 @@ class LoadDevice(BaseDevice):
             if self._new_program_detected(ctx, sw_on, p):
                 _LOGGER.info("[%s] neues Programm erkannt – automatischer Reset", self.name)
                 self._reset()
-                self.state.update(sm=DETECTED, since=ctx.now.timestamp(), approved=False)
+                self.state.update(sm=DETECTED, since=ctx.now.timestamp(), approved=False,
+                                  last_wash_day=dt_util.as_local(ctx.now).date().isoformat())
                 self.reason = "Automatischer Reset – neues Programm erkannt"
                 return self.decide(ctx, budget_left)
             return Decision(sw_on, p, "Fertig – neues Programm wird automatisch erkannt")
