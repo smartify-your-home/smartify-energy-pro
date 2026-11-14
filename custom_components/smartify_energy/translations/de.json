@@ -572,7 +572,11 @@
             "nominal_power": "Pflicht: elektrische WP-Nennleistung, die vor geplanten Starts reserviert wird.",
             "fbh_heating_active_entity": "Optional: EIN nur beim FBH-Heizbetrieb. Verhindert, dass WW-Ladungen fälschlich als FBH-Heizlaufzeit gezählt werden.",
             "ww_active_entity": "Sehr empfohlen: EIN während Warmwasserladung. Im WW-Betrieb keine neuen FBH-Starts oder falsch gezählte Standby-Phasen.",
-            "absence_entity": "Optional: EIN sperrt den Boost. Ein bereits angehobener Sollwert wird sicher zurückgestellt."
+            "absence_entity": "Optional: EIN sperrt den Boost. Ein bereits angehobener Sollwert wird sicher zurückgestellt.",
+            "fbh_restart_after_ww": "Optional: Nur wenn unmittelbar VOR Warmwasser FBH-Heizstatus EIN war und die WP-Leistung oberhalb Standby lag. Benötigt sowohl WW-aktiv als auch FBH-Heizbetrieb-aktiv als Binärsensor. Vorher inaktive FBH: KEIN Impuls. Standard AUS.",
+            "fbh_restart_wait": "Nach Ende der WW-Ladung zunächst abwarten, ob die FBH selbst wieder startet. Bei erkanntem FBH-Wiederanlauf ist keine Zusatzanhebung nötig.",
+            "fbh_restart_delta": "Extra Kelvin über dem bereits angehobenen FBH-Sollwert. Maximaltemperatur und Gerätegrenze werden nie überschritten; der ursprüngliche Sollwert bleibt gesichert.",
+            "fbh_restart_duration": "Maximaldauer des einmaligen Wiederanlaufimpulses. Danach bzw. bei früherem FBH-Wiederanlauf zum normalen FBH-Boost-Sollwert zurück, bei Zeitfensterende auf den ursprünglichen Sollwert."
           }
         },
         "reconfigure": {
@@ -592,7 +596,11 @@
             "nominal_power": "Pflicht: elektrische WP-Nennleistung, die vor geplanten Starts reserviert wird.",
             "fbh_heating_active_entity": "Optional: EIN nur beim FBH-Heizbetrieb. Verhindert, dass WW-Ladungen fälschlich als FBH-Heizlaufzeit gezählt werden.",
             "ww_active_entity": "Sehr empfohlen: EIN während Warmwasserladung. Im WW-Betrieb keine neuen FBH-Starts oder falsch gezählte Standby-Phasen.",
-            "absence_entity": "Optional: EIN sperrt den Boost. Ein bereits angehobener Sollwert wird sicher zurückgestellt."
+            "absence_entity": "Optional: EIN sperrt den Boost. Ein bereits angehobener Sollwert wird sicher zurückgestellt.",
+            "fbh_restart_after_ww": "Optional: Nur wenn unmittelbar VOR Warmwasser FBH-Heizstatus EIN war und die WP-Leistung oberhalb Standby lag. Benötigt sowohl WW-aktiv als auch FBH-Heizbetrieb-aktiv als Binärsensor. Vorher inaktive FBH: KEIN Impuls. Standard AUS.",
+            "fbh_restart_wait": "Nach Ende der WW-Ladung zunächst abwarten, ob die FBH selbst wieder startet. Bei erkanntem FBH-Wiederanlauf ist keine Zusatzanhebung nötig.",
+            "fbh_restart_delta": "Extra Kelvin über dem bereits angehobenen FBH-Sollwert. Maximaltemperatur und Gerätegrenze werden nie überschritten; der ursprüngliche Sollwert bleibt gesichert.",
+            "fbh_restart_duration": "Maximaldauer des einmaligen Wiederanlaufimpulses. Danach bzw. bei früherem FBH-Wiederanlauf zum normalen FBH-Boost-Sollwert zurück, bei Zeitfensterende auf den ursprünglichen Sollwert."
           }
         }
       }
@@ -810,6 +818,15 @@
       },
       "fbh_idle_minutes": {
         "name": "Standby-Mindestdauer"
+      },
+      "fbh_restart_wait": {
+        "name": "Wartezeit nach Warmwasser"
+      },
+      "fbh_restart_delta": {
+        "name": "Zusätzliche kurzzeitige Sollwerterhöhung"
+      },
+      "fbh_restart_duration": {
+        "name": "Maximale Impulsdauer"
       }
     },
     "time": {
@@ -883,6 +900,9 @@
       },
       "announce_reminder": {
         "name": "Erinnerung alle 30 Minuten"
+      },
+      "fbh_restart_after_ww": {
+        "name": "FBH-Wiederanlauf nach WW"
       }
     },
     "sensor": {
