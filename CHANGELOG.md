@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 0.3.90 – 2026-11-14
+
+- PV-Diagramm: Vergangene vollständige Stunden zeigen eingefrorene ursprüngliche Prognose und gemessene Erzeugung; die aktuelle Stunde zeigt ursprüngliche und aktuelle Prognose ohne unvollständigen Ist-Balken; zukünftige Stunden zeigen ausschließlich die aktuell gültige Prognose.
+- Historische Prognosedaten bleiben unverändert gespeichert und für die spätere Genauigkeitsauswertung erhalten. Die Änderung betrifft nur die Balkendarstellung.
+
 ## 0.3.89 – 2026-11-14
 
 - PV-Ansicht: ein dauerhaft sichtbares, horizontal scrollbareres Diagramm mit drei stündlichen Balkenreihen: unveränderliche ursprüngliche Prognose, aktuelle Prognose und gemessene Erzeugung.
