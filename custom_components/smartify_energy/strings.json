@@ -572,11 +572,7 @@
             "nominal_power": "Expected electrical heat-pump power reserved for a future boost.",
             "fbh_heating_active_entity": "Optional on while underfloor-heating is active; allows filtering hot-water or non-heating cycles.",
             "ww_active_entity": "Strongly recommended when hot-water and heating share the same compressor; on suspends FBH runtime detection and start.",
-            "absence_entity": "Optional on means away and disables the new boost. Existing active setpoint is restored safely.",
-            "fbh_restart_after_ww": "Optional: Only if FBH heating status was ON and WP power was above idle immediately BEFORE WW charging began. Requires both binary WW-active and FBH-heating-active sensors. No pulse if FBH was previously inactive. Default OFF.",
-            "fbh_restart_wait": "Wait after WW charging ends to give the heat pump a chance to resume FBH by itself. If it resumes, no pulse is applied.",
-            "fbh_restart_delta": "Additional kelvin above the already raised FBH boost target, capped at the configured and actuator-reported temperature maxima; the saved original setpoint remains unchanged.",
-            "fbh_restart_duration": "Maximum duration of the one-time WW recovery pulse. Return to normal FBH boost target after the deadline or earlier heating restart, then to the original setpoint at the window end."
+            "absence_entity": "Optional on means away and disables the new boost. Existing active setpoint is restored safely."
           }
         },
         "reconfigure": {
@@ -596,11 +592,7 @@
             "nominal_power": "Expected electrical heat-pump power reserved for a future boost.",
             "fbh_heating_active_entity": "Optional on while underfloor-heating is active; allows filtering hot-water or non-heating cycles.",
             "ww_active_entity": "Strongly recommended when hot-water and heating share the same compressor; on suspends FBH runtime detection and start.",
-            "absence_entity": "Optional on means away and disables the new boost. Existing active setpoint is restored safely.",
-            "fbh_restart_after_ww": "Optional: Only if FBH heating status was ON and WP power was above idle immediately BEFORE WW charging began. Requires both binary WW-active and FBH-heating-active sensors. No pulse if FBH was previously inactive. Default OFF.",
-            "fbh_restart_wait": "Wait after WW charging ends to give the heat pump a chance to resume FBH by itself. If it resumes, no pulse is applied.",
-            "fbh_restart_delta": "Additional kelvin above the already raised FBH boost target, capped at the configured and actuator-reported temperature maxima; the saved original setpoint remains unchanged.",
-            "fbh_restart_duration": "Maximum duration of the one-time WW recovery pulse. Return to normal FBH boost target after the deadline or earlier heating restart, then to the original setpoint at the window end."
+            "absence_entity": "Optional on means away and disables the new boost. Existing active setpoint is restored safely."
           }
         }
       }
