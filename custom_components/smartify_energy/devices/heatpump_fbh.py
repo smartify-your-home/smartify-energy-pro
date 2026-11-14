@@ -270,6 +270,9 @@ class FBHBoostDevice(BaseDevice):
             if window is None or window[2] != key:
                 self.status = "fertig"
                 return Decision(False, 0, "FBH-Zeitfenster beendet – Sollwert wiederherstellen")
+            if self._shared_ww_running():
+                self.status = "wartet"
+                return Decision(True, 0, "Warmwasserbetrieb hat Vorrang – keine zusätzliche FBH-Reservierung")
             self.status = "boost"
             return Decision(True, self.nominal, "FBH-Sollwerterhöhung läuft")
         window = self._window_now(now)
