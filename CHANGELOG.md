@@ -1,5 +1,12 @@
 ## Unreleased
 
+## 0.3.92 – 2026-11-14
+
+- FBH-Boost: manuelle Aktionen **Jetzt anheben** und **Jetzt absenken** als eigene Home-Assistant-Buttons und exklusiv in der SEP-Gerätezeile. Anheben nur im aktiven Fenster mit mindestens einer Stunde Restzeit, bei Heizbedarf, freiem Sollwert und ohne WW-Konflikt. Nach manueller Absenkung bleiben beide Aktionen und ein automatischer Neustart im selben Fenster gesperrt.
+- Manuelles Absenken stellt den **vor der Erhöhung gespeicherten Original-Sollwert** wieder her (kein pauschales −2 K). Die Rückstellinformation wird vor Schreibvorgängen dauerhaft gespeichert und erst nach bestätigter Rückstellung verworfen.
+- Neuer optionaler Eingang **FBH-Heizbedarf** (binary_sensor/input_boolean): EIN erlaubt die Erhöhung, AUS versetzt sie in Standby und stellt laufende Erhöhung zurück; unbekannt/nicht verfügbar sperrt sicherheitshalber. Ohne konfigurierten Sensor bleibt das bisherige Verhalten erhalten.
+- Die Wärmepumpenreservierung und der optionale Wiederanlaufimpuls nach WW berücksichtigen ebenfalls den Heizbedarf. Automatik und Manuell teilen dieselbe sichere Sollwert-Schreibroutine.
+
 ## 0.3.91 – 2026-11-14
 
 - PV-Vergleich startet beim Öffnen der SEP-Karte automatisch am heutigen Tag, statt am ältesten gespeicherten Prognosetag. Nach dem ersten Browser-Layout wird die Scrollposition auf den heutigen Tag gesetzt; anschließendes manuelles Scrollen bleibt erhalten.
