@@ -314,22 +314,16 @@ test('PV plan has an initially collapsed, clickable actual-vs-forecast chart',()
   }}};
   const hass={entities,states,devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
   card.hass=hass;
-  const toggle=card.shadowRoot.querySelector('[data-pvcompare]');
-  assert.ok(toggle,'expand control must exist below PV plan even if plan timeline is empty');
-  assert.equal(toggle.getAttribute('aria-expanded'),'false');
-  assert.equal(card.shadowRoot.querySelector('.pv-compare-body'),null);
-  toggle.click();
-  assert.equal(card.shadowRoot.querySelector('[data-pvcompare]').getAttribute('aria-expanded'),'true');
+  assert.ok(card.shadowRoot.querySelector('.pv-compare-body'),
+    'comparison chart must always be visible even with an empty PV plan');
+  assert.equal(card.shadowRoot.querySelector('[data-pvcompare]'),null);
   assert.match(card.shadowRoot.querySelector('.pv-compare-body').textContent,/0,80 kWh/);
   assert.match(card.shadowRoot.querySelector('.pv-compare-body').textContent,/-20.0 %/);
   assert.equal(card.shadowRoot.querySelectorAll('.pv-compare-forecast').length,2);
   assert.equal(card.shadowRoot.querySelectorAll('.pv-compare-actual').length,1);
-  const existing=card.shadowRoot.querySelector('.pv-compare-body');
   states['sensor.plan']={...states['sensor.plan'],last_updated:new Date(Date.now()+1000).toISOString()};
   card.hass=hass;
-  assert.ok(card.shadowRoot.querySelector('.pv-compare-body'),'expanded state survives HA refresh');
-  card.shadowRoot.querySelector('[data-pvcompare]').click();
-  assert.equal(card.shadowRoot.querySelector('.pv-compare-body'),null);
+  assert.ok(card.shadowRoot.querySelector('.pv-compare-body'),'visible state survives HA refresh');
 });
 
 test('PV comparison reports missing PV generation meter rather than inventing actuals',()=>{
@@ -341,7 +335,6 @@ test('PV comparison reports missing PV generation meter rather than inventing ac
   card.hass={entities:{plan:{platform:'smartify_energy',translation_key:'plan',device_id:'hub',entity_id:'sensor.plan'}},
     states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:false,stunden:[]}}}},
     devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
-  card.shadowRoot.querySelector('[data-pvcompare]').click();
   assert.match(card.shadowRoot.querySelector('.pv-compare-body').textContent,/PV-Erzeugungsleistung/);
   assert.equal(card.shadowRoot.querySelectorAll('.pv-compare-actual').length,0);
 });
@@ -365,9 +358,7 @@ test('PV comparison supports a 48h scrollback including missing hours',()=>{
       stunden:slots,prognose_kwh:10,ist_kwh:9,abweichung_pct:-10,verglichene_stunden:35}}}},
     devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}
   };
-  card.shadowRoot.querySelector('[data-pvcompare]').click();
   const root=card.shadowRoot;
-  assert.match(root.querySelector('[data-pvcompare]').textContent,/14 Tage/);
   assert.equal(root.querySelectorAll('.pv-compare-col').length,48);
   assert.equal(root.querySelectorAll('.pv-compare-forecast').length,47);
   assert.equal(root.querySelectorAll('.pv-compare-actual').length,36);
@@ -413,7 +404,6 @@ test('PV actual-forecast comparison uses fixed left kWh axis while scrolling 48h
     states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:2.5,
       stunden:slots,prognose_kwh:90,ist_kwh:72,abweichung_pct:-20,verglichene_stunden:40}}}},
     devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
-  card.shadowRoot.querySelector('[data-pvcompare]').click();
   const root=card.shadowRoot;
   const axis=root.querySelector('.pv-compare-body .sep-y-axis');
   const scroll=root.querySelector('.pv-compare-scroll');
@@ -444,7 +434,6 @@ test('PV comparison hides night hours using HA sunrise/sunset, keeps edge hours 
     states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:2.5,
       stunden:slots,tageslicht:sunlight,zeitzone:"Europe/Vienna",prognose_kwh:20,ist_kwh:16,abweichung_pct:-20,verglichene_stunden:20}}}},
     devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
-  card.shadowRoot.querySelector('[data-pvcompare]').click();
   const root=card.shadowRoot;
   assert.equal(root.querySelectorAll('.pv-compare-col').length,22);
   assert.equal(root.querySelectorAll('.pv-compare-day').length,2);
@@ -469,7 +458,6 @@ test('PV chart uses installed total peak rather than a 14-day historical outlier
     states:{'sensor.plan':{state:'–',attributes:{stunden:[],pv_vergleich:{konfiguriert:true,
       gesamt_peak_kwp:10.6,stunden:hours,prognose_kwh:4,ist_kwh:3,abweichung_pct:-25,verglichene_stunden:3}}}},
     devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
-  card.shadowRoot.querySelector('[data-pvcompare]').click();
   const root=card.shadowRoot;
   assert.equal(root.querySelector('.pv-compare-body .sep-y-axis span').textContent,'10,6 kWh',
     '10.6 kWp is exactly 10.6 kWh on the fixed scale, independent of 8 kWh historical value');
@@ -502,7 +490,6 @@ test('PV summary follows horizontally visible day; no 14-day aggregate displayed
       konfiguriert:true,gesamt_peak_kwp:10,zeitzone:'Europe/Vienna',tageslicht:sunlight,
       stunden:slots,prognose_kwh:22,ist_kwh:22,abweichung_pct:0,verglichene_stunden:22}}}},
     devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
-  card.shadowRoot.querySelector('[data-pvcompare]').click();
   const root=card.shadowRoot, scroll=root.querySelector('.pv-compare-scroll');
   assert.equal(root.querySelectorAll('.pv-compare-day').length,2);
   // jsdom has no layout engine; simulate the measured horizontal viewport.
@@ -541,7 +528,6 @@ test('PV selected-day summary shows incomplete hours as missing rather than zero
       gesamt_peak_kwp:5,stunden:[{zeit:'2026-11-09T09:00:00+01:00',prognose_wh:1200,ist_wh:null}],
       prognose_kwh:null,ist_kwh:null,abweichung_pct:null,verglichene_stunden:0}}}},
     devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}};
-  card.shadowRoot.querySelector('[data-pvcompare]').click();
   const root=card.shadowRoot;
   assert.equal(root.querySelector('[data-pv-day-actual]').textContent,'–');
   assert.equal(root.querySelector('[data-pv-day-forecast]').textContent,'–');
@@ -690,7 +676,6 @@ test('PV comparison exact peak scale stays at 10 kWh even with larger historic v
       pv_vergleich:{konfiguriert:true,gesamt_peak_kwp:10,stunden:slots}}}},
     devices:{hub:{name:'SEP'}},callService(){return Promise.resolve()}
   };
-  card.shadowRoot.querySelector('[data-pvcompare]').click();
   const root=card.shadowRoot;
   const axis=root.querySelector('.pv-compare-body .sep-y-axis');
   assert.equal(axis.querySelector('span').textContent,'10 kWh');
@@ -775,12 +760,12 @@ test('PV plan and forecast/actual comparison move together above priorities',()=
   card.setConfig({show_timeline:true,show_priorities:true});
   const order=()=>[...root.querySelectorAll('[data-order-block]')].map(x=>x.dataset.orderBlock);
   assert.deepEqual(order(),['priorities','pv'],'legacy order is the default');
-  assert.equal(root.querySelector('[data-order-block="pv"] [data-pvcompare]')!=null,true,
+  assert.equal(root.querySelector('[data-order-block="pv"] .pv-compare-body')!=null,true,
     'forecast/actual comparison remains inside the PV block');
   assert.ok(root.querySelector('[data-priority-lock]'),'lock remains in priorities header');
   card._changeSectionOrder(true);
   assert.deepEqual(order(),['pv','priorities'],'drag moves the complete PV block above priorities');
-  assert.ok(root.querySelector('[data-order-block="pv"] [data-pvcompare]'),
+  assert.ok(root.querySelector('[data-order-block="pv"] .pv-compare-body'),
     'comparison remains with PV timeline after reordering');
   assert.equal(card._priorityLocked,true,'section rearrangement does not unlock device priorities');
   card._changeSectionOrder(false);
