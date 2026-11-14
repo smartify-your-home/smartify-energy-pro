@@ -1,5 +1,12 @@
 ## Unreleased
 
+## 0.3.93 – 2026-11-14
+
+- FBH-Gerätezeile zeigt den tatsächlichen Zustand der Sollwerterhöhung permanent und unmissverständlich: „Erhöhung aktiv“ bzw. „Keine Erhöhung aktiv“ / „kein Heizbedarf“, zusätzlich den aktuellen Sollwert und bei aktiver Erhöhung Original- und Boost-Sollwert.
+- Die für Waschmaschine/Geschirrspüler gedachte Meldung „Neues Programm wird automatisch erkannt“ erscheint nicht mehr für FBH.
+- Die FBH-Aktionsbuttons „Erhöhen“ und „Absenken“ stehen im gleichen Aktionsbereich wie „Fertig“/„Nachladen“. Immer nur der erlaubte Button erscheint; außerhalb des gültigen Zeitfensters und während Schreibvorgängen keiner.
+- Manuelles Absenken stellt den gespeicherten Originalwert zurück und verhindert einen **automatischen** Sofort-Neustart im selben Zeitfenster. Eine **explizite manuelle** Erhöhung ist im selben Fenster weiterhin erlaubt, wenn Heizbedarf, Temperaturgrenze und mindestens 60 Minuten Restlaufzeit passen.
+
 ## 0.3.92 – 2026-11-14
 
 - FBH-Boost: manuelle Aktionen **Jetzt anheben** und **Jetzt absenken** als eigene Home-Assistant-Buttons und exklusiv in der SEP-Gerätezeile. Anheben nur im aktiven Fenster mit mindestens einer Stunde Restzeit, bei Heizbedarf, freiem Sollwert und ohne WW-Konflikt. Nach manueller Absenkung bleiben beide Aktionen und ein automatischer Neustart im selben Fenster gesperrt.
