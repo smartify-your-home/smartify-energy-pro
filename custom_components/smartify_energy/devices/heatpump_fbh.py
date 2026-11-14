@@ -134,8 +134,6 @@ class FBHBoostDevice(BaseDevice):
         window = self._window_now(now)
         if (self._manual_busy or self.mode != MODE_AUTO or self.state.get("active")
                 or self.state.get("restore_pending") or not window
-                or self.state.get("completed_window") == window[2]
-                or self.state.get("manual_lock_window") == window[2]
                 or self.state.get("externally_changed")
                 or self._heating_demand() is not True
                 or self._shared_ww_running() or self._unavailable_actor()):
@@ -168,15 +166,31 @@ class FBHBoostDevice(BaseDevice):
                 raise ValueError("FBH-Anheben derzeit gesperrt (Zeitfenster, Heizbedarf oder Betriebsstatus)")
             self._manual_busy = True
             try:
+                # A deliberate manual raise overrides the automatic no-restart
+                # lock created by the user's earlier manual lowering. Automatic
+                # relaunch remains blocked until the user explicitly raises.
+                window_key = self._window_now(now)[2]
+                if self.state.get("manual_lock_window") == window_key:
+                    self.state["manual_lock_window"] = None
+                if self.state.get("completed_window") == window_key:
+                    self.state["completed_window"] = None
                 await self._start_boost(now)
             finally:
                 self._manual_busy = False
         await self.manager.async_request_run(immediate=True)
 
+    def _manual_can_lower(self, now: datetime) -> bool:
+        window = self._window_now(now)
+        return bool(
+            not self._manual_busy and not self.state.get("restore_pending")
+            and self.state.get("active") and window is not None
+            and window[2] == self.state.get("window")
+        )
+
     async def async_lower_now(self) -> None:
         async with self.manager._lock:
-            if self._manual_busy or not self.state.get("active"):
-                raise ValueError("Keine aktive FBH-Erhöhung zum Absenken")
+            if not self._manual_can_lower(dt_util.now()):
+                raise ValueError("FBH-Absenken nur bei aktiver Erhöhung im gültigen Zeitfenster")
             self._manual_busy = True
             try:
                 self.state["manual_lock_window"] = self.state.get("window")
@@ -243,9 +257,12 @@ class FBHBoostDevice(BaseDevice):
                 "heizbedarf_entitaet": self.cfg.get("fbh_demand_entity"),
                 "heizbedarf": self._heating_demand(),
                 "fbh_manuell_anheben_moeglich": self._manual_can_raise(dt_util.now()),
-                "fbh_manuell_absenken_moeglich": bool(self.state.get("active") and not self._manual_busy),
-                "fbh_manuell_gesperrt_bis_fensterwechsel": self.state.get("manual_lock_window") == (self._window_now(dt_util.now()) or (None, None, None))[2],
+                "fbh_manuell_absenken_moeglich": self._manual_can_lower(dt_util.now()),
+                "fbh_erhoehung_aktiv": bool(self.state.get("active")),
+                "fbh_zeitfenster_aktiv": self._window_now(dt_util.now()) is not None,
+                "fbh_automatik_nach_absenken_pausiert": self.state.get("manual_lock_window") == (self._window_now(dt_util.now()) or (None, None, None))[2],
                 "fbh_schreibvorgang": self._manual_busy or bool(self.state.get("restore_pending")),
+                "sollwert_aktuell": self._setpoint(self.state.get("setpoint_entity") or self.cfg.get("fbh_setpoint_entity")),
                 "sollwert_original": self.state.get("original"),
                 "sollwert_boost": self.state.get("target"),
                 "sollwert_entitaet": self.cfg.get("fbh_setpoint_entity"),
