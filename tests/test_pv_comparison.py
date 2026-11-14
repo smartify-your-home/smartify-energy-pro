@@ -16,6 +16,25 @@ class PVComparisonTests(unittest.TestCase):
     def setUp(self):
         self.hour = datetime(2026, 11, 8, 8, tzinfo=UTC)
 
+    def test_unified_timeline_preserves_original_and_exposes_live_future(self):
+        model = PVComparison()
+        now = self.hour + timedelta(hours=1)
+        past = self.hour
+        future = now + timedelta(hours=59)
+        model.capture(self.hour - timedelta(minutes=10), {
+            past: 1000, future: 1800,
+        })
+        model.capture(self.hour - timedelta(minutes=5), {past: 2000})
+        model.actual_wh[past.isoformat()] = 900
+        model.coverage_s[past.isoformat()] = 3600
+        result = model.timeline(now, {future: 2300}, 14 * 24, 60)
+        self.assertEqual(len(result["stunden"]), 396)
+        self.assertEqual(result["stunden"][335]["prognose_wh"], 1000)
+        self.assertEqual(result["stunden"][335]["ist_wh"], 900)
+        self.assertEqual(result["stunden"][-1]["prognose_wh"], 1800)
+        self.assertEqual(result["stunden"][-1]["aktuelle_prognose_wh"], 2300)
+        self.assertIsNone(result["stunden"][-1]["ist_wh"])
+
     def test_original_forecast_is_not_replaced(self):
         model = PVComparison()
         model.capture(self.hour - timedelta(minutes=15), {self.hour: 1000})
