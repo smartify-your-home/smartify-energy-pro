@@ -256,11 +256,12 @@ class FBHBoostDevice(BaseDevice):
         await self._write_setpoint(entity, target)
 
     async def _manual_lower(self) -> None:
+        if not self.state.get("active"):
+            raise ValueError("FBH-Temperatur ist nicht angehoben")
         window = self._window_now(dt_util.now())
+        await self._restore()
         if self.state.get("active"):
-            await self._restore()
-            if self.state.get("active"):
-                raise RuntimeError("FBH-Rückstellung noch nicht bestätigt")
+            raise RuntimeError("FBH-Rückstellung noch nicht bestätigt")
         self.state["manual_hold_window"] = window[2] if window else None
         self.state["manual_override"] = False
         await self.manager.async_save_now()
