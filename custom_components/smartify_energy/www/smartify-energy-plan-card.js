@@ -855,6 +855,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._grpClosed = new Set();  // geschlossene, standardmäßig offene Gruppen
     this._boostUntil = {};
     this._pvCompareOpen = true;
+    this._pvCompareInitialScroll = false;
     this._pvCompareDay = null;
     this._pvTipIndex = 0;
   }
@@ -1475,7 +1476,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     const starts = new Set(days.map(x=>x.first));
     const dayDividers = days.slice(1).map(day =>
       `<span class="pv-compare-day-divider" style="left:${day.first*unitWidth-3}px" aria-hidden="true"></span>`).join("");
-    const unitWidth = 54;
+    const unitWidth = 45;
     const totalWidth = Math.max(580, rows.length*unitWidth);
     const dayHead = days.map(day=>{
       const pct=day.compared && day.expected>0 ? (day.actual/day.expected-1)*100:null;
@@ -1495,7 +1496,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const deviation=deviationOf(x);
       const peak=Math.max(0,forecast || 0,current || 0,actual || 0);
       const position=(Math.min(peak, axisMax) / axisMax * 100).toFixed(3);
-      return `<div class="pv-compare-col ${starts.has(i)?"day-start":""}" title="${esc(label)} · Prognose ${forecast===null?"kein Wert":esc((forecast/1000).toFixed(2))+" kWh"} · Ist ${actual===null?"noch nicht vollständig gemessen":esc((actual/1000).toFixed(2))+" kWh"}">
+      return `<div class="pv-compare-col ${starts.has(i)?"day-start":""}" data-hour="${esc(x.zeit)}" title="${esc(label)} · Prognose ${forecast===null?"kein Wert":esc((forecast/1000).toFixed(2))+" kWh"} · Ist ${actual===null?"noch nicht vollständig gemessen":esc((actual/1000).toFixed(2))+" kWh"}">
         ${bar(forecast,"pv-compare-forecast")}${bar(current,"pv-compare-current")}${bar(actual,"pv-compare-actual")}
         ${deviation===null?"":`<span class="pv-compare-hour-pct ${classify(deviation)}" style="bottom:calc(${position}% + 8px)" title="${esc(signed(deviation))}">${esc(signed(deviation))}</span>`}</div>`;
     }).join("");
@@ -1592,6 +1593,15 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     template.innerHTML = markup;
     patchChildren(this.shadowRoot, template.content);
     this._bind(d);
+    if (!this._pvCompareInitialScroll) {
+      const scroll = this.shadowRoot.querySelector(".pv-compare-scroll");
+      const columns = scroll?.querySelectorAll(".pv-compare-col");
+      const currentIndex = columns ? [...columns].findIndex(col => Date.parse(col.dataset.hour) >= Date.now() - 3600000) : -1;
+      if (scroll && currentIndex >= 0) {
+        scroll.scrollLeft = Math.max(0, currentIndex * 45 - scroll.clientWidth / 2);
+        this._pvCompareInitialScroll = true;
+      }
+    }
     this._updatePVSelectedDay();
   }
 
@@ -1599,12 +1609,12 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     if (!scroll) return;
     const heads=[...scroll.querySelectorAll(".pv-compare-day[data-day]")];
     if (!heads.length) return;
-    // Each hourly column occupies 54px. Choose the day at the viewport centre.
+    // Each hourly column occupies 45px. Choose the day at the viewport centre.
     // Using data-start/count also works before layout sizes are available in jsdom.
     const centre=scroll.scrollLeft+(scroll.clientWidth || scroll.offsetWidth || 0)/2;
-    const chosen=heads.find(h=>centre >= Number(h.dataset.start)*54 &&
-      centre < (Number(h.dataset.start)+Number(h.dataset.count))*54) ||
-      (centre < Number(heads[0].dataset.start)*54 ? heads[0] : heads[heads.length-1]);
+    const chosen=heads.find(h=>centre >= Number(h.dataset.start)*45 &&
+      centre < (Number(h.dataset.start)+Number(h.dataset.count))*45) ||
+      (centre < Number(heads[0].dataset.start)*45 ? heads[0] : heads[heads.length-1]);
     if (!chosen) return;
     const key=chosen.dataset.day;
     this._pvCompareDay=key;
