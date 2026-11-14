@@ -280,3 +280,11 @@ Der ganze PV-Plan mit Prognose-Ist-Vergleich kann per Ziehgriff an der Abschnitt
 
 ### Prioritätenüberschrift (v0.3.84)
 Die Bedienelemente stehen ab sofort ganz links in der Reihenfolge **Ziehgriff · Schloss · PRIORITÄTEN**. Der Griff verschiebt den gesamten Bereich, das Schloss schützt das Verschieben einzelner Geräte.
+
+
+### WP FBH Sollwerterhöhung, WP Warmwasser Boost und aktuelle Waschtipps (0.3.88)
+Der bestehende Wärmepumpen-Boost heißt jetzt **WP Warmwasser Boost**. Zusätzlich gibt es den neuen SEP-Gerätetyp **WP FBH Sollwerterhöhung** mit bis zu zwei Start-/End-Zeitfenstern, einstellbarer Sollwerterhöhung in Kelvin und Maximaltemperatur sowie wählbarer Zeit- oder PV-Steuerung. Notwendig sind ein schreibbarer FBH-Sollwert (`number`, `input_number` oder `climate`), elektrischer WP-Leistungssensor und WP-Nennleistung. Heizbetriebs- und WW-Aktiv-Signale erhöhen die Zuverlässigkeit und verhindern, dass die Warmwasserladung als FBH-Heizung gezählt wird.
+
+SEP merkt den Sollwert vor der Anhebung dauerhaft und stellt ihn nach Zeitfensterende oder vorzeitig erkannter Fertigstellung zurück (standardmäßig nach mindestens 3 h elektrischer FBH-Heizlaufzeit plus 20 min Standby). Die **Vorausreservierung** vor einem geplanten Boost ist pro Gerät 0–120 min einstellbar (30 min Standard). Sie hat Vorrang vor nachrangigen, noch nicht freigegebenen Geräten; WP-Messwerte werden nicht doppelt berücksichtigt. Prüfe nach der Anlage eines FBH-Geräts die Priorität und stelle es erst nach Konfiguration von Beobachten auf Automatik.
+
+PV-Waschtipps bewerten heute nur noch den **restlichen PV-Ertrag bis 16 Uhr**, nicht den schon produzierten Tagesertrag. Gibt es heute noch ein gutes Waschfenster, empfiehlt SEP nicht bloß aufgrund einer höheren morgigen Tagessumme, den Waschgang zu verschieben. Sobald SEP das Waschprogramm erkennt, wird der Waschtipp bis nach dem Zyklus (und bei Fertigstellung für den restlichen Tag) ausgeblendet. Die übrigen Alltagstipps bleiben sichtbar.
