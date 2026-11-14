@@ -77,6 +77,7 @@ from .const import (
     TYPE_EV,
     TYPE_HEATER,
     TYPE_HEATPUMP,
+    TYPE_HEATPUMP_FBH,
     TYPE_LOAD,
     TYPE_POOL,
 )
@@ -269,6 +270,7 @@ class SmartifyEnergyConfigFlow(_HubSteps, ConfigFlow, domain=DOMAIN):
             TYPE_POOL: PoolSubentryFlow,
             TYPE_EV: EvSubentryFlow,
             TYPE_HEATPUMP: HeatPumpSubentryFlow,
+            TYPE_HEATPUMP_FBH: FBHBoostSubentryFlow,
             TYPE_HEATER: HeaterSubentryFlow,
         }
 
