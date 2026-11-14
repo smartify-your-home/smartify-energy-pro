@@ -797,8 +797,9 @@ const CARD_CSS = `
     padding:30px 0 0;border-bottom:1px solid var(--divider-color)}
   .pv-compare-plot .sep-chart-grid{top:30px}
   .pv-compare-col{flex:0 0 40px;min-width:40px;height:100%;display:flex;align-items:end;justify-content:center;gap:2px;position:relative;z-index:1}
-  .pv-compare-bar{width:42%;min-height:0;border-radius:3px 3px 0 0}
+  .pv-compare-bar{width:29%;min-height:0;border-radius:3px 3px 0 0}
   .pv-compare-forecast{background:var(--warning-color,#e5a21a);opacity:.82}
+  .pv-compare-current{background:var(--info-color,#4399ce)}
   .pv-compare-actual{background:var(--success-color,#22a06b)}
   .pv-compare-labels{min-width:max(100%,580px);display:flex;gap:5px}
   .pv-compare-labels span{flex:0 0 40px;min-width:40px;text-align:center;color:var(--secondary-text-color);font-size:10px}
@@ -853,7 +854,8 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     this._grpOpen = new Set();    // geöffnete, standardmäßig zugeklappte Gruppen
     this._grpClosed = new Set();  // geschlossene, standardmäßig offene Gruppen
     this._boostUntil = {};
-    this._pvCompareOpen = false;
+    this._pvCompareOpen = true;
+    this._pvCompareInitialScroll = false;
     this._pvCompareDay = null;
     this._pvTipIndex = 0;
   }
@@ -1421,14 +1423,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
   _pvComparison(d) {
     const plan = this._st(d.ents["sensor:plan"]);
     const data = plan?.attributes?.pv_vergleich;
-    const open = this._pvCompareOpen;
-    const toggle = `<button type="button" class="pv-compare-toggle" data-pvcompare
-      aria-expanded="${open ? "true" : "false"}" aria-controls="sep-pv-compare">
-      <ha-icon icon="${open ? "mdi:chevron-down" : "mdi:chevron-right"}"></ha-icon>
-      PV-Prognose / Ist-Erzeugung (14 Tage) <span>${open ? "Einklappen" : "Ausklappen"}</span>
-    </button>`;
-    if (!open) return toggle;
-    if (!data?.konfiguriert) return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
+    if (!data?.konfiguriert) return `<div class="pv-compare-body" id="sep-pv-compare">
       <div class="pv-compare-note">Für diesen Vergleich unter SEP → Konfigurieren → Prognose
       den Sensor für die gesamte PV-Erzeugungsleistung (W) auswählen.
       Der Netzsaldo oder die Akkuleistung sind dafür nicht geeignet.</div></div>`;
@@ -1445,18 +1440,18 @@ class SmartifyEnergyPlanCard extends HTMLElement {
           return time + 3600000 > sunrise - 3600000 && time < sunset + 3600000;
       }
       // Compatibility with older SEP backends that do not expose daylight.
-      return (Number(x.prognose_wh) || 0) > 0 || (Number(x.ist_wh) || 0) > 0;
+      return (Number(x.prognose_wh) || 0) > 0 || (Number(x.aktuelle_prognose_wh) || 0) > 0 || (Number(x.ist_wh) || 0) > 0;
     };
     const rows = Array.isArray(data.stunden) ? data.stunden.filter(x =>
       Number.isFinite(Date.parse(x.zeit)) && isDaylight(x)) : [];
-    if (!rows.length) return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
+    if (!rows.length) return `<div class="pv-compare-body" id="sep-pv-compare">
       <div class="pv-compare-note">Noch keine Tageslichtstunden mit gespeicherter Prognose verfügbar.
       Der Vergleich beginnt mit der nächsten vollständig gemessenen Stunde.</div></div>`;
     // Strict fixed chart scale: installed STC kWp equals the top kWh tick
     // for a one-hour bucket. No headroom, rounding, or history-based expansion.
     const peakKwp = Number(data.gesamt_peak_kwp);
     const axisMax = Number.isFinite(peakKwp) && peakKwp > 0 ? peakKwp * 1000 : null;
-    if (!axisMax) return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
+    if (!axisMax) return `<div class="pv-compare-body" id="sep-pv-compare">
       <div class="pv-compare-note">Für die feste Y-Achse die gesamte installierte PV-Peakleistung
       in SEP → Konfigurieren → Prognose hinterlegen (oder PV-Flächen einzeichnen).</div></div>`;
     const fmt = v => typeof v === "number" && Number.isFinite(v)
@@ -1497,11 +1492,12 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       const label=t.toLocaleString("de-AT",{timeZone:data.zeitzone || undefined,weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
       const forecast=typeof x.prognose_wh==="number"?x.prognose_wh:null;
       const actual=typeof x.ist_wh==="number"?x.ist_wh:null;
+      const current=typeof x.aktuelle_prognose_wh==="number"?x.aktuelle_prognose_wh:null;
       const deviation=deviationOf(x);
-      const peak=Math.max(0,forecast || 0,actual || 0);
+      const peak=Math.max(0,forecast || 0,current || 0,actual || 0);
       const position=(Math.min(peak, axisMax) / axisMax * 100).toFixed(3);
-      return `<div class="pv-compare-col ${starts.has(i)?"day-start":""}" title="${esc(label)} · Prognose ${forecast===null?"kein Wert":esc((forecast/1000).toFixed(2))+" kWh"} · Ist ${actual===null?"noch nicht vollständig gemessen":esc((actual/1000).toFixed(2))+" kWh"}">
-        ${bar(forecast,"pv-compare-forecast")}${bar(actual,"pv-compare-actual")}
+      return `<div class="pv-compare-col ${starts.has(i)?"day-start":""}" data-hour="${esc(x.zeit)}" title="${esc(label)} · Prognose ${forecast===null?"kein Wert":esc((forecast/1000).toFixed(2))+" kWh"} · Aktuelle Prognose ${current===null?"kein Wert":esc((current/1000).toFixed(2))+" kWh"} · Ist ${actual===null?"noch nicht vollständig gemessen":esc((actual/1000).toFixed(2))+" kWh"}">
+        ${bar(forecast,"pv-compare-forecast")}${bar(current,"pv-compare-current")}${bar(actual,"pv-compare-actual")}
         ${deviation===null?"":`<span class="pv-compare-hour-pct ${classify(deviation)}" style="bottom:calc(${position}% + 8px)" title="${esc(signed(deviation))}">${esc(signed(deviation))}</span>`}</div>`;
     }).join("");
     const labels=rows.map((x,i)=>{
@@ -1511,13 +1507,13 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     }).join("");
     // Summary is always one local day, never the 14-day aggregate from pv_vergleich.
     // On first expansion default to newest day; a scroll event changes the selected day.
-    const initialDay=days.find(x=>x.key===this._pvCompareDay) || days[days.length-1];
+    const initialDay=days.find(x=>x.key===this._pvCompareDay) || days.find(x=>x.key===localDay(new Date().toISOString())) || days[days.length-1];
     const totalPct=initialDay.compared && initialDay.expected > 0
       ? (initialDay.actual/initialDay.expected-1)*100 : null;
     const partial=initialDay.incomplete > 0 || initialDay.key===localDay(new Date().toISOString());
     const labelDate=new Date(initialDay.key+"T12:00:00").toLocaleDateString("de-AT",
       {weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"});
-    return toggle + `<div class="pv-compare-body" id="sep-pv-compare">
+    return `<div class="pv-compare-body" id="sep-pv-compare">
       <div class="pv-compare-totals">
         <div class="pv-compare-selected-day" data-pv-selected-date>${esc(labelDate)}${partial?" · bisher":""}</div>
         <div><small>Prognose (vergleichbare Stunden)</small><strong data-pv-day-forecast>${initialDay.compared?fmt(initialDay.expected/1000):"–"}</strong></div>
@@ -1534,6 +1530,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       </div>
       <div class="pv-compare-legend">
         <span><i style="background:var(--warning-color,#e5a21a)"></i>Ursprüngliche Prognose</span>
+        <span><i style="background:var(--info-color,#4399ce)"></i>Aktuelle Prognose</span>
         <span><i style="background:var(--success-color,#22a06b)"></i>Gemessene Erzeugung</span>
       </div>
       <div class="pv-compare-note">Die Werte oben gelten nur für den ausgewählten Tag.
@@ -1578,10 +1575,10 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         <button type="button" class="section-move-grip" data-section-grip="pv"
           aria-label="PV-Plan-Abschnitt verschieben" title="PV-Plan und Prognose-Ist-Vergleich verschieben">
           <ha-icon icon="mdi:drag-vertical"></ha-icon>
-        </button>PV-Plan</span>
-        <span>Zukunft scrollen${this._st(d.ents["sensor:forecast_today"])?.attributes?.prognose_quelle ?
+        </button>PV-Prognose / Ist</span>
+        <span>14 Tage zurück · 60 h voraus${this._st(d.ents["sensor:forecast_today"])?.attributes?.prognose_quelle ?
           ` · ${esc(this._st(d.ents["sensor:forecast_today"]).attributes.prognose_quelle)}` : ""}</span>
-      </div>${this._timeline(d)}${this._pvComparison(d)}</div>` : "";
+      </div>${this._pvComparison(d)}</div>` : "";
     const orderedBlocks = pvFirst ? pvBlock + priorityBlock : priorityBlock + pvBlock;
     const markup = `
       <style>${CARD_CSS}</style>
@@ -1596,7 +1593,16 @@ class SmartifyEnergyPlanCard extends HTMLElement {
     template.innerHTML = markup;
     patchChildren(this.shadowRoot, template.content);
     this._bind(d);
-    if (this._pvCompareOpen) this._updatePVSelectedDay();
+    if (!this._pvCompareInitialScroll) {
+      const scroll = this.shadowRoot.querySelector(".pv-compare-scroll");
+      const columns = scroll?.querySelectorAll(".pv-compare-col");
+      const currentIndex = columns ? [...columns].findIndex(col => Date.parse(col.dataset.hour) >= Date.now() - 3600000) : -1;
+      if (scroll && currentIndex >= 0) {
+        scroll.scrollLeft = Math.max(0, currentIndex * 45 - scroll.clientWidth / 2);
+        this._pvCompareInitialScroll = true;
+      }
+    }
+    this._updatePVSelectedDay();
   }
 
   _updatePVSelectedDay(scroll=this.shadowRoot.querySelector(".pv-compare-scroll")) {

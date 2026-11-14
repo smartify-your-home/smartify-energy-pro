@@ -1,5 +1,12 @@
 ## Unreleased
 
+## 0.3.89 – 2026-11-14
+
+- PV-Ansicht: ein dauerhaft sichtbares, horizontal scrollbareres Diagramm mit drei stündlichen Balkenreihen: unveränderliche ursprüngliche Prognose, aktuelle Prognose und gemessene Erzeugung.
+- Zeitachse: bis zu 14 Tage zurück und 60 Stunden voraus. Prognose und Ist werden nur bei vorhandenen Daten dargestellt; fehlende Messstunden bleiben offen.
+- Die zuvor separat aufklappbare Prognose/Ist-Grafik wird mit der PV-Prognoseansicht zusammengeführt. Ursprüngliche Vorhersagen bleiben für historische Vergleiche gespeichert.
+
+
 ## 0.3.88 – 2026-11-14
 
 - Nach WW-Ladung optionaler, einmaliger **FBH-Wiederanlaufimpuls**: nur bei eindeutig nachgewiesenem FBH-Heizbetrieb **unmittelbar vor** Warmwasserstart (Heizstatus EIN + WP-Leistung über Standby). Wenn FBH vor WW inaktiv war oder danach selbst wieder startet, absolut keine Zusatzanhebung. Beide Betriebsstatussensoren erforderlich.
