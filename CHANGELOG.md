@@ -1,5 +1,18 @@
 ## Unreleased
 
+## 0.3.88 – 2026-11-14
+
+- **WP Warmwasser Boost:** bisherigen Wärmepumpen-Boost in Formularen und DE/EN-Übersetzungen präziser umbenannt; vorhandene Geräte und Konfigurationen werden nicht verändert.
+- **Neuer SEP-Gerätetyp „WP FBH Sollwerterhöhung“:** schreibbare number/input_number/climate-Temperaturentität, elektrischer WP-Leistungssensor und Nennleistung; optional FBH-Heizstatus, Warmwasser-aktiv sowie Abwesenheit. In der bestehenden Karte eigene Parameter für zeitgesteuert/PV-gesteuert, +Kelvin, zulässigen Maximalwert und **zwei unabhängige Zeitfenster** (00:00–00:00 = aus).
+- Setpoint-Sicherung **vor jeder Anhebung** in HA-Storage; Rückstellung bei Ende, Fertigmeldung, Deaktivierung oder Moduswechsel. Erst bei bestätigtem Rückstellwert wird die gespeicherte Sicherung gelöscht. Zwischenzeitlich manuell veränderte Sollwerte werden nicht blind überschrieben.
+- **Fertigerkennung:** nach mindestens 180 min bestätigter FBH-Heizlaufzeit und danach 20 min WP-Standby unter einstellbarer Watt-Schwelle wird der Boost im Zeitfenster als erledigt markiert, Rückstellung angefordert und die Vorausreservierung freigegeben. Warmwasserzyklen werden nicht als FBH-Laufzeit gezählt; mindestens ein Mode-/WW-Signal für zuverlässige automatische Erkennung nötig.
+- **Vorausreservierung 0–120 min** vor jedem Boost-Fenster (0 = kein Vorlauf). Bereits real gemessene WP-Leistung wird nicht doppelt reserviert; WW- und FBH-Betriebsart teilen sich bei gleichem Leistungssensor ein Leistungsbudget. Vorrang in der vorhandenen SEP-Prioritätenliste, WP-FBH-Default-Rang 2. Laufende Haushaltsprogramme werden nicht unterbrochen.
+- **PV-Alltagstipps:** Empfehlungen morgen/übermorgen vergleichen tatsächlichen **verbleibenden** PV-Ertrag heute bis 16 Uhr, nicht die vergangene Tagesenergie. Ein noch gut versorgbares Waschprogramm heute bleibt „heute waschen“, selbst bei höherem Gesamtertrag morgen. Erst bei ungünstigem Restfenster und deutlichem Vorteil zukünftiger Tage wird eine Verschiebung empfohlen.
+- Der Waschtipp wird während eines erkannten, wartenden oder laufenden Waschprogramms und nach einem am selben Tag fertiggestellten Programm aus Tipp-Rotation und Sensor-Hauptempfehlung entfernt. Sensor bleibt mit Attribut `waesche_unterdrueckt` verfügbar, andere Tipps bleiben angezeigt. Tipps werden nach **jedem** SEP-Regelzyklus aktualisiert statt nur alle 15 Minuten.
+- Neue Python- und HA-Regressionstests für verbleibende Tagesprognose, aktive Wäsche, FBH-Sollwert, WW-Abgrenzung, gemeinsame WP-Reservierung, Zeitfenster und Standby-Abschluss.
+
+
+
 ## 0.3.87 – 2026-11-13
 
 - **GeoSphere Cloud Forecast 60h:** Im bisherigen Bewölkungsmodell werden ab sofort alle tatsächlich von GeoSphere C-LAEF gelieferten Wolkenstunden bis zur 60h-Reichweite für die PV-Prognose verwendet. Bisher begrenzte die Standardverarbeitung die Bewölkungsprognose auf ungefähr 48 Stunden.
