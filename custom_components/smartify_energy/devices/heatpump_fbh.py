@@ -240,7 +240,8 @@ class FBHBoostDevice(BaseDevice):
             raise ValueError("Jetzt anheben erfordert FBH-Automatikmodus")
         now = dt_util.now()
         window = self._window_now(now)
-        if window is None or window[1] - dt_util.as_local(now) < timedelta(hours=1):
+        if (window is None or window[1] - dt_util.as_local(now) < timedelta(hours=1)
+                or self.state.get("manual_hold_window") == window[2]):
             raise ValueError("Jetzt anheben nur im Zeitfenster und mindestens 60 Minuten vor Ende")
         if self.state.get("active"):
             return
