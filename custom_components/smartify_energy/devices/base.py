@@ -29,7 +29,7 @@ ENTITY_FIELDS = {
     "ev": ("control_entity", "current_entity", "phase_entity", "connected_entity", "soc_sensor",
            "days_entity", "power_sensor"),
     "heatpump_fbh": ("fbh_setpoint_entity", "power_sensor", "ww_active_entity",
-                     "fbh_heating_active_entity", CONF_ABSENCE_ENTITY),
+                     "fbh_heating_active_entity", "fbh_demand_entity", CONF_ABSENCE_ENTITY),
     "heatpump": ("boost_entity", "power_sensor", "temperature_sensor", "ww_active_entity",
                  "ww_boost_temp_entity", "sun_angle_entity", "cloud_now_entity", "cloud_next_entity", CONF_ABSENCE_ENTITY),
 }

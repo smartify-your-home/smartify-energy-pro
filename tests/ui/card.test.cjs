@@ -171,6 +171,25 @@ function rowCard(devs){
   return card.shadowRoot;
 }
 
+test('FBH card shows only authorized raise or lower action and hides locked actions',()=>{
+  const setup = overrides => rowCard({
+    fbh:[['sensor.fbh','status','waiting',{geraetetyp:'heatpump_fbh',modus:'auto',
+      fbh_manuell_anheben_moeglich:true,fbh_manuell_absenken_moeglich:false,
+      fbh_schreibvorgang:false,...overrides}],
+      ['button.fbh_up','fbh_raise_now','unknown'],
+      ['button.fbh_down','fbh_lower_now','unknown']],
+  });
+  const available=setup({});
+  assert.deepEqual([...available.querySelectorAll('[data-wrap="fbh"] .sep-act')].map(x=>x.textContent.trim()),['Jetzt anheben']);
+  assert.equal(available.querySelector('[data-press="button.fbh_up"]')?.textContent.trim(),'Jetzt anheben');
+  const active=setup({fbh_manuell_anheben_moeglich:false,fbh_manuell_absenken_moeglich:true});
+  assert.deepEqual([...active.querySelectorAll('[data-wrap="fbh"] .sep-act')].map(x=>x.textContent.trim()),['Jetzt absenken']);
+  const locked=setup({fbh_manuell_anheben_moeglich:false,fbh_manuell_absenken_moeglich:false});
+  assert.equal(locked.querySelectorAll('[data-wrap="fbh"] .sep-act').length,0);
+  const writing=setup({fbh_schreibvorgang:true});
+  assert.equal(writing.querySelectorAll('[data-wrap="fbh"] .sep-act').length,0);
+});
+
 test('device rows: no mode select, EV shows charge goal, loads show actions',()=>{
   const modeOpts={options:['auto','observe','manual','off']};
   const root=rowCard({

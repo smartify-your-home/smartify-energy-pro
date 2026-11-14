@@ -326,6 +326,8 @@ function collect(hass, hubId) {
         active: ents["binary_sensor:active"],
         startNow: ents["button:start_now"],
         reset: ents["button:reset"],
+        fbhRaise: ents["button:fbh_raise_now"],
+        fbhLower: ents["button:fbh_lower_now"],
         nachladen: ents["switch:nachladen"],
         boost: ents["switch:boost"],
         settings: settings[id] || [],
@@ -1249,6 +1251,17 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         dev.reset && ["laeuft", "running"].includes(phase)
           ? act("data-press", dev.reset, "mdi:check-circle-outline", "Fertig") : "",
       ].join("") : "";
+      // FBH controls are exclusive and derived from the device's server-side
+      // guard state. Never offer both actions or an action while writing.
+      const fbhAttrs = st?.attributes || {};
+      const fbhActions = a.geraetetyp === "heatpump_fbh" && !fbhAttrs.fbh_schreibvorgang
+        ? fbhAttrs.fbh_manuell_absenken_moeglich && dev.fbhLower
+          ? act("data-press", dev.fbhLower, "mdi:thermometer-chevron-down", "Jetzt absenken")
+          : fbhAttrs.fbh_manuell_anheben_moeglich && dev.fbhRaise
+            ? act("data-press", dev.fbhRaise, "mdi:thermometer-chevron-up", "Jetzt anheben")
+            : ""
+        : "";
+      const allActions = actions + fbhActions;
       const evSoc = a.geraetetyp === "ev" ? num(a.soc) : null;
       const chip = forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`
                  : on ? `<span class="chip" style="background:${grad(dev.color)}">${esc(statusTxt || "ein")}</span>`
@@ -1284,7 +1297,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
               </div>
               </div>
               ${a.geraetetyp !== "heater" && mode && !["auto", "observe"].includes(mode) ? `<span class="mode-tag ${esc(mode)}" title="Modus – ändern im Zahnrad">${esc(MODE_LABELS[mode] || mode)}</span>` : ""}
-              ${actions ? `<div class="sep-actions">${actions}</div>` : ""}
+              ${allActions ? `<div class="sep-actions">${allActions}</div>` : ""}
               ${this._config.show_settings !== false && dev.settings.length ? `<button class="gear ${open ? "open" : ""}" data-gear="${dev.id}" title="Einstellungen"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}
             </div>
           </div>

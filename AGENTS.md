@@ -1,3 +1,10 @@
+## SEP 0.3.92 – FBH manuelle Bedienung und Heizbedarfsfreigabe
+
+- Die heatpump_fbh-Konfiguration besitzt optional fbh_demand_entity, nur binary_sensor.* oder input_boolean.*; EIN bedeutet Heizbedarf, AUS/unknown/unavailable blockiert neue automatische und manuelle FBH-Erhöhungen und Vorausreservierung. Bei bereits aktivem Boost wird der Original-Sollwert sicher wiederhergestellt. Ohne konfigurierte Entity ist die bisherige Regelung unverändert.
+- button.fbh_raise_now: Anheben nur im aktuellen Zeitfenster, nicht nach end - 60 min, nur im Modus Auto, mit gültigem Heizbedarf, freiem Aktor, ohne laufende WW-Ladung, Temperaturgrenze und ohne manuelle Fenster-Sperre. Beim Beginn Original-Sollwert und Ziel dauerhaft vor Sollwertänderung speichern.
+- button.fbh_lower_now: Nur bei aktivem Boost; exakt gespeicherten Original-Sollwert wiederherstellen. Rückstellungs-Bestätigung abwarten, dauerhafte Rollback-Daten nicht vorzeitig löschen. Anschließend weitere Anhebungen für das betroffene Zeitfenster sperren, auch nach HA-Neustart. Im SEP-Karten-Geräteeintrag nur den aktuell möglichen Button rendern, nie beide und nie gesperrte Buttons.
+- Der Heizbedarf blockiert auch den optionalen, einmaligen WW-FBH-Wiederanlaufimpuls. Der Impuls bleibt nur bei **nachweislichem** Heizbetrieb direkt vor WW zulässig. Tests tests/ha/test_fbh_boost.py und tests/ui/card.test.cjs pflegen.
+
 ## SEP 0.3.91 – Initialposition PV-Vergleich
 
 - Beim ersten Anzeigen des PV-Diagramms den aktuellen lokalen Kalendertag (Zeitzone aus `pv_vergleich.zeitzone`) zentriert im horizontalen Scrollbereich zeigen, niemals standardmäßig den ältesten historischen Tag.

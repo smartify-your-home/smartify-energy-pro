@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from homeassistant.util import dt as dt_util
 
 from ..const import MODE_AUTO
-from ..helpers import ParamSpec, SensorSpec, power_w, state_float, state_str, time_from_str
+from ..helpers import ButtonSpec, ParamSpec, SensorSpec, power_w, state_float, state_str, time_from_str
 from .base import BaseDevice, Context, Decision
 
 _LOGGER = logging.getLogger(__name__)
@@ -39,6 +39,8 @@ class FBHBoostDevice(BaseDevice):
         self.state.setdefault("last_sample", None)
         self.state.setdefault("externally_changed", False)
         self.state.setdefault("restore_pending", False)
+        self.state.setdefault("manual_lock_window", None)
+        self._manual_busy = False
         # Optional one-shot recovery after WW preempts an ACTIVE FBH cycle.
         # Scalar values are retained in HA's durable manager storage.
         self.state.setdefault("ww_seen", None)
@@ -121,6 +123,70 @@ class FBHBoostDevice(BaseDevice):
         value = state_str(self.hass, source)
         return {"on": True, "off": False}.get(value)
 
+    def _heating_demand(self) -> bool | None:
+        """Optional explicit demand signal; unknown configured signals fail closed."""
+        entity = self.cfg.get("fbh_demand_entity")
+        if not entity:
+            return True  # No sensor configured: preserve existing SEP behavior.
+        return {"on": True, "off": False}.get(state_str(self.hass, entity))
+
+    def _manual_can_raise(self, now: datetime) -> bool:
+        window = self._window_now(now)
+        if (self._manual_busy or self.mode != MODE_AUTO or self.state.get("active")
+                or self.state.get("restore_pending") or not window
+                or self.state.get("completed_window") == window[2]
+                or self.state.get("manual_lock_window") == window[2]
+                or self.state.get("externally_changed")
+                or self._heating_demand() is not True
+                or self._shared_ww_running() or self._unavailable_actor()):
+            return False
+        # One full hour must remain before the selected time window ends.
+        if dt_util.as_local(now) > window[1] - timedelta(minutes=60):
+            return False
+        original = self._setpoint()
+        if original is None:
+            return False
+        maximum = float(self.p("fbh_max_temp"))
+        state = self.hass.states.get(self.cfg.get("fbh_setpoint_entity"))
+        if state and state.attributes.get("max") is not None:
+            try:
+                maximum = min(maximum, float(state.attributes["max"]))
+            except (ValueError, TypeError):
+                return False
+        return original + float(self.p("fbh_delta")) <= maximum
+
+    def button_specs(self) -> list[ButtonSpec]:
+        return [
+            ButtonSpec("fbh_raise_now", self.async_raise_now, "mdi:thermometer-chevron-up"),
+            ButtonSpec("fbh_lower_now", self.async_lower_now, "mdi:thermometer-chevron-down"),
+        ]
+
+    async def async_raise_now(self) -> None:
+        async with self.manager._lock:
+            now = dt_util.now()
+            if not self._manual_can_raise(now):
+                raise ValueError("FBH-Anheben derzeit gesperrt (Zeitfenster, Heizbedarf oder Betriebsstatus)")
+            self._manual_busy = True
+            try:
+                await self._start_boost(now)
+            finally:
+                self._manual_busy = False
+        await self.manager.async_request_run(immediate=True)
+
+    async def async_lower_now(self) -> None:
+        async with self.manager._lock:
+            if self._manual_busy or not self.state.get("active"):
+                raise ValueError("Keine aktive FBH-Erhöhung zum Absenken")
+            self._manual_busy = True
+            try:
+                self.state["manual_lock_window"] = self.state.get("window")
+                self.state["completed_window"] = self.state.get("window")
+                await self.manager.async_save_now()
+                await self._restore()
+            finally:
+                self._manual_busy = False
+        await self.manager.async_request_run(immediate=True)
+
     def _power(self) -> float | None:
         val = power_w(self.hass, self.cfg.get("power_sensor"))
         return val if val is not None and math.isfinite(val) and val >= 0 else None
@@ -154,7 +220,7 @@ class FBHBoostDevice(BaseDevice):
 
     def observed_entities(self) -> set[str]:
         return (super().observed_entities()
-                | {entity for key in ("fbh_setpoint_entity", "fbh_heating_active_entity")
+                | {entity for key in ("fbh_setpoint_entity", "fbh_heating_active_entity", "fbh_demand_entity")
                    if (entity := self.cfg.get(key))})
 
     def _unavailable_actor(self) -> str | None:
@@ -174,6 +240,12 @@ class FBHBoostDevice(BaseDevice):
     def status_attrs(self) -> dict:
         return {**super().status_attrs(),
                 "regelung": self.p("fbh_control"),
+                "heizbedarf_entitaet": self.cfg.get("fbh_demand_entity"),
+                "heizbedarf": self._heating_demand(),
+                "fbh_manuell_anheben_moeglich": self._manual_can_raise(dt_util.now()),
+                "fbh_manuell_absenken_moeglich": bool(self.state.get("active") and not self._manual_busy),
+                "fbh_manuell_gesperrt_bis_fensterwechsel": self.state.get("manual_lock_window") == (self._window_now(dt_util.now()) or (None, None, None))[2],
+                "fbh_schreibvorgang": self._manual_busy or bool(self.state.get("restore_pending")),
                 "sollwert_original": self.state.get("original"),
                 "sollwert_boost": self.state.get("target"),
                 "sollwert_entitaet": self.cfg.get("fbh_setpoint_entity"),
@@ -218,7 +290,8 @@ class FBHBoostDevice(BaseDevice):
 
     def advance_reservation(self, now: datetime) -> float:
         """W above the *real* compressor metering; do not reserve it twice."""
-        if self.mode != MODE_AUTO or self.state.get("externally_changed"):
+        if (self.mode != MODE_AUTO or self.state.get("externally_changed")
+                or self._heating_demand() is not True):
             return 0
         if self._shared_ww_running():
             return 0
@@ -230,7 +303,8 @@ class FBHBoostDevice(BaseDevice):
         if not window:
             return 0
         start, end, key = window
-        if self.state.get("completed_window") == key:
+        if (self.state.get("completed_window") == key
+                or self.state.get("manual_lock_window") == key):
             return 0
         lead = timedelta(minutes=max(0.0, float(self.p("fbh_reserve_before") or 0)))
         local = dt_util.as_local(now)
@@ -284,7 +358,8 @@ class FBHBoostDevice(BaseDevice):
         self.state["ww_seen"] = ww
 
     def _restart_ready(self, ctx: Context) -> bool:
-        if not self.state.get("active") or not self.state.get("ww_recovery_eligible"):
+        if (not self.state.get("active") or not self.state.get("ww_recovery_eligible")
+                or self._heating_demand() is not True):
             return False
         if not self.p("fbh_restart_after_ww") or self.state.get("externally_changed"):
             return False
@@ -425,6 +500,9 @@ class FBHBoostDevice(BaseDevice):
         now = ctx.now
         if self.state.get("restore_pending"):
             return Decision(False, 0, "Wiederherstellung des FBH-Sollwerts läuft")
+        if self._heating_demand() is not True:
+            self.status = "wartet"
+            return Decision(False, 0, "Kein Heizbedarf – FBH-Erhöhung im Standby")
         if self.state.get("active"):
             if self.state.get("completed_window") == self.state.get("window"):
                 self.status = "fertig"
@@ -440,6 +518,9 @@ class FBHBoostDevice(BaseDevice):
             self.status = "boost"
             return Decision(True, self.nominal, "FBH-Sollwerterhöhung läuft")
         window = self._window_now(now)
+        if window and self.state.get("manual_lock_window") == window[2]:
+            self.status = "fertig"
+            return Decision(False, 0, "Nach manuellem Absenken bis zum nächsten Zeitfenster gesperrt")
         if window and self.state.get("completed_window") == window[2]:
             self.status = "fertig"
             return Decision(False, 0, "FBH-Boost in diesem Zeitfenster erledigt")
@@ -494,22 +575,31 @@ class FBHBoostDevice(BaseDevice):
             return
         if not decision.on:
             return
-        window = self._window_now(ctx.now)
-        if window is None:
-            return
+        await self._start_boost(ctx.now)
+
+    async def _start_boost(self, now: datetime) -> None:
+        """Crash-safe shared activation for automation and manual raise."""
+        window = self._window_now(now)
+        if window is None or self._heating_demand() is not True:
+            raise RuntimeError("Kein zulässiges FBH-Zeitfenster oder kein Heizbedarf")
         original = self._setpoint()
         if original is None:
-            return
+            raise RuntimeError("FBH-Sollwert nicht lesbar")
         target = original + float(self.p("fbh_delta"))
+        maximum = float(self.p("fbh_max_temp"))
+        st = self.hass.states.get(self.cfg.get("fbh_setpoint_entity"))
+        if st and st.attributes.get("max") is not None:
+            maximum = min(maximum, float(st.attributes["max"]))
+        if target > maximum:
+            raise RuntimeError("FBH-Sollwertgrenze überschritten")
         self.state.update(active=True, window=window[2], setpoint_entity=self.cfg["fbh_setpoint_entity"],
-                          original=original, target=target, started=ctx.now.timestamp(),
-                          runtime_seconds=0.0, idle_since=None, last_sample=ctx.now.timestamp(),
+                          original=original, target=target, started=now.timestamp(),
+                          runtime_seconds=0.0, idle_since=None, last_sample=now.timestamp(),
                           externally_changed=False, restore_pending=False,
                           ww_seen=self._ww_active(), last_fbh_running_at=None,
                           fbh_was_running_before_ww=False, ww_ended_at=None,
                           ww_recovery_eligible=False, restart_pulse_target=None,
                           restart_pulse_until=None, restart_return_pending=False)
-        # Persist BEFORE changing the external actuator: restart must restore.
         await self.manager.async_save_now()
         await self._write_setpoint(self.state["setpoint_entity"], target)
 

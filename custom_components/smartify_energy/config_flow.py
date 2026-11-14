@@ -422,6 +422,7 @@ class FBHBoostSubentryFlow(_DeviceFlow):
             _req(CONF_POWER_SENSOR, d): _ent("sensor", "power"),
             _req(CONF_NOMINAL, d, 2500): _num(100, 12000, 50, "W"),
             _opt("fbh_heating_active_entity", d): _ent(["binary_sensor", "input_boolean"]),
+            _opt("fbh_demand_entity", d): _ent(["binary_sensor", "input_boolean"]),
             _opt(CONF_WW_ACTIVE_ENTITY, d): _ent(["binary_sensor", "input_boolean"]),
             _opt(CONF_ABSENCE_ENTITY, d): _ent(["binary_sensor", "input_boolean"]),
         })
