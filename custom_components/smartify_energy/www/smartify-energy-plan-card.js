@@ -325,6 +325,8 @@ function collect(hass, hubId) {
         goal: ents["select:goal"],
         active: ents["binary_sensor:active"],
         startNow: ents["button:start_now"],
+        fbhRaise: ents["button:raise_now"],
+        fbhLower: ents["button:lower_now"],
         reset: ents["button:reset"],
         nachladen: ents["switch:nachladen"],
         boost: ents["switch:boost"],
@@ -1247,6 +1249,11 @@ class SmartifyEnergyPlanCard extends HTMLElement {
         dev.reset && ["laeuft", "running"].includes(phase)
           ? act("data-press", dev.reset, "mdi:check-circle-outline", "Fertig") : "",
       ].join("") : "";
+      const fbhControl = a.geraetetyp === "heatpump_fbh"
+        ? (a.jetzt_absenken_erlaubt === true && dev.fbhLower
+          ? act("data-press", dev.fbhLower, "mdi:arrow-down-bold", "Jetzt absenken")
+          : a.jetzt_anheben_erlaubt === true && dev.fbhRaise
+            ? act("data-press", dev.fbhRaise, "mdi:arrow-up-bold", "Jetzt anheben") : "") : "";
       const evSoc = a.geraetetyp === "ev" ? num(a.soc) : null;
       const chip = forced ? `<span class="chip" style="background:${grad(FORCED_GRADIENT)}">Pflicht</span>`
                  : on ? `<span class="chip" style="background:${grad(dev.color)}">${esc(statusTxt || "ein")}</span>`
@@ -1282,6 +1289,7 @@ class SmartifyEnergyPlanCard extends HTMLElement {
               </div>
               </div>
               ${a.geraetetyp !== "heater" && mode && !["auto", "observe"].includes(mode) ? `<span class="mode-tag ${esc(mode)}" title="Modus – ändern im Zahnrad">${esc(MODE_LABELS[mode] || mode)}</span>` : ""}
+              ${fbhControl ? `<div class="sep-actions">${fbhControl}</div>` : ""}
               ${actions ? `<div class="sep-actions">${actions}</div>` : ""}
               ${this._config.show_settings !== false && dev.settings.length ? `<button class="gear ${open ? "open" : ""}" data-gear="${dev.id}" title="Einstellungen"><ha-icon icon="mdi:cog"></ha-icon></button>` : ""}
             </div>
