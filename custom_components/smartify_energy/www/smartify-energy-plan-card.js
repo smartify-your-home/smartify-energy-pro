@@ -1610,13 +1610,35 @@ class SmartifyEnergyPlanCard extends HTMLElement {
       // Wait for a measurable viewport; otherwise a zero-width first render can
       // permanently mark the chart as initialized while still at scrollLeft=0.
       const width = scroll?.clientWidth || scroll?.offsetWidth || 0;
-      if (scroll && selected && width > 0) {
+      if (scroll && selected) {
         const start = Number(selected.dataset.start) * 45;
         const count = Number(selected.dataset.count);
         const centre = start + count * 45 / 2;
-        scroll.scrollLeft = Math.max(0, centre - width / 2);
-        this._pvCompareDay = today;
-        this._pvCompareInitialScroll = true;
+        const position = Math.max(0, centre - width / 2);
+        if (width > 0) {
+          scroll.scrollLeft = position;
+          this._pvCompareDay = today;
+          this._pvCompareInitialScroll = true;
+        } else if (!this._pvCompareScrollScheduled) {
+          this._pvCompareScrollScheduled = true;
+          // First HA render may occur before the card has a layout width.
+          // Retry after layout instead of leaving the oldest day selected.
+          requestAnimationFrame(() => {
+            this._pvCompareScrollScheduled = false;
+            if (this._pvCompareInitialScroll || !this.isConnected) return;
+            const live = this.shadowRoot.querySelector(".pv-compare-scroll");
+            const liveDay = [...(live?.querySelectorAll(".pv-compare-day[data-day]") || [])]
+              .find(day => day.dataset.day === today);
+            if (!live || !liveDay) return;
+            const visibleWidth = live.clientWidth || live.offsetWidth || 0;
+            if (!visibleWidth) return;
+            const mid = (Number(liveDay.dataset.start) + Number(liveDay.dataset.count) / 2) * 45;
+            live.scrollLeft = Math.max(0, mid - visibleWidth / 2);
+            this._pvCompareDay = today;
+            this._pvCompareInitialScroll = true;
+            this._updatePVSelectedDay(live);
+          });
+        }
       }
     }
     // Do not replace the correct initial-day summary with the oldest day
