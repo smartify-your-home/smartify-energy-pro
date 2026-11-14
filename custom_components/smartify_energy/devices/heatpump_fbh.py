@@ -503,7 +503,7 @@ class FBHBoostDevice(BaseDevice):
         if self.state.get("active"):
             key = self.state.get("window")
             window = self._window_now(now)
-            if not self.state.get("manual_override") and (window is None or window[2] != key):
+            if key is not None and (window is None or window[2] != key):
                 self.status = "fertig"
                 return Decision(False, 0, "FBH-Zeitfenster beendet – Sollwert wiederherstellen")
             if self._shared_ww_running():
