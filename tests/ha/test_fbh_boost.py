@@ -100,6 +100,7 @@ async def test_completed_after_three_hours_heating_and_twenty_minutes_standby(ha
         dev.pre_update(make_ctx(today_at(10) + timedelta(minutes=minute)))
     assert dev.state["runtime_seconds"] >= 180 * 60
     hass.states.async_set("sensor.wp", "0", {"unit_of_measurement": "W"})
+    hass.states.async_set("binary_sensor.fbh_heating", "off")  # Common after compressor reaches target.
     dev.pre_update(make_ctx(today_at(13, 1)))
     dev.pre_update(make_ctx(today_at(13, 20)))
     assert dev.state["completed_window"] is None
@@ -138,3 +139,27 @@ async def test_invalid_setpoint_blocks_unsafe_start(hass, invalid):
     _, dev = make_fbh(hass)
     hass.states.async_set("input_number.fbh_setpoint", invalid)
     assert not dev.decide(make_ctx(today_at(10), 5000), 5000).on
+
+async def test_advance_reservation_delays_lower_priority_appliance(hass):
+    """A future FBH rise wins a PV budget slot before a new appliance start."""
+    from unittest.mock import patch
+    from custom_components.smartify_energy.devices.base import BaseDevice, Decision
+
+    manager, fbh = make_fbh(hass)
+    hass.states.async_set("sensor.grid", "3000", {"unit_of_measurement": "W"})
+    class Appliance(BaseDevice):
+        def is_on(self): return False
+        def decide(self, ctx, left):
+            return Decision(ctx.now_left(left) >= 2000, 2000 if ctx.now_left(left) >= 2000 else 0)
+        async def async_apply(self, decision, ctx): pass
+    appliance = Appliance(manager, "load", "Waschmaschine", {"nominal_power": 2000})
+    appliance.params.update(mode="auto", priority=5)
+    manager.devices[appliance.id] = appliance
+    fake_now = today_at(9, 40)
+    with patch("custom_components.smartify_energy.manager.dt_util.now", return_value=fake_now):
+        await manager._async_run()
+    assert fbh.advance_reservation(fake_now) == 2500
+    assert manager.device_budgets["fbh"]["fbh_vorreservierung_w"] == 2500
+    assert not appliance.last_decision.on
+    assert manager.device_budgets["load"]["aktuell_w"] <= 500
+    await manager.async_stop()
