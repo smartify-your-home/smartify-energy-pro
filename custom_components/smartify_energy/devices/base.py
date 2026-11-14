@@ -21,12 +21,15 @@ _LOGGER = logging.getLogger(__name__)
 ACTOR_FIELDS = {
     "load": ("switch",), "dryer": ("switch",), "pool": ("switch",), "heater": ("switch",),
     "ev": ("control_entity", "current_entity", "phase_entity"), "heatpump": ("boost_entity",),
+    "heatpump_fbh": ("fbh_setpoint_entity",),
 }
 ENTITY_FIELDS = {
     "load": ("switch", "power_sensor"), "dryer": ("switch", "power_sensor"),
     "pool": ("switch", "power_sensor"), "heater": ("switch", "power_sensor", "temperature_sensor", CONF_ABSENCE_ENTITY),
     "ev": ("control_entity", "current_entity", "phase_entity", "connected_entity", "soc_sensor",
            "days_entity", "power_sensor"),
+    "heatpump_fbh": ("fbh_setpoint_entity", "power_sensor", "ww_active_entity",
+                     "fbh_heating_active_entity", CONF_ABSENCE_ENTITY),
     "heatpump": ("boost_entity", "power_sensor", "temperature_sensor", "ww_active_entity",
                  "ww_boost_temp_entity", "sun_angle_entity", "cloud_now_entity", "cloud_next_entity", CONF_ABSENCE_ENTITY),
 }
