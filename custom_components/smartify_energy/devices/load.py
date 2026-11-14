@@ -83,6 +83,7 @@ class LoadDevice(BaseDevice):
         self.state.setdefault("approved", False)
         self.state.setdefault("hp_active", False)
         self.state.setdefault("hp_done", False)
+        self.state.setdefault("last_wash_day", None)
         self._detected_since: datetime | None = None
         self._hp_since: datetime | None = None
         self._low_since: datetime | None = None
@@ -218,7 +219,8 @@ class LoadDevice(BaseDevice):
         await self.manager.async_request_run(immediate=True)
 
     async def async_start_now(self) -> None:
-        self.state.update(sm=RUNNING, approved=True, forced_start=True, since=dt_util.now().timestamp())
+        self.state.update(sm=RUNNING, approved=True, forced_start=True, since=dt_util.now().timestamp(),
+                          last_wash_day=dt_util.as_local(dt_util.now()).date().isoformat())
         self.reason = "Sofort-Start"
         if not self.is_on():
             await self._switch(self.switch, True)
@@ -354,7 +356,8 @@ class LoadDevice(BaseDevice):
                 self.status = "bereit"
                 return Decision(False, 0, "Programmerkennung: 5 Sekunden prüfen")
             self._detected_since = None
-            self.state.update(sm=DETECTED, since=ctx.now.timestamp(), approved=False)
+            self.state.update(sm=DETECTED, since=ctx.now.timestamp(), approved=False,
+                              last_wash_day=dt_util.as_local(ctx.now).date().isoformat())
             # First detected cycle proceeds to DETECTED below; earliest time is checked there.
 
         if sm == FINISHED:
