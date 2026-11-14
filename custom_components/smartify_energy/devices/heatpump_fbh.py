@@ -183,6 +183,14 @@ class FBHBoostDevice(BaseDevice):
         # Never credit/claim that measured power as reclaimable.
         return max(0.0, self._power() or 0.0)
 
+    def _manual_raise_allowed(self) -> bool:
+        now = dt_util.now()
+        window = self._window_now(now)
+        return bool(self.mode == MODE_AUTO and not self.state.get("active")
+                    and window is not None
+                    and window[1] - dt_util.as_local(now) >= timedelta(hours=1)
+                    and self.state.get("manual_hold_window") != window[2])
+
     def status_attrs(self) -> dict:
         return {**super().status_attrs(),
                 "regelung": self.p("fbh_control"),
@@ -193,7 +201,9 @@ class FBHBoostDevice(BaseDevice):
                 "heizbetrieb_aktiv": self._heating_active(),
                 "laufzeit_heizen_min": round(float(self.state.get("runtime_seconds") or 0) / 60, 1),
                 "fertig_im_zeitfenster": self.state.get("completed_window"),
-                "temperatur_angehoben": bool(self.state.get("active") and not self.state.get("externally_changed")),
+                "temperatur_angehoben": self._temperature_raised(),
+                "jetzt_anheben_erlaubt": self._manual_raise_allowed(),
+                "jetzt_absenken_erlaubt": bool(self.state.get("active")),
                 "leistungsreservierung_freigegeben": bool(self.state.get("reservation_released")),
                 "vorreservierung_w": round(self.advance_reservation(dt_util.now())),
                 "manuell_geaendert": bool(self.state.get("externally_changed")),
