@@ -354,13 +354,13 @@
       }
     },
     "heatpump": {
-      "entry_type": "Heat pump",
+      "entry_type": "WP hot water boost",
       "initiate_flow": {
-        "user": "Add heat pump boost"
+        "user": "Add WP hot water boost"
       },
       "step": {
         "user": {
-          "title": "Heat pump – PV boost",
+          "title": "WP hot water boost",
           "data": {
             "absence_entity": "Away (on = absent)",
             "name": "Name",
@@ -399,7 +399,7 @@
           }
         },
         "reconfigure": {
-          "title": "Heat pump – PV boost",
+          "title": "WP hot water boost",
           "data": {
             "absence_entity": "Away (on = absent)",
             "name": "Name",
@@ -547,6 +547,54 @@
       },
       "abort": {
         "reconfigure_successful": "Saved."
+      }
+    },
+    "heatpump_fbh": {
+      "entry_type": "WP floor-heating setpoint boost",
+      "initiate_flow": {
+        "user": "Add WP floor-heating setpoint boost"
+      },
+      "step": {
+        "user": {
+          "title": "WP floor-heating setpoint boost",
+          "data": {
+            "name": "Name",
+            "fbh_setpoint_entity": "Writable underfloor-heating temperature setpoint",
+            "power_sensor": "Heat-pump electrical power sensor",
+            "nominal_power": "Electrical heat-pump rated power",
+            "fbh_heating_active_entity": "Floor-heating mode active (optional)",
+            "ww_active_entity": "Hot-water charging active (recommended)",
+            "absence_entity": "Away-mode inhibit (optional)"
+          },
+          "data_description": {
+            "fbh_setpoint_entity": "Must be a writable number, input_number, or climate target; read original value before raising and restore safely.",
+            "power_sensor": "Electrical power in W or kW. Required for standby completion and reservation.",
+            "nominal_power": "Expected electrical heat-pump power reserved for a future boost.",
+            "fbh_heating_active_entity": "Optional on while underfloor-heating is active; allows filtering hot-water or non-heating cycles.",
+            "ww_active_entity": "Strongly recommended when hot-water and heating share the same compressor; on suspends FBH runtime detection and start.",
+            "absence_entity": "Optional on means away and disables the new boost. Existing active setpoint is restored safely."
+          }
+        },
+        "reconfigure": {
+          "title": "WP floor-heating setpoint boost",
+          "data": {
+            "name": "Name",
+            "fbh_setpoint_entity": "Writable underfloor-heating temperature setpoint",
+            "power_sensor": "Heat-pump electrical power sensor",
+            "nominal_power": "Electrical heat-pump rated power",
+            "fbh_heating_active_entity": "Floor-heating mode active (optional)",
+            "ww_active_entity": "Hot-water charging active (recommended)",
+            "absence_entity": "Away-mode inhibit (optional)"
+          },
+          "data_description": {
+            "fbh_setpoint_entity": "Must be a writable number, input_number, or climate target; read original value before raising and restore safely.",
+            "power_sensor": "Electrical power in W or kW. Required for standby completion and reservation.",
+            "nominal_power": "Expected electrical heat-pump power reserved for a future boost.",
+            "fbh_heating_active_entity": "Optional on while underfloor-heating is active; allows filtering hot-water or non-heating cycles.",
+            "ww_active_entity": "Strongly recommended when hot-water and heating share the same compressor; on suspends FBH runtime detection and start.",
+            "absence_entity": "Optional on means away and disables the new boost. Existing active setpoint is restored safely."
+          }
+        }
       }
     }
   },
@@ -744,6 +792,24 @@
       },
       "boost_min_power": {
         "name": "Boost minimum power"
+      },
+      "fbh_delta": {
+        "name": "Setpoint increase"
+      },
+      "fbh_max_temp": {
+        "name": "Maximum setpoint"
+      },
+      "fbh_reserve_before": {
+        "name": "Reservation before start"
+      },
+      "fbh_finish_runtime": {
+        "name": "Minimum confirmed heating duration"
+      },
+      "fbh_idle_power": {
+        "name": "Standby power threshold"
+      },
+      "fbh_idle_minutes": {
+        "name": "Standby duration to mark finished"
       }
     },
     "time": {
@@ -779,6 +845,18 @@
       },
       "announce_end": {
         "name": "Announcements until"
+      },
+      "fbh_start_1": {
+        "name": "First window from"
+      },
+      "fbh_end_1": {
+        "name": "First window until"
+      },
+      "fbh_start_2": {
+        "name": "Second window from"
+      },
+      "fbh_end_2": {
+        "name": "Second window until"
       }
     },
     "switch": {
@@ -886,6 +964,9 @@
       },
       "boost_today": {
         "name": "Boost today"
+      },
+      "fbh_runtime": {
+        "name": "FBH heating duration"
       }
     },
     "binary_sensor": {
@@ -970,6 +1051,13 @@
         "state": {
           "1": "Next 1 hour",
           "2": "Next 2 hours"
+        }
+      },
+      "fbh_control": {
+        "name": "FBH control mode",
+        "state": {
+          "time": "Time controlled",
+          "pv": "PV controlled"
         }
       }
     }
