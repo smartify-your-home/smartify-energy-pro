@@ -1,3 +1,11 @@
+## SEP 0.3.93 – sichtbarer FBH-Zustand und kontextuelle Aktionen
+
+- Für heatpump_fbh im Status immer fbh_erhoehung_aktiv, fbh_zeitfenster_aktiv und sollwert_aktuell ausgeben. Original- und Boost-Sollwert nur anzeigen, wenn tatsächlich eine FBH-Erhöhung verwaltet wird. Die Darstellung darf nie vom reservierten PV-Budget oder dem Statuscode „finished“ abgeleitet werden; bei WW-Vorrang kann der FBH-Sollwert erhöht bleiben, obwohl keine zusätzliche Leistung reserviert wird.
+- „Neues Programm wird automatisch erkannt“ gilt nur für geeignete Haushaltsgeräte und niemals für heatpump_fbh. Die FBH-Karte zeigt stattdessen den Boost-Zustand und die betroffenen Temperaturen.
+- Die FBH-Karte verwendet die normalen sep-act-Geräteaktionen wie WM/GS. Erhöhen wird nur angezeigt, wenn fbh_manuell_anheben_moeglich, Absenken nur bei fbh_manuell_absenken_moeglich und aktivem Boost. Nie beide. Außerhalb des gültigen Zeitfensters, während Rückstellung oder Schreibvorgang keine manuellen FBH-Aktionen.
+- Nach manuellem Absenken ist nur der AUTOMATISCHE Wiederanlauf für das aktuelle Zeitfenster gesperrt. Eine erneute EXPLIZITE manuelle Erhöhung bleibt innerhalb des zulässigen Zeitfensters, mit Heizbedarf und 60 Minuten Restlaufzeit, erlaubt; dabei werden die Automatik-Abschlusssperren erst nach bestätigter manueller Startberechtigung aufgehoben. Crash-sichere Speicherung vor jeder Sollwertänderung beibehalten.
+- Prüfen in tests/ha/test_fbh_boost.py und tests/ui/card.test.cjs.
+
 ## SEP 0.3.92 – FBH manuelle Bedienung und Heizbedarfsfreigabe
 
 - Die heatpump_fbh-Konfiguration besitzt optional fbh_demand_entity, nur binary_sensor.* oder input_boolean.*; EIN bedeutet Heizbedarf, AUS/unknown/unavailable blockiert neue automatische und manuelle FBH-Erhöhungen und Vorausreservierung. Bei bereits aktivem Boost wird der Original-Sollwert sicher wiederhergestellt. Ohne konfigurierte Entity ist die bisherige Regelung unverändert.
