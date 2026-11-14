@@ -23,11 +23,24 @@ def day_windows(hours: dict[datetime, float], now: datetime) -> list[dict]:
         date = now.date() + timedelta(days=offset)
         stamps = [datetime.combine(date, time(h), now.tzinfo) for h in range(START_HOUR, END_HOUR)]
         values = [indexed.get(stamp) for stamp in stamps]
-        complete = all(isinstance(v, (float, int)) and isfinite(v) and v >= 0 for v in values)
+        # For today compare ONLY real forecast energy still ahead of us.
+        # Prior hours need not be present in a forward-only weather feed.
+        fractions = [
+            max(0.0, min(1.0, (stamp + timedelta(hours=1) -
+                              max(now, stamp)).total_seconds() / 3600))
+            if offset == 0 else 1.0 for stamp in stamps
+        ]
+        complete = all(fraction == 0 or
+                       (isinstance(value, (float, int)) and isfinite(value) and value >= 0)
+                       for fraction, value in zip(fractions, values))
+        weighted = [value * fraction if fraction and value is not None else 0.0
+                    for fraction, value in zip(fractions, values)] if complete else []
         results.append({"tag": ("heute", "morgen", "uebermorgen")[offset],
                         "datum": date.isoformat(), "vollstaendig": complete,
-                        "kwh": round(sum(values) / 1000, 2) if complete else None,
-                        "stunden": values if complete else []})
+                        "kwh": round(sum(weighted) / 1000, 2) if complete else None,
+                        "stunden": weighted,
+                        "rest_heute": offset == 0,
+                        "begutachtung_ab": (now if offset == 0 else stamps[0]).isoformat()})
     return results
 
 
@@ -65,7 +78,8 @@ def _tip(key: str, icon: str, title: str, detail: str, priority: int, **attrs) -
             "prioritaet": priority, **attrs}
 
 
-def _best_start(day: dict, duration: float, nominal_w: float, base_load_w: float) -> tuple[int, float] | None:
+def _best_start(day: dict, duration: float, nominal_w: float, base_load_w: float,
+                now: datetime | None = None) -> tuple[int, float] | None:
     """Highest PV-supported contiguous run inside the 08–16 h window."""
     if not day["vollstaendig"] or not 0 < duration <= 8:
         return None
@@ -73,6 +87,11 @@ def _best_start(day: dict, duration: float, nominal_w: float, base_load_w: float
     n = max(1, min(8, int(duration + 0.999)))
     options = []
     for offset in range(9 - n):
+        if day["tag"] == "heute" and now is not None:
+            # No programme may be scheduled in an already elapsed hour.
+            local = now.astimezone(now.tzinfo)
+            if START_HOUR + offset < local.hour + (1 if local.minute or local.second or local.microsecond else 0):
+                continue
         supported = sum(max(0.0, min(nominal_w, watts - base_load_w)) for watts in hours[offset:offset + n])
         options.append((START_HOUR + offset, supported / 1000))
     return max(options, key=lambda x: x[1], default=None)
@@ -93,7 +112,7 @@ def build_advice(hours: dict[datetime, float], now: datetime, devices: list[dict
         return {"state": "ab_06_uhr", "tips": [], "waschtipp": None,
                 "tage": days, "zeitfenster": "08:00–16:00", "aktualisiert": now.isoformat()}
     devices = [d for d in (devices or []) if d.get("mode") != "off"]
-    comparison = _recommend_day(days)
+    comparison = _recommend_day(days)  # all future-day advice compares against today's REMAINING energy
     tips = []
     laundry = None
     washers = [d for d in devices if d.get("kind") == "washing_machine"]
@@ -103,20 +122,33 @@ def build_advice(hours: dict[datetime, float], now: datetime, devices: list[dict
                   and not d.get("power_running")), None)
     laundry_suppressed = bool(washers and first is None)
     if first:
-        if comparison:
-            wanted = comparison["tag"]
+        # A full washing run still supported by today's PV should not be
+        # postponed just because tomorrow has more total daylight hours.
+        duration = float(first.get("duration") or 2.0)
+        nominal = float(first.get("power") or 1800)
+        today_slot = (_best_start(days[0], duration, nominal, base_load_w, now)
+                      if nominal > 0 and 0 < duration <= 8 else None)
+        today_good = bool(today_slot and today_slot[1] >= nominal * duration * 0.75 / 1000)
+        washing_comparison = ({
+            "tag": "heute", "base_tag": "heute",
+            "mehrertrag_kwh": 0, "mehrertrag_prozent": 0,
+        } if today_good else comparison)
+        if washing_comparison:
+            wanted = washing_comparison["tag"]
             title = "Wäsche " + (
                 "heute waschen" if wanted == "heute" else
-                ("besser " if comparison["base_tag"] == "heute" else "") +
+                ("besser " if washing_comparison["base_tag"] == "heute" else "") +
                 ("morgen waschen" if wanted == "morgen" else "übermorgen waschen")
             )
             details = ("08–16 Uhr · " + 
-                       (f"+{comparison['mehrertrag_kwh']:.1f} kWh"
-                        if comparison["mehrertrag_kwh"] else "kein deutlicher Vorteil"))
-            if comparison["mehrertrag_prozent"] and comparison["mehrertrag_kwh"]:
-                details += f" (+{comparison['mehrertrag_prozent']:.0f} %)"
+                       (f"+{washing_comparison['mehrertrag_kwh']:.1f} kWh gegenüber heute ab jetzt"
+                        if washing_comparison["mehrertrag_kwh"] else
+                        "heute noch gutes PV-Zeitfenster" if today_good
+                        else "kein deutlicher Vorteil"))
+            if washing_comparison["mehrertrag_prozent"] and washing_comparison["mehrertrag_kwh"]:
+                details += f" (+{washing_comparison['mehrertrag_prozent']:.0f} %)"
             laundry = _tip("waschen", "mdi:washing-machine", title, details, 10,
-                           empfehlung=comparison["tag"], **comparison)
+                           empfehlung=washing_comparison["tag"], **washing_comparison)
             tips.append(laundry)
         else:
             laundry = _tip("waschen", "mdi:washing-machine", "Noch keine vollständige PV-Prognose",
@@ -127,10 +159,13 @@ def build_advice(hours: dict[datetime, float], now: datetime, devices: list[dict
         nominal = float(device.get("power") or 1800)
         if not (nominal > 0 and 0 < duration <= 8):
             continue
-        options = [(day, start) for day in days if (start := _best_start(day, duration, nominal, base_load_w))]
+        options = [(day, start) for day in days if (start := _best_start(day, duration, nominal, base_load_w, now))]
         if not options:
             continue
-        best_day, (hour, energy) = max(options, key=lambda entry: entry[1][1])
+        today_options = [o for o in options if o[0]["tag"] == "heute"]
+        sufficiently_good_today = bool(today_options and today_options[0][1][1] >= nominal * duration * 0.75 / 1000)
+        best_day, (hour, energy) = (today_options[0] if sufficiently_good_today
+                                   else max(options, key=lambda entry: entry[1][1]))
         first_day, (_, baseline_energy) = options[0]
         if best_day["tag"] != first_day["tag"] and (
             energy < baseline_energy * 1.25 or energy - baseline_energy < 0.5
