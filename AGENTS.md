@@ -1,3 +1,10 @@
+## SEP 0.3.90 – PV-Zeitbereiche und Balkenregeln
+
+- Abgeschlossene Stunden: ursprüngliche (eingefrorene) Prognose und vollständige Ist-Erzeugung anzeigen; keine zusätzliche Live-Prognose.
+- Laufende Stunde: ursprüngliche und aktuelle Prognose anzeigen, aber keinen unvollständigen Ist-Balken.
+- Zukünftige Stunden: ausschließlich aktuelle Prognose anzeigen. Ursprüngliche Prognose im Datenmodell unverändert behalten.
+- Die stündlichen Vergleiche und Abweichungen gelten nur für vollständig gemessene historische Stunden. Regressionsprüfung in `tests/ui/card.test.cjs`.
+
 ## 0.3.89 – Vereinheitlichte PV-Grafik
 - Genau eine immer sichtbare PV-Prognose/Ist-Grafik; keine aufklappbare Vergleichsgrafik. Drei stündliche Balkenreihen: gespeicherter ursprünglicher Forecast, aktuelle Forecast-Werte und gemessener Ist-Ertrag.
 - 14 Tage historische Stunden plus 60 Stunden Zukunft, horizontal scrollbar. Fehlende Daten nie als 0 ausgeben, ursprüngliche Prognose niemals überschreiben. Stündliche Ist-Erzeugung nur bei vollständiger Messabdeckung anzeigen. Einheitliche kWh-Skala; Tagessummen nur über vergleichbare Stunden.
