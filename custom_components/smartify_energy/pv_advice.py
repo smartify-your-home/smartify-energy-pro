@@ -117,8 +117,11 @@ def build_advice(hours: dict[datetime, float], now: datetime, devices: list[dict
     laundry = None
     washers = [d for d in devices if d.get("kind") == "washing_machine"]
     # A switched-on plug alone does not count as washing. SEP detects a program.
-    first = next((d for d in washers if d.get("program_state") not in
-                  {"erkannt", "wartet", "laeuft", "fertig"}
+    first = next((d for d in washers
+                  if d.get("program_state") not in {"erkannt", "wartet", "laeuft"}
+                  and not (d.get("program_state") == "fertig" and
+                           (not d.get("program_day") or
+                            d["program_day"] == now.date().isoformat()))
                   and not d.get("power_running")), None)
     laundry_suppressed = bool(washers and first is None)
     if first:
