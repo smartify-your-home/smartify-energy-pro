@@ -35,6 +35,7 @@ class FBHBoostDevice(BaseDevice):
         self.state.setdefault("idle_since", None)
         self.state.setdefault("last_sample", None)
         self.state.setdefault("externally_changed", False)
+        self.state.setdefault("restore_pending", False)
 
     def param_specs(self) -> list[ParamSpec]:
         return [
@@ -176,7 +177,7 @@ class FBHBoostDevice(BaseDevice):
                 continue
             if device.cfg.get("power_sensor") == self.cfg.get("power_sensor"):
                 active = getattr(device, "ww_active", False)
-                if active is not False:
+                if active is not False or device.is_on():
                     return True
         return False
 
@@ -244,6 +245,8 @@ class FBHBoostDevice(BaseDevice):
 
     def decide(self, ctx: Context, budget_left: float) -> Decision:
         now = ctx.now
+        if self.state.get("restore_pending"):
+            return Decision(False, 0, "Wiederherstellung des FBH-Sollwerts läuft")
         if self.state.get("active"):
             if self.state.get("completed_window") == self.state.get("window"):
                 self.status = "fertig"
@@ -270,7 +273,10 @@ class FBHBoostDevice(BaseDevice):
         max_value = float(self.p("fbh_max_temp"))
         st = self.hass.states.get(self.cfg.get("fbh_setpoint_entity"))
         if st and st.attributes.get("max") is not None:
-            max_value = min(max_value, float(st.attributes["max"]))
+            try:
+                max_value = min(max_value, float(st.attributes["max"]))
+            except (TypeError, ValueError):
+                return Decision(False, 0, "FBH-Gerätegrenze ungültig")
         if target > max_value:
             self.status = "wartet"
             return Decision(False, 0, f"Max. FBH-Sollwert {max_value:g} °C überschritten")
@@ -308,27 +314,49 @@ class FBHBoostDevice(BaseDevice):
         self.state.update(active=True, window=window[2], setpoint_entity=self.cfg["fbh_setpoint_entity"],
                           original=original, target=target, started=ctx.now.timestamp(),
                           runtime_seconds=0.0, idle_since=None, last_sample=ctx.now.timestamp(),
-                          externally_changed=False)
+                          externally_changed=False, restore_pending=False)
         # Persist BEFORE changing the external actuator: restart must restore.
         await self.manager.async_save_now()
         await self._write_setpoint(self.state["setpoint_entity"], target)
 
     async def _restore(self) -> None:
+        """Confirm actual HA setpoint before clearing durable rollback state."""
         if not self.state.get("active"):
             return
         entity = self.state.get("setpoint_entity")
         original = self.state.get("original")
         current = self._setpoint(entity)
         target = self.state.get("target")
-        if (not self.state.get("externally_changed") and entity and original is not None
-                and current is not None and target is not None
-                and abs(current - float(target)) <= EPSILON):
-            await self._write_setpoint(entity, float(original))
-        elif current is None:
+        if current is None:
             raise RuntimeError("FBH-Sollwert nicht verfügbar; Wiederherstellung später versuchen")
+        if not entity or original is None or target is None:
+            raise RuntimeError("FBH-Rückstellwert fehlt; Zustand zur Diagnose erhalten")
+        if not self.state.get("externally_changed"):
+            if abs(current - float(original)) <= EPSILON:
+                pass  # Already restored (or the boost write never took effect).
+            elif abs(current - float(target)) <= EPSILON:
+                self.state["restore_pending"] = True
+                await self.manager.async_save_now()
+                await self._write_setpoint(entity, float(original))
+                actual = self._setpoint(entity)
+                if actual is None or abs(actual - float(original)) > EPSILON:
+                    return  # Keep rollback state until HA confirms the change.
+            elif self.state.get("restore_pending"):
+                return  # Delayed write/HA state update: retry on the next cycle.
+            else:
+                # Do not overwrite an externally adjusted temperature target.
+                self.state["externally_changed"] = True
         self.state.update(active=False, original=None, target=None, setpoint_entity=None,
-                          idle_since=None, last_sample=None)
+                          idle_since=None, last_sample=None, restore_pending=False)
         await self.manager.async_save_now()
+
+    async def async_run(self, ctx: Context, budget_left: float) -> Decision:
+        if self.state.get("active") and self.mode != MODE_AUTO:
+            # Avoid leaving a raised setpoint behind when the hub/FBH mode
+            # switches to Observe, Manual or Off.
+            await self._restore()
+            return Decision(False, 0, "FBH-Moduswechsel – Sollwert zurückstellen")
+        return await super().async_run(ctx, budget_left)
 
     async def async_disabled(self, ctx: Context) -> None:
         await self._restore()
