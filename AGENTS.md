@@ -1,3 +1,8 @@
+## 0.3.89 – Vereinheitlichte PV-Grafik
+- Genau eine immer sichtbare PV-Prognose/Ist-Grafik; keine aufklappbare Vergleichsgrafik. Drei stündliche Balkenreihen: gespeicherter ursprünglicher Forecast, aktuelle Forecast-Werte und gemessener Ist-Ertrag.
+- 14 Tage historische Stunden plus 60 Stunden Zukunft, horizontal scrollbar. Fehlende Daten nie als 0 ausgeben, ursprüngliche Prognose niemals überschreiben. Stündliche Ist-Erzeugung nur bei vollständiger Messabdeckung anzeigen. Einheitliche kWh-Skala; Tagessummen nur über vergleichbare Stunden.
+- Bei Änderungen an PV-Historie und Anzeige die Python-Regressionstests sowie UI-Tests aktualisieren und ausführen; Release nur bei grüner Validierung.
+
 ## 0.3.88 – WW-Unterbrechung darf nur vorher aktive FBH erneut anstoßen
 - **Keine** kurze Sollwert-Überhöhung allein aufgrund WW-Ende. Ein gültiger Übergang: FBH-Status war **vor WW EIN** und elektrische WP-Leistung > Standby; dann WW von AUS→EIN, danach EIN→AUS. Nur wenn der ursprüngliche FBH-Boost weiterhin aktiv ist, FBH *nicht selbst* anläuft und das Zeitfenster noch läuft, frühestens nach `fbh_restart_wait` Minuten erneut kurz erhöhen.
 - Dazu müssen `ww_active_entity` UND `fbh_heating_active_entity` konfiguriert und verfügbar sein. Unbekannter Status und WP-Leistung ohne FBH-Betriebsart sind kein Freigabesignal. War die FBH schon vor WW aus, kein Wiederanlaufimpuls. Rekonstruktion nach Restart ohne gesicherte Statusflanken verboten.
